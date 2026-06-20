@@ -440,6 +440,51 @@ h3 {
   margin: 0 auto;
 }
 
+.loan-section {
+  background: var(--navy);
+  color: var(--white);
+}
+
+.loan-section .section-heading p:not(.eyebrow) {
+  color: rgba(255, 255, 255, 0.78);
+}
+
+.loan-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+  max-width: 1180px;
+  margin: 0 auto;
+}
+
+.loan-grid article {
+  padding: 24px;
+  border: 1px solid rgba(242, 223, 180, 0.25);
+  border-radius: var(--radius);
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.loan-grid span {
+  display: inline-flex;
+  margin-bottom: 18px;
+  color: var(--gold-soft);
+  font-weight: 900;
+}
+
+.loan-grid p {
+  color: rgba(255, 255, 255, 0.76);
+}
+
+.loan-note {
+  max-width: 920px;
+  margin: 22px auto 0;
+  padding: 20px 22px;
+  border-radius: var(--radius);
+  background: var(--gold);
+  color: var(--white);
+  font-weight: 800;
+}
+
 .life {
   background: #fbfaf7;
 }
@@ -690,6 +735,7 @@ h3 {
   .team-grid,
   .problem-grid,
   .tax-grid,
+  .loan-grid,
   .service-layout,
   .split-section,
   .tax-section,
