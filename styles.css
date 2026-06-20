@@ -774,6 +774,27 @@ h3 {
   color: var(--muted);
 }
 
+.google-form-section {
+  background: var(--soft);
+}
+
+.google-form-frame {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--white);
+  box-shadow: var(--shadow);
+}
+
+.google-form-frame iframe {
+  display: block;
+  width: 100%;
+  min-height: 1545px;
+  border: 0;
+}
+
 .site-footer {
   display: flex;
   align-items: center;
