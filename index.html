@@ -308,6 +308,76 @@
         </div>
       </section>
 
+      <section class="mortgage-calculator" id="calculator">
+        <div class="section-heading">
+          <p class="eyebrow">Mortgage Calculator</p>
+          <h2>房貸還款試算</h2>
+          <p>可輸入貸款金額、年限、寬限期與三段式利率，試算不同期間的月繳金額與本金、利息拆分。</p>
+        </div>
+        <form class="calc-form" id="mortgage-form">
+          <div class="calc-fields">
+            <label>
+              <span>貸款金額（萬元）</span>
+              <input type="number" id="loan-amount" min="1" step="1" value="1000" required>
+            </label>
+            <label>
+              <span>貸款年限</span>
+              <input type="number" id="loan-years" min="1" max="40" step="1" value="40" required>
+            </label>
+            <label>
+              <span>寬限期（月，0-84）</span>
+              <input type="number" id="grace-months" min="0" max="84" step="1" value="36" required>
+            </label>
+          </div>
+
+          <div class="rate-grid" aria-label="三段式利率設定">
+            <div class="rate-row rate-head">
+              <span>段別</span>
+              <span>年利率（%）</span>
+              <span>啟用月份</span>
+            </div>
+            <label class="rate-row">
+              <span>第一段</span>
+              <input type="number" id="rate-1" min="0" step="0.001" value="1.775" required>
+              <input type="number" id="start-1" min="1" step="1" value="1" required>
+            </label>
+            <label class="rate-row">
+              <span>第二段</span>
+              <input type="number" id="rate-2" min="0" step="0.001" value="2.000" required>
+              <input type="number" id="start-2" min="1" step="1" value="37" required>
+            </label>
+            <label class="rate-row">
+              <span>第三段</span>
+              <input type="number" id="rate-3" min="0" step="0.001" value="2.300" required>
+              <input type="number" id="start-3" min="1" step="1" value="85" required>
+            </label>
+          </div>
+
+          <div class="calc-actions">
+            <button class="button primary" type="submit">開始試算</button>
+            <p>啟用月份以貸款第 1 個月開始計算；例如第 37 月代表第 4 年開始適用。</p>
+          </div>
+        </form>
+
+        <div class="calc-summary" id="calc-summary" aria-live="polite"></div>
+        <div class="calc-table-wrap">
+          <table class="calc-table" id="calc-table">
+            <thead>
+              <tr>
+                <th>期間</th>
+                <th>利率</th>
+                <th>月繳金額</th>
+                <th>首月本金</th>
+                <th>首月利息</th>
+                <th>期間本金</th>
+                <th>期間利息</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
+
       <section class="life" id="life">
         <div class="section-heading">
           <p class="eyebrow">Life Notes</p>
