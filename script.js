@@ -31,6 +31,7 @@ document.querySelectorAll(".article-card").forEach((card, index) => {
 
 const mortgageForm = document.querySelector("#mortgage-form");
 const calcSummary = document.querySelector("#calc-summary");
+const calcWarning = document.querySelector("#calc-warning");
 const calcTableBody = document.querySelector("#calc-table tbody");
 
 const money = new Intl.NumberFormat("zh-TW", {
@@ -122,6 +123,7 @@ function calculateMortgage() {
     }
 
     rows.push({
+      start: segment.start,
       label: `${segment.start} - ${segment.end} 月`,
       rate: `${segment.rate.toFixed(3)}%`,
       firstPayment,
@@ -150,6 +152,27 @@ function calculateMortgage() {
       <td>${formatMoney(row.periodInterest)}</td>
     </tr>
   `).join("");
+
+  if (calcWarning) {
+    const paymentJump = rows.slice(1).reduce((largest, row, index) => {
+      const previous = rows[index];
+      const increase = row.firstPayment - previous.firstPayment;
+      return increase > largest.increase
+        ? { month: row.start, before: previous.firstPayment, after: row.firstPayment, increase }
+        : largest;
+    }, { month: 0, before: 0, after: 0, increase: 0 });
+
+    if (paymentJump.increase > 1000) {
+      const reason = paymentJump.month === graceMonths + 1
+        ? "寬限期結束"
+        : "利率或還款條件變更";
+      calcWarning.textContent = `⚠️ 第 ${paymentJump.month} 個月起${reason}，月付金將由 ${formatMoney(paymentJump.before)} 提高至 ${formatMoney(paymentJump.after)}。`;
+      calcWarning.classList.add("is-visible");
+    } else {
+      calcWarning.textContent = "";
+      calcWarning.classList.remove("is-visible");
+    }
+  }
 }
 
 mortgageForm?.addEventListener("submit", (event) => {
