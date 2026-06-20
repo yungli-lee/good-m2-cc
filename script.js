@@ -137,6 +137,18 @@ function buildRateSegments(totalMonths) {
   }));
 }
 
+function buildPaymentSegments(totalMonths, graceMonths) {
+  return buildRateSegments(totalMonths).flatMap((segment) => {
+    if (graceMonths > 0 && segment.start <= graceMonths && segment.end > graceMonths) {
+      return [
+        { ...segment, end: graceMonths },
+        { ...segment, start: graceMonths + 1 },
+      ];
+    }
+    return [segment];
+  });
+}
+
 function calculateMortgage() {
   const principalStart = readNumber("#loan-amount") * 10000;
   const totalMonths = Math.floor(readNumber("#loan-years") * 12);
@@ -149,7 +161,7 @@ function calculateMortgage() {
   }
   clearCalcError();
 
-  const rateSegments = buildRateSegments(totalMonths);
+  const rateSegments = buildPaymentSegments(totalMonths, graceMonths);
   let balance = principalStart;
   let totalInterest = 0;
   let totalPrincipal = 0;
@@ -189,7 +201,7 @@ function calculateMortgage() {
 
     rows.push({
       start: segment.start,
-      label: `${segment.start} - ${segment.end} 月`,
+      label: `${segment.start} - ${segment.end} 月${segment.end <= graceMonths ? "（寬限期）" : "（本息攤還）"}`,
       rate: `${segment.rate.toFixed(3)}%`,
       firstPayment,
       firstPrincipal,
