@@ -559,6 +559,15 @@ h3 {
   font-size: 14px;
 }
 
+.calc-table-wrap::before {
+  content: "表格中的本金與利息拆分，為該利率期間第一個月的估算；實際金額仍以銀行核貸與每期帳單為準。";
+  display: block;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 14px;
+}
+
 .calc-summary {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
