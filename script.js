@@ -30,6 +30,7 @@ document.querySelectorAll(".article-card").forEach((card, index) => {
 });
 
 const mortgageForm = document.querySelector("#mortgage-form");
+const calcError = document.querySelector("#calc-error");
 const calcSummary = document.querySelector("#calc-summary");
 const calcWarning = document.querySelector("#calc-warning");
 const calcTableBody = document.querySelector("#calc-table tbody");
@@ -54,18 +55,81 @@ function readNumber(id) {
   return Number(document.querySelector(id)?.value || 0);
 }
 
-function buildRateSegments(totalMonths) {
-  const segments = [
-    { rate: readNumber("#rate-1"), start: Math.max(1, Math.floor(readNumber("#start-1"))) },
-    { rate: readNumber("#rate-2"), start: Math.max(1, Math.floor(readNumber("#start-2"))) },
-    { rate: readNumber("#rate-3"), start: Math.max(1, Math.floor(readNumber("#start-3"))) },
-  ]
-    .filter((segment) => segment.start <= totalMonths)
-    .sort((a, b) => a.start - b.start);
+function readOptionalRate(index) {
+  const rateValue = document.querySelector(`#rate-${index}`)?.value.trim() || "";
+  const startValue = document.querySelector(`#start-${index}`)?.value.trim() || "";
+  return {
+    index,
+    hasRate: rateValue !== "",
+    hasStart: startValue !== "",
+    rate: Number(rateValue),
+    start: Number(startValue),
+  };
+}
 
-  if (!segments.some((segment) => segment.start === 1)) {
-    segments.unshift({ rate: segments[0]?.rate || 0, start: 1 });
+function showCalcError(message) {
+  if (calcError) {
+    calcError.textContent = message;
+    calcError.classList.add("is-visible");
   }
+  calcSummary.innerHTML = "";
+  calcTableBody.innerHTML = "";
+  calcWarning?.classList.remove("is-visible");
+}
+
+function clearCalcError() {
+  if (calcError) {
+    calcError.textContent = "";
+    calcError.classList.remove("is-visible");
+  }
+}
+
+function validateMortgageInputs(totalMonths, graceMonths) {
+  const amount = readNumber("#loan-amount");
+  const years = readNumber("#loan-years");
+  const firstRate = readOptionalRate(1);
+  const secondRate = readOptionalRate(2);
+  const thirdRate = readOptionalRate(3);
+
+  if (amount <= 0) return "請輸入正確的貸款金額。";
+  if (!Number.isInteger(years) || years < 1 || years > 40) return "貸款年限請輸入 1 到 40 年。";
+  if (!Number.isInteger(graceMonths) || graceMonths < 0 || graceMonths > 84) return "寬限期請輸入 0 到 84 個月。";
+  if (graceMonths >= totalMonths) return "寬限期不可大於或等於總貸款期數。";
+  if (!firstRate.hasRate || !firstRate.hasStart) return "第一段利率與啟用月份必填。";
+  if (firstRate.start !== 1) return "第一段啟用月份必須是 1。";
+  if (firstRate.rate < 0) return "第一段利率不可小於 0。";
+
+  const optionalRates = [secondRate, thirdRate];
+  for (const segment of optionalRates) {
+    if (segment.hasRate !== segment.hasStart) {
+      return `第 ${segment.index} 段利率與啟用月份必須同時填寫，或同時留空。`;
+    }
+    if (segment.hasRate && segment.rate < 0) {
+      return `第 ${segment.index} 段利率不可小於 0。`;
+    }
+    if (segment.hasStart && (!Number.isInteger(segment.start) || segment.start < 1 || segment.start > totalMonths)) {
+      return `第 ${segment.index} 段啟用月份必須在 1 到 ${totalMonths} 之間。`;
+    }
+  }
+
+  if (!secondRate.hasRate && thirdRate.hasRate) {
+    return "第二段空白時，第三段不可填寫；請先填第二段，或清空第三段。";
+  }
+
+  const activeSegments = [firstRate, secondRate, thirdRate].filter((segment) => segment.hasRate);
+  for (let index = 1; index < activeSegments.length; index += 1) {
+    if (activeSegments[index].start <= activeSegments[index - 1].start) {
+      return "各段利率的啟用月份必須由小到大，且不可相同。";
+    }
+  }
+
+  return "";
+}
+
+function buildRateSegments(totalMonths) {
+  const segments = [readOptionalRate(1), readOptionalRate(2), readOptionalRate(3)]
+    .filter((segment) => segment.hasRate)
+    .map((segment) => ({ rate: segment.rate, start: segment.start }));
 
   return segments.map((segment, index) => ({
     ...segment,
@@ -76,13 +140,14 @@ function buildRateSegments(totalMonths) {
 function calculateMortgage() {
   const principalStart = readNumber("#loan-amount") * 10000;
   const totalMonths = Math.floor(readNumber("#loan-years") * 12);
-  const graceMonths = Math.min(84, Math.max(0, Math.floor(readNumber("#grace-months"))));
+  const graceMonths = Math.floor(readNumber("#grace-months"));
 
-  if (principalStart <= 0 || totalMonths <= 0 || graceMonths >= totalMonths) {
-    calcSummary.innerHTML = "<article><strong>請確認貸款金額、年限與寬限期設定。</strong></article>";
-    calcTableBody.innerHTML = "";
+  const validationMessage = validateMortgageInputs(totalMonths, graceMonths);
+  if (validationMessage) {
+    showCalcError(validationMessage);
     return;
   }
+  clearCalcError();
 
   const rateSegments = buildRateSegments(totalMonths);
   let balance = principalStart;

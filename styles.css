@@ -559,6 +559,22 @@ h3 {
   font-size: 14px;
 }
 
+.calc-error {
+  display: none;
+  max-width: 1180px;
+  margin: 18px auto 0;
+  padding: 16px 18px;
+  border: 2px solid #b3261e;
+  border-radius: var(--radius);
+  background: #fff1ee;
+  color: #7d1a14;
+  font-weight: 900;
+}
+
+.calc-error.is-visible {
+  display: block;
+}
+
 .calc-table-wrap::before {
   content: "表格中的月繳本金與月繳利息，為各利率期間第一期的估算；實際金額仍以銀行核貸與每期帳單為準。";
   display: block;

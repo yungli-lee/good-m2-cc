@@ -314,7 +314,7 @@
           <h2>房貸還款試算</h2>
           <p>可輸入貸款金額、年限、寬限期與三段式利率，試算不同期間的月繳金額與本金、利息拆分。</p>
         </div>
-        <form class="calc-form" id="mortgage-form">
+        <form class="calc-form" id="mortgage-form" novalidate>
           <div class="calc-fields">
             <label>
               <span>貸款金額（萬元）</span>
@@ -343,22 +343,23 @@
             </label>
             <label class="rate-row">
               <span>第二段</span>
-              <input type="number" id="rate-2" min="0" step="0.001" value="2.000" required>
-              <input type="number" id="start-2" min="1" step="1" value="37" required>
+              <input type="number" id="rate-2" min="0" step="0.001" value="2.000">
+              <input type="number" id="start-2" min="1" step="1" value="37">
             </label>
             <label class="rate-row">
               <span>第三段</span>
-              <input type="number" id="rate-3" min="0" step="0.001" value="2.300" required>
-              <input type="number" id="start-3" min="1" step="1" value="85" required>
+              <input type="number" id="rate-3" min="0" step="0.001" value="2.300">
+              <input type="number" id="start-3" min="1" step="1" value="85">
             </label>
           </div>
 
-        <div class="calc-actions">
-          <button class="button primary" type="submit">開始試算</button>
-          <p>啟用月份以貸款第 1 個月開始計算；例如第 37 月代表第 4 年開始適用。</p>
-        </div>
+          <div class="calc-actions">
+            <button class="button primary" type="submit">開始試算</button>
+            <p>第二段與第三段可留空；若填寫利率，啟用月份也要一起填。第三段不可跳過第二段。</p>
+          </div>
         </form>
 
+        <div class="calc-error" id="calc-error" aria-live="polite"></div>
         <div class="calc-summary" id="calc-summary" aria-live="polite"></div>
         <div class="calc-warning" id="calc-warning" aria-live="polite"></div>
         <div class="calc-table-wrap">
