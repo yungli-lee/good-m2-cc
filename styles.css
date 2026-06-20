@@ -705,7 +705,8 @@ h3 {
 }
 
 .person-card .ayong-photo {
-  object-position: center 28%;
+  object-fit: contain;
+  object-position: center center;
 }
 
 .person-card .wu-photo {
