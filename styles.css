@@ -508,16 +508,16 @@ h3 {
   display: grid;
   grid-template-columns: minmax(150px, 0.7fr) minmax(0, 1fr);
   gap: 20px;
-  align-items: end;
+  align-items: center;
   padding: 22px;
   overflow: hidden;
 }
 
 .person-card img {
   width: 100%;
-  max-height: 420px;
+  height: 280px;
   object-fit: contain;
-  object-position: bottom center;
+  object-position: center center;
 }
 
 .person-card a {
