@@ -1,4 +1,11 @@
 const SERVICE_TYPES = new Set(["buy", "sell", "loan_tax", "factory_land", "other"]);
+const SERVICE_TYPE_LABELS = {
+  buy: "買屋 / 買地",
+  sell: "賣屋 / 賣地 / 委託銷售",
+  loan_tax: "貸款 / 稅務提醒",
+  factory_land: "廠房 / 土地需求",
+  other: "其他諮詢",
+};
 
 function cleanText(value, maxLength = 500) {
   return String(value || "").trim().slice(0, maxLength);
@@ -11,6 +18,99 @@ function jsonResponse(body, status = 200) {
       "Content-Type": "application/json; charset=utf-8",
     },
   });
+}
+
+function escapeHtml(value) {
+  return String(value || "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
+function fieldValue(value) {
+  return value || "未填寫";
+}
+
+function buildEmailContent(data, createdAt, requestMeta) {
+  const serviceLabel = SERVICE_TYPE_LABELS[data.service_type] || data.service_type;
+  const fields = [
+    ["姓名", data.name],
+    ["電話", data.phone],
+    ["LINE ID", data.line_id],
+    ["Email", data.email],
+    ["服務項目", serviceLabel],
+    ["區域", data.area],
+    ["預算", data.budget],
+    ["方便聯絡時段", data.contact_time],
+    ["需求說明", data.message],
+    ["建立時間", createdAt],
+    ["User Agent", requestMeta.userAgent],
+    ["IP Address", requestMeta.ip],
+  ];
+
+  const text = [
+    "阿勇服務表單收到新需求：",
+    "",
+    ...fields.map(([label, value]) => `${label}：${fieldValue(value)}`),
+  ].join("\n");
+
+  const rows = fields.map(([label, value]) => `
+    <tr>
+      <th style="width: 140px; padding: 10px 12px; text-align: left; background: #f6f0e7; border: 1px solid #e5d8c8;">${escapeHtml(label)}</th>
+      <td style="padding: 10px 12px; border: 1px solid #e5d8c8; white-space: pre-wrap;">${escapeHtml(fieldValue(value))}</td>
+    </tr>
+  `).join("");
+
+  const html = `
+    <div style="font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; color: #15233b; line-height: 1.7;">
+      <h2 style="margin: 0 0 16px;">阿勇服務表單收到新需求</h2>
+      <table style="border-collapse: collapse; width: 100%; max-width: 760px; font-size: 16px;">
+        ${rows}
+      </table>
+    </div>
+  `;
+
+  return { html, text };
+}
+
+async function sendNotificationEmail(env, data, createdAt, requestMeta) {
+  if (!env.RESEND_API_KEY) {
+    throw new Error("RESEND_API_KEY is not configured.");
+  }
+
+  if (!env.NOTIFY_EMAIL_FROM) {
+    throw new Error("NOTIFY_EMAIL_FROM is not configured.");
+  }
+
+  const to = env.NOTIFY_EMAIL_TO || "best@m2.cc";
+  const { html, text } = buildEmailContent(data, createdAt, requestMeta);
+  const payload = {
+    from: env.NOTIFY_EMAIL_FROM,
+    to: [to],
+    subject: "【阿勇服務表單】新需求通知",
+    html,
+    text,
+  };
+
+  if (data.email) {
+    payload.reply_to = data.email;
+  }
+
+  const response = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${env.RESEND_API_KEY}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    const detail = await response.text();
+    throw new Error(`Resend email failed: ${response.status} ${detail}`);
+  }
 }
 
 export async function onRequestPost({ request, env }) {
@@ -58,6 +158,10 @@ export async function onRequestPost({ request, env }) {
     request.headers.get("cf-connecting-ip") ||
     request.headers.get("x-forwarded-for") ||
     "";
+  const createdAt = new Date().toLocaleString("zh-TW", {
+    timeZone: "Asia/Taipei",
+    hour12: false,
+  });
 
   const result = await env.DB.prepare(`
     INSERT INTO service_requests (
@@ -89,9 +193,18 @@ export async function onRequestPost({ request, env }) {
     ip.slice(0, 80)
   ).run();
 
+  let emailSent = false;
+  try {
+    await sendNotificationEmail(env, data, createdAt, { userAgent, ip });
+    emailSent = true;
+  } catch (error) {
+    console.error("Service form notification failed", error);
+  }
+
   return jsonResponse({
     ok: true,
     id: result.meta?.last_row_id || null,
+    email_sent: emailSent,
     message: "已收到您的需求。",
   });
 }
