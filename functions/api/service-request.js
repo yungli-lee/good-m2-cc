@@ -33,7 +33,7 @@ function fieldValue(value) {
   return value || "未填寫";
 }
 
-function buildEmailContent(data, createdAt, requestMeta) {
+function buildEmailContent(data, createdAt, requestMeta, d1Id) {
   const serviceLabel = SERVICE_TYPE_LABELS[data.service_type] || data.service_type;
   const fields = [
     ["姓名", data.name],
@@ -46,8 +46,9 @@ function buildEmailContent(data, createdAt, requestMeta) {
     ["方便聯絡時段", data.contact_time],
     ["需求說明", data.message],
     ["建立時間", createdAt],
-    ["User Agent", requestMeta.userAgent],
-    ["IP Address", requestMeta.ip],
+    ["user_agent", requestMeta.userAgent],
+    ["ip_address", requestMeta.ip],
+    ["D1 新增 id", d1Id],
   ];
 
   const text = [
@@ -75,7 +76,7 @@ function buildEmailContent(data, createdAt, requestMeta) {
   return { html, text };
 }
 
-async function sendNotificationEmail(env, data, createdAt, requestMeta) {
+async function sendNotificationEmail(env, data, createdAt, requestMeta, d1Id) {
   if (!env.RESEND_API_KEY) {
     throw new Error("RESEND_API_KEY is not configured.");
   }
@@ -84,12 +85,15 @@ async function sendNotificationEmail(env, data, createdAt, requestMeta) {
     throw new Error("NOTIFY_EMAIL_FROM is not configured.");
   }
 
-  const to = env.NOTIFY_EMAIL_TO || "best@m2.cc";
-  const { html, text } = buildEmailContent(data, createdAt, requestMeta);
+  if (!env.NOTIFY_EMAIL_TO) {
+    throw new Error("NOTIFY_EMAIL_TO is not configured.");
+  }
+
+  const { html, text } = buildEmailContent(data, createdAt, requestMeta, d1Id);
   const payload = {
     from: env.NOTIFY_EMAIL_FROM,
-    to: [to],
-    subject: "【阿勇服務表單】新需求通知",
+    to: [env.NOTIFY_EMAIL_TO],
+    subject: "【阿勇不動產顧問】新服務需求",
     html,
     text,
   };
@@ -193,9 +197,10 @@ export async function onRequestPost({ request, env }) {
     ip.slice(0, 80)
   ).run();
 
+  const d1Id = result.meta?.last_row_id || null;
   let emailSent = false;
   try {
-    await sendNotificationEmail(env, data, createdAt, { userAgent, ip });
+    await sendNotificationEmail(env, data, createdAt, { userAgent, ip }, d1Id);
     emailSent = true;
   } catch (error) {
     console.error("Service form notification failed", error);
@@ -203,8 +208,8 @@ export async function onRequestPost({ request, env }) {
 
   return jsonResponse({
     ok: true,
-    id: result.meta?.last_row_id || null,
-    email_sent: emailSent,
+    id: d1Id,
+    emailSent,
     message: "已收到您的需求。",
   });
 }

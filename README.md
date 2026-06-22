@@ -36,6 +36,6 @@ Cloudflare D1 資料庫：
 
 通知信主旨：
 
-`【阿勇服務表單】新需求通知`
+`【阿勇不動產顧問】新服務需求`
 
-通知信內容包含表單資料、建立時間、User Agent 與 IP Address。
+通知信內容包含表單資料、建立時間、`user_agent`、`ip_address` 與 D1 新增 id。若 Email 暫時寄送失敗，表單仍會回傳成功，並在 response 中標示 `emailSent: false`。
