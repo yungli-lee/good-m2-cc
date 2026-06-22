@@ -1,0 +1,8 @@
+name = "good-m2-cc"
+compatibility_date = "2026-06-22"
+pages_build_output_dir = "."
+
+[[d1_databases]]
+binding = "DB"
+database_name = "good-m2-service-db"
+database_id = "5c1b4f0c-63bc-4ae5-8830-5c8c6b9a0aa4"

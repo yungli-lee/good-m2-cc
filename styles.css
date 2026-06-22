@@ -807,25 +807,83 @@ h3 {
   color: var(--muted);
 }
 
-.google-form-section {
+.service-form-section {
   background: var(--soft);
 }
 
-.google-form-frame {
-  max-width: 760px;
+.service-form {
+  max-width: 920px;
   margin: 0 auto;
-  padding: 12px;
+  padding: clamp(18px, 4vw, 34px);
   border: 1px solid var(--line);
   border-radius: var(--radius);
   background: var(--white);
   box-shadow: var(--shadow);
 }
 
-.google-form-frame iframe {
-  display: block;
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.service-form label {
+  display: grid;
+  gap: 8px;
+  color: var(--ink);
+  font-weight: 900;
+}
+
+.service-form input,
+.service-form select,
+.service-form textarea {
   width: 100%;
-  min-height: 1545px;
-  border: 0;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 13px 14px;
+  background: #fffdf9;
+  color: var(--ink);
+  font: inherit;
+}
+
+.service-form textarea {
+  margin-top: 18px;
+  resize: vertical;
+}
+
+.consent-check {
+  grid-template-columns: auto 1fr;
+  align-items: start;
+  margin: 18px 0;
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.consent-check input {
+  width: auto;
+  margin-top: 4px;
+}
+
+.form-message {
+  display: none;
+  margin: 0 0 16px;
+  padding: 12px 14px;
+  border-radius: 8px;
+  font-weight: 900;
+}
+
+.form-message.is-visible {
+  display: block;
+}
+
+.form-message.is-success {
+  background: #e9f8ef;
+  color: #09733d;
+}
+
+.form-message.is-error {
+  background: #fff1f0;
+  color: #b42318;
 }
 
 .site-footer {
@@ -936,6 +994,7 @@ h3 {
   .loan-grid,
   .calc-fields,
   .calc-summary,
+  .form-grid,
   .service-layout,
   .split-section,
   .tax-section,

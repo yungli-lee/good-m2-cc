@@ -34,6 +34,8 @@ const calcError = document.querySelector("#calc-error");
 const calcSummary = document.querySelector("#calc-summary");
 const calcWarning = document.querySelector("#calc-warning");
 const calcTableBody = document.querySelector("#calc-table tbody");
+const consultForm = document.querySelector("#consult-form");
+const consultFormMessage = document.querySelector("#consult-form-message");
 
 const money = new Intl.NumberFormat("zh-TW", {
   maximumFractionDigits: 0,
@@ -260,3 +262,43 @@ mortgageForm?.addEventListener("submit", (event) => {
 if (mortgageForm) {
   calculateMortgage();
 }
+
+function showConsultMessage(message, type) {
+  if (!consultFormMessage) return;
+  consultFormMessage.textContent = message;
+  consultFormMessage.classList.remove("is-success", "is-error");
+  consultFormMessage.classList.add("is-visible", type === "success" ? "is-success" : "is-error");
+}
+
+consultForm?.addEventListener("submit", async (event) => {
+  event.preventDefault();
+
+  const submitButton = consultForm.querySelector("button[type='submit']");
+  const formData = new FormData(consultForm);
+  const payload = Object.fromEntries(formData.entries());
+  payload.consent = formData.get("consent") === "on";
+
+  submitButton.disabled = true;
+  submitButton.textContent = "送出中...";
+
+  try {
+    const response = await fetch("/api/service-request", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    const result = await response.json().catch(() => ({}));
+
+    if (!response.ok) {
+      throw new Error(result.message || "送出失敗，請稍後再試。");
+    }
+
+    consultForm.reset();
+    showConsultMessage("已收到您的需求，我們會盡快與您聯絡。", "success");
+  } catch (error) {
+    showConsultMessage(error.message || "送出失敗，請稍後再試。", "error");
+  } finally {
+    submitButton.disabled = false;
+    submitButton.textContent = "送出服務需求";
+  }
+});
