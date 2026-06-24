@@ -3,6 +3,7 @@
 !.env.example
 
 .next
+.vercel
 node_modules
 dist
 coverage

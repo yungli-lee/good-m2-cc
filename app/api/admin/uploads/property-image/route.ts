@@ -4,6 +4,8 @@ import { recordAuditLog } from "@/lib/audit/audit-log";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { uploadPropertyImageSchema } from "@/lib/validation/common";
 
+export const runtime = "edge";
+
 const allowedTypes = new Set(["image/jpeg", "image/png", "image/webp"]);
 const allowedExtensions = new Set(["jpg", "jpeg", "png", "webp"]);
 const maxSize = 5 * 1024 * 1024;

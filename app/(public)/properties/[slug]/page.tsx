@@ -5,6 +5,8 @@ import { getPublishedPropertyBySlug } from "@/lib/properties/queries";
 import type { Property } from "@/lib/properties/types";
 import { getCoverMedia } from "@/lib/properties/types";
 
+export const runtime = "edge";
+
 type Props = {
   params: Promise<{ slug: string }>;
 };

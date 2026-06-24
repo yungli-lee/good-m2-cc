@@ -5,6 +5,8 @@ import { recordAuditLog } from "@/lib/audit/audit-log";
 import { propertySchema, toPropertyPayload } from "@/lib/properties/schema";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
+export const runtime = "edge";
+
 export async function GET() {
   const auth = await requireApiRole(["editor", "admin", "owner"]);
   if (auth.response) return auth.response;

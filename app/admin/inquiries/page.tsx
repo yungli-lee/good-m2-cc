@@ -3,6 +3,8 @@ import { requireRole } from "@/lib/auth";
 import { formatDateTime } from "@/lib/format";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
+export const runtime = "edge";
+
 const statusLabel: Record<string, string> = {
   new: "新詢問",
   contacted: "已聯絡",

@@ -4,6 +4,8 @@ import { inquiryNoteSchema } from "@/lib/inquiries/schema";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { routeIdParamsSchema } from "@/lib/validation/common";
 
+export const runtime = "edge";
+
 type Props = { params: Promise<{ id: string }> };
 
 export async function PATCH(request: Request, { params }: Props) {

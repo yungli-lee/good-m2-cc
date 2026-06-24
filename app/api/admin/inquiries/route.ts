@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { requireApiRole, apiError } from "@/lib/auth-api";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
+export const runtime = "edge";
+
 export async function GET() {
   const auth = await requireApiRole(["editor", "admin", "owner"]);
   if (auth.response) return auth.response;

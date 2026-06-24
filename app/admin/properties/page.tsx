@@ -5,6 +5,8 @@ import { formatDateTime, formatPrice } from "@/lib/format";
 import { listAdminProperties } from "@/lib/properties/queries";
 import type { Property } from "@/lib/properties/types";
 
+export const runtime = "edge";
+
 const statusLabel: Record<string, string> = {
   draft: "草稿",
   published: "已上架",

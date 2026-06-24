@@ -3,6 +3,8 @@ import { inquirySchema } from "@/lib/inquiries/schema";
 import { getRequestMeta } from "@/lib/security/request";
 import { createSupabaseAdminClient } from "@/lib/supabase/server";
 
+export const runtime = "edge";
+
 async function verifyTurnstile(token?: string) {
   const secret = process.env.TURNSTILE_SECRET_KEY;
   if (!secret) return { ok: true, skipped: true };

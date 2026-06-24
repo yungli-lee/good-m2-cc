@@ -6,6 +6,8 @@ import { getAdminPropertyById } from "@/lib/properties/queries";
 import type { Property } from "@/lib/properties/types";
 import { setCoverImageAction, updatePropertyAction, uploadPropertyImageAction } from "../../actions";
 
+export const runtime = "edge";
+
 type Props = {
   params: Promise<{ id: string }>;
   searchParams: Promise<{ error?: string; saved?: string }>;

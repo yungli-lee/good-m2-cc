@@ -1,5 +1,7 @@
 import { loginAction } from "./actions";
 
+export const runtime = "edge";
+
 type Props = {
   searchParams: Promise<{ error?: string }>;
 };

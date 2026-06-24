@@ -2,6 +2,8 @@ import { PropertyForm } from "@/components/admin/property-form";
 import { requireRole } from "@/lib/auth";
 import { createPropertyAction } from "../actions";
 
+export const runtime = "edge";
+
 type Props = {
   searchParams: Promise<{ error?: string }>;
 };

@@ -4,6 +4,8 @@ import { formatDateTime } from "@/lib/format";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { markInquirySpamAction, updateInquiryNoteAction, updateInquiryStatusAction } from "../actions";
 
+export const runtime = "edge";
+
 type Props = {
   params: Promise<{ id: string }>;
   searchParams: Promise<{ error?: string; saved?: string }>;

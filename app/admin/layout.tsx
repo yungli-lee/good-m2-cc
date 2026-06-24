@@ -4,6 +4,7 @@ import { hasSupabaseConfig } from "@/lib/supabase/server";
 import { logoutAction } from "./login/actions";
 
 export const dynamic = "force-dynamic";
+export const runtime = "edge";
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const current = hasSupabaseConfig() ? await getCurrentProfile() : null;

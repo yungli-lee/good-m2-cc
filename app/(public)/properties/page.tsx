@@ -2,6 +2,8 @@ import { PropertyCard } from "@/components/properties/property-card";
 import { listPublishedProperties } from "@/lib/properties/queries";
 import type { Property } from "@/lib/properties/types";
 
+export const runtime = "edge";
+
 export const metadata = {
   title: "主推物件｜阿勇不動產顧問",
   description: "查看目前已上架的主推物件。"

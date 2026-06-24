@@ -4,6 +4,8 @@ import { recordAuditLog } from "@/lib/audit/audit-log";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { publishStatusSchema, routeIdParamsSchema } from "@/lib/validation/common";
 
+export const runtime = "edge";
+
 type Props = { params: Promise<{ id: string }> };
 
 export async function POST(request: Request, { params }: Props) {
