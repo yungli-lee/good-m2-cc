@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="robots" content="noindex,nofollow">
+    <title>後台登入｜阿勇不動產顧問</title>
+    <link rel="stylesheet" href="/admin/styles.css">
+  </head>
+  <body>
+    <main class="admin-login-shell">
+      <section class="login-panel" aria-labelledby="login-title">
+        <a class="brand-link" href="/" aria-label="回到首頁">阿勇不動產顧問</a>
+        <p class="eyebrow">Admin</p>
+        <h1 id="login-title">後台登入</h1>
+        <p class="muted">
+          請使用已授權的管理帳號登入。正式後台需部署 Next.js App Router 與 Supabase Auth 後啟用。
+        </p>
+
+        <form class="login-form" id="admin-login-form" action="#" method="post" novalidate>
+          <label>
+            Email
+            <input type="email" name="email" autocomplete="email" required placeholder="name@example.com">
+          </label>
+          <label>
+            密碼
+            <input type="password" name="password" autocomplete="current-password" required>
+          </label>
+          <button type="submit">登入</button>
+          <p class="form-message" id="admin-login-message" role="status" aria-live="polite"></p>
+        </form>
+      </section>
+    </main>
+    <script src="/admin/script.js"></script>
+  </body>
+</html>
