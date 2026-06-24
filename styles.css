@@ -136,7 +136,7 @@ a {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  object-position: center center;
+  object-position: center 42%;
 }
 
 .hero-copy {
@@ -979,6 +979,12 @@ h3 {
 
   .hero-media::after {
     background: linear-gradient(180deg, rgba(19, 41, 75, 0.16), rgba(19, 41, 75, 0.82));
+  }
+
+  .hero-media img {
+    object-fit: contain;
+    object-position: center top;
+    background: var(--navy);
   }
 
   .hero-copy p:not(.eyebrow) {
