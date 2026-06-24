@@ -2,6 +2,9 @@ name = "good-m2-cc"
 compatibility_date = "2026-06-22"
 pages_build_output_dir = ".vercel/output/static"
 
+[build]
+command = "npm run pages:build"
+
 [[d1_databases]]
 binding = "DB"
 database_name = "good-m2-service-db"
