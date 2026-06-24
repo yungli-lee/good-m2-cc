@@ -9,6 +9,7 @@ const eslintConfig = [
     ignores: [
       "next-env.d.ts",
       ".next/**",
+      ".vercel/**",
       "node_modules/**",
       "public/**",
       "script.js",

@@ -4,6 +4,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "pages:build": "npx @cloudflare/next-on-pages@1",
     "lint": "eslint .",
     "start": "next start",
     "typecheck": "tsc --noEmit"
