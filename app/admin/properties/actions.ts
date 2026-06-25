@@ -233,9 +233,7 @@ export async function uploadPropertyImageAction(id: string, formData: FormData) 
     .from("property_media")
     .insert({
       property_id: id,
-      media_type: "image",
-      url: publicUrl.publicUrl,
-      alt_text: String(formData.get("alt_text") || "").trim() || null
+      url: publicUrl.publicUrl
     })
     .select()
     .single();
