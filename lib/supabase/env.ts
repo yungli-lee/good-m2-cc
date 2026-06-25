@@ -9,7 +9,7 @@ type CloudflareRequestContext = {
   env?: CloudflareRuntimeEnv;
 };
 
-function getCloudflareRequestContext() {
+export function getRequestContext() {
   const contextSymbol = Symbol.for("__cloudflare-request-context__");
   const globalWithContext = globalThis as unknown as {
     [key: symbol]: CloudflareRequestContext | undefined;
@@ -18,7 +18,8 @@ function getCloudflareRequestContext() {
 }
 
 function getCloudflareRuntimeEnv() {
-  return getCloudflareRequestContext()?.env;
+  const { env } = getRequestContext() || {};
+  return env;
 }
 
 function getSource(processUrl?: string, processAnon?: string, runtimeUrl?: string, runtimeAnon?: string) {
@@ -28,7 +29,7 @@ function getSource(processUrl?: string, processAnon?: string, runtimeUrl?: strin
 }
 
 export function getSupabaseEnv() {
-  const runtimeEnv = getCloudflareRuntimeEnv();
+  const { env: runtimeEnv } = getRequestContext() || {};
   const processUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const processAnon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   const runtimeUrl = runtimeEnv?.NEXT_PUBLIC_SUPABASE_URL;
@@ -44,7 +45,8 @@ export function getSupabaseEnv() {
 }
 
 export function getSupabaseEnvDiagnostics() {
-  const runtimeEnv = getCloudflareRuntimeEnv();
+  const requestContext = getRequestContext();
+  const { env: runtimeEnv } = requestContext || {};
   const processUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const processAnon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   const runtimeUrl = runtimeEnv?.NEXT_PUBLIC_SUPABASE_URL;
@@ -55,8 +57,9 @@ export function getSupabaseEnvDiagnostics() {
   return {
     processUrl: !!processUrl,
     processAnon: !!processAnon,
-    cloudflareContext: !!getCloudflareRequestContext(),
+    cloudflareContext: !!requestContext,
     requestContext: !!runtimeEnv,
+    envKeys: Object.keys(runtimeEnv || {}).sort(),
     source,
     hasUrl: !!env.url,
     hasAnon: !!env.anonKey,
