@@ -5,6 +5,17 @@ const optionalNumber = z.preprocess(
   z.coerce.number().nonnegative().optional()
 );
 
+function toSafeSlug(slug: string, title: string) {
+  const cleaned = (slug || title)
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "")
+    .slice(0, 120);
+
+  return cleaned || `property-${crypto.randomUUID().slice(0, 8)}`;
+}
+
 export const propertySchema = z.object({
   title: z.string().trim().min(1, "請輸入案名").max(120),
   slug: z.string().trim().min(1).max(140).regex(/^[a-z0-9-]+$/),
@@ -33,8 +44,11 @@ export type PropertyFormInput = z.infer<typeof propertySchema>;
 
 export function normalizePropertyForm(formData: FormData) {
   const raw = Object.fromEntries(formData.entries());
+  const title = String(formData.get("title") || "");
   return propertySchema.parse({
     ...raw,
+    title,
+    slug: toSafeSlug(String(formData.get("slug") || ""), title),
     is_featured: formData.get("is_featured") === "on",
     highlights: String(formData.get("highlights") || "")
   });

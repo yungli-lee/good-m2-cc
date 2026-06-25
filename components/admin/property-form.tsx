@@ -32,7 +32,7 @@ export function PropertyForm({
       </div>
       <div className="field">
         <label htmlFor="slug">Slug</label>
-        <input className="input" id="slug" name="slug" defaultValue={property?.slug || ""} required />
+        <input className="input" id="slug" name="slug" defaultValue={property?.slug || ""} placeholder="可留空，系統會自動產生" />
       </div>
       <div className="field">
         <label htmlFor="address_public">公開地址</label>
