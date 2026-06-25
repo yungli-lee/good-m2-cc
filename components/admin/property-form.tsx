@@ -32,7 +32,7 @@ export function PropertyForm({
       </div>
       <div className="field">
         <label htmlFor="slug">Slug</label>
-        <input className="input" id="slug" name="slug" defaultValue={property?.slug || ""} pattern="[a-z0-9-]+" required />
+        <input className="input" id="slug" name="slug" defaultValue={property?.slug || ""} pattern={"[a-z0-9\\x2d]+"} required />
       </div>
       <div className="field">
         <label htmlFor="address_public">公開地址</label>
