@@ -73,12 +73,12 @@
 
 | Item | Level | Status |
 | --- | --- | --- |
-| Server-side validation | MUST | 部分完成 |
-| Turnstile | MUST | 部分完成 |
-| Honeypot | MUST | 部分完成 |
+| Server-side validation | MUST | 部分完成；首頁服務表單 Phase 1 已改送 `/api/public/inquiries` |
+| Turnstile | MUST | 部分完成；production 不可 skipped 尚未解決 |
+| Honeypot | MUST | 部分完成；首頁服務表單已加入 honeypot 欄位 |
 | Rate limit | MUST | 未完成 |
-| Email notification | MUST | 需驗證 |
-| 表單紀錄 | MUST | 部分完成 |
+| Email notification | MUST | 新 API 尚未整合 Resend |
+| 表單紀錄 | MUST | 部分完成；新 API 寫入 Supabase `inquiries`，需 preview 驗證 |
 
 ## SEO
 
@@ -117,4 +117,3 @@
 | ESLint | MUST | 本次文件前通過 |
 | Production env | MUST | 需正式驗證 |
 | Rollback branch | MUST | 已有 production static backup 概念，需保持更新 |
-

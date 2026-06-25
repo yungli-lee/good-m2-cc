@@ -48,6 +48,14 @@ const calcTableBody = document.querySelector("#calc-table tbody");
 const consultForm = document.querySelector("#consult-form");
 const consultFormMessage = document.querySelector("#consult-form-message");
 
+const SERVICE_TYPE_LABELS = {
+  buy: "買屋 / 買地",
+  sell: "賣屋 / 賣地 / 委託銷售",
+  loan_tax: "貸款 / 稅務提醒",
+  factory_land: "廠房 / 土地需求",
+  other: "其他諮詢",
+};
+
 const money = new Intl.NumberFormat("zh-TW", {
   maximumFractionDigits: 0,
 });
@@ -281,19 +289,55 @@ function showConsultMessage(message, type) {
   consultFormMessage.classList.add("is-visible", type === "success" ? "is-success" : "is-error");
 }
 
+function readPayloadValue(payload, key) {
+  return String(payload[key] || "").trim();
+}
+
+function buildInquiryMessage(payload) {
+  const serviceType = readPayloadValue(payload, "service_type");
+  const serviceLabel = SERVICE_TYPE_LABELS[serviceType] || serviceType || "未選擇";
+  const originalMessage =
+    readPayloadValue(payload, "message") ||
+    readPayloadValue(payload, "notes") ||
+    readPayloadValue(payload, "requirement");
+
+  return [
+    `服務需求：${serviceLabel}`,
+    `需求地區：${readPayloadValue(payload, "area") || "未填寫"}`,
+    `預算或委售金額：${readPayloadValue(payload, "budget") || "未填寫"}`,
+    `方便聯絡時段：${readPayloadValue(payload, "contact_time") || "未填寫"}`,
+    `Line ID：${readPayloadValue(payload, "line_id") || "未填寫"}`,
+    `需求說明：${originalMessage || "使用者由首頁服務表單送出諮詢需求。"}`,
+  ].join("\n");
+}
+
+function buildInquiryPayload(formData) {
+  const rawPayload = Object.fromEntries(formData.entries());
+
+  return {
+    form_type: "service-form",
+    name: readPayloadValue(rawPayload, "name"),
+    phone: readPayloadValue(rawPayload, "phone"),
+    email: readPayloadValue(rawPayload, "email"),
+    source_page: `${window.location.pathname}${window.location.hash}`,
+    website: readPayloadValue(rawPayload, "website"),
+    turnstile_token: readPayloadValue(rawPayload, "turnstile_token"),
+    message: buildInquiryMessage(rawPayload),
+  };
+}
+
 consultForm?.addEventListener("submit", async (event) => {
   event.preventDefault();
 
   const submitButton = consultForm.querySelector("button[type='submit']");
   const formData = new FormData(consultForm);
-  const payload = Object.fromEntries(formData.entries());
-  payload.consent = formData.get("consent") === "on";
+  const payload = buildInquiryPayload(formData);
 
   submitButton.disabled = true;
   submitButton.textContent = "送出中...";
 
   try {
-    const response = await fetch("/api/service-request", {
+    const response = await fetch("/api/public/inquiries", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
@@ -301,7 +345,7 @@ consultForm?.addEventListener("submit", async (event) => {
     const result = await response.json().catch(() => ({}));
 
     if (!response.ok) {
-      throw new Error(result.message || "送出失敗，請稍後再試。");
+      throw new Error(result.error || result.message || "送出失敗，請稍後再試。");
     }
 
     consultForm.reset();

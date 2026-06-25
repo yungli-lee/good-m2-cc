@@ -20,7 +20,7 @@
 - Rate Limit：`rate_limit_events` 表存在，但公開表單的完整限制流程需補齊。
 - Blocklist：server-side 檢查存在，但後台管理介面未完成。
 - Audit Log：資料寫入存在，但 `/admin/audit-logs` 未完成。
-- Forms：`/api/public/inquiries` 存在，但首頁既有表單送出路徑需完成統一。
+- Forms：首頁服務表單 Phase 1 已改送 `/api/public/inquiries`，但仍需 preview/prod 端到端驗證與通知信整合。
 - CSP：尚未完整 production 化。
 - HSTS：尚未完整 production 化。
 - 404：Next 預設可處理，但自訂品牌 404 尚未建立。
@@ -46,7 +46,7 @@
 - Turnstile production key/secret 端到端驗證。
 - Server-side rate limit。
 - Honeypot 與 blocklist production 驗證。
-- 首頁與所有公開表單統一送到安全 API。
+- 首頁與所有公開表單統一送到安全 API，並完成 preview/prod 送出驗證。
 - RLS policy 實測。
 - Storage bucket policy 實測。
 - Service role key 不出現在 client bundle、Wrangler public vars 或 repo。
@@ -54,4 +54,3 @@
 - 錯誤訊息不暴露 secret。
 - Backup strategy 與 rollback SOP。
 - Sitemap、robots.txt、404。
-

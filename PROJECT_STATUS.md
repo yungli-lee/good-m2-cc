@@ -28,7 +28,7 @@ Sprint A 目前是「核心平台 preview 可驗收」狀態，不是 production
 | 1 | Hero | 已完成 | 90% |
 | 2 | 架構與資安規格 | 部分完成 | 55% |
 | 3 | 主推物件 | 部分完成 | 70% |
-| 4 | 表單安全 | 部分完成 | 45% |
+| 4 | 表單安全 | 部分完成 | 50% |
 | 5 | Seller Calculator | 未完成 | 15% |
 | 6 | Mortgage Calculator | 部分完成 | 35% |
 | 7 | Purchase Cost | 未完成 | 0% |
@@ -53,7 +53,7 @@ Sprint A 目前是「核心平台 preview 可驗收」狀態，不是 production
 
 ## Partially Complete
 
-- 表單安全已建立 `inquiries`、`blocklist`、Turnstile 驗證入口與 API，但首頁既有表單與 Next API 的串接仍需確認，rate limit 仍未完整落地。
+- 表單安全已建立 `inquiries`、`blocklist`、Turnstile 驗證入口與 API；首頁服務表單 Phase 1 已改送 `/api/public/inquiries`。Rate limit、Turnstile production 強制驗證與新 API Resend 通知仍未完成。
 - Audit log 有資料表與寫入 helper，但尚未建立 `/admin/audit-logs` 查看介面。
 - Blocklist 有資料表與表單檢查，但尚未建立 `/admin/blocklist` 管理介面。
 - Inquiries 後台已有列表與詳細頁，但篩選、搜尋、CSV、刪除與完整 audit 還未完成。
@@ -72,7 +72,7 @@ Sprint A 目前是「核心平台 preview 可驗收」狀態，不是 production
 
 - 目前不建議正式 production 切換；請先以 preview/staging 驗收。
 - CSP 與 HSTS 尚未完整 production 化。
-- Turnstile、rate limit、首頁表單串接與通知信需完成端到端驗證。
+- Turnstile、rate limit、首頁表單 preview 端到端驗證與新 API 通知信需完成。
 - D1 與 Supabase 兩套資料來源共存，需避免 production 設定誤用。
 - public Supabase key 已放入 Wrangler vars；service role key 不得放到前端或公開設定。
 
