@@ -20,7 +20,7 @@ export default async function NewPropertyPage({ searchParams }: Props) {
         {params.error ? <div className="notice">建立失敗：{params.error}</div> : null}
         <div className="card">
           <div className="card-body">
-            <PropertyForm role={current.profile.role} action={createPropertyAction} />
+            <PropertyForm role={current.profile.role} formAction={createPropertyAction} />
           </div>
         </div>
       </div>

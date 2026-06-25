@@ -16,16 +16,16 @@ const typeOptions = [
 export function PropertyForm({
   property,
   role,
-  action
+  formAction
 }: {
   property?: Property | null;
   role: AdminRole;
-  action: (formData: FormData) => Promise<void>;
+  formAction: (formData: FormData) => Promise<void>;
 }) {
   const canPublish = role === "admin" || role === "owner";
 
   return (
-    <form action={action} className="form-grid">
+    <form action={formAction} className="form-grid">
       <div className="field">
         <label htmlFor="title">案名</label>
         <input className="input" id="title" name="title" defaultValue={property?.title || ""} required />

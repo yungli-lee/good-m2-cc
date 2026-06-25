@@ -34,7 +34,7 @@ export default async function EditPropertyPage({ params, searchParams }: Props) 
             <PropertyForm
               property={property}
               role={current.profile.role}
-              action={updatePropertyAction.bind(null, property.id)}
+              formAction={updatePropertyAction.bind(null, property.id)}
             />
           </div>
         </div>
