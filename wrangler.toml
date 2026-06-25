@@ -3,6 +3,14 @@ compatibility_date = "2026-06-22"
 compatibility_flags = ["nodejs_compat"]
 pages_build_output_dir = ".vercel/output/static"
 
+[env.preview.vars]
+NEXT_PUBLIC_SUPABASE_URL = "https://rlbuadkmylulieoryzal.supabase.co"
+NEXT_PUBLIC_SUPABASE_ANON_KEY = "sb_publishable_P8tZ_FS1IFfQX55W0E-x4w_TnYA_5iT"
+
+[env.production.vars]
+NEXT_PUBLIC_SUPABASE_URL = "https://rlbuadkmylulieoryzal.supabase.co"
+NEXT_PUBLIC_SUPABASE_ANON_KEY = "sb_publishable_P8tZ_FS1IFfQX55W0E-x4w_TnYA_5iT"
+
 [[d1_databases]]
 binding = "DB"
 database_name = "good-m2-service-db"
