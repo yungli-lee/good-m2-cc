@@ -18,9 +18,23 @@ function getCloudflareRuntimeEnv() {
 
 export function getSupabaseEnv() {
   const runtimeEnv = getCloudflareRuntimeEnv();
+  const processUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const processAnon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  const runtimeUrl = runtimeEnv?.NEXT_PUBLIC_SUPABASE_URL;
+  const runtimeAnon = runtimeEnv?.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  const url = processUrl || runtimeUrl;
+  const anonKey = processAnon || runtimeAnon;
+  const source = processUrl && processAnon ? "process" : runtimeUrl && runtimeAnon ? "cloudflare" : "missing";
+
+  console.log({
+    source,
+    hasUrl: !!url,
+    hasAnon: !!anonKey
+  });
+
   return {
-    url: process.env.NEXT_PUBLIC_SUPABASE_URL || runtimeEnv?.NEXT_PUBLIC_SUPABASE_URL,
-    anonKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || runtimeEnv?.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+    url,
+    anonKey,
     serviceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY || runtimeEnv?.SUPABASE_SERVICE_ROLE_KEY
   };
 }
