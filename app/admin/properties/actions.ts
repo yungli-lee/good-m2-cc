@@ -233,12 +233,17 @@ export async function uploadPropertyImageAction(id: string, formData: FormData) 
     .from("property_media")
     .insert({
       property_id: id,
+      media_type: "image",
       url: publicUrl.publicUrl
     })
     .select()
     .single();
 
-  if (error) redirect(`/admin/properties/${id}/edit?error=${encodeURIComponent(error.code || "media_failed")}`);
+  if (error) {
+    await supabase.storage.from("property-media").remove([storagePath]);
+    const message = error.code === "23502" ? "media_metadata_missing_required_field" : error.code || "media_failed";
+    redirect(`/admin/properties/${id}/edit?error=${encodeURIComponent(message)}`);
+  }
 
   await recordAuditLog({
     action: "property_cover_set",
