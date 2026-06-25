@@ -29,10 +29,10 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   if (!mediaId) return redirectTo(request, `/admin/properties/${id}/edit?error=cover_failed`);
 
   const supabase = await createSupabaseServerClient();
-  await supabase.from("property_media").update({ is_cover: false, updated_by: current.user.id }).eq("property_id", id);
+  await supabase.from("property_media").update({ is_cover: false }).eq("property_id", id);
   const { data, error } = await supabase
     .from("property_media")
-    .update({ is_cover: true, updated_by: current.user.id, updated_at: new Date().toISOString() })
+    .update({ is_cover: true, updated_at: new Date().toISOString() })
     .eq("id", mediaId)
     .eq("property_id", id)
     .select()

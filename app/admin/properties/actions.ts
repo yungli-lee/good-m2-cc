@@ -236,9 +236,7 @@ export async function uploadPropertyImageAction(id: string, formData: FormData) 
       media_type: "image",
       url: publicUrl.publicUrl,
       storage_path: storagePath,
-      alt_text: String(formData.get("alt_text") || "").trim() || null,
-      created_by: current.user.id,
-      updated_by: current.user.id
+      alt_text: String(formData.get("alt_text") || "").trim() || null
     })
     .select()
     .single();
@@ -263,10 +261,10 @@ export async function setCoverImageAction(propertyId: string, mediaId: string) {
   if (!canManagePropertyMedia(current.profile.role)) redirect("/admin/login?error=forbidden");
   const supabase = await createSupabaseServerClient();
 
-  await supabase.from("property_media").update({ is_cover: false, updated_by: current.user.id }).eq("property_id", propertyId);
+  await supabase.from("property_media").update({ is_cover: false }).eq("property_id", propertyId);
   const { data, error } = await supabase
     .from("property_media")
-    .update({ is_cover: true, updated_by: current.user.id, updated_at: new Date().toISOString() })
+    .update({ is_cover: true, updated_at: new Date().toISOString() })
     .eq("id", mediaId)
     .eq("property_id", propertyId)
     .select()

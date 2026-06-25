@@ -64,9 +64,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       media_type: "image",
       url: publicUrl.publicUrl,
       storage_path: storagePath,
-      alt_text: String(formData.get("alt_text") || "").trim() || null,
-      created_by: current.user.id,
-      updated_by: current.user.id
+      alt_text: String(formData.get("alt_text") || "").trim() || null
     })
     .select()
     .single();
