@@ -23,9 +23,10 @@ export function PropertyForm({
   formAction: string | ((formData: FormData) => Promise<void>);
 }) {
   const canPublish = role === "admin" || role === "owner";
+  const actionPath = typeof formAction === "string" ? formAction : undefined;
 
   return (
-    <form action={formAction} className="form-grid">
+    <form action={formAction} method={actionPath ? "post" : undefined} className="form-grid">
       <div className="field">
         <label htmlFor="title">案名</label>
         <input className="input" id="title" name="title" defaultValue={property?.title || ""} required />
@@ -123,7 +124,7 @@ export function PropertyForm({
         <input className="input" id="canonical_url" name="canonical_url" defaultValue={property?.canonical_url || ""} />
       </div>
       <div className="field full">
-        <button className="button" type="submit">儲存物件</button>
+        <button className="button" type="submit" formAction={actionPath} formMethod={actionPath ? "post" : undefined}>儲存物件</button>
       </div>
     </form>
   );
