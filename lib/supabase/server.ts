@@ -2,6 +2,7 @@ import { cookies } from "next/headers";
 import { createServerClient } from "@supabase/ssr";
 import type { CookieOptions } from "@supabase/ssr";
 import { createClient } from "@supabase/supabase-js";
+import { getSupabaseEnv } from "./env";
 
 type SupabaseCookie = {
   name: string;
@@ -10,18 +11,20 @@ type SupabaseCookie = {
 };
 
 export function hasSupabaseConfig() {
-  return Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
+  const { url, anonKey } = getSupabaseEnv();
+  return Boolean(url && anonKey);
 }
 
 export async function createSupabaseServerClient() {
-  if (!hasSupabaseConfig()) {
+  const { url, anonKey } = getSupabaseEnv();
+  if (!url || !anonKey) {
     throw new Error("Supabase URL and anon key must be configured before using Supabase Auth.");
   }
 
   const cookieStore = await cookies();
   return createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    url,
+    anonKey,
     {
       cookies: {
         getAll: () => cookieStore.getAll(),
@@ -38,9 +41,14 @@ export async function createSupabaseServerClient() {
 }
 
 export function createSupabaseAdminClient() {
+  const { url, serviceRoleKey } = getSupabaseEnv();
+  if (!url || !serviceRoleKey) {
+    throw new Error("Supabase URL and service role key must be configured before using Supabase admin APIs.");
+  }
+
   return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    url,
+    serviceRoleKey,
     { auth: { persistSession: false, autoRefreshToken: false } }
   );
 }

@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import type { CookieOptions } from "@supabase/ssr";
+import { getSupabaseEnv } from "@/lib/supabase/env";
 
 type SupabaseCookie = {
   name: string;
@@ -16,7 +17,8 @@ export async function middleware(request: NextRequest) {
 
   if (!isAdminPath || isAdminLoginPath) return response;
 
-  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+  const { url, anonKey } = getSupabaseEnv();
+  if (!url || !anonKey) {
     if (path.startsWith("/api/admin")) {
       return NextResponse.json({ error: "Auth service is not configured" }, { status: 503 });
     }
@@ -25,8 +27,8 @@ export async function middleware(request: NextRequest) {
   }
 
   const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    url,
+    anonKey,
     {
       cookies: {
         getAll: () => request.cookies.getAll(),
