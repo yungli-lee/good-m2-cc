@@ -110,6 +110,8 @@ feat: add admin inquiry status update
 chore: update cloudflare pages config
 ```
 
+Git Tag 僅建立於 Foundation、Sprint、Release Candidate、Production、Hotfix 等重大里程碑。不建議每個 Task 建立 Tag；release history 與 tag 規則請參閱 [RELEASE_HISTORY.md](RELEASE_HISTORY.md)。
+
 ## 7. Pull Request Checklist
 
 建立 PR 或交付修改前，請確認：

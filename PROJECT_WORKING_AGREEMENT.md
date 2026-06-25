@@ -227,7 +227,23 @@ Sprint A：
 
 未經明確允許，不得 push 會觸發 production deployment 的分支。
 
-## 15. Living Document
+## 15. Release Governance
+
+Release history 與 tag 規則請參閱 [docs/RELEASE_HISTORY.md](docs/RELEASE_HISTORY.md)。
+
+重大里程碑才建立 Git Tag，不要每一個 Task 都建立 Tag。
+
+Git Tag 代表可以回溯的重要版本，例如：
+
+- Foundation。
+- Sprint。
+- Release Candidate。
+- Production。
+- Hotfix。
+
+建立 tag 前必須完成必要驗證、文件同步、Git Health Check、Preview 驗證與阿勇確認。
+
+## 16. Living Document
 
 本文件為專案工作協議，也是 Living Document。
 
@@ -235,7 +251,7 @@ Sprint A：
 
 若本文件與其他專案文件衝突，先提出差異並等待確認。
 
-## 16. Project Philosophy
+## 17. Project Philosophy
 
 這不是 Demo Website。
 
@@ -249,4 +265,3 @@ Sprint A：
 - Verify Before Commit。
 - Maintainability。
 - Production Ready。
-
