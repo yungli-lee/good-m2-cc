@@ -20,7 +20,7 @@ export function PropertyForm({
 }: {
   property?: Property | null;
   role: AdminRole;
-  formAction: (formData: FormData) => Promise<void>;
+  formAction: string | ((formData: FormData) => Promise<void>);
 }) {
   const canPublish = role === "admin" || role === "owner";
 

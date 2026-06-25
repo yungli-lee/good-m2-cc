@@ -6,8 +6,8 @@ export function PropertyMediaManager({
   setCoverAction
 }: {
   media: PropertyMedia[];
-  uploadAction: (formData: FormData) => Promise<void>;
-  setCoverAction: (mediaId: string) => Promise<void>;
+  uploadAction: string | ((formData: FormData) => Promise<void>);
+  setCoverAction: string | ((mediaId: string) => Promise<void>);
 }) {
   return (
     <section className="section" style={{ paddingBottom: 0 }}>
@@ -34,7 +34,8 @@ export function PropertyMediaManager({
               <p>{item.alt_text || "未填寫照片說明"}</p>
               <p className="muted">{item.is_cover ? "目前封面照片" : "一般照片"}</p>
               {!item.is_cover ? (
-                <form action={setCoverAction.bind(null, item.id)}>
+                <form action={typeof setCoverAction === "string" ? setCoverAction : setCoverAction.bind(null, item.id)}>
+                  {typeof setCoverAction === "string" ? <input type="hidden" name="media_id" value={item.id} /> : null}
                   <button className="button secondary" type="submit">設為封面</button>
                 </form>
               ) : null}

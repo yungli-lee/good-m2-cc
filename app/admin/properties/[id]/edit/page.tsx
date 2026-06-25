@@ -4,7 +4,6 @@ import { PropertyMediaManager } from "@/components/admin/property-media-manager"
 import { requireRole } from "@/lib/auth";
 import { getAdminPropertyById } from "@/lib/properties/queries";
 import type { Property } from "@/lib/properties/types";
-import { setCoverImageAction, updatePropertyAction, uploadPropertyImageAction } from "../../actions";
 
 export const runtime = "edge";
 
@@ -34,14 +33,14 @@ export default async function EditPropertyPage({ params, searchParams }: Props) 
             <PropertyForm
               property={property}
               role={current.profile.role}
-              formAction={updatePropertyAction.bind(null, property.id)}
+              formAction={`/admin/properties/${property.id}/edit/save`}
             />
           </div>
         </div>
         <PropertyMediaManager
           media={(property.property_media || []).filter((item) => !item.deleted_at)}
-          uploadAction={uploadPropertyImageAction.bind(null, property.id)}
-          setCoverAction={setCoverImageAction.bind(null, property.id)}
+          uploadAction={`/admin/properties/${property.id}/edit/upload`}
+          setCoverAction={`/admin/properties/${property.id}/edit/cover`}
         />
       </div>
     </main>
