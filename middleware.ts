@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import type { CookieOptions } from "@supabase/ssr";
-import { getSupabaseEnv } from "@/lib/supabase/env";
+import { getSupabaseEnv, isSupabaseEnvDebugAllowed } from "@/lib/supabase/env";
 
 type SupabaseCookie = {
   name: string;
@@ -14,8 +14,9 @@ export async function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname;
   const isAdminPath = path.startsWith("/admin") || path.startsWith("/api/admin");
   const isAdminLoginPath = path === "/admin/login" || path === "/admin/login/";
+  const isAdminEnvDebugPath = path === "/admin/debug/env" || path === "/admin/debug/env/";
 
-  if (!isAdminPath || isAdminLoginPath) return response;
+  if (!isAdminPath || isAdminLoginPath || (isAdminEnvDebugPath && isSupabaseEnvDebugAllowed())) return response;
 
   const { url, anonKey } = getSupabaseEnv();
   if (!url || !anonKey) {

@@ -4,34 +4,7 @@ import { redirect } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { recordAuditLog } from "@/lib/audit/audit-log";
 
-type CloudflareRequestContext = {
-  env?: unknown;
-};
-
-function getRequestContext() {
-  const contextSymbol = Symbol.for("__cloudflare-request-context__");
-  const globalWithContext = globalThis as unknown as {
-    [key: symbol]: CloudflareRequestContext | undefined;
-  };
-  const context = globalWithContext[contextSymbol];
-  if (!context) throw new Error("Cloudflare request context is missing.");
-  return context;
-}
-
 export async function loginAction(formData: FormData) {
-  console.log({
-    processUrl: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
-    processAnon: !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-    cloudflareContext: !!(globalThis as unknown as { [key: symbol]: unknown })[Symbol.for("__cloudflare-request-context__")],
-    requestContext: (() => {
-      try {
-        return !!getRequestContext().env;
-      } catch {
-        return false;
-      }
-    })()
-  });
-
   const email = String(formData.get("email") || "").trim().toLowerCase();
   const password = String(formData.get("password") || "");
   if (!email || !password) {
