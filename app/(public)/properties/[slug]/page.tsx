@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { formatPing, formatPrice, propertyTypeLabel } from "@/lib/format";
 import { getPublishedPropertyBySlug } from "@/lib/properties/queries";
@@ -68,12 +69,12 @@ export default async function PropertyDetailPage({ params }: Props) {
               <p>屋齡：{property.age == null ? "-" : `${property.age} 年`}</p>
               <p>座向：{property.orientation || "-"}</p>
               <div className="actions">
-                <a className="button" href="https://line.me/R/ti/p/@buyhouse4" target="_blank" rel="noreferrer">
+                <a className="button" href="https://line.me/ti/p/abQv5LYzzE" target="_blank" rel="noreferrer">
                   Line 阿勇諮詢
                 </a>
-                <a className="button secondary" href="#inquiry">
+                <Link className="button secondary" href="/#service-form">
                   填寫服務表單
-                </a>
+                </Link>
               </div>
             </div>
           </aside>

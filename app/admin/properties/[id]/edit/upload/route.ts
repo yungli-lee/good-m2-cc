@@ -63,7 +63,6 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       property_id: id,
       media_type: "image",
       url: publicUrl.publicUrl,
-      storage_path: storagePath,
       alt_text: String(formData.get("alt_text") || "").trim() || null
     })
     .select()
