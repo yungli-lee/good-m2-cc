@@ -18,7 +18,7 @@ export function hasSupabaseConfig() {
 export async function createSupabaseServerClient() {
   const { url, anonKey } = getSupabaseEnv();
   if (!url || !anonKey) {
-    throw new Error("Supabase URL and anon key must be configured before using Supabase Auth.");
+    throw new Error("auth_not_configured");
   }
 
   const cookieStore = await cookies();
