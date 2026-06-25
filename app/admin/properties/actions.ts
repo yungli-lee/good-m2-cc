@@ -10,6 +10,7 @@ import {
   requireRole
 } from "@/lib/auth";
 import { recordAuditLog } from "@/lib/audit/audit-log";
+import type { PropertyFormInput } from "@/lib/properties/schema";
 import { normalizePropertyForm, toPropertyPayload } from "@/lib/properties/schema";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
@@ -33,12 +34,28 @@ function assertImageFile(file: File) {
   }
 }
 
+function parsePropertyFormOrRedirect(formData: FormData, redirectTo: string): PropertyFormInput {
+  try {
+    return normalizePropertyForm(formData);
+  } catch {
+    redirect(`${redirectTo}?error=invalid_form`);
+  }
+}
+
+async function tryRecordAuditLog(input: Parameters<typeof recordAuditLog>[0]) {
+  try {
+    await recordAuditLog(input);
+  } catch {
+    // Audit logging should not block the primary property write path.
+  }
+}
+
 export async function createPropertyAction(formData: FormData) {
   const current = await requireRole(["editor", "admin", "owner"]);
   if (!canManageProperties(current.profile.role)) redirect("/admin/login?error=forbidden");
 
   const supabase = await createSupabaseServerClient();
-  const input = normalizePropertyForm(formData);
+  const input = parsePropertyFormOrRedirect(formData, "/admin/properties/new");
   const payload = toPropertyPayload(input);
   const role = current.profile.role;
   const safePayload = canPublishProperties(role)
@@ -58,7 +75,7 @@ export async function createPropertyAction(formData: FormData) {
 
   if (error) redirect(`/admin/properties/new?error=${encodeURIComponent(error.code || "create_failed")}`);
 
-  await recordAuditLog({
+  await tryRecordAuditLog({
     action: "property_create",
     resourceType: "property",
     resourceId: data.id,
@@ -84,7 +101,7 @@ export async function updatePropertyAction(id: string, formData: FormData) {
     redirect(`/admin/properties/${id}/edit?error=editor_can_edit_draft_only`);
   }
 
-  const input = normalizePropertyForm(formData);
+  const input = parsePropertyFormOrRedirect(formData, `/admin/properties/${id}/edit`);
   const payload = toPropertyPayload(input);
   const safePayload = canPublishProperties(role)
     ? payload
