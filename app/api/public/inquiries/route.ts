@@ -5,8 +5,27 @@ import { createSupabaseAdminClient } from "@/lib/supabase/server";
 
 export const runtime = "edge";
 
-function jsonError(code: string, status: number, error = "送出失敗，請稍後再試") {
-  return NextResponse.json({ error, code }, { status });
+type FieldErrorKey = "name" | "phone" | "email" | "message";
+
+const fieldErrorMessages: Record<FieldErrorKey, string> = {
+  name: "請輸入正確姓名",
+  phone: "請輸入正確手機號碼",
+  email: "請輸入正確 Email",
+  message: "請簡單描述您的需求，至少 10 個字"
+};
+
+function jsonError(code: string, status: number, error = "送出失敗，請稍後再試", details: Record<string, unknown> = {}) {
+  return NextResponse.json({ error, code, ...details }, { status });
+}
+
+function validationFieldErrors(issues: Array<{ path: Array<string | number>; message: string }>) {
+  return issues.reduce<Partial<Record<FieldErrorKey, string>>>((errors, issue) => {
+    const field = issue.path[0];
+    if (field === "name" || field === "phone" || field === "email" || field === "message") {
+      errors[field] ||= issue.message || fieldErrorMessages[field];
+    }
+    return errors;
+  }, {});
 }
 
 async function verifyTurnstile(token?: string) {
@@ -29,7 +48,9 @@ export async function POST(request: Request) {
     const parsed = inquirySchema.safeParse(body);
 
     if (!parsed.success) {
-      return jsonError("validation_error", 422, "送出資料格式不正確");
+      return jsonError("validation_error", 422, "送出資料格式不正確", {
+        field_errors: validationFieldErrors(parsed.error.issues)
+      });
     }
 
     const input = parsed.data;

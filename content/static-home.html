@@ -498,10 +498,12 @@
             <label>
               姓名 *
               <input name="name" type="text" autocomplete="name" required>
+              <span class="field-error" data-field-error="name"></span>
             </label>
             <label>
               手機 / Line 電話 *
               <input name="phone" type="tel" autocomplete="tel" required>
+              <span class="field-error" data-field-error="phone"></span>
             </label>
             <label>
               Line ID
@@ -510,6 +512,7 @@
             <label>
               Email
               <input name="email" type="email" autocomplete="email">
+              <span class="field-error" data-field-error="email"></span>
             </label>
             <label>
               服務需求 *
@@ -538,6 +541,7 @@
           <label>
             需求說明
             <textarea name="message" rows="6" placeholder="請簡單描述您的需求、物件條件或想詢問的問題。"></textarea>
+            <span class="field-error" data-field-error="message"></span>
           </label>
           <div aria-hidden="true" style="position:absolute; left:-10000px; width:1px; height:1px; overflow:hidden;">
             <label>

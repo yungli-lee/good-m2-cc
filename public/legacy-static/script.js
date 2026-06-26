@@ -289,6 +289,40 @@ function showConsultMessage(message, type) {
   consultFormMessage.classList.add("is-visible", type === "success" ? "is-success" : "is-error");
 }
 
+function clearConsultFieldErrors() {
+  if (!consultForm) return;
+  consultForm.querySelectorAll("[data-field-error]").forEach((element) => {
+    element.textContent = "";
+    element.classList.remove("is-visible");
+  });
+  consultForm.querySelectorAll("[aria-invalid='true']").forEach((element) => {
+    element.removeAttribute("aria-invalid");
+  });
+}
+
+function showConsultFieldErrors(fieldErrors) {
+  if (!consultForm || !fieldErrors) return false;
+  let hasFieldError = false;
+
+  Object.entries(fieldErrors).forEach(([field, message]) => {
+    if (!message) return;
+    const errorElement = consultForm.querySelector(`[data-field-error="${field}"]`);
+    const inputElement = consultForm.querySelector(`[name="${field}"]`);
+
+    if (errorElement) {
+      errorElement.textContent = String(message);
+      errorElement.classList.add("is-visible");
+      hasFieldError = true;
+    }
+
+    if (inputElement) {
+      inputElement.setAttribute("aria-invalid", "true");
+    }
+  });
+
+  return hasFieldError;
+}
+
 function readPayloadValue(payload, key) {
   return String(payload[key] || "").trim();
 }
@@ -333,6 +367,7 @@ consultForm?.addEventListener("submit", async (event) => {
   const formData = new FormData(consultForm);
   const payload = buildInquiryPayload(formData);
 
+  clearConsultFieldErrors();
   submitButton.disabled = true;
   submitButton.textContent = "送出中...";
 
@@ -345,10 +380,15 @@ consultForm?.addEventListener("submit", async (event) => {
     const result = await response.json().catch(() => ({}));
 
     if (!response.ok) {
+      if (showConsultFieldErrors(result.field_errors)) {
+        showConsultMessage(result.error || "請確認欄位內容後再送出。", "error");
+        return;
+      }
       throw new Error(result.error || result.message || "送出失敗，請稍後再試。");
     }
 
     consultForm.reset();
+    clearConsultFieldErrors();
     showConsultMessage("已收到您的需求，我們會盡快與您聯絡。", "success");
   } catch (error) {
     showConsultMessage(error.message || "送出失敗，請稍後再試。", "error");

@@ -809,6 +809,7 @@ h3 {
 
 .service-form-section {
   background: var(--soft);
+  scroll-margin-top: 96px;
 }
 
 .service-form {
@@ -846,9 +847,25 @@ h3 {
   font: inherit;
 }
 
+.service-form input[aria-invalid="true"],
+.service-form textarea[aria-invalid="true"] {
+  border-color: var(--red);
+}
+
 .service-form textarea {
   margin-top: 18px;
   resize: vertical;
+}
+
+.field-error {
+  display: none;
+  color: var(--red);
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.field-error.is-visible {
+  display: block;
 }
 
 .consent-check {
