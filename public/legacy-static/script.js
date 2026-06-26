@@ -149,6 +149,7 @@ async function loadFeaturedProperties() {
     if (!response.ok) throw new Error(result.error || "featured_properties_failed");
     renderFeaturedProperties(result.data || []);
   } catch {
+    if (featuredPropertyList.children.length > 0) return;
     renderFeaturedProperties([]);
   }
 }
