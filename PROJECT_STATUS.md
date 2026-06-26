@@ -16,6 +16,21 @@ Production 仍不建議直接切換至此分支。原因請見 [docs/GO_LIVE_CHE
 
 所有 Sprint 與專案接手流程請先遵循 [PROJECT_WORKING_AGREEMENT.md](PROJECT_WORKING_AGREEMENT.md)。技術開發規範請參閱 [docs/DEVELOPMENT_GUIDE.md](docs/DEVELOPMENT_GUIDE.md)。
 
+## Documentation
+
+- README
+- ROADMAP
+- PROJECT_STATUS
+- RELEASE_NOTES
+- CONTRIBUTING.md：開發規範與 Rule No.5 文件同步標準
+
+`RELEASE_NOTES.md` 作為每個 module 完成後的版本紀錄與驗證摘要。
+
+Engineering Standard:
+
+- CONTRIBUTING.md 為專案開發規範。
+- 所有開發遵循 Yongmei OS Engineering Standard Rule No.1~No.6。
+
 ## Sprint A Completion
 
 Sprint A 目前是「核心平台 preview 可驗收」狀態，不是 production ready。主要已完成範圍為：Supabase Auth 後台登入、物件 CRUD 基礎、圖片上傳與封面、公開物件頁、部分 audit log、部分詢問單後台。
