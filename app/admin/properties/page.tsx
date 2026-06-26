@@ -3,6 +3,7 @@ import { requireRole } from "@/lib/auth";
 import { formatDateTime, formatPrice } from "@/lib/format";
 import { listAdminProperties } from "@/lib/properties/queries";
 import type { PropertyStatus } from "@/lib/properties/types";
+import { togglePropertyPublishAction } from "./actions";
 
 export const runtime = "edge";
 
@@ -33,8 +34,38 @@ function parsePublicLocation(address?: string | null) {
   };
 }
 
-export default async function AdminPropertiesPage() {
+type Props = {
+  searchParams: Promise<{ error?: string }>;
+};
+
+function PublishAction({ id, status }: { id: string; status: PropertyStatus }) {
+  if (status === "draft") {
+    return (
+      <form action={togglePropertyPublishAction.bind(null, id, "published")}>
+        <button className="button" type="submit">發布</button>
+      </form>
+    );
+  }
+
+  if (status === "published") {
+    return (
+      <form action={togglePropertyPublishAction.bind(null, id, "draft")}>
+        <button className="button ghost" type="submit">下架回草稿</button>
+      </form>
+    );
+  }
+
+  return <span className="muted">暫無操作</span>;
+}
+
+const errorMessage: Record<string, string> = {
+  not_found: "找不到指定物件。",
+  publish_failed: "物件狀態更新失敗，請稍後再試。"
+};
+
+export default async function AdminPropertiesPage({ searchParams }: Props) {
   await requireRole(["editor", "admin", "owner"]);
+  const query = await searchParams;
   const { data, error } = await listAdminProperties();
   const properties = (data || []) as AdminPropertyListItem[];
 
@@ -44,7 +75,7 @@ export default async function AdminPropertiesPage() {
         <div className="actions" style={{ justifyContent: "space-between", marginBottom: 18 }}>
           <div>
             <h1 style={{ margin: 0 }}>物件管理</h1>
-            <p className="muted">A-012 Phase 1：先提供後台物件列表；新增、編輯、上下架與刪除會在後續階段處理。</p>
+            <p className="muted">M2-002：可從列表發布草稿，或將已上架物件下架回草稿。</p>
           </div>
           <div className="actions">
             <Link className="button ghost" href="/admin">返回後台</Link>
@@ -52,6 +83,7 @@ export default async function AdminPropertiesPage() {
           </div>
         </div>
         {error ? <div className="notice">物件資料讀取失敗。</div> : null}
+        {query.error ? <div className="notice">{errorMessage[query.error] || `操作失敗：${query.error}`}</div> : null}
         <div className="table-wrap">
           <table>
             <thead>
@@ -89,7 +121,10 @@ export default async function AdminPropertiesPage() {
                     </td>
                     <td>{formatDateTime(property.updated_at)}</td>
                     <td>
-                      <Link className="button ghost" href={`/admin/properties/${property.id}/edit`}>編輯</Link>
+                      <div className="actions">
+                        <Link className="button ghost" href={`/admin/properties/${property.id}/edit`}>編輯</Link>
+                        <PublishAction id={property.id} status={property.status} />
+                      </div>
                     </td>
                   </tr>
                 );

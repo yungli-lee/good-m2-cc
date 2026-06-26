@@ -178,6 +178,45 @@ export async function updateDraftPropertyAction(
   redirect("/admin/properties");
 }
 
+export async function togglePropertyPublishAction(id: string, nextStatus: "draft" | "published") {
+  const current = await requireRole(["editor", "admin", "owner"]);
+  if (!canManageProperties(current.profile.role)) redirect("/admin/login?error=forbidden");
+
+  const supabase = await createSupabaseServerClient();
+  const { data: before } = await supabase.from("properties").select("*").eq("id", id).is("deleted_at", null).maybeSingle();
+  if (!before) redirect("/admin/properties?error=not_found");
+
+  const now = new Date().toISOString();
+  const { data, error } = await supabase
+    .from("properties")
+    .update({
+      status: nextStatus,
+      published_at: nextStatus === "published" ? before.published_at || now : null,
+      updated_by: current.user.id,
+      updated_at: now
+    })
+    .eq("id", id)
+    .select()
+    .single();
+
+  if (error) redirect(`/admin/properties?error=${encodeURIComponent(error.code || "publish_failed")}`);
+
+  await tryRecordAuditLog({
+    action: nextStatus === "published" ? "property_publish" : "property_unpublish",
+    resourceType: "property",
+    resourceId: id,
+    beforeData: before,
+    afterData: data,
+    userId: current.user.id,
+    userEmail: current.user.email
+  });
+
+  revalidatePath("/admin/properties");
+  revalidatePath("/properties");
+  revalidatePath(`/properties/${data.slug}`);
+  redirect("/admin/properties");
+}
+
 export async function createPropertyAction(formData: FormData) {
   const current = await requireRole(["editor", "admin", "owner"]);
   if (!canManageProperties(current.profile.role)) redirect("/admin/login?error=forbidden");
