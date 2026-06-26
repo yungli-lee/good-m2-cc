@@ -28,6 +28,7 @@ Priority 2
 - 完成首頁精選物件區塊。
 - 完成詢問單後台篩選與狀態管理。
 - 完成 production security headers。
+- 建立並執行 A-099 Legacy Static Cleanup，集中處理靜態站移轉 Next.js 後的 HTML、assets、API、routing、SEO、metadata、console、network、performance 與 accessibility 技術債；詳細 checklist 以 [PROJECT_STATUS.md](PROJECT_STATUS.md#technical-debt-backlog) 為準。
 - 完成 go-live checklist 與 rollback SOP。
 
 Priority 3

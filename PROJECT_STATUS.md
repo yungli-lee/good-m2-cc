@@ -68,6 +68,65 @@ Sprint A 目前是「核心平台 preview 可驗收」狀態，不是 production
 - 圖片壓縮、EXIF metadata strip、MP4、YouTube、輪播。
 - Production go-live 完整驗收與備份演練。
 
+## Technical Debt Backlog
+
+### A-099 Legacy Static Cleanup
+
+目的：集中管理從靜態網站轉換到 Next.js 後可能殘留的相對路徑、舊 API、SEO、資源載入、路由相容性與前端錯誤問題。
+
+Checklist:
+
+- [ ] HTML 相對路徑
+- [ ] Image assets 路徑
+- [ ] JS API endpoint
+- [ ] CSS resource path
+- [ ] favicon
+- [ ] OG image
+- [ ] manifest
+- [ ] robots.txt
+- [ ] sitemap.xml
+- [ ] canonical URL
+- [ ] structured data (JSON-LD)
+- [ ] metadata consistency
+- [ ] anchor navigation
+- [ ] client-side routing compatibility
+- [ ] legacy script compatibility
+- [ ] browser console warnings
+- [ ] Network 404 檢查
+- [ ] Mixed Content 檢查
+- [ ] Preview 與 Production 一致性
+- [ ] Performance
+- [ ] Accessibility
+
+分類摘要：
+
+- Technical Debt Backlog
+- A-099 Legacy Static Cleanup
+- HTML
+- Assets
+- API
+- Routing
+- SEO
+- Metadata
+- Console
+- Network
+- Performance
+- Accessibility
+
+Done Criteria:
+
+Legacy Static Cleanup 完成代表：
+
+- Preview 無 404 Assets
+- Preview 無 JS Console Error
+- Network 無錯誤資源
+- 所有 API Endpoint 正確
+- 所有圖片正常載入
+- SEO 基本資源完整
+- Client-side navigation 正常
+- Mobile / Desktop 驗證完成
+- Preview 與 Production 行為一致
+
 ## Known Production Risk
 
 - 目前不建議正式 production 切換；請先以 preview/staging 驗收。
