@@ -62,6 +62,7 @@ export default async function AdminPropertiesPage() {
                 <th>開價</th>
                 <th>狀態</th>
                 <th>更新時間</th>
+                <th>操作</th>
               </tr>
             </thead>
             <tbody>
@@ -87,12 +88,15 @@ export default async function AdminPropertiesPage() {
                       ) : null}
                     </td>
                     <td>{formatDateTime(property.updated_at)}</td>
+                    <td>
+                      <Link className="button ghost" href={`/admin/properties/${property.id}/edit`}>編輯</Link>
+                    </td>
                   </tr>
                 );
               })}
               {properties.length === 0 ? (
                 <tr>
-                  <td colSpan={6}>尚未建立物件。可以先使用「新增物件」建立草稿。</td>
+                  <td colSpan={7}>尚未建立物件。可以先使用「新增物件」建立草稿。</td>
                 </tr>
               ) : null}
             </tbody>

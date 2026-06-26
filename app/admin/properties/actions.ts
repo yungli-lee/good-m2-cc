@@ -116,6 +116,68 @@ export async function createDraftPropertyAction(
   redirect("/admin/properties");
 }
 
+export async function updateDraftPropertyAction(
+  id: string,
+  _previousState: DraftPropertyFormState,
+  formData: FormData
+): Promise<DraftPropertyFormState> {
+  const current = await requireRole(["editor", "admin", "owner"]);
+  if (!canManageProperties(current.profile.role)) redirect("/admin/login?error=forbidden");
+
+  const values = draftPropertyValuesFromFormData(formData);
+  const parsed = draftPropertySchema.safeParse(values);
+  if (!parsed.success) {
+    return {
+      values,
+      fieldErrors: draftFieldErrors(parsed.error),
+      formError: "請確認欄位內容後再送出。"
+    };
+  }
+
+  const supabase = await createSupabaseServerClient();
+  const { data: before } = await supabase.from("properties").select("*").eq("id", id).is("deleted_at", null).maybeSingle();
+  if (!before) redirect("/admin/properties?error=not_found");
+
+  const payload = toDraftPropertyPayload(parsed.data);
+  const { data, error } = await supabase
+    .from("properties")
+    .update({
+      title: payload.title,
+      slug: payload.slug,
+      price: payload.price,
+      address_public: payload.address_public,
+      updated_by: current.user.id,
+      updated_at: new Date().toISOString()
+    })
+    .eq("id", id)
+    .select()
+    .single();
+
+  if (error) {
+    return {
+      values,
+      fieldErrors: error.code === "23505" ? { slug: "Slug 已存在，請使用其他 Slug。" } : {},
+      formError: error.code === "23505" ? "Slug 已存在，請調整後再送出。" : "物件儲存失敗，請稍後再試。"
+    };
+  }
+
+  await tryRecordAuditLog({
+    action: "property_update",
+    resourceType: "property",
+    resourceId: id,
+    beforeData: before,
+    afterData: data,
+    userId: current.user.id,
+    userEmail: current.user.email
+  });
+
+  revalidatePath("/admin/properties");
+  revalidatePath(`/admin/properties/${id}/edit`);
+  revalidatePath("/properties");
+  revalidatePath(`/properties/${data.slug}`);
+  redirect("/admin/properties");
+}
+
 export async function createPropertyAction(formData: FormData) {
   const current = await requireRole(["editor", "admin", "owner"]);
   if (!canManageProperties(current.profile.role)) redirect("/admin/login?error=forbidden");

@@ -14,10 +14,14 @@ function FieldError({ message }: { message?: string }) {
 
 export function DraftPropertyForm({
   action,
-  initialState
+  initialState,
+  submitLabel = "建立草稿",
+  pendingLabel = "建立中..."
 }: {
   action: DraftPropertyAction;
   initialState: DraftPropertyFormState;
+  submitLabel?: string;
+  pendingLabel?: string;
 }) {
   const [state, formAction, pending] = useActionState(action, initialState);
 
@@ -74,7 +78,7 @@ export function DraftPropertyForm({
       </div>
       <div className="actions">
         <button className="button" type="submit" disabled={pending}>
-          {pending ? "建立中..." : "建立草稿"}
+          {pending ? pendingLabel : submitLabel}
         </button>
       </div>
     </form>

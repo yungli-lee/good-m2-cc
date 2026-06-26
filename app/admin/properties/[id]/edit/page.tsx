@@ -1,9 +1,11 @@
 import { notFound } from "next/navigation";
-import { PropertyForm } from "@/components/admin/property-form";
-import { PropertyMediaManager } from "@/components/admin/property-media-manager";
+import Link from "next/link";
+import { DraftPropertyForm } from "@/components/admin/draft-property-form";
 import { requireRole } from "@/lib/auth";
 import { getAdminPropertyById } from "@/lib/properties/queries";
+import type { DraftPropertyFormState } from "@/lib/properties/schema";
 import type { Property } from "@/lib/properties/types";
+import { updateDraftPropertyAction } from "../../actions";
 
 export const runtime = "edge";
 
@@ -13,35 +15,44 @@ type Props = {
 };
 
 export default async function EditPropertyPage({ params, searchParams }: Props) {
-  const current = await requireRole(["editor", "admin", "owner"]);
+  await requireRole(["editor", "admin", "owner"]);
   const { id } = await params;
   const query = await searchParams;
   const { data, error } = await getAdminPropertyById(id);
   if (error || !data) notFound();
 
   const property = data as Property;
+  const initialDraftPropertyFormState: DraftPropertyFormState = {
+    values: {
+      title: property.title || "",
+      slug: property.slug || "",
+      price: property.price == null ? "" : String(property.price),
+      address_public: property.address_public || ""
+    },
+    fieldErrors: {}
+  };
+  const updateAction = updateDraftPropertyAction.bind(null, property.id);
 
   return (
     <main className="section">
       <div className="container">
         <h1>編輯物件</h1>
-        <p className="muted">目前狀態：{property.status}</p>
+        <p className="muted">M2-001：本階段只編輯案名、Slug、開價與公開地址。目前狀態：{property.status}</p>
         {query.saved ? <div className="notice">已儲存。</div> : null}
         {query.error ? <div className="notice">操作失敗：{query.error}</div> : null}
         <div className="card">
           <div className="card-body">
-            <PropertyForm
-              property={property}
-              role={current.profile.role}
-              formAction={`/admin/properties/${property.id}/edit/save`}
+            <DraftPropertyForm
+              action={updateAction}
+              initialState={initialDraftPropertyFormState}
+              submitLabel="儲存物件"
+              pendingLabel="儲存中..."
             />
+            <div className="actions">
+              <Link className="button ghost" href="/admin/properties">返回物件列表</Link>
+            </div>
           </div>
         </div>
-        <PropertyMediaManager
-          media={(property.property_media || []).filter((item) => !item.deleted_at)}
-          uploadAction={`/admin/properties/${property.id}/edit/upload`}
-          setCoverAction={`/admin/properties/${property.id}/edit/cover`}
-        />
       </div>
     </main>
   );
