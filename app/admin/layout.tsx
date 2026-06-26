@@ -9,6 +9,10 @@ export const runtime = "edge";
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const current = hasSupabaseConfig() ? await getCurrentProfile() : null;
 
+  if (!current) {
+    return <>{children}</>;
+  }
+
   return (
     <>
       <header className="topbar">

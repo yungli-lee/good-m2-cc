@@ -61,7 +61,7 @@ export async function loginAction(formData: FormData) {
     userEmail: data.user.email
   });
 
-  redirect("/admin/properties");
+  redirect("/admin");
 }
 
 export async function logoutAction() {

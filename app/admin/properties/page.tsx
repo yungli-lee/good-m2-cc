@@ -92,7 +92,7 @@ export default async function AdminPropertiesPage() {
               })}
               {properties.length === 0 ? (
                 <tr>
-                  <td colSpan={6}>尚未建立物件。可以先使用「新增物件」進入後續建置中的新增頁。</td>
+                  <td colSpan={6}>尚未建立物件。可以先使用「新增物件」建立草稿。</td>
                 </tr>
               ) : null}
             </tbody>

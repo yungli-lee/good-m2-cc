@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { requireRole } from "@/lib/auth";
-import { logoutAction } from "./login/actions";
 
 export const runtime = "edge";
 
@@ -17,9 +16,6 @@ export default async function AdminIndexPage() {
             <h1 style={{ margin: 0 }}>後台首頁</h1>
             <p className="muted">Supabase Auth session 已建立；完整 Dashboard 會在後續 Sprint 處理。</p>
           </div>
-          <form action={logoutAction}>
-            <button className="button ghost" type="submit">登出</button>
-          </form>
         </div>
 
         <div className="card" style={{ marginBottom: 18 }}>
