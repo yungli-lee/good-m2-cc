@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { recordAuditLog } from "@/lib/audit/audit-log";
+import { isAdminRole } from "@/types/auth/admin";
 
 export async function loginAction(formData: FormData) {
   const email = String(formData.get("email") || "").trim().toLowerCase();
@@ -39,7 +40,7 @@ export async function loginAction(formData: FormData) {
     .eq("id", data.user.id)
     .maybeSingle();
 
-  if (!profile || !["editor", "admin", "owner"].includes(profile.role)) {
+  if (!profile || !isAdminRole(profile.role)) {
     await recordAuditLog({
       action: "admin_login_failure",
       resourceType: "auth",

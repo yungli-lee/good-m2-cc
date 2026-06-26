@@ -1,4 +1,8 @@
 import { loginAction } from "./actions";
+import { redirect } from "next/navigation";
+import { getCurrentProfile } from "@/lib/auth";
+import { hasSupabaseConfig } from "@/lib/supabase/server";
+import { isAdminRole } from "@/types/auth/admin";
 
 export const runtime = "edge";
 
@@ -8,6 +12,11 @@ type Props = {
 
 export default async function AdminLoginPage({ searchParams }: Props) {
   const params = await searchParams;
+  const current = hasSupabaseConfig() ? await getCurrentProfile() : null;
+
+  if (current && isAdminRole(current.profile.role)) {
+    redirect("/admin");
+  }
 
   return (
     <main className="section">

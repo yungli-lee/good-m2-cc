@@ -1,7 +1,9 @@
 import { redirect } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import type { AdminRole } from "@/types/auth/admin";
+import { isAdminRole } from "@/types/auth/admin";
 
-export type AdminRole = "viewer" | "editor" | "admin" | "owner";
+export type { AdminRole };
 
 export async function getCurrentProfile() {
   const supabase = await createSupabaseServerClient();
@@ -11,20 +13,20 @@ export async function getCurrentProfile() {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("id,email,role")
+    .select("id,email,role,display_name")
     .eq("id", user.id)
     .maybeSingle();
 
   return {
     user,
-    profile: profile || { id: user.id, email: user.email, role: "viewer" as AdminRole }
+    profile: profile || { id: user.id, email: user.email, role: "viewer" as AdminRole, display_name: null }
   };
 }
 
 export async function requireRole(allowed: AdminRole[]) {
   const current = await getCurrentProfile();
   if (!current) redirect("/admin/login");
-  if (!allowed.includes(current.profile.role as AdminRole)) redirect("/admin/login?error=forbidden");
+  if (!isAdminRole(current.profile.role) || !allowed.includes(current.profile.role)) redirect("/admin/login?error=forbidden");
   return current;
 }
 

@@ -16,10 +16,12 @@ export async function middleware(request: NextRequest) {
   const isAdminLoginPath = path === "/admin/login" || path === "/admin/login/";
   const isAdminEnvDebugPath = path === "/admin/debug/env" || path === "/admin/debug/env/";
 
-  if (!isAdminPath || isAdminLoginPath || (isAdminEnvDebugPath && isSupabaseEnvDebugAllowed())) return response;
+  if (!isAdminPath || (isAdminEnvDebugPath && isSupabaseEnvDebugAllowed())) return response;
 
   const { url, anonKey } = getSupabaseEnv();
   if (!url || !anonKey) {
+    if (isAdminLoginPath) return response;
+
     if (path.startsWith("/api/admin")) {
       return NextResponse.json({ error: "Auth service is not configured" }, { status: 503 });
     }
@@ -39,6 +41,10 @@ export async function middleware(request: NextRequest) {
   );
 
   const { data } = await supabase.auth.getUser();
+  if (isAdminLoginPath) {
+    return data.user ? NextResponse.redirect(new URL("/admin", request.url)) : response;
+  }
+
   if (!data.user) {
     if (path.startsWith("/api/admin")) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
