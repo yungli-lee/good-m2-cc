@@ -5,7 +5,12 @@ import Script from "next/script";
 function readStaticHomeBody() {
   const html = readFileSync(path.join(process.cwd(), "content/static-home.html"), "utf8");
   const match = html.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
-  return match?.[1] || html;
+  const body = match?.[1] || html;
+
+  return body.replace(
+    /<script\b[^>]*\bsrc=["']\/legacy-static\/script\.js["'][^>]*>\s*<\/script>/gi,
+    "",
+  );
 }
 
 export default function HomePage() {
