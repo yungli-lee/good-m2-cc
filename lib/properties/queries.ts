@@ -16,7 +16,7 @@ export async function listPublishedProperties() {
     .order("created_at", { ascending: false });
 }
 
-export async function listFeaturedProperties(limit = 6) {
+export async function listFeaturedProperties(limit = 3) {
   const supabase = await createSupabaseServerClient();
   return supabase
     .from("properties")
@@ -24,8 +24,7 @@ export async function listFeaturedProperties(limit = 6) {
     .eq("status", "published")
     .eq("is_featured", true)
     .is("deleted_at", null)
-    .order("sort_order", { ascending: true })
-    .order("created_at", { ascending: false })
+    .order("published_at", { ascending: false })
     .limit(limit);
 }
 

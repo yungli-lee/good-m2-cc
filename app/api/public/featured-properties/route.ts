@@ -4,7 +4,7 @@ import { listFeaturedProperties } from "@/lib/properties/queries";
 export const runtime = "edge";
 
 export async function GET() {
-  const { data, error } = await listFeaturedProperties(6);
+  const { data, error } = await listFeaturedProperties(3);
 
   if (error) {
     return NextResponse.json({ error: "Unable to load featured properties" }, { status: 500 });
@@ -17,7 +17,7 @@ export async function GET() {
       is_featured: true,
       deleted_at: null
     },
-    sort: ["sort_order ASC", "created_at DESC"],
-    limit: 6
+    sort: ["published_at DESC"],
+    limit: 3
   });
 }

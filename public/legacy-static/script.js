@@ -47,6 +47,8 @@ const calcWarning = document.querySelector("#calc-warning");
 const calcTableBody = document.querySelector("#calc-table tbody");
 const consultForm = document.querySelector("#consult-form");
 const consultFormMessage = document.querySelector("#consult-form-message");
+const featuredPropertyList = document.querySelector("[data-featured-property-list]");
+const featuredPropertyEmpty = document.querySelector("[data-featured-property-empty]");
 
 const SERVICE_TYPE_LABELS = {
   buy: "買屋 / 買地",
@@ -70,6 +72,78 @@ function monthlyPayment(principal, annualRate, months) {
 
 function formatMoney(value) {
   return `$${money.format(Math.round(value))}`;
+}
+
+function formatPropertyPrice(value) {
+  const price = Number(value || 0);
+  if (!price) return "洽詢";
+  if (price >= 10000) return `${money.format(Math.round(price / 10000))} 萬`;
+  return `${money.format(price)} 元`;
+}
+
+function formatPing(value) {
+  if (value === null || value === undefined || value === "") return "-";
+  return `${Number(value).toLocaleString("zh-TW", { maximumFractionDigits: 2 })} 坪`;
+}
+
+function escapeHtml(value) {
+  return String(value ?? "").replace(/[&<>"']/g, (character) => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#039;",
+  })[character]);
+}
+
+function getCoverMedia(property) {
+  const media = Array.isArray(property.property_media) ? property.property_media : [];
+  return media.find((item) => item.is_cover && !item.deleted_at) || media.find((item) => !item.deleted_at) || null;
+}
+
+function renderFeaturedProperties(properties) {
+  if (!featuredPropertyList || !featuredPropertyEmpty) return;
+
+  if (!Array.isArray(properties) || properties.length === 0) {
+    featuredPropertyList.innerHTML = "";
+    featuredPropertyEmpty.hidden = false;
+    return;
+  }
+
+  featuredPropertyEmpty.hidden = true;
+  featuredPropertyList.innerHTML = properties.map((property) => {
+    const cover = getCoverMedia(property);
+    const image = cover?.url
+      ? `<img src="${escapeHtml(cover.url)}" alt="${escapeHtml(cover.alt_text || property.title)}" loading="lazy">`
+      : "";
+    const highlights = Array.isArray(property.highlights) ? property.highlights.slice(0, 2).join("、") : "";
+
+    return `
+      <article>
+        ${image}
+        <h3>${escapeHtml(property.title)}</h3>
+        <p><strong>${escapeHtml(formatPropertyPrice(property.price))}</strong></p>
+        <p>${escapeHtml(property.address_public || "地址洽詢")}</p>
+        <p>土地 ${escapeHtml(formatPing(property.land_area_ping))} / 建物 ${escapeHtml(formatPing(property.building_area_ping))}</p>
+        <p>${escapeHtml(property.layout || "格局洽詢")}</p>
+        ${highlights ? `<p>${escapeHtml(highlights)}</p>` : ""}
+        <a class="button" href="/properties/${encodeURIComponent(property.slug)}">查看詳情</a>
+      </article>
+    `;
+  }).join("");
+}
+
+async function loadFeaturedProperties() {
+  if (!featuredPropertyList) return;
+
+  try {
+    const response = await fetch("/api/public/featured-properties");
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(result.error || "featured_properties_failed");
+    renderFeaturedProperties(result.data || []);
+  } catch {
+    renderFeaturedProperties([]);
+  }
 }
 
 function readNumber(id) {
@@ -281,6 +355,8 @@ mortgageForm?.addEventListener("submit", (event) => {
 if (mortgageForm) {
   calculateMortgage();
 }
+
+loadFeaturedProperties();
 
 function showConsultMessage(message, type) {
   if (!consultFormMessage) return;
