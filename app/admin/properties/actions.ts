@@ -10,8 +10,14 @@ import {
   requireRole
 } from "@/lib/auth";
 import { recordAuditLog } from "@/lib/audit/audit-log";
-import type { PropertyFormInput } from "@/lib/properties/schema";
-import { normalizePropertyForm, toPropertyPayload } from "@/lib/properties/schema";
+import type { DraftPropertyFormState, PropertyFormInput } from "@/lib/properties/schema";
+import {
+  draftPropertySchema,
+  draftPropertyValuesFromFormData,
+  normalizePropertyForm,
+  toDraftPropertyPayload,
+  toPropertyPayload
+} from "@/lib/properties/schema";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 const imageTypes = new Set(["image/jpeg", "image/png", "image/webp"]);
@@ -48,6 +54,66 @@ async function tryRecordAuditLog(input: Parameters<typeof recordAuditLog>[0]) {
   } catch {
     // Audit logging should not block the primary property write path.
   }
+}
+
+function draftFieldErrors(error: { issues: Array<{ path: Array<string | number>; message: string }> }) {
+  return error.issues.reduce<DraftPropertyFormState["fieldErrors"]>((errors, issue) => {
+    const field = issue.path[0];
+    if (field === "title" || field === "slug" || field === "price" || field === "address_public") {
+      errors[field] ||= issue.message;
+    }
+    return errors;
+  }, {});
+}
+
+export async function createDraftPropertyAction(
+  _previousState: DraftPropertyFormState,
+  formData: FormData
+): Promise<DraftPropertyFormState> {
+  const current = await requireRole(["editor", "admin", "owner"]);
+  if (!canManageProperties(current.profile.role)) redirect("/admin/login?error=forbidden");
+
+  const values = draftPropertyValuesFromFormData(formData);
+  const parsed = draftPropertySchema.safeParse(values);
+  if (!parsed.success) {
+    return {
+      values,
+      fieldErrors: draftFieldErrors(parsed.error),
+      formError: "請確認欄位內容後再送出。"
+    };
+  }
+
+  const supabase = await createSupabaseServerClient();
+  const payload = toDraftPropertyPayload(parsed.data);
+  const { data, error } = await supabase
+    .from("properties")
+    .insert({
+      ...payload,
+      created_by: current.user.id,
+      updated_by: current.user.id
+    })
+    .select()
+    .single();
+
+  if (error) {
+    return {
+      values,
+      fieldErrors: error.code === "23505" ? { slug: "Slug 已存在，請使用其他 Slug。" } : {},
+      formError: error.code === "23505" ? "Slug 已存在，請調整後再送出。" : "草稿建立失敗，請稍後再試。"
+    };
+  }
+
+  await tryRecordAuditLog({
+    action: "property_create",
+    resourceType: "property",
+    resourceId: data.id,
+    afterData: data,
+    userId: current.user.id,
+    userEmail: current.user.email
+  });
+
+  revalidatePath("/admin/properties");
+  redirect("/admin/properties");
 }
 
 export async function createPropertyAction(formData: FormData) {

@@ -16,6 +16,12 @@ function toSafeSlug(slug: string, title: string) {
   return cleaned || `property-${crypto.randomUUID().slice(0, 8)}`;
 }
 
+const draftSlug = z
+  .string()
+  .trim()
+  .max(140, "Slug 最多 140 字")
+  .regex(/^[a-z0-9-]*$/, "Slug 只能使用小寫英文、數字與連字號");
+
 export const propertySchema = z.object({
   title: z.string().trim().min(1, "請輸入案名").max(120),
   slug: z.string().trim().min(1).max(140).regex(/^[a-z0-9-]+$/),
@@ -40,7 +46,48 @@ export const propertySchema = z.object({
   canonical_url: z.string().trim().max(500).optional().or(z.literal(""))
 });
 
+export const draftPropertySchema = z.object({
+  title: z.string().trim().min(1, "請輸入案名").max(120, "案名最多 120 字"),
+  slug: draftSlug,
+  price: optionalNumber,
+  address_public: z.string().trim().max(160, "公開地址最多 160 字").optional().or(z.literal(""))
+});
+
+export type DraftPropertyInput = z.infer<typeof draftPropertySchema>;
+
 export type PropertyFormInput = z.infer<typeof propertySchema>;
+
+export type DraftPropertyFormValues = {
+  title: string;
+  slug: string;
+  price: string;
+  address_public: string;
+};
+
+export type DraftPropertyFormState = {
+  values: DraftPropertyFormValues;
+  fieldErrors: Partial<Record<keyof DraftPropertyFormValues, string>>;
+  formError?: string;
+};
+
+export function draftPropertyValuesFromFormData(formData: FormData): DraftPropertyFormValues {
+  return {
+    title: String(formData.get("title") || ""),
+    slug: String(formData.get("slug") || ""),
+    price: String(formData.get("price") || ""),
+    address_public: String(formData.get("address_public") || "")
+  };
+}
+
+export function toDraftPropertyPayload(input: DraftPropertyInput) {
+  return {
+    title: input.title,
+    slug: toSafeSlug(input.slug, input.title),
+    price: input.price ?? null,
+    address_public: emptyToNull(input.address_public || ""),
+    status: "draft" as const
+  };
+}
 
 export function normalizePropertyForm(formData: FormData) {
   const raw = Object.fromEntries(formData.entries());

@@ -1,10 +1,22 @@
 import Link from "next/link";
+import { DraftPropertyForm } from "@/components/admin/draft-property-form";
 import { requireRole } from "@/lib/auth";
+import type { DraftPropertyFormState } from "@/lib/properties/schema";
+import { createDraftPropertyAction } from "../actions";
 
 export const runtime = "edge";
 
 export default async function NewPropertyPage() {
   await requireRole(["editor", "admin", "owner"]);
+  const initialDraftPropertyFormState: DraftPropertyFormState = {
+    values: {
+      title: "",
+      slug: "",
+      price: "",
+      address_public: ""
+    },
+    fieldErrors: {}
+  };
 
   return (
     <main className="section">
@@ -12,7 +24,8 @@ export default async function NewPropertyPage() {
         <div className="card">
           <div className="card-body">
             <h1 style={{ marginTop: 0 }}>新增物件</h1>
-            <p className="muted">A-012 Phase 1 先建立物件列表；新增表單會在後續 CRUD 階段補上。</p>
+            <p className="muted">先建立草稿物件；圖片、SEO、上架與完整內容會在後續階段補上。</p>
+            <DraftPropertyForm action={createDraftPropertyAction} initialState={initialDraftPropertyFormState} />
             <div className="actions">
               <Link className="button ghost" href="/admin/properties">返回物件列表</Link>
             </div>
