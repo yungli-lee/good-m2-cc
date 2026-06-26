@@ -5,6 +5,30 @@ const publicPropertySelect = `
   property_media(*)
 `;
 
+const featuredPropertySelect = `
+  id,
+  slug,
+  title,
+  address_public,
+  price,
+  land_area_ping,
+  building_area_ping,
+  layout,
+  highlights,
+  status,
+  is_featured,
+  published_at,
+  property_media(
+    id,
+    property_id,
+    url,
+    alt_text,
+    sort_order,
+    is_cover,
+    deleted_at
+  )
+`;
+
 export async function listPublishedProperties() {
   const supabase = await createSupabaseServerClient();
   return supabase
@@ -20,7 +44,7 @@ export async function listFeaturedProperties(limit = 3) {
   const supabase = await createSupabaseServerClient();
   return supabase
     .from("properties")
-    .select(publicPropertySelect)
+    .select(featuredPropertySelect)
     .eq("status", "published")
     .eq("is_featured", true)
     .is("deleted_at", null)
