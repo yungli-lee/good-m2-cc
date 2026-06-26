@@ -47,8 +47,6 @@ const calcWarning = document.querySelector("#calc-warning");
 const calcTableBody = document.querySelector("#calc-table tbody");
 const consultForm = document.querySelector("#consult-form");
 const consultFormMessage = document.querySelector("#consult-form-message");
-const featuredPropertyList = document.querySelector("[data-featured-property-list]");
-const featuredPropertyEmpty = document.querySelector("[data-featured-property-empty]");
 
 const SERVICE_TYPE_LABELS = {
   buy: "買屋 / 買地",
@@ -101,7 +99,15 @@ function getCoverMedia(property) {
   return media.find((item) => item.is_cover && !item.deleted_at) || media.find((item) => !item.deleted_at) || null;
 }
 
+function getFeaturedPropertyElements() {
+  return {
+    empty: document.querySelector("[data-featured-property-empty]"),
+    list: document.querySelector("[data-featured-property-list]"),
+  };
+}
+
 function renderFeaturedProperties(properties) {
+  const { empty: featuredPropertyEmpty, list: featuredPropertyList } = getFeaturedPropertyElements();
   if (!featuredPropertyList || !featuredPropertyEmpty) return;
 
   if (!Array.isArray(properties) || properties.length === 0) {
@@ -134,6 +140,7 @@ function renderFeaturedProperties(properties) {
 }
 
 async function loadFeaturedProperties() {
+  const { list: featuredPropertyList } = getFeaturedPropertyElements();
   if (!featuredPropertyList) return;
 
   try {
@@ -144,6 +151,15 @@ async function loadFeaturedProperties() {
   } catch {
     renderFeaturedProperties([]);
   }
+}
+
+function initFeaturedProperties() {
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", loadFeaturedProperties, { once: true });
+    return;
+  }
+
+  loadFeaturedProperties();
 }
 
 function readNumber(id) {
@@ -356,7 +372,7 @@ if (mortgageForm) {
   calculateMortgage();
 }
 
-loadFeaturedProperties();
+initFeaturedProperties();
 
 function showConsultMessage(message, type) {
   if (!consultFormMessage) return;
