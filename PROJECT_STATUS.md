@@ -20,6 +20,12 @@ Production 仍不建議直接切換至此分支。原因請見 [docs/GO_LIVE_CHE
 
 Sprint A 目前是「核心平台 preview 可驗收」狀態，不是 production ready。主要已完成範圍為：Supabase Auth 後台登入、物件 CRUD 基礎、圖片上傳與封面、公開物件頁、部分 audit log、部分詢問單後台。
 
+## Sprint A Milestone 2 Progress
+
+- M2-001 Property Edit：已完成 `/admin/properties/[id]/edit` 四欄位編輯。
+- M2-002 Property Publish Workflow：已完成 `/admin/properties` 列表發布與下架回草稿。
+- M2-003 Featured Property：已完成 `/admin/properties` 列表精選標記切換，使用既有 `properties.is_featured` 欄位。限制：本階段不做首頁串接、不做 media/delete/SEO。
+
 ## Sprint 0-16 Status Overview
 
 | No | 功能 | 狀態 | 完成度 |
@@ -32,7 +38,7 @@ Sprint A 目前是「核心平台 preview 可驗收」狀態，不是 production
 | 5 | Seller Calculator | 未完成 | 15% |
 | 6 | Mortgage Calculator | 部分完成 | 35% |
 | 7 | Purchase Cost | 未完成 | 0% |
-| 8 | Featured Properties | 部分完成 | 45% |
+| 8 | Featured Properties | 部分完成 | 55% |
 | 9 | TikTok | 未完成 | 0% |
 | 10 | Audit Log | 部分完成 | 55% |
 | 11 | Blocklist | 部分完成 | 45% |
@@ -57,7 +63,7 @@ Sprint A 目前是「核心平台 preview 可驗收」狀態，不是 production
 - Audit log 有資料表與寫入 helper，但尚未建立 `/admin/audit-logs` 查看介面。
 - Blocklist 有資料表與表單檢查，但尚未建立 `/admin/blocklist` 管理介面。
 - Inquiries 後台已有列表與詳細頁，但篩選、搜尋、CSV、刪除與完整 audit 還未完成。
-- 精選物件資料條件與 API 已存在，但首頁精選物件區塊仍未完整上線。
+- 精選物件資料條件、API 與後台 `is_featured` 切換已存在，但首頁精選物件區塊仍未完整上線。
 
 ## Not Yet Complete
 

@@ -217,6 +217,43 @@ export async function togglePropertyPublishAction(id: string, nextStatus: "draft
   redirect("/admin/properties");
 }
 
+export async function togglePropertyFeaturedAction(id: string, isFeatured: boolean) {
+  const current = await requireRole(["editor", "admin", "owner"]);
+  if (!canManageProperties(current.profile.role)) redirect("/admin/login?error=forbidden");
+
+  const supabase = await createSupabaseServerClient();
+  const { data: before } = await supabase.from("properties").select("*").eq("id", id).is("deleted_at", null).maybeSingle();
+  if (!before) redirect("/admin/properties?error=not_found");
+
+  const { data, error } = await supabase
+    .from("properties")
+    .update({
+      is_featured: isFeatured,
+      updated_by: current.user.id,
+      updated_at: new Date().toISOString()
+    })
+    .eq("id", id)
+    .select()
+    .single();
+
+  if (error) redirect(`/admin/properties?error=${encodeURIComponent(error.code || "featured_failed")}`);
+
+  await tryRecordAuditLog({
+    action: "property_featured_change",
+    resourceType: "property",
+    resourceId: id,
+    beforeData: before,
+    afterData: data,
+    userId: current.user.id,
+    userEmail: current.user.email
+  });
+
+  revalidatePath("/admin/properties");
+  revalidatePath("/");
+  revalidatePath("/properties");
+  redirect("/admin/properties");
+}
+
 export async function createPropertyAction(formData: FormData) {
   const current = await requireRole(["editor", "admin", "owner"]);
   if (!canManageProperties(current.profile.role)) redirect("/admin/login?error=forbidden");

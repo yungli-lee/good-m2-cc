@@ -3,7 +3,7 @@ import { requireRole } from "@/lib/auth";
 import { formatDateTime, formatPrice } from "@/lib/format";
 import { listAdminProperties } from "@/lib/properties/queries";
 import type { PropertyStatus } from "@/lib/properties/types";
-import { togglePropertyPublishAction } from "./actions";
+import { togglePropertyFeaturedAction, togglePropertyPublishAction } from "./actions";
 
 export const runtime = "edge";
 
@@ -14,6 +14,7 @@ type AdminPropertyListItem = {
   address_public: string | null;
   price: number | null;
   status: PropertyStatus;
+  is_featured: boolean;
   published_at: string | null;
   updated_at: string | null;
 };
@@ -58,9 +59,20 @@ function PublishAction({ id, status }: { id: string; status: PropertyStatus }) {
   return <span className="muted">暫無操作</span>;
 }
 
+function FeaturedAction({ id, isFeatured }: { id: string; isFeatured: boolean }) {
+  return (
+    <form action={togglePropertyFeaturedAction.bind(null, id, !isFeatured)}>
+      <button className={isFeatured ? "button ghost" : "button"} type="submit">
+        {isFeatured ? "取消精選" : "設為精選"}
+      </button>
+    </form>
+  );
+}
+
 const errorMessage: Record<string, string> = {
   not_found: "找不到指定物件。",
-  publish_failed: "物件狀態更新失敗，請稍後再試。"
+  publish_failed: "物件狀態更新失敗，請稍後再試。",
+  featured_failed: "精選狀態更新失敗，請稍後再試。"
 };
 
 export default async function AdminPropertiesPage({ searchParams }: Props) {
@@ -75,7 +87,7 @@ export default async function AdminPropertiesPage({ searchParams }: Props) {
         <div className="actions" style={{ justifyContent: "space-between", marginBottom: 18 }}>
           <div>
             <h1 style={{ margin: 0 }}>物件管理</h1>
-            <p className="muted">M2-002：可從列表發布草稿，或將已上架物件下架回草稿。</p>
+            <p className="muted">M2-003：可從列表管理發布狀態與精選物件標記。</p>
           </div>
           <div className="actions">
             <Link className="button ghost" href="/admin">返回後台</Link>
@@ -93,6 +105,7 @@ export default async function AdminPropertiesPage({ searchParams }: Props) {
                 <th>行政區</th>
                 <th>開價</th>
                 <th>狀態</th>
+                <th>精選</th>
                 <th>更新時間</th>
                 <th>操作</th>
               </tr>
@@ -119,11 +132,13 @@ export default async function AdminPropertiesPage({ searchParams }: Props) {
                         </>
                       ) : null}
                     </td>
+                    <td>{property.is_featured ? "精選" : "-"}</td>
                     <td>{formatDateTime(property.updated_at)}</td>
                     <td>
                       <div className="actions">
                         <Link className="button ghost" href={`/admin/properties/${property.id}/edit`}>編輯</Link>
                         <PublishAction id={property.id} status={property.status} />
+                        <FeaturedAction id={property.id} isFeatured={property.is_featured} />
                       </div>
                     </td>
                   </tr>
@@ -131,7 +146,7 @@ export default async function AdminPropertiesPage({ searchParams }: Props) {
               })}
               {properties.length === 0 ? (
                 <tr>
-                  <td colSpan={7}>尚未建立物件。可以先使用「新增物件」建立草稿。</td>
+                  <td colSpan={8}>尚未建立物件。可以先使用「新增物件」建立草稿。</td>
                 </tr>
               ) : null}
             </tbody>
