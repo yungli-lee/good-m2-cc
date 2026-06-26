@@ -44,7 +44,7 @@ export async function listAdminProperties() {
   const supabase = await createSupabaseServerClient();
   return supabase
     .from("properties")
-    .select("*, property_media(*)")
+    .select("id,title,slug,address_public,price,status,published_at,updated_at")
     .is("deleted_at", null)
     .order("updated_at", { ascending: false });
 }
