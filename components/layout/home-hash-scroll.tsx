@@ -14,9 +14,10 @@ const homeScrollTargets = new Set([
   "consult"
 ]);
 
-const maxScrollAttempts = 10;
+const maxScrollAttempts = 15;
 const scrollAttemptDelayMs = 50;
-const scrollTolerancePx = 8;
+const scrollVerificationDelayMs = 125;
+const scrollTolerancePx = 24;
 
 function getHomeScrollTarget() {
   const searchParams = new URLSearchParams(window.location.search);
@@ -74,7 +75,7 @@ function scrollToHomeTarget(attempt = 1) {
     behavior: "auto"
   });
 
-  requestAnimationFrame(() => {
+  window.setTimeout(() => {
     if (isTargetInPosition(target)) {
       if (scrollTarget.shouldCleanUrl) {
         cleanScrollTargetQuery();
@@ -85,7 +86,7 @@ function scrollToHomeTarget(attempt = 1) {
     if (attempt < maxScrollAttempts) {
       window.setTimeout(() => scrollToHomeTarget(attempt + 1), scrollAttemptDelayMs);
     }
-  });
+  }, scrollVerificationDelayMs);
 }
 
 export function HomeHashScroll() {
