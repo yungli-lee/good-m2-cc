@@ -10,18 +10,19 @@ type FeaturedPropertiesError = {
   details?: string | null;
 };
 
-function isProductionRuntime() {
+function isProductionRuntime(request: Request) {
   const runtimeEnv = getRequestContext()?.env;
   const branch = process.env.CF_PAGES_BRANCH || runtimeEnv?.CF_PAGES_BRANCH;
-  return branch === "main";
+  const hostname = new URL(request.url).hostname;
+  return branch === "main" && hostname === "good.m2.cc";
 }
 
 function isMissingEnvError(error: unknown) {
   return error instanceof Error && error.message === "auth_not_configured";
 }
 
-function featuredPropertiesErrorResponse(error: FeaturedPropertiesError) {
-  if (isProductionRuntime()) {
+function featuredPropertiesErrorResponse(error: FeaturedPropertiesError, request: Request) {
+  if (isProductionRuntime(request)) {
     return NextResponse.json({ error: "Unable to load featured properties" }, { status: 500 });
   }
 
@@ -36,13 +37,13 @@ function featuredPropertiesErrorResponse(error: FeaturedPropertiesError) {
   );
 }
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
     const { data, error } = await listFeaturedProperties(3);
 
     if (error) {
       console.error(new Error("featured_properties_query_error"), error);
-      return featuredPropertiesErrorResponse(error);
+      return featuredPropertiesErrorResponse(error, request);
     }
 
     return NextResponse.json({
@@ -62,7 +63,7 @@ export async function GET() {
       return NextResponse.json({ error: "missing_env" }, { status: 500 });
     }
 
-    if (isProductionRuntime()) {
+    if (isProductionRuntime(request)) {
       return NextResponse.json({ error: "Unable to load featured properties" }, { status: 500 });
     }
 
