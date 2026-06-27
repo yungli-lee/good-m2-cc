@@ -18,6 +18,10 @@ export default async function AdminLoginPage({ searchParams }: Props) {
     redirect("/admin");
   }
 
+  if (current) {
+    redirect("/admin/pending");
+  }
+
   return (
     <main className="section">
       <div className="container" style={{ maxWidth: 460 }}>

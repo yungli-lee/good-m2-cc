@@ -13,7 +13,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   const pathname = headerStore.get("x-good-m2-pathname") || "";
   const current = hasSupabaseConfig() ? await getCurrentProfile() : null;
 
-  if (!current || pathname === "/admin/login" || pathname === "/admin/login/") {
+  if (!current || pathname === "/admin/login" || pathname === "/admin/login/" || pathname === "/admin/pending" || pathname === "/admin/pending/") {
     return <>{children}</>;
   }
 

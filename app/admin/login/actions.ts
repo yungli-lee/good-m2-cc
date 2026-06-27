@@ -36,21 +36,33 @@ export async function loginAction(formData: FormData) {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("role")
+    .select("role,deleted_at")
     .eq("id", data.user.id)
     .maybeSingle();
 
-  if (!profile || !isAdminRole(profile.role)) {
+  if (profile?.deleted_at) {
     await recordAuditLog({
       action: "admin_login_failure",
       resourceType: "auth",
       resourceId: data.user.id,
-      afterData: { email, reason: "forbidden_role" },
+      afterData: { email, reason: "disabled_profile" },
       userId: data.user.id,
       userEmail: data.user.email
     });
     await supabase.auth.signOut();
     redirect("/admin/login?error=forbidden");
+  }
+
+  if (!profile || !isAdminRole(profile.role)) {
+    await recordAuditLog({
+      action: "admin_login_success",
+      resourceType: "auth",
+      resourceId: data.user.id,
+      afterData: { email, pending_access: true },
+      userId: data.user.id,
+      userEmail: data.user.email
+    });
+    redirect("/admin/pending");
   }
 
   await recordAuditLog({
