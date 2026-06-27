@@ -253,7 +253,217 @@ td {
   border: 1px solid rgba(201, 154, 67, 0.3);
 }
 
+.site-app-header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 14px clamp(18px, 4vw, 56px);
+  background: rgba(255, 253, 248, 0.94);
+  border-bottom: 1px solid rgba(183, 138, 53, 0.18);
+  backdrop-filter: blur(14px);
+}
+
+.site-app-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 220px;
+  color: #17233f;
+  text-decoration: none;
+}
+
+.site-app-brand img {
+  width: 44px;
+  height: 44px;
+  object-fit: contain;
+  border-radius: 50%;
+}
+
+.site-app-brand strong,
+.site-app-brand small {
+  display: block;
+}
+
+.site-app-brand strong {
+  font-size: 17px;
+  line-height: 1.2;
+}
+
+.site-app-brand small {
+  color: #64708a;
+  font-size: 12px;
+}
+
+.site-app-nav {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 22px;
+  color: #64708a;
+  font-size: 15px;
+}
+
+.site-app-nav a {
+  text-decoration: none;
+}
+
+.site-app-nav a:hover {
+  color: #102343;
+}
+
+.site-app-menu-toggle {
+  display: none;
+  width: 42px;
+  height: 42px;
+  border: 1px solid rgba(16, 35, 67, 0.18);
+  border-radius: 8px;
+  background: #fff;
+}
+
+.site-app-menu-toggle span {
+  display: block;
+  width: 18px;
+  height: 2px;
+  margin: 4px auto;
+  background: #17233f;
+}
+
+.site-app-contact {
+  padding: 56px 0;
+}
+
+.site-app-contact-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 28px;
+  align-items: center;
+  padding: clamp(24px, 4vw, 40px);
+  border-radius: 8px;
+  background: #102343;
+  color: #fff;
+}
+
+.site-app-contact-card p {
+  color: rgba(255, 255, 255, 0.82);
+}
+
+.site-app-contact-actions,
+.site-app-social,
+.site-app-footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.site-app-contact-actions {
+  justify-content: flex-end;
+}
+
+.site-app-social {
+  justify-content: center;
+  margin-top: 20px;
+  color: #64708a;
+}
+
+.site-app-footer {
+  justify-content: center;
+  align-items: center;
+  padding: 28px;
+  background: #102343;
+  color: #fff;
+}
+
+.site-app-footer strong {
+  flex-basis: 100%;
+  text-align: center;
+}
+
+.site-app-footer small {
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.breadcrumb {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 20px;
+  color: #64708a;
+}
+
+.breadcrumb a {
+  color: #102343;
+  text-decoration: none;
+}
+
+.calculator-route-card {
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.calculator-route-card[href]:hover {
+  border-color: rgba(201, 154, 67, 0.55);
+  box-shadow: 0 14px 34px rgba(16, 35, 67, 0.14);
+  transform: translateY(-2px);
+}
+
+.calculator-route-card.is-disabled {
+  cursor: default;
+  opacity: 0.56;
+  filter: grayscale(1);
+  box-shadow: none;
+}
+
 @media (max-width: 760px) {
+  .site-app-header {
+    align-items: center;
+  }
+
+  .site-app-brand {
+    min-width: 0;
+  }
+
+  .site-app-brand small {
+    display: none;
+  }
+
+  .site-app-nav {
+    position: absolute;
+    left: 14px;
+    right: 14px;
+    top: calc(100% + 8px);
+    display: none;
+    flex-direction: column;
+    gap: 0;
+    padding: 10px;
+    border: 1px solid rgba(16, 35, 67, 0.18);
+    border-radius: 8px;
+    background: #fff;
+    box-shadow: 0 18px 55px rgba(23, 32, 51, 0.12);
+  }
+
+  .site-app-nav.is-open {
+    display: flex;
+  }
+
+  .site-app-nav a {
+    padding: 12px;
+  }
+
+  .site-app-menu-toggle {
+    display: block;
+  }
+
+  .site-app-contact-card {
+    grid-template-columns: 1fr;
+  }
+
+  .site-app-contact-actions {
+    justify-content: flex-start;
+  }
+
   .topbar-inner {
     align-items: flex-start;
     flex-direction: column;

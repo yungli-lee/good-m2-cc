@@ -39,7 +39,16 @@ const tools: CalculatorTool[] = [
 
 export const metadata = {
   title: "房產試算工具｜阿勇不動產顧問",
-  description: "買屋、賣屋與房貸相關試算工具。"
+  description: "買屋、賣屋與房貸相關試算工具。",
+  alternates: {
+    canonical: "/calculator"
+  },
+  openGraph: {
+    title: "房產試算工具｜阿勇不動產顧問",
+    description: "買屋、賣屋與房貸相關試算工具。",
+    url: "/calculator",
+    siteName: "阿勇不動產顧問"
+  }
 };
 
 export default function CalculatorCenterPage() {
@@ -56,7 +65,7 @@ export default function CalculatorCenterPage() {
           <div className="grid">
             {tools.map((tool) => (
               tool.available ? (
-                <Link className="card" href={tool.href} key={tool.title} style={{ textDecoration: "none" }}>
+                <Link className="card calculator-route-card" href={tool.href} key={tool.title} style={{ textDecoration: "none" }}>
                   <div className="card-body">
                     <p className="price" style={{ marginTop: 0, fontSize: "0.95rem" }}>{tool.status}</p>
                     <h2>{tool.title}</h2>
@@ -65,7 +74,7 @@ export default function CalculatorCenterPage() {
                   </div>
                 </Link>
               ) : (
-                <article className="card" key={tool.title} style={{ opacity: 0.56, filter: "grayscale(1)" }}>
+                <article className="card calculator-route-card is-disabled" key={tool.title}>
                   <div className="card-body">
                     <p className="price" style={{ marginTop: 0, fontSize: "0.95rem" }}>{tool.status}</p>
                     <h2>{tool.title}</h2>

@@ -3,7 +3,16 @@ import { MortgageCalculator } from "@/components/calculators/mortgage-calculator
 
 export const metadata = {
   title: "房貸月付金試算｜阿勇不動產顧問",
-  description: "輸入貸款金額、年限、寬限期與三段式利率，估算月付金、總利息與利率跳升提醒。"
+  description: "輸入貸款金額、年限、寬限期與三段式利率，估算月付金、總利息與利率跳升提醒。",
+  alternates: {
+    canonical: "/calculator/mortgage"
+  },
+  openGraph: {
+    title: "房貸月付金試算｜阿勇不動產顧問",
+    description: "輸入貸款金額、年限、寬限期與三段式利率，估算月付金、總利息與利率跳升提醒。",
+    url: "/calculator/mortgage",
+    siteName: "阿勇不動產顧問"
+  }
 };
 
 export default function MortgageCalculatorPage() {
@@ -17,9 +26,13 @@ export default function MortgageCalculatorPage() {
       </section>
       <section className="section">
         <div className="container">
-          <p>
-            <Link className="button ghost" href="/calculator">返回試算工具</Link>
-          </p>
+          <nav className="breadcrumb" aria-label="Breadcrumb">
+            <Link href="/">首頁</Link>
+            <span>＞</span>
+            <Link href="/calculator">房產試算工具</Link>
+            <span>＞</span>
+            <strong>房貸月付金試算</strong>
+          </nav>
           <MortgageCalculator />
           <p className="muted" style={{ marginTop: 24 }}>
             本試算為初步估算，實際核貸條件、利率與每期金額仍以銀行審核與合約為準。
