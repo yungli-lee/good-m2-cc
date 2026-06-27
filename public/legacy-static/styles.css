@@ -84,7 +84,9 @@ a {
 
 .site-nav {
   display: flex;
+  flex-wrap: wrap;
   gap: 22px;
+  justify-content: flex-end;
   font-size: 15px;
   color: var(--muted);
 }
@@ -349,6 +351,49 @@ h3 {
 
 .service-list article {
   padding: 22px;
+}
+
+.calculator-tools {
+  background: var(--paper);
+}
+
+.calculator-tool-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  max-width: 1180px;
+  margin: 0 auto;
+}
+
+.calculator-tool-card {
+  position: relative;
+  display: block;
+  min-height: 220px;
+  padding: 28px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--white);
+  box-shadow: 0 12px 36px rgba(23, 32, 51, 0.08);
+}
+
+.calculator-tool-card:hover {
+  border-color: rgba(183, 138, 53, 0.5);
+  transform: translateY(-2px);
+}
+
+.calculator-tool-card p {
+  color: var(--muted);
+}
+
+.tool-status {
+  display: inline-flex;
+  margin-bottom: 18px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--soft);
+  color: var(--gold);
+  font-size: 13px;
+  font-weight: 800;
 }
 
 .commitment {
@@ -1013,6 +1058,7 @@ h3 {
   .article-grid,
   .team-grid,
   .problem-grid,
+  .calculator-tool-grid,
   .tax-grid,
   .loan-grid,
   .calc-fields,
