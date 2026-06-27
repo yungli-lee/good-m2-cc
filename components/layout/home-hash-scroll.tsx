@@ -14,6 +14,10 @@ const homeScrollTargets = new Set([
   "consult"
 ]);
 
+const maxScrollAttempts = 10;
+const scrollAttemptDelayMs = 50;
+const scrollTolerancePx = 8;
+
 function getHomeScrollTarget() {
   const searchParams = new URLSearchParams(window.location.search);
   const scrollTo = searchParams.get("scrollTo") || "";
@@ -29,7 +33,27 @@ function cleanScrollTargetQuery() {
   window.history.replaceState(window.history.state, "", `${url.pathname}${url.search}${url.hash}`);
 }
 
-function scrollToHomeTarget() {
+function getHeaderOffset() {
+  const header = document.querySelector<HTMLElement>(".site-header, .site-app-header");
+  const headerHeight = header?.offsetHeight ?? 0;
+
+  return headerHeight + 12;
+}
+
+function getTargetTop(target: HTMLElement) {
+  const headerOffset = getHeaderOffset();
+
+  return Math.max(0, target.getBoundingClientRect().top + window.scrollY - headerOffset);
+}
+
+function isTargetInPosition(target: HTMLElement) {
+  const headerOffset = getHeaderOffset();
+  const currentTop = target.getBoundingClientRect().top;
+
+  return Math.abs(currentTop - headerOffset) <= scrollTolerancePx;
+}
+
+function scrollToHomeTarget(attempt = 1) {
   const scrollTarget = getHomeScrollTarget();
 
   if (!scrollTarget) {
@@ -39,21 +63,29 @@ function scrollToHomeTarget() {
   const target = document.getElementById(scrollTarget.target);
 
   if (!target) {
+    if (attempt < maxScrollAttempts) {
+      window.setTimeout(() => scrollToHomeTarget(attempt + 1), scrollAttemptDelayMs);
+    }
     return;
   }
 
-  const header = document.querySelector<HTMLElement>(".site-header, .site-app-header");
-  const headerHeight = header?.offsetHeight ?? 0;
-  const top = target.getBoundingClientRect().top + window.scrollY - headerHeight - 12;
-
   window.scrollTo({
-    top: Math.max(0, top),
+    top: getTargetTop(target),
     behavior: "auto"
   });
 
-  if (scrollTarget.shouldCleanUrl) {
-    cleanScrollTargetQuery();
-  }
+  requestAnimationFrame(() => {
+    if (isTargetInPosition(target)) {
+      if (scrollTarget.shouldCleanUrl) {
+        cleanScrollTargetQuery();
+      }
+      return;
+    }
+
+    if (attempt < maxScrollAttempts) {
+      window.setTimeout(() => scrollToHomeTarget(attempt + 1), scrollAttemptDelayMs);
+    }
+  });
 }
 
 export function HomeHashScroll() {
