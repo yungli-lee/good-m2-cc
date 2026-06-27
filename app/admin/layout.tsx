@@ -26,6 +26,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           <nav className="nav" aria-label="後台導覽">
             <Link href="/admin/properties">物件管理</Link>
             <Link href="/admin/inquiries">詢問單</Link>
+            <Link href="/admin/tools/seller-net-profit">後台工具</Link>
             <Link href="/properties" target="_blank" rel="noopener noreferrer">前台物件</Link>
             {current ? <span>{current.profile.email || current.user.email}</span> : null}
             {current ? (

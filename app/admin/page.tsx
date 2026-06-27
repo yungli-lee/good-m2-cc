@@ -29,6 +29,7 @@ export default async function AdminIndexPage() {
         <div className="actions">
           <Link className="button" href="/admin/properties">物件管理</Link>
           <Link className="button secondary" href="/admin/inquiries">詢問單</Link>
+          <Link className="button ghost" href="/admin/tools/seller-net-profit">賣屋淨利反推成交價</Link>
         </div>
       </div>
     </main>
