@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useState } from "react";
 
 const navItems = [
@@ -15,6 +16,8 @@ const navItems = [
 
 export function SiteHeader() {
   const [isOpen, setIsOpen] = useState(false);
+  const pathname = usePathname();
+  const isHome = pathname === "/";
 
   return (
     <header className="site-app-header">
@@ -39,7 +42,7 @@ export function SiteHeader() {
       <nav className={`site-app-nav${isOpen ? " is-open" : ""}`} aria-label="主選單">
         {navItems.map((item) => (
           <Link
-            href={{ pathname: "/", hash: item.hash }}
+            href={isHome ? `#${item.hash}` : `/#${item.hash}`}
             key={item.hash}
             onClick={() => setIsOpen(false)}
           >
