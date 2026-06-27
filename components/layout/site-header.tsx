@@ -42,7 +42,7 @@ export function SiteHeader() {
       <nav className={`site-app-nav${isOpen ? " is-open" : ""}`} aria-label="主選單">
         {navItems.map((item) => (
           <Link
-            href={isHome ? `#${item.hash}` : `/#${item.hash}`}
+            href={isHome ? `#${item.hash}` : `/?scrollTo=${item.hash}`}
             key={item.hash}
             onClick={() => setIsOpen(false)}
           >

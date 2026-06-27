@@ -3,7 +3,7 @@
 import { usePathname } from "next/navigation";
 import { useEffect } from "react";
 
-const homeHashes = new Set([
+const homeScrollTargets = new Set([
   "philosophy",
   "featured-properties",
   "services",
@@ -14,14 +14,29 @@ const homeHashes = new Set([
   "consult"
 ]);
 
-function scrollToHomeHash() {
+function getHomeScrollTarget() {
+  const searchParams = new URLSearchParams(window.location.search);
+  const scrollTo = searchParams.get("scrollTo") || "";
   const hash = window.location.hash.replace("#", "");
+  const target = scrollTo || hash;
 
-  if (!homeHashes.has(hash)) {
+  return homeScrollTargets.has(target) ? { shouldCleanUrl: Boolean(scrollTo), target } : null;
+}
+
+function cleanScrollTargetQuery() {
+  const url = new URL(window.location.href);
+  url.searchParams.delete("scrollTo");
+  window.history.replaceState(window.history.state, "", `${url.pathname}${url.search}${url.hash}`);
+}
+
+function scrollToHomeTarget() {
+  const scrollTarget = getHomeScrollTarget();
+
+  if (!scrollTarget) {
     return;
   }
 
-  const target = document.getElementById(hash);
+  const target = document.getElementById(scrollTarget.target);
 
   if (!target) {
     return;
@@ -35,6 +50,10 @@ function scrollToHomeHash() {
     top: Math.max(0, top),
     behavior: "auto"
   });
+
+  if (scrollTarget.shouldCleanUrl) {
+    cleanScrollTargetQuery();
+  }
 }
 
 export function HomeHashScroll() {
@@ -47,7 +66,7 @@ export function HomeHashScroll() {
 
     const scrollAfterNavigation = () => {
       requestAnimationFrame(() => {
-        window.setTimeout(scrollToHomeHash, 50);
+        window.setTimeout(scrollToHomeTarget, 50);
       });
     };
 
