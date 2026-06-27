@@ -14,6 +14,7 @@ export async function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname;
   const isAdminPath = path.startsWith("/admin") || path.startsWith("/api/admin");
   const isAdminLoginPath = path === "/admin/login" || path === "/admin/login/";
+  const isForbiddenLoginPath = isAdminLoginPath && request.nextUrl.searchParams.get("error") === "forbidden";
   const isAdminEnvDebugPath = path === "/admin/debug/env" || path === "/admin/debug/env/";
 
   if (!isAdminPath || (isAdminEnvDebugPath && isSupabaseEnvDebugAllowed())) return response;
@@ -42,6 +43,7 @@ export async function middleware(request: NextRequest) {
 
   const { data } = await supabase.auth.getUser();
   if (isAdminLoginPath) {
+    if (isForbiddenLoginPath) return response;
     return data.user ? NextResponse.redirect(new URL("/admin", request.url)) : response;
   }
 
