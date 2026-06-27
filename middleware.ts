@@ -10,8 +10,10 @@ type SupabaseCookie = {
 };
 
 export async function middleware(request: NextRequest) {
-  const response = NextResponse.next({ request });
   const path = request.nextUrl.pathname;
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set("x-good-m2-pathname", path);
+  const response = NextResponse.next({ request: { headers: requestHeaders } });
   const isAdminPath = path.startsWith("/admin") || path.startsWith("/api/admin");
   const isAdminLoginPath = path === "/admin/login" || path === "/admin/login/";
   const isForbiddenLoginPath = isAdminLoginPath && request.nextUrl.searchParams.get("error") === "forbidden";
