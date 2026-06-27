@@ -376,7 +376,7 @@ h3 {
   box-shadow: 0 12px 36px rgba(23, 32, 51, 0.08);
 }
 
-.calculator-tool-card:hover {
+.calculator-tool-card[href]:hover {
   border-color: rgba(183, 138, 53, 0.5);
   transform: translateY(-2px);
 }
@@ -394,6 +394,25 @@ h3 {
   color: var(--gold);
   font-size: 13px;
   font-weight: 800;
+}
+
+.tool-status.available {
+  background: rgba(19, 41, 75, 0.08);
+  color: var(--navy);
+}
+
+.tool-cta {
+  display: inline-block;
+  margin-top: 8px;
+  color: var(--gold);
+  font-size: 15px;
+}
+
+.calculator-tool-card.is-disabled {
+  cursor: default;
+  opacity: 0.56;
+  filter: grayscale(1);
+  box-shadow: none;
 }
 
 .commitment {
