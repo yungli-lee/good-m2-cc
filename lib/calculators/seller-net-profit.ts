@@ -1,4 +1,5 @@
 export type SellerNetProfitInput = {
+  improvementCostsWan: number;
   purchaseDate: string;
   saleDate: string;
   purchaseBrokerFeeWan: number;
@@ -11,6 +12,7 @@ export type SellerNetProfitInput = {
 export type SellerNetProfitResult = {
   autoTaxRatePercent: number;
   holdingPeriod: string;
+  improvementCostsWan: number;
   minimumSalePriceWan: number;
   saleBrokerFeeWan: number;
   taxAmountWan: number;
@@ -78,6 +80,7 @@ export function validateSellerNetProfitInput(input: SellerNetProfitInput) {
   if (sale < purchase) return "預計出售日期不可早於買入日期。";
   if (input.purchasePriceWan <= 0) return "買入價格需大於 0。";
   if (input.purchaseBrokerFeeWan < 0) return "買入仲介費不可為負數。";
+  if (input.improvementCostsWan < 0) return "裝修及其他必要支出不可為負數。";
   if (input.saleBrokerFeeRatePercent < 0 || input.saleBrokerFeeRatePercent >= 100) return "出售仲介費率需介於 0% 到 100% 之間。";
   if (input.targetNetProfitWan < 0) return "目標稅後淨利不可為負數。";
   if (input.taxRatePercent < 0 || input.taxRatePercent >= 100) return "房地合一稅率需介於 0% 到 100% 之間。";
@@ -91,15 +94,17 @@ export function calculateSellerNetProfit(input: SellerNetProfitInput): SellerNet
   const minimumSalePriceWan = (
     input.purchasePriceWan +
     input.purchaseBrokerFeeWan +
+    input.improvementCostsWan +
     requiredTaxableIncome
   ) / (1 - brokerRate);
   const saleBrokerFeeWan = minimumSalePriceWan * brokerRate;
-  const taxableIncomeWan = minimumSalePriceWan - input.purchasePriceWan - input.purchaseBrokerFeeWan - saleBrokerFeeWan;
+  const taxableIncomeWan = minimumSalePriceWan - input.purchasePriceWan - input.purchaseBrokerFeeWan - input.improvementCostsWan - saleBrokerFeeWan;
   const taxAmountWan = taxableIncomeWan * taxRate;
 
   return {
     autoTaxRatePercent: getSellerTaxRatePercent(input.purchaseDate, input.saleDate),
     holdingPeriod: getHoldingPeriodLabel(input.purchaseDate, input.saleDate),
+    improvementCostsWan: input.improvementCostsWan,
     minimumSalePriceWan,
     saleBrokerFeeWan,
     taxAmountWan,

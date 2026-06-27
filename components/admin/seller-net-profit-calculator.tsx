@@ -19,11 +19,13 @@ function toInput(
   saleDate: string,
   purchasePriceWan: string,
   purchaseBrokerFeeWan: string,
+  improvementCostsWan: string,
   saleBrokerFeeRatePercent: string,
   targetNetProfitWan: string,
   taxRatePercent: string
 ): SellerNetProfitInput {
   return {
+    improvementCostsWan: toNumber(improvementCostsWan),
     purchaseDate,
     saleDate,
     purchaseBrokerFeeWan: toNumber(purchaseBrokerFeeWan),
@@ -39,6 +41,7 @@ export function SellerNetProfitCalculator() {
   const [saleDate, setSaleDate] = useState("2026-06-22");
   const [purchasePriceWan, setPurchasePriceWan] = useState("800");
   const [purchaseBrokerFeeWan, setPurchaseBrokerFeeWan] = useState("16");
+  const [improvementCostsWan, setImprovementCostsWan] = useState("0");
   const [saleBrokerFeeRatePercent, setSaleBrokerFeeRatePercent] = useState("4");
   const [targetNetProfitWan, setTargetNetProfitWan] = useState("200");
   const [taxRatePercent, setTaxRatePercent] = useState("35");
@@ -57,6 +60,7 @@ export function SellerNetProfitCalculator() {
     saleDate,
     purchasePriceWan,
     purchaseBrokerFeeWan,
+    improvementCostsWan,
     saleBrokerFeeRatePercent,
     targetNetProfitWan,
     taxRatePercent
@@ -65,6 +69,7 @@ export function SellerNetProfitCalculator() {
     saleDate,
     purchasePriceWan,
     purchaseBrokerFeeWan,
+    improvementCostsWan,
     saleBrokerFeeRatePercent,
     targetNetProfitWan,
     taxRatePercent
@@ -93,6 +98,10 @@ export function SellerNetProfitCalculator() {
             <label className="field">
               <span>買入仲介費（萬元）</span>
               <input className="input" type="number" min="0" step="1" value={purchaseBrokerFeeWan} onChange={(event) => setPurchaseBrokerFeeWan(event.target.value)} />
+            </label>
+            <label className="field">
+              <span>裝修及其他必要支出（萬元）</span>
+              <input className="input" type="number" min="0" step="1" value={improvementCostsWan} onChange={(event) => setImprovementCostsWan(event.target.value)} />
             </label>
             <label className="field">
               <span>出售仲介費率（%）</span>
@@ -140,6 +149,7 @@ export function SellerNetProfitCalculator() {
         <div className="grid" aria-live="polite">
           {[
             ["建議最低成交價", formatWan(result.minimumSalePriceWan)],
+            ["裝修及其他必要支出", formatWan(result.improvementCostsWan)],
             ["預估出售仲介費", formatWan(result.saleBrokerFeeWan)],
             ["預估房地合一稅", formatWan(result.taxAmountWan)],
             ["預估稅後淨利", formatWan(result.targetNetProfitWan)],
