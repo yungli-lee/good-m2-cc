@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { requireRole } from "@/lib/auth";
+import { canManageUsers } from "@/lib/auth/permissions";
 
 export const runtime = "edge";
 
@@ -30,6 +31,7 @@ export default async function AdminIndexPage() {
           <Link className="button" href="/admin/properties">物件管理</Link>
           <Link className="button secondary" href="/admin/inquiries">詢問單</Link>
           <Link className="button ghost" href="/admin/tools/seller-net-profit">賣屋淨利反推成交價</Link>
+          {canManageUsers(role) ? <Link className="button ghost" href="/admin/users">使用者管理</Link> : null}
         </div>
       </div>
     </main>

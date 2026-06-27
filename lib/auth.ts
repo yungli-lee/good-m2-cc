@@ -11,15 +11,34 @@ export async function getCurrentProfile() {
   const user = userResult.user;
   if (!user) return null;
 
-  const { data: profile } = await supabase
+  const { data: profile, error } = await supabase
     .from("profiles")
-    .select("id,email,role,display_name")
+    .select("id,email,role,display_name,deleted_at")
     .eq("id", user.id)
     .maybeSingle();
 
+  if (error) {
+    console.error("profile_query_failed", {
+      userId: user.id,
+      code: error.code
+    });
+    return null;
+  }
+
+  if (profile?.deleted_at) {
+    console.warn("disabled_profile_access_denied", { userId: user.id });
+    return null;
+  }
+
   return {
     user,
-    profile: profile || { id: user.id, email: user.email, role: "viewer" as AdminRole, display_name: null }
+    profile: profile || {
+      id: user.id,
+      email: user.email || null,
+      role: "viewer" as AdminRole,
+      display_name: null,
+      deleted_at: null
+    }
   };
 }
 
