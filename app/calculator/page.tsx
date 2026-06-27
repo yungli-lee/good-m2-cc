@@ -28,12 +28,6 @@ const tools: CalculatorTool[] = [
     description: "一次掌握購屋總支出。",
     status: "即將開放",
     available: false
-  },
-  {
-    title: "賣屋淨利反推成交價",
-    description: "反推成交價與實際獲利。",
-    status: "即將開放",
-    available: false
   }
 ];
 
