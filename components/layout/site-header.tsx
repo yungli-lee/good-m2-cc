@@ -10,7 +10,7 @@ const navItems = [
   { href: "/#calculators", label: "房產試算工具" },
   { href: "/#process", label: "買屋流程" },
   { href: "/#life", label: "生活提醒" },
-  { href: "/#contact", label: "聯絡我們" }
+  { href: "/#team", label: "聯絡我們" }
 ];
 
 export function SiteHeader() {
