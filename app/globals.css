@@ -264,6 +264,119 @@ td {
   border: 1px solid rgba(201, 154, 67, 0.3);
 }
 
+.admin-users-shell {
+  display: grid;
+  gap: 18px;
+}
+
+.admin-users-toolbar {
+  display: grid;
+  grid-template-columns: minmax(260px, 1fr) minmax(160px, 0.35fr) minmax(160px, 0.35fr);
+  gap: 12px;
+  align-items: end;
+  padding: 16px;
+  border: 1px solid rgba(16, 35, 67, 0.1);
+  border-radius: 8px;
+  background: #fff;
+}
+
+.admin-users-inline-form {
+  display: grid;
+  grid-template-columns: minmax(160px, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+  min-width: 260px;
+}
+
+.admin-users-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 800;
+}
+
+.admin-users-badge.is-active {
+  color: #075e46;
+  background: #dff7ec;
+}
+
+.admin-users-badge.is-disabled {
+  color: #8a1f17;
+  background: #ffe4df;
+}
+
+.admin-users-cards {
+  display: none;
+}
+
+.admin-users-card-body {
+  display: grid;
+  gap: 14px;
+}
+
+.admin-users-empty {
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  padding: 34px 16px;
+  text-align: center;
+}
+
+.admin-users-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.admin-users-skeleton {
+  display: block;
+  width: min(180px, 100%);
+  height: 18px;
+  border-radius: 6px;
+  background: linear-gradient(90deg, rgba(16, 35, 67, 0.08), rgba(16, 35, 67, 0.16), rgba(16, 35, 67, 0.08));
+  background-size: 220% 100%;
+  animation: admin-users-pulse 1.25s ease-in-out infinite;
+}
+
+.admin-users-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: grid;
+  place-items: center;
+  padding: 18px;
+  background: rgba(16, 35, 67, 0.58);
+}
+
+.admin-users-modal {
+  width: min(460px, 100%);
+  display: grid;
+  gap: 14px;
+  padding: 22px;
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 24px 70px rgba(16, 35, 67, 0.28);
+}
+
+.admin-users-modal h2,
+.admin-users-modal p {
+  margin: 0;
+}
+
+@keyframes admin-users-pulse {
+  0% {
+    background-position: 0% 50%;
+  }
+  100% {
+    background-position: 220% 50%;
+  }
+}
+
 .site-app-header {
   position: sticky;
   top: 0;
@@ -495,5 +608,22 @@ td {
   th,
   td {
     white-space: nowrap;
+  }
+
+  .admin-users-toolbar {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-users-table {
+    display: none;
+  }
+
+  .admin-users-cards {
+    display: grid;
+    gap: 12px;
+  }
+
+  .admin-users-pagination {
+    justify-content: flex-start;
   }
 }
