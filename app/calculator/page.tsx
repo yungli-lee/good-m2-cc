@@ -25,9 +25,10 @@ const tools: CalculatorTool[] = [
   },
   {
     title: "買房總成本試算",
-    description: "一次掌握購屋總支出。",
-    status: "即將開放",
-    available: false
+    description: "一次掌握購屋總支出，先抓出自備款、稅費、仲介費與常見雜支。",
+    href: "/calculator/purchase-cost",
+    status: "已開放",
+    available: true
   }
 ];
 
