@@ -2,7 +2,6 @@
 
 import { useMemo, useState } from "react";
 import {
-  BUYER_ESCROW_RATE,
   calculatePurchaseCost,
   defaultPurchaseCostInput,
   type PurchaseCostInput,
@@ -111,9 +110,6 @@ export function PurchaseCostCalculator() {
               {field.note ? <small className="muted">{field.note}</small> : null}
             </label>
           ))}
-        </div>
-        <div className="notice">
-          履約保證費自動以成交價 × {BUYER_ESCROW_RATE * 10000} / 10000 估算。一般買賣雙方各負擔 3 / 10000，合計 6 / 10000；本頁以買方購屋成本估算買方負擔。
         </div>
       </form>
 
