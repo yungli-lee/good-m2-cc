@@ -81,3 +81,5 @@ Not Included
 - Search
 - SEO
 - TikTok
+- Analytics Dashboard
+- GA4 tracking script / page_view

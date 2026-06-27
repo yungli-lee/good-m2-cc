@@ -62,7 +62,7 @@ Sprint A 目前是「核心平台 preview 可驗收」狀態，不是 production
 | 13 | Inquiries | 部分完成 | 60% |
 | 14 | Go Live | 部分完成 | 25% |
 | 15 | Maintenance | 未完成 | 10% |
-| 16 | Analytics | 未完成 | 0% |
+| 16 | Analytics Dashboard | Sprint C / Planned | 0% |
 
 ## Completed
 
@@ -85,7 +85,8 @@ Sprint A 目前是「核心平台 preview 可驗收」狀態，不是 production
 
 - TikTok 最新影音、影片後台。
 - Dashboard 總覽。
-- Analytics Dashboard 與 GA4 文件化整合。
+- Analytics Dashboard 已移至 Sprint C / Planned，不進入目前 Sprint A 開發。
+- GA4 基礎載入尚未完成，建議列為 Sprint A/B boundary 或 Sprint B First Step，先累積 page_view / event 資料後再做 dashboard。
 - `/calculator` 工具入口與三個獨立試算工具路由。
 - 圖片壓縮、EXIF metadata strip、MP4、YouTube、輪播。
 - Production go-live 完整驗收與備份演練。

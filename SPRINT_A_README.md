@@ -11,7 +11,10 @@ Scope:
 Not included:
 
 - Dashboard
-- Analytics
+- Analytics Dashboard：Deferred to Sprint C
+- GA4 基礎載入：尚未納入 Sprint A，建議作為 Sprint B First Step
+
+第 16 項 `/admin/analytics` Dashboard 暫緩至 Sprint C。原因：需先完成 GA4 基礎載入並累積 page_view / event 資料，再建立後台分析 dashboard。
 - TikTok
 
 ## Migration
