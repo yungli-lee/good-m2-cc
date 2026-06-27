@@ -21,6 +21,17 @@ html {
   scroll-behavior: smooth;
 }
 
+#philosophy,
+#featured-properties,
+#services,
+#calculators,
+#process,
+#reminders,
+#team,
+#consult {
+  scroll-margin-top: 96px;
+}
+
 body {
   margin: 0;
   color: var(--ink);
