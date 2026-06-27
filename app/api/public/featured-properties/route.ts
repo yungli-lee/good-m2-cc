@@ -1,23 +1,71 @@
 import { NextResponse } from "next/server";
 import { listFeaturedProperties } from "@/lib/properties/queries";
+import { getRequestContext } from "@/lib/supabase/env";
 
 export const runtime = "edge";
 
-export async function GET() {
-  const { data, error } = await listFeaturedProperties(3);
+type FeaturedPropertiesError = {
+  code?: string;
+  hint?: string | null;
+  details?: string | null;
+};
 
-  if (error) {
+function isProductionRuntime() {
+  const runtimeEnv = getRequestContext()?.env;
+  const branch = process.env.CF_PAGES_BRANCH || runtimeEnv?.CF_PAGES_BRANCH;
+  return branch === "main";
+}
+
+function isMissingEnvError(error: unknown) {
+  return error instanceof Error && error.message === "auth_not_configured";
+}
+
+function featuredPropertiesErrorResponse(error: FeaturedPropertiesError) {
+  if (isProductionRuntime()) {
     return NextResponse.json({ error: "Unable to load featured properties" }, { status: 500 });
   }
 
-  return NextResponse.json({
-    data: data || [],
-    filters: {
-      status: "published",
-      is_featured: true,
-      deleted_at: null
+  return NextResponse.json(
+    {
+      error: "featured_properties_query_error",
+      code: error.code,
+      hint: error.hint,
+      details: error.details
     },
-    sort: ["published_at DESC"],
-    limit: 3
-  });
+    { status: 500 }
+  );
+}
+
+export async function GET() {
+  try {
+    const { data, error } = await listFeaturedProperties(3);
+
+    if (error) {
+      console.error(new Error("featured_properties_query_error"), error);
+      return featuredPropertiesErrorResponse(error);
+    }
+
+    return NextResponse.json({
+      data: data || [],
+      filters: {
+        status: "published",
+        is_featured: true,
+        deleted_at: null
+      },
+      sort: ["published_at DESC"],
+      limit: 3
+    });
+  } catch (error) {
+    console.error(error);
+
+    if (isMissingEnvError(error)) {
+      return NextResponse.json({ error: "missing_env" }, { status: 500 });
+    }
+
+    if (isProductionRuntime()) {
+      return NextResponse.json({ error: "Unable to load featured properties" }, { status: 500 });
+    }
+
+    return NextResponse.json({ error: "featured_properties_unhandled_error" }, { status: 500 });
+  }
 }
