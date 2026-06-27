@@ -4,13 +4,13 @@ import Link from "next/link";
 import { useState } from "react";
 
 const navItems = [
-  { href: "/#philosophy", label: "服務理念" },
-  { href: "/#featured-properties", label: "精選物件" },
-  { href: "/#services", label: "服務項目" },
-  { href: "/#calculators", label: "房產試算工具" },
-  { href: "/#process", label: "買屋流程" },
-  { href: "/#life", label: "生活提醒" },
-  { href: "/#team", label: "聯絡我們" }
+  { hash: "philosophy", label: "服務理念" },
+  { hash: "featured-properties", label: "精選物件" },
+  { hash: "services", label: "服務項目" },
+  { hash: "calculators", label: "房產試算工具" },
+  { hash: "process", label: "買屋流程" },
+  { hash: "reminders", label: "生活提醒" },
+  { hash: "team", label: "聯絡我們" }
 ];
 
 export function SiteHeader() {
@@ -38,7 +38,11 @@ export function SiteHeader() {
       </button>
       <nav className={`site-app-nav${isOpen ? " is-open" : ""}`} aria-label="主選單">
         {navItems.map((item) => (
-          <Link href={item.href} key={item.href} onClick={() => setIsOpen(false)}>
+          <Link
+            href={{ pathname: "/", hash: item.hash }}
+            key={item.hash}
+            onClick={() => setIsOpen(false)}
+          >
             {item.label}
           </Link>
         ))}
