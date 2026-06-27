@@ -13,17 +13,6 @@ nav?.querySelectorAll("a").forEach((link) => {
   });
 });
 
-function scrollToHashTarget() {
-  const id = window.location.hash?.slice(1);
-  if (!id) return;
-  document.getElementById(id)?.scrollIntoView({ block: "start" });
-}
-
-window.addEventListener("load", () => {
-  scrollToHashTarget();
-  window.setTimeout(scrollToHashTarget, 250);
-});
-
 document.querySelectorAll(".article-card").forEach((card, index) => {
   const button = card.querySelector(".article-toggle");
   if (index === 0) {
