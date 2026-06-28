@@ -5,8 +5,8 @@ type AuditAction =
   | "property_create" | "property_update" | "property_delete" | "property_publish" | "property_unpublish"
   | "property_featured_change" | "property_image_upload" | "property_image_delete" | "property_cover_set"
   | "inquiry_view" | "inquiry_status_update" | "inquiry_note_create" | "inquiry_mark_spam" | "inquiry_delete"
-  | "admin_login_success" | "admin_login_failure"
-  | "role_changed" | "user_disabled" | "user_restored" | "display_name_updated" | "failed_permission_attempt";
+  | "admin_login_success" | "admin_login_failure" | "login_success" | "login_denied"
+  | "role_changed" | "user_created" | "user_disabled" | "user_restored" | "display_name_updated" | "failed_permission_attempt";
 
 const sensitiveKey = /password|passcode|secret|token|api[_-]?key|authorization|cookie|session|service[_-]?role/i;
 

@@ -6,7 +6,7 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 export const runtime = "edge";
 
 type Props = {
-  searchParams: Promise<{ error?: string; saved?: string }>;
+  searchParams: Promise<{ error?: string; saved?: string; warning?: string }>;
 };
 
 const errorMessage: Record<string, string> = {
@@ -16,13 +16,17 @@ const errorMessage: Record<string, string> = {
   request_failed: "操作失敗，請稍後再試。"
 };
 
+const warningMessage: Record<string, string> = {
+  role_pending: "使用者已建立，但角色升級未完成，目前會保留 viewer pending 狀態。"
+};
+
 export default async function AdminUsersPage({ searchParams }: Props) {
   const current = await requireRole(["admin", "owner"]);
   const query = await searchParams;
   const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase
     .from("profiles")
-    .select("id,email,display_name,role,created_at,deleted_at")
+    .select("id,email,display_name,role,created_at,deleted_at,last_login_at,last_login_device")
     .order("created_at", { ascending: false });
   const users = (data || []) as AdminUserListItem[];
 
@@ -38,6 +42,7 @@ export default async function AdminUsersPage({ searchParams }: Props) {
         </div>
 
         {query.saved ? <div className="notice">已儲存。</div> : null}
+        {query.warning ? <div className="notice">{warningMessage[query.warning] || "操作已完成，但有部分狀態需要確認。"}</div> : null}
         {query.error ? <div className="notice">{errorMessage[query.error] || "操作失敗，請稍後再試。"}</div> : null}
 
         <UsersManager users={users} actorRole={current.profile.role} loadError={Boolean(error)} />

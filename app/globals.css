@@ -288,6 +288,23 @@ td {
   min-width: 260px;
 }
 
+.admin-users-create-form {
+  display: grid;
+  gap: 12px;
+}
+
+.admin-users-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted);
+}
+
+.admin-users-last-login {
+  display: grid;
+  gap: 2px;
+}
+
 .admin-users-badge {
   display: inline-flex;
   align-items: center;

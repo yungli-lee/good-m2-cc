@@ -4,13 +4,27 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { requireRole, type AdminRole } from "@/lib/auth";
-import { canChangeRole, canDisableUser, canManageUsers, canRestoreUser } from "@/lib/auth/permissions";
+import {
+  canAssignInitialRole,
+  canChangeRole,
+  canCreateUser,
+  canDisableUser,
+  canManageUsers,
+  canRestoreUser
+} from "@/lib/auth/permissions";
 import { recordAuditLog } from "@/lib/audit/audit-log";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { createSupabaseAdminClient, createSupabaseServerClient } from "@/lib/supabase/server";
 import { uuidSchema } from "@/lib/validation/common";
 
 const roleSchema = z.enum(["viewer", "editor", "admin"]);
 const displayNameSchema = z.string().trim().max(120);
+const createUserSchema = z.object({
+  email: z.string().trim().toLowerCase().email().max(254),
+  display_name: displayNameSchema,
+  role: roleSchema,
+  password: z.string().min(12).max(128),
+  auto_confirm: z.boolean()
+});
 
 type ManagedProfile = {
   id: string;
@@ -93,6 +107,127 @@ function canUpdateDisplayName(actorRole: AdminRole, targetRole: AdminRole) {
   if (actorRole === "owner") return targetRole !== "owner";
   if (actorRole === "admin") return targetRole === "viewer" || targetRole === "editor";
   return false;
+}
+
+export async function createUserAction(formData: FormData) {
+  const current = await requireRole(["admin", "owner"]);
+  const parsed = createUserSchema.safeParse({
+    email: String(formData.get("email") || ""),
+    display_name: String(formData.get("display_name") || ""),
+    role: String(formData.get("role") || "viewer"),
+    password: String(formData.get("password") || ""),
+    auto_confirm: formData.get("auto_confirm") === "on"
+  });
+
+  if (!parsed.success) safeErrorRedirect("invalid_request");
+  if (!canCreateUser(current.profile.role) || !canAssignInitialRole(current.profile.role, parsed.data.role)) {
+    await recordAuditLog({
+      action: "failed_permission_attempt",
+      resourceType: "profile",
+      resourceId: parsed.data.email,
+      afterData: { attempted_action: "user_created", email: parsed.data.email, role: parsed.data.role },
+      userId: current.user.id,
+      userEmail: current.user.email
+    });
+    safeErrorRedirect("forbidden");
+  }
+
+  let adminSupabase: ReturnType<typeof createSupabaseAdminClient>;
+  try {
+    adminSupabase = createSupabaseAdminClient();
+  } catch (error) {
+    console.error("admin_client_create_failed", { message: error instanceof Error ? error.message : "unknown" });
+    safeErrorRedirect("request_failed");
+  }
+
+  const displayName = parsed.data.display_name || null;
+  const { data: created, error: createError } = await adminSupabase.auth.admin.createUser({
+    email: parsed.data.email,
+    password: parsed.data.password,
+    email_confirm: parsed.data.auto_confirm,
+    user_metadata: displayName ? { display_name: displayName } : undefined
+  });
+
+  if (createError || !created.user) {
+    console.error("admin_user_create_failed", { status: createError?.status, code: createError?.code });
+    safeErrorRedirect("request_failed");
+  }
+
+  const supabase = await createSupabaseServerClient();
+  const now = new Date().toISOString();
+  const { error: insertProfileError } = await adminSupabase
+    .from("profiles")
+    .insert({
+      id: created.user.id,
+      email: created.user.email || parsed.data.email,
+      display_name: displayName,
+      role: "viewer",
+      created_at: now,
+      updated_at: now
+    });
+
+  if (insertProfileError && insertProfileError.code !== "23505") {
+    console.error("created_user_profile_insert_failed", { targetId: created.user.id, code: insertProfileError.code });
+  }
+
+  let target = await getTargetProfile(supabase, created.user.id);
+  let roleUpdateFailed = false;
+
+  if (target.display_name !== displayName) {
+    const { data, error } = await supabase
+      .from("profiles")
+      .update({ display_name: displayName, updated_at: new Date().toISOString() })
+      .eq("id", created.user.id)
+      .select("id,email,role,display_name,created_at,updated_at,deleted_at")
+      .single();
+
+    if (error) {
+      console.error("created_user_display_name_update_failed", { targetId: created.user.id, code: error.code });
+    } else {
+      target = data as ManagedProfile;
+    }
+  }
+
+  if (parsed.data.role !== "viewer") {
+    const activeOwnerCount = await getActiveOwnerCount(supabase);
+    if (!canChangeRole(current.profile, target, parsed.data.role, activeOwnerCount)) {
+      roleUpdateFailed = true;
+    } else {
+      const { data, error } = await supabase
+        .from("profiles")
+        .update({ role: parsed.data.role, updated_at: new Date().toISOString() })
+        .eq("id", created.user.id)
+        .select("id,email,role,display_name,created_at,updated_at,deleted_at")
+        .single();
+
+      if (error) {
+        console.error("created_user_role_update_failed", { targetId: created.user.id, code: error.code });
+        roleUpdateFailed = true;
+      } else {
+        target = data as ManagedProfile;
+      }
+    }
+  }
+
+  await recordAuditLog({
+    action: "user_created",
+    resourceType: "profile",
+    resourceId: created.user.id,
+    afterData: {
+      id: created.user.id,
+      email: created.user.email || parsed.data.email,
+      display_name: displayName,
+      role: target.role,
+      requested_role: parsed.data.role,
+      auto_confirm: parsed.data.auto_confirm,
+      role_update_failed: roleUpdateFailed
+    },
+    userId: current.user.id,
+    userEmail: current.user.email
+  });
+
+  revalidatePath("/admin/users");
+  redirect(roleUpdateFailed ? "/admin/users?saved=1&warning=role_pending" : "/admin/users?saved=1");
 }
 
 export async function updateUserRoleAction(targetId: string, formData: FormData) {

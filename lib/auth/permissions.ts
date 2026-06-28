@@ -18,6 +18,17 @@ function isViewerOrEditor(role: AdminRole) {
   return role === "viewer" || role === "editor";
 }
 
+export function canCreateUser(role: AdminRole) {
+  return role === "admin" || role === "owner";
+}
+
+export function canAssignInitialRole(actorRole: AdminRole, nextRole: AdminRole) {
+  if (nextRole === "owner") return false;
+  if (actorRole === "owner") return nextRole === "viewer" || nextRole === "editor" || nextRole === "admin";
+  if (actorRole === "admin") return nextRole === "viewer" || nextRole === "editor";
+  return false;
+}
+
 export function canChangeRole(
   actor: UserPermissionProfile,
   target: UserPermissionProfile,

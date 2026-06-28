@@ -2,7 +2,13 @@
 
 import { useEffect, useMemo, useState } from "react";
 import type { AdminRole } from "@/lib/auth";
-import { updateUserRoleAction, disableUserAction, restoreUserAction, updateDisplayNameAction } from "@/app/admin/users/actions";
+import {
+  createUserAction,
+  updateUserRoleAction,
+  disableUserAction,
+  restoreUserAction,
+  updateDisplayNameAction
+} from "@/app/admin/users/actions";
 
 export type AdminUserListItem = {
   id: string;
@@ -11,6 +17,8 @@ export type AdminUserListItem = {
   role: AdminRole;
   created_at: string | null;
   deleted_at: string | null;
+  last_login_at: string | null;
+  last_login_device: string | null;
 };
 
 type PendingConfirmation =
@@ -33,6 +41,48 @@ function roleOptions(actorRole: AdminRole) {
   return actorRole === "owner" ? ["viewer", "editor", "admin"] as const : ["viewer", "editor"] as const;
 }
 
+function CreateUserModal({ actorRole, onClose }: { actorRole: AdminRole; onClose: () => void }) {
+  const options = roleOptions(actorRole);
+
+  return (
+    <div className="admin-users-modal-backdrop" role="presentation">
+      <div className="admin-users-modal" role="dialog" aria-modal="true" aria-labelledby="admin-users-create-title">
+        <h2 id="admin-users-create-title">新增使用者</h2>
+        <form action={createUserAction} className="admin-users-create-form">
+          <label className="field">
+            <span>Email</span>
+            <input className="input" name="email" type="email" autoComplete="email" required />
+          </label>
+          <label className="field">
+            <span>Display Name</span>
+            <input className="input" name="display_name" maxLength={120} autoComplete="name" />
+          </label>
+          <label className="field">
+            <span>Role</span>
+            <select className="select" name="role" defaultValue="viewer">
+              {options.map((role) => (
+                <option key={role} value={role}>{role}</option>
+              ))}
+            </select>
+          </label>
+          <label className="field">
+            <span>Password</span>
+            <input className="input" name="password" type="password" minLength={12} autoComplete="new-password" required />
+          </label>
+          <label className="admin-users-checkbox">
+            <input name="auto_confirm" type="checkbox" />
+            <span>Auto confirm</span>
+          </label>
+          <div className="actions">
+            <button className="button" type="submit">建立使用者</button>
+            <button className="button ghost" type="button" onClick={onClose}>取消</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
 function needsCurrentRoleOption(options: readonly string[], role: AdminRole) {
   return !options.includes(role);
 }
@@ -49,6 +99,17 @@ function statusLabel(user: AdminUserListItem) {
 
 function statusClass(user: AdminUserListItem) {
   return user.deleted_at ? "admin-users-badge is-disabled" : "admin-users-badge is-active";
+}
+
+function LastLogin({ user }: { user: AdminUserListItem }) {
+  if (!user.last_login_at) return <span className="muted">尚未登入</span>;
+
+  return (
+    <span className="admin-users-last-login">
+      <span>{formatDateTime(user.last_login_at)}</span>
+      <span className="muted">{user.last_login_device || "Unknown device"}</span>
+    </span>
+  );
 }
 
 function SkeletonRows() {
@@ -122,6 +183,7 @@ export function UsersManager({
   const [statusFilter, setStatusFilter] = useState("all");
   const [page, setPage] = useState(1);
   const [confirmation, setConfirmation] = useState<PendingConfirmation | null>(null);
+  const [showCreate, setShowCreate] = useState(false);
 
   useEffect(() => {
     setReady(true);
@@ -148,6 +210,12 @@ export function UsersManager({
 
   return (
     <div className="admin-users-shell">
+      <div className="actions" style={{ justifyContent: "flex-end" }}>
+        <button className="button" type="button" onClick={() => setShowCreate(true)}>
+          新增使用者
+        </button>
+      </div>
+
       <div className="admin-users-toolbar" aria-label="使用者篩選">
         <label className="field">
           <span>Email 搜尋</span>
@@ -227,7 +295,7 @@ export function UsersManager({
                   </td>
                   <td><span className={statusClass(user)}>{statusLabel(user)}</span></td>
                   <td>{formatDateTime(user.created_at)}</td>
-                  <td className="muted">尚未提供</td>
+                  <td><LastLogin user={user} /></td>
                   <td>
                     <div className="actions">
                       {user.deleted_at ? (
@@ -312,7 +380,11 @@ export function UsersManager({
                 </div>
                 <div>
                   <div className="muted">最後登入</div>
-                  <span>尚未提供</span>
+                  {user.last_login_at ? <span>{formatDateTime(user.last_login_at)}</span> : <span>尚未登入</span>}
+                </div>
+                <div>
+                  <div className="muted">設備</div>
+                  <span>{user.last_login_at ? user.last_login_device || "Unknown device" : "-"}</span>
                 </div>
                 {user.deleted_at ? (
                   <button className="button" type="button" disabled={!editable} onClick={() => setConfirmation({ type: "restore", user })}>
@@ -343,6 +415,7 @@ export function UsersManager({
       </div>
 
       {confirmation ? <ConfirmationModal confirmation={confirmation} onClose={() => setConfirmation(null)} /> : null}
+      {showCreate ? <CreateUserModal actorRole={actorRole} onClose={() => setShowCreate(false)} /> : null}
     </div>
   );
 }
