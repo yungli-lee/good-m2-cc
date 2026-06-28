@@ -1,15 +1,26 @@
 import { redirect } from "next/navigation";
-import { getCurrentProfile } from "@/lib/auth";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { logoutAction } from "../login/actions";
 import { isAdminRole } from "@/types/auth/admin";
 
 export const runtime = "edge";
 
 export default async function AdminPendingPage() {
-  const current = await getCurrentProfile();
-  if (!current) redirect("/admin/login");
-  if (isAdminRole(current.profile.role)) redirect("/admin");
+  const supabase = await createSupabaseServerClient();
+  const { data: userResult } = await supabase.auth.getUser();
+  const user = userResult.user;
+  if (!user) redirect("/admin/login");
 
-  const email = current.profile.email || current.user.email || "-";
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("email,role,deleted_at")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  if (profile?.deleted_at) redirect("/admin/login?error=forbidden");
+  if (profile && isAdminRole(profile.role)) redirect("/admin");
+
+  const email = profile?.email || user.email || "-";
 
   return (
     <main className="section">
@@ -26,6 +37,12 @@ export default async function AdminPendingPage() {
             <p className="muted" style={{ margin: 0 }}>
               若管理員稍後升級權限，重新整理即可進入後台。
             </p>
+            <div className="actions">
+              <a className="button" href="/admin/pending">重新整理</a>
+              <form action={logoutAction}>
+                <button className="button ghost" type="submit">登出</button>
+              </form>
+            </div>
           </div>
         </div>
       </div>
