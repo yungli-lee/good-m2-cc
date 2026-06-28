@@ -13,7 +13,6 @@ import {
   canRestoreUser
 } from "@/lib/auth/permissions";
 import { recordAuditLog } from "@/lib/audit/audit-log";
-import { getSupabaseEnv } from "@/lib/supabase/env";
 import { createSupabaseAdminClient, createSupabaseServerClient } from "@/lib/supabase/server";
 import { uuidSchema } from "@/lib/validation/common";
 
@@ -49,12 +48,7 @@ async function getActiveOwnerCount(supabase: Awaited<ReturnType<typeof createSup
     .is("deleted_at", null);
 
   if (error) {
-    console.error("owner_count_query_failed", {
-      code: error.code,
-      message: error.message,
-      details: error.details,
-      hint: error.hint
-    });
+    console.error("owner_count_query_failed", { code: error.code });
     safeErrorRedirect("request_failed");
   }
 
@@ -72,13 +66,7 @@ async function getTargetProfile(
     .maybeSingle();
 
   if (error) {
-    console.error("managed_profile_query_failed", {
-      targetId,
-      code: error.code,
-      message: error.message,
-      details: error.details,
-      hint: error.hint
-    });
+    console.error("managed_profile_query_failed", { targetId, code: error.code });
     safeErrorRedirect("request_failed");
   }
 
@@ -137,24 +125,7 @@ export async function createUserAction(formData: FormData) {
   });
 
   if (!parsed.success) safeErrorRedirect("invalid_request");
-  const { serviceRoleKey } = getSupabaseEnv();
-  console.error("createUserAction_start", {
-    actorUserId: current.user.id,
-    actorEmail: current.user.email,
-    actorRole: current.profile.role,
-    targetEmail: parsed.data.email,
-    targetRole: parsed.data.role,
-    hasServiceRoleKey: Boolean(serviceRoleKey)
-  });
-
   if (!canCreateUser(current.profile.role) || !canAssignInitialRole(current.profile.role, parsed.data.role)) {
-    console.error("createUserAction_permission_denied", {
-      actorUserId: current.user.id,
-      actorEmail: current.user.email,
-      actorRole: current.profile.role,
-      targetEmail: parsed.data.email,
-      targetRole: parsed.data.role
-    });
     await recordAuditLog({
       action: "failed_permission_attempt",
       resourceType: "profile",
@@ -174,10 +145,7 @@ export async function createUserAction(formData: FormData) {
   try {
     adminSupabase = createSupabaseAdminClient();
   } catch (error) {
-    console.error("admin_client_create_failed", {
-      hasServiceRoleKey: Boolean(serviceRoleKey),
-      message: error instanceof Error ? error.message : "unknown"
-    });
+    console.error("admin_client_create_failed", { message: error instanceof Error ? error.message : "unknown" });
     safeErrorRedirect("request_failed");
   }
 
@@ -190,21 +158,9 @@ export async function createUserAction(formData: FormData) {
   });
 
   if (createError || !created.user) {
-    console.error("admin_user_create_failed", {
-      targetEmail: parsed.data.email,
-      targetRole: parsed.data.role,
-      hasServiceRoleKey: Boolean(serviceRoleKey),
-      status: createError?.status,
-      code: createError?.code,
-      message: createError?.message
-    });
+    console.error("admin_user_create_failed", { status: createError?.status, code: createError?.code });
     safeErrorRedirect("request_failed");
   }
-  console.error("admin_user_create_ok", {
-    targetUserId: created.user.id,
-    targetEmail: created.user.email || parsed.data.email,
-    targetRole: parsed.data.role
-  });
 
   const supabase = await createSupabaseServerClient();
   const now = new Date().toISOString();
@@ -220,21 +176,7 @@ export async function createUserAction(formData: FormData) {
     });
 
   if (insertProfileError && insertProfileError.code !== "23505") {
-    console.error("created_user_profile_insert_failed", {
-      targetId: created.user.id,
-      targetEmail: created.user.email || parsed.data.email,
-      code: insertProfileError.code,
-      message: insertProfileError.message,
-      details: insertProfileError.details,
-      hint: insertProfileError.hint
-    });
-  } else {
-    console.error("created_user_profile_insert_result", {
-      targetId: created.user.id,
-      targetEmail: created.user.email || parsed.data.email,
-      inserted: !insertProfileError,
-      conflictIgnored: insertProfileError?.code === "23505"
-    });
+    console.error("created_user_profile_insert_failed", { targetId: created.user.id, code: insertProfileError.code });
   }
 
   let target = await getTargetProfile(supabase, created.user.id);
@@ -249,15 +191,8 @@ export async function createUserAction(formData: FormData) {
       .single();
 
     if (error) {
-      console.error("created_user_display_name_update_failed", {
-        targetId: created.user.id,
-        code: error.code,
-        message: error.message,
-        details: error.details,
-        hint: error.hint
-      });
+      console.error("created_user_display_name_update_failed", { targetId: created.user.id, code: error.code });
     } else {
-      console.error("created_user_display_name_update_ok", { targetId: created.user.id });
       target = data as ManagedProfile;
     }
   }
@@ -265,14 +200,6 @@ export async function createUserAction(formData: FormData) {
   if (parsed.data.role !== "viewer") {
     const activeOwnerCount = await getActiveOwnerCount(supabase);
     if (!canChangeRole(current.profile, target, parsed.data.role, activeOwnerCount)) {
-      console.error("created_user_role_change_blocked", {
-        actorUserId: current.user.id,
-        actorRole: current.profile.role,
-        targetId: created.user.id,
-        currentTargetRole: target.role,
-        requestedRole: parsed.data.role,
-        activeOwnerCount
-      });
       roleUpdateFailed = true;
     } else {
       const { data, error } = await supabase
@@ -283,32 +210,14 @@ export async function createUserAction(formData: FormData) {
         .single();
 
       if (error) {
-        console.error("created_user_role_update_failed", {
-          targetId: created.user.id,
-          requestedRole: parsed.data.role,
-          code: error.code,
-          message: error.message,
-          details: error.details,
-          hint: error.hint
-        });
+        console.error("created_user_role_update_failed", { targetId: created.user.id, code: error.code });
         roleUpdateFailed = true;
       } else {
-        console.error("created_user_role_update_ok", {
-          targetId: created.user.id,
-          requestedRole: parsed.data.role
-        });
         target = data as ManagedProfile;
       }
     }
   }
 
-  console.error("createUserAction_audit_write_start", {
-    actorUserId: current.user.id,
-    targetUserId: created.user.id,
-    targetEmail: created.user.email || parsed.data.email,
-    result: roleUpdateFailed ? "failed" : "success",
-    reason: roleUpdateFailed ? "role_update_failed" : null
-  });
   await recordAuditLog({
     action: "user_created",
     resourceType: "profile",
@@ -329,11 +238,6 @@ export async function createUserAction(formData: FormData) {
     targetEmail: created.user.email || parsed.data.email,
     result: roleUpdateFailed ? "failed" : "success",
     reason: roleUpdateFailed ? "role_update_failed" : null
-  });
-  console.error("createUserAction_audit_write_finished", {
-    actorUserId: current.user.id,
-    targetUserId: created.user.id,
-    targetEmail: created.user.email || parsed.data.email
   });
 
   revalidatePath("/admin/users");
