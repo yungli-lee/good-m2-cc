@@ -8,3 +8,4 @@ node_modules
 dist
 coverage
 tsconfig.tsbuildinfo
+supabase/.temp/
