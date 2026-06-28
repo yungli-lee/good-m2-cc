@@ -4,8 +4,8 @@ compatibility_flags = ["nodejs_compat"]
 pages_build_output_dir = ".vercel/output/static"
 
 [env.preview.vars]
-NEXT_PUBLIC_SUPABASE_URL = "https://rlbuadkmylulieoryzal.supabase.co"
-NEXT_PUBLIC_SUPABASE_ANON_KEY = "sb_publishable_P8tZ_FS1IFfQX55W0E-x4w_TnYA_5iT"
+NEXT_PUBLIC_SUPABASE_URL = "https://niorteztdbuyusemsgwa.supabase.co"
+NEXT_PUBLIC_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5pb3J0ZXp0ZGJ1eXVzZW1zZ3dhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI1OTU0NjgsImV4cCI6MjA5ODE3MTQ2OH0.EzLo9NfsnWoRumP6-16jZ5_CfzgJSKQtSNSXc8C9CUk"
 
 [env.production.vars]
 NEXT_PUBLIC_SUPABASE_URL = "https://rlbuadkmylulieoryzal.supabase.co"
