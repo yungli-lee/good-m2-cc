@@ -36,6 +36,8 @@ type ManagedProfile = {
   deleted_at: string | null;
 };
 
+type RoleChangeFailureReason = "request_failed" | "database_error" | "permission_denied" | "validation_failed";
+
 function safeErrorRedirect(code = "request_failed"): never {
   redirect(`/admin/users?error=${code}`);
 }
@@ -112,6 +114,51 @@ function canUpdateDisplayName(actorRole: AdminRole, targetRole: AdminRole) {
   if (actorRole === "owner") return targetRole !== "owner";
   if (actorRole === "admin") return targetRole === "viewer" || targetRole === "editor";
   return false;
+}
+
+async function recordUserRoleChangeAudit(input: {
+  current: Awaited<ReturnType<typeof requireRole>>;
+  targetId: string;
+  targetEmail?: string | null;
+  beforeRole?: AdminRole | null;
+  attemptedRole?: AdminRole | string | null;
+  result: "success" | "failed";
+  reason?: RoleChangeFailureReason | null;
+  afterRole?: AdminRole | null;
+}) {
+  const targetUserId = uuidSchema.safeParse(input.targetId).success ? input.targetId : null;
+
+  await recordAuditLog({
+    action: "user.role_change",
+    resourceType: "user",
+    resourceId: input.targetId,
+    beforeData: {
+      before: { role: input.beforeRole || null },
+      actor_email: input.current.user.email || null,
+      target_email: input.targetEmail || null
+    },
+    afterData: input.result === "success"
+      ? {
+          after: { role: input.afterRole || null },
+          actor_email: input.current.user.email || null,
+          target_email: input.targetEmail || null
+        }
+      : {
+          after_attempted: { role: input.attemptedRole || null },
+          actor_email: input.current.user.email || null,
+          target_email: input.targetEmail || null
+        },
+    userId: input.current.user.id,
+    userEmail: input.current.user.email,
+    actorRole: input.current.profile.role,
+    targetUserId,
+    targetEmail: input.targetEmail || null,
+    result: input.result,
+    reason: input.reason || null,
+    metadata: {
+      audit_schema: "admin_user_role_change_v1"
+    }
+  });
 }
 
 export async function createUserAction(formData: FormData) {
@@ -246,23 +293,81 @@ export async function createUserAction(formData: FormData) {
 
 export async function updateUserRoleAction(targetId: string, formData: FormData) {
   const current = await requireRole(["admin", "owner"]);
-  const parsedTargetId = parseTargetId(targetId);
-  const parsedRole = roleSchema.safeParse(String(formData.get("role") || ""));
-  if (!parsedRole.success) safeErrorRedirect("invalid_request");
+  const parsedTargetId = uuidSchema.safeParse(targetId);
+  const requestedRole = String(formData.get("role") || "");
+  const parsedRole = roleSchema.safeParse(requestedRole);
+
+  if (!parsedTargetId.success || !parsedRole.success) {
+    await recordUserRoleChangeAudit({
+      current,
+      targetId,
+      attemptedRole: requestedRole,
+      result: "failed",
+      reason: "validation_failed"
+    });
+    safeErrorRedirect("invalid_request");
+  }
 
   const supabase = await createSupabaseServerClient();
-  const target = await getTargetProfile(supabase, parsedTargetId);
-  const activeOwnerCount = await getActiveOwnerCount(supabase);
+  const { data: targetData, error: targetError } = await supabase
+    .from("profiles")
+    .select("id,email,role,display_name,created_at,updated_at,deleted_at")
+    .eq("id", parsedTargetId.data)
+    .maybeSingle();
 
-  if (!canChangeRole(current.profile, target, parsedRole.data, activeOwnerCount)) {
-    await recordFailedPermissionAttempt({
-      actorId: current.user.id,
-      actorEmail: current.user.email,
-      targetId: parsedTargetId,
+  if (targetError) {
+    console.error("managed_profile_query_failed", { targetId: parsedTargetId.data, code: targetError.code });
+    await recordUserRoleChangeAudit({
+      current,
+      targetId: parsedTargetId.data,
+      attemptedRole: parsedRole.data,
+      result: "failed",
+      reason: "database_error"
+    });
+    safeErrorRedirect("request_failed");
+  }
+
+  if (!targetData) {
+    await recordUserRoleChangeAudit({
+      current,
+      targetId: parsedTargetId.data,
+      attemptedRole: parsedRole.data,
+      result: "failed",
+      reason: "request_failed"
+    });
+    safeErrorRedirect("not_found");
+  }
+
+  const target = targetData as ManagedProfile;
+  const { count: activeOwnerCount, error: ownerCountError } = await supabase
+    .from("profiles")
+    .select("id", { count: "exact", head: true })
+    .eq("role", "owner")
+    .is("deleted_at", null);
+
+  if (ownerCountError) {
+    console.error("owner_count_query_failed", { code: ownerCountError.code });
+    await recordUserRoleChangeAudit({
+      current,
+      targetId: parsedTargetId.data,
       targetEmail: target.email,
-      action: "role_changed",
-      beforeData: target,
-      afterData: { next_role: parsedRole.data }
+      beforeRole: target.role,
+      attemptedRole: parsedRole.data,
+      result: "failed",
+      reason: "database_error"
+    });
+    safeErrorRedirect("request_failed");
+  }
+
+  if (!canChangeRole(current.profile, target, parsedRole.data, activeOwnerCount || 0)) {
+    await recordUserRoleChangeAudit({
+      current,
+      targetId: parsedTargetId.data,
+      targetEmail: target.email,
+      beforeRole: target.role,
+      attemptedRole: parsedRole.data,
+      result: "failed",
+      reason: "permission_denied"
     });
     safeErrorRedirect("forbidden");
   }
@@ -270,26 +375,30 @@ export async function updateUserRoleAction(targetId: string, formData: FormData)
   const { data, error } = await supabase
     .from("profiles")
     .update({ role: parsedRole.data, updated_at: new Date().toISOString() })
-    .eq("id", parsedTargetId)
+    .eq("id", parsedTargetId.data)
     .select("id,email,role,display_name,created_at,updated_at,deleted_at")
     .single();
 
   if (error) {
-    console.error("user_role_update_failed", { targetId: parsedTargetId, code: error.code });
+    console.error("user_role_update_failed", { targetId: parsedTargetId.data, code: error.code });
+    await recordUserRoleChangeAudit({
+      current,
+      targetId: parsedTargetId.data,
+      targetEmail: target.email,
+      beforeRole: target.role,
+      attemptedRole: parsedRole.data,
+      result: "failed",
+      reason: "database_error"
+    });
     safeErrorRedirect("request_failed");
   }
 
-  await recordAuditLog({
-    action: "role_changed",
-    resourceType: "profile",
-    resourceId: parsedTargetId,
-    beforeData: target,
-    afterData: data,
-    userId: current.user.id,
-    userEmail: current.user.email,
-    actorRole: current.profile.role,
-    targetUserId: parsedTargetId,
+  await recordUserRoleChangeAudit({
+    current,
+    targetId: parsedTargetId.data,
     targetEmail: target.email,
+    beforeRole: target.role,
+    afterRole: (data as ManagedProfile).role,
     result: "success"
   });
 

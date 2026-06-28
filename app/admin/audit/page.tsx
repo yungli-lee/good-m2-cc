@@ -43,6 +43,7 @@ const actionOptions = [
   "login_success",
   "login_denied",
   "user_created",
+  "user.role_change",
   "role_changed",
   "user_disabled",
   "user_restored",
