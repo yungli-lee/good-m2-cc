@@ -45,23 +45,9 @@ export async function loginAction(formData: FormData) {
     .maybeSingle();
 
   if (profileError) {
-    console.error("login_profile_query_failed", {
-      userId: data.user.id,
-      email,
-      code: profileError.code,
-      message: profileError.message,
-      details: profileError.details,
-      hint: profileError.hint
-    });
-    console.error("login_profile_query_failed_raw", profileError);
+    console.error("login_profile_query_failed", { userId: data.user.id, code: profileError.code });
     redirect("/admin/login?error=login_failed");
   }
-
-  console.error("login_profile_query_ok", {
-    userId: data.user.id,
-    role: profile?.role ?? null,
-    deletedAt: profile?.deleted_at ?? null
-  });
 
   if (profile?.deleted_at) {
     await recordAuditLog({
