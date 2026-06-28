@@ -42,6 +42,11 @@ function safeErrorRedirect(code = "request_failed"): never {
   redirect(`/admin/users?error=${code}`);
 }
 
+function sanitizeDatabaseErrorMessage(message?: string) {
+  if (!message) return null;
+  return message.slice(0, 180);
+}
+
 async function getActiveOwnerCount(supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>) {
   const { count, error } = await supabase
     .from("profiles")
@@ -125,6 +130,8 @@ async function recordUserRoleChangeAudit(input: {
   result: "success" | "failed";
   reason?: RoleChangeFailureReason | null;
   afterRole?: AdminRole | null;
+  errorCode?: string | null;
+  errorMessage?: string | null;
 }) {
   const targetUserId = uuidSchema.safeParse(input.targetId).success ? input.targetId : null;
 
@@ -145,6 +152,8 @@ async function recordUserRoleChangeAudit(input: {
         }
       : {
           after_attempted: { role: input.attemptedRole || null },
+          error_code: input.errorCode || null,
+          error_message_sanitized: sanitizeDatabaseErrorMessage(input.errorMessage || undefined),
           actor_email: input.current.user.email || null,
           target_email: input.targetEmail || null
         },
@@ -316,13 +325,19 @@ export async function updateUserRoleAction(targetId: string, formData: FormData)
     .maybeSingle();
 
   if (targetError) {
-    console.error("managed_profile_query_failed", { targetId: parsedTargetId.data, code: targetError.code });
+    console.error("managed_profile_query_failed", {
+      targetId: parsedTargetId.data,
+      code: targetError.code,
+      message: sanitizeDatabaseErrorMessage(targetError.message)
+    });
     await recordUserRoleChangeAudit({
       current,
       targetId: parsedTargetId.data,
       attemptedRole: parsedRole.data,
       result: "failed",
-      reason: "database_error"
+      reason: "database_error",
+      errorCode: targetError.code,
+      errorMessage: targetError.message
     });
     safeErrorRedirect("request_failed");
   }
@@ -346,7 +361,10 @@ export async function updateUserRoleAction(targetId: string, formData: FormData)
     .is("deleted_at", null);
 
   if (ownerCountError) {
-    console.error("owner_count_query_failed", { code: ownerCountError.code });
+    console.error("owner_count_query_failed", {
+      code: ownerCountError.code,
+      message: sanitizeDatabaseErrorMessage(ownerCountError.message)
+    });
     await recordUserRoleChangeAudit({
       current,
       targetId: parsedTargetId.data,
@@ -354,7 +372,9 @@ export async function updateUserRoleAction(targetId: string, formData: FormData)
       beforeRole: target.role,
       attemptedRole: parsedRole.data,
       result: "failed",
-      reason: "database_error"
+      reason: "database_error",
+      errorCode: ownerCountError.code,
+      errorMessage: ownerCountError.message
     });
     safeErrorRedirect("request_failed");
   }
@@ -380,7 +400,11 @@ export async function updateUserRoleAction(targetId: string, formData: FormData)
     .single();
 
   if (error) {
-    console.error("user_role_update_failed", { targetId: parsedTargetId.data, code: error.code });
+    console.error("user_role_update_failed", {
+      targetId: parsedTargetId.data,
+      code: error.code,
+      message: sanitizeDatabaseErrorMessage(error.message)
+    });
     await recordUserRoleChangeAudit({
       current,
       targetId: parsedTargetId.data,
@@ -388,7 +412,9 @@ export async function updateUserRoleAction(targetId: string, formData: FormData)
       beforeRole: target.role,
       attemptedRole: parsedRole.data,
       result: "failed",
-      reason: "database_error"
+      reason: "database_error",
+      errorCode: error.code,
+      errorMessage: error.message
     });
     safeErrorRedirect("request_failed");
   }
