@@ -31,7 +31,9 @@ export async function loginAction(formData: FormData) {
       action: "admin_login_failure",
       resourceType: "auth",
       resourceId: email,
-      afterData: { email }
+      afterData: { email },
+      result: "failed",
+      reason: "invalid_credentials"
     });
     redirect("/admin/login?error=login_failed");
   }
@@ -54,7 +56,10 @@ export async function loginAction(formData: FormData) {
       resourceId: data.user.id,
       afterData: { email, reason: "disabled_profile" },
       userId: data.user.id,
-      userEmail: data.user.email
+      userEmail: data.user.email,
+      actorRole: profile.role,
+      result: "denied",
+      reason: "disabled_profile"
     });
     await supabase.auth.signOut();
     redirect("/admin/login?error=forbidden");
@@ -84,7 +89,9 @@ export async function loginAction(formData: FormData) {
       resourceId: data.user.id,
       afterData: { email, pending_access: true },
       userId: data.user.id,
-      userEmail: data.user.email
+      userEmail: data.user.email,
+      actorRole: profile?.role || "viewer",
+      result: "success"
     });
     redirect("/admin/pending");
   }
@@ -95,7 +102,9 @@ export async function loginAction(formData: FormData) {
     resourceId: data.user.id,
     afterData: { email },
     userId: data.user.id,
-    userEmail: data.user.email
+    userEmail: data.user.email,
+    actorRole: profile.role,
+    result: "success"
   });
 
   redirect("/admin");
@@ -103,6 +112,25 @@ export async function loginAction(formData: FormData) {
 
 export async function logoutAction() {
   const supabase = await createSupabaseServerClient();
+  const { data: userResult } = await supabase.auth.getUser();
+  const user = userResult.user;
+  if (user) {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("role")
+      .eq("id", user.id)
+      .maybeSingle();
+
+    await recordAuditLog({
+      action: "admin_logout",
+      resourceType: "auth",
+      resourceId: user.id,
+      userId: user.id,
+      userEmail: user.email,
+      actorRole: profile?.role || null,
+      result: "success"
+    });
+  }
   await supabase.auth.signOut();
   redirect("/admin/login");
 }

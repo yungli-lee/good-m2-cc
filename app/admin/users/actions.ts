@@ -78,6 +78,7 @@ async function recordFailedPermissionAttempt(input: {
   actorId: string;
   actorEmail?: string | null;
   targetId: string;
+  targetEmail?: string | null;
   action: string;
   beforeData?: unknown;
   afterData?: unknown;
@@ -92,7 +93,11 @@ async function recordFailedPermissionAttempt(input: {
       attempted_action: input.action
     },
     userId: input.actorId,
-    userEmail: input.actorEmail
+    userEmail: input.actorEmail,
+    targetUserId: uuidSchema.safeParse(input.targetId).success ? input.targetId : null,
+    targetEmail: input.targetEmail || null,
+    result: "denied",
+    reason: "permission_denied"
   });
 }
 
@@ -127,7 +132,11 @@ export async function createUserAction(formData: FormData) {
       resourceId: parsed.data.email,
       afterData: { attempted_action: "user_created", email: parsed.data.email, role: parsed.data.role },
       userId: current.user.id,
-      userEmail: current.user.email
+      userEmail: current.user.email,
+      actorRole: current.profile.role,
+      targetEmail: parsed.data.email,
+      result: "denied",
+      reason: "permission_denied"
     });
     safeErrorRedirect("forbidden");
   }
@@ -223,7 +232,12 @@ export async function createUserAction(formData: FormData) {
       role_update_failed: roleUpdateFailed
     },
     userId: current.user.id,
-    userEmail: current.user.email
+    userEmail: current.user.email,
+    actorRole: current.profile.role,
+    targetUserId: created.user.id,
+    targetEmail: created.user.email || parsed.data.email,
+    result: roleUpdateFailed ? "failed" : "success",
+    reason: roleUpdateFailed ? "role_update_failed" : null
   });
 
   revalidatePath("/admin/users");
@@ -245,6 +259,7 @@ export async function updateUserRoleAction(targetId: string, formData: FormData)
       actorId: current.user.id,
       actorEmail: current.user.email,
       targetId: parsedTargetId,
+      targetEmail: target.email,
       action: "role_changed",
       beforeData: target,
       afterData: { next_role: parsedRole.data }
@@ -271,7 +286,11 @@ export async function updateUserRoleAction(targetId: string, formData: FormData)
     beforeData: target,
     afterData: data,
     userId: current.user.id,
-    userEmail: current.user.email
+    userEmail: current.user.email,
+    actorRole: current.profile.role,
+    targetUserId: parsedTargetId,
+    targetEmail: target.email,
+    result: "success"
   });
 
   revalidatePath("/admin/users");
@@ -290,6 +309,7 @@ export async function disableUserAction(targetId: string) {
       actorId: current.user.id,
       actorEmail: current.user.email,
       targetId: parsedTargetId,
+      targetEmail: target.email,
       action: "user_disabled",
       beforeData: target
     });
@@ -315,7 +335,11 @@ export async function disableUserAction(targetId: string) {
     beforeData: target,
     afterData: data,
     userId: current.user.id,
-    userEmail: current.user.email
+    userEmail: current.user.email,
+    actorRole: current.profile.role,
+    targetUserId: parsedTargetId,
+    targetEmail: target.email,
+    result: "success"
   });
 
   revalidatePath("/admin/users");
@@ -333,6 +357,7 @@ export async function restoreUserAction(targetId: string) {
       actorId: current.user.id,
       actorEmail: current.user.email,
       targetId: parsedTargetId,
+      targetEmail: target.email,
       action: "user_restored",
       beforeData: target
     });
@@ -358,7 +383,11 @@ export async function restoreUserAction(targetId: string) {
     beforeData: target,
     afterData: data,
     userId: current.user.id,
-    userEmail: current.user.email
+    userEmail: current.user.email,
+    actorRole: current.profile.role,
+    targetUserId: parsedTargetId,
+    targetEmail: target.email,
+    result: "success"
   });
 
   revalidatePath("/admin/users");
@@ -379,6 +408,7 @@ export async function updateDisplayNameAction(targetId: string, formData: FormDa
       actorId: current.user.id,
       actorEmail: current.user.email,
       targetId: parsedTargetId,
+      targetEmail: target.email,
       action: "display_name_updated",
       beforeData: target,
       afterData: { display_name: parsedDisplayName.data }
@@ -405,7 +435,11 @@ export async function updateDisplayNameAction(targetId: string, formData: FormDa
     beforeData: target,
     afterData: data,
     userId: current.user.id,
-    userEmail: current.user.email
+    userEmail: current.user.email,
+    actorRole: current.profile.role,
+    targetUserId: parsedTargetId,
+    targetEmail: target.email,
+    result: "success"
   });
 
   revalidatePath("/admin/users");
