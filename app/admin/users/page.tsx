@@ -28,6 +28,15 @@ export default async function AdminUsersPage({ searchParams }: Props) {
     .from("profiles")
     .select("id,email,display_name,role,created_at,deleted_at,last_login_at,last_login_device")
     .order("created_at", { ascending: false });
+  if (error) {
+    console.error("[users]", {
+      code: error.code,
+      message: error.message,
+      details: error.details,
+      hint: error.hint
+    });
+    console.error("[users]", error);
+  }
   const users = (data || []) as AdminUserListItem[];
 
   return (

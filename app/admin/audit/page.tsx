@@ -114,6 +114,15 @@ export default async function AdminAuditPage({ searchParams }: Props) {
   const fromRow = (currentPage - 1) * pageSize;
   const toRow = fromRow + pageSize - 1;
   const { data, error, count } = await query.range(fromRow, toRow);
+  if (error) {
+    console.error("[audit]", {
+      code: error.code,
+      message: error.message,
+      details: error.details,
+      hint: error.hint
+    });
+    console.error("[audit]", error);
+  }
   const logs = (data || []) as AuditLogRow[];
   const total = count || 0;
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
