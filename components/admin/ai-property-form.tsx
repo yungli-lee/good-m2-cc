@@ -1,0 +1,201 @@
+"use client";
+
+import { useMemo, useRef, useState } from "react";
+import type { AdminRole } from "@/lib/auth";
+import { parsePastedProperty, type ParsedProperty } from "@/lib/properties/ai-parser";
+
+const typeOptions = [
+  ["townhouse", "透天"],
+  ["apartment", "公寓"],
+  ["building", "大樓"],
+  ["land", "土地"],
+  ["farmland", "農地"],
+  ["building_land", "建地"],
+  ["storefront", "店面"],
+  ["factory", "廠房"],
+  ["other", "其他"]
+];
+
+function setFormValue(form: HTMLFormElement, name: keyof ParsedProperty, value?: string) {
+  if (!value) return;
+  const field = form.elements.namedItem(name);
+  if (field instanceof HTMLInputElement || field instanceof HTMLTextAreaElement || field instanceof HTMLSelectElement) {
+    field.value = value;
+    field.dispatchEvent(new Event("input", { bubbles: true }));
+    field.dispatchEvent(new Event("change", { bubbles: true }));
+  }
+}
+
+export function AiPropertyForm({
+  role,
+  formAction
+}: {
+  role: AdminRole;
+  formAction: (formData: FormData) => Promise<void>;
+}) {
+  const formRef = useRef<HTMLFormElement>(null);
+  const [quickPaste, setQuickPaste] = useState("");
+  const [message, setMessage] = useState("");
+  const canPublish = role === "admin" || role === "owner";
+  const quickPasteStats = useMemo(() => quickPaste.trim().length, [quickPaste]);
+
+  function handleParse() {
+    if (!formRef.current) return;
+    if (!quickPaste.trim()) {
+      setMessage("請先貼上物件資料。");
+      return;
+    }
+
+    const parsed = parsePastedProperty(quickPaste);
+    const form = formRef.current;
+    const fields: Array<keyof ParsedProperty> = [
+      "title",
+      "slug",
+      "address_public",
+      "address_private",
+      "price",
+      "land_area_ping",
+      "building_area_ping",
+      "layout",
+      "age",
+      "orientation",
+      "floor",
+      "property_type",
+      "highlights",
+      "description",
+      "seo_title",
+      "meta_description"
+    ];
+    fields.forEach((field) => setFormValue(form, field, parsed[field]));
+    setMessage("已解析並填入表單，送出前請快速確認欄位。");
+  }
+
+  async function copyQuickPaste() {
+    if (!quickPaste) return;
+    await navigator.clipboard?.writeText(quickPaste);
+    setMessage("已複製快速貼上內容。");
+  }
+
+  return (
+    <form ref={formRef} action={formAction} className="form-grid ai-property-form">
+      <section className="ai-quick-paste field full" aria-label="AI 快速建立物件">
+        <div className="ai-quick-paste-header">
+          <div>
+            <h2>AI 快速建立物件</h2>
+            <p className="muted">貼上 Line 或 Word 物件資料，解析後會先填入表單，可再人工校正。</p>
+          </div>
+          <button className="button ghost ai-copy-button" type="button" onClick={copyQuickPaste} disabled={!quickPaste}>
+            複製
+          </button>
+        </div>
+        <textarea
+          className="textarea ai-quick-paste-textarea"
+          value={quickPaste}
+          onChange={(event) => setQuickPaste(event.target.value)}
+          placeholder="貼上案名、地址、地號、地坪、建坪、格局、坐向、屋齡、完工日、開價、底價、開發、帶看資訊、密碼、推薦特色等資料"
+        />
+        <div className="ai-quick-paste-actions">
+          <button className="button secondary" type="button" onClick={handleParse}>
+            AI 解析
+          </button>
+          <span className="muted">{quickPasteStats ? `${quickPasteStats} 字` : "尚未貼上內容"}</span>
+        </div>
+        {message ? <div className="notice">{message}</div> : null}
+      </section>
+
+      <div className="field">
+        <label htmlFor="title">案名</label>
+        <input className="input" id="title" name="title" required />
+      </div>
+      <div className="field">
+        <label htmlFor="slug">Slug</label>
+        <input className="input" id="slug" name="slug" placeholder="可留空，系統會自動產生" />
+      </div>
+      <div className="field">
+        <label htmlFor="address_public">公開地址</label>
+        <input className="input" id="address_public" name="address_public" />
+      </div>
+      <div className="field">
+        <label htmlFor="address_private">內部備註（後台限定）</label>
+        <textarea className="textarea" id="address_private" name="address_private" />
+      </div>
+      <div className="field">
+        <label htmlFor="price">開價（萬）</label>
+        <input className="input" id="price" name="price" type="number" min="0" />
+      </div>
+      <div className="field">
+        <label htmlFor="land_area_ping">土地坪數</label>
+        <input className="input" id="land_area_ping" name="land_area_ping" type="number" step="0.01" min="0" />
+      </div>
+      <div className="field">
+        <label htmlFor="building_area_ping">建物坪數</label>
+        <input className="input" id="building_area_ping" name="building_area_ping" type="number" step="0.01" min="0" />
+      </div>
+      <div className="field">
+        <label htmlFor="layout">格局</label>
+        <input className="input" id="layout" name="layout" />
+      </div>
+      <div className="field">
+        <label htmlFor="age">屋齡</label>
+        <input className="input" id="age" name="age" type="number" step="0.1" min="0" />
+      </div>
+      <div className="field">
+        <label htmlFor="orientation">座向</label>
+        <input className="input" id="orientation" name="orientation" />
+      </div>
+      <div className="field">
+        <label htmlFor="floor">樓層</label>
+        <input className="input" id="floor" name="floor" />
+      </div>
+      <div className="field">
+        <label htmlFor="property_type">類型</label>
+        <select className="select" id="property_type" name="property_type" defaultValue="other">
+          {typeOptions.map(([value, label]) => (
+            <option key={value} value={value}>{label}</option>
+          ))}
+        </select>
+      </div>
+      <div className="field">
+        <label htmlFor="sort_order">排序</label>
+        <input className="input" id="sort_order" name="sort_order" type="number" defaultValue={1000} />
+      </div>
+      <div className="field">
+        <label htmlFor="status">上架狀態</label>
+        <select className="select" id="status" name="status" defaultValue="draft" disabled={!canPublish}>
+          <option value="draft">草稿</option>
+          <option value="published">已上架</option>
+          <option value="archived">下架</option>
+        </select>
+        {!canPublish ? <input type="hidden" name="status" value="draft" /> : null}
+      </div>
+      {canPublish ? (
+        <div className="field">
+          <label>
+            <input type="checkbox" name="is_featured" /> 設為精選
+          </label>
+        </div>
+      ) : null}
+      <div className="field full">
+        <label htmlFor="highlights">推薦特色</label>
+        <textarea className="textarea" id="highlights" name="highlights" placeholder="每行一個特色" />
+      </div>
+      <div className="field full">
+        <label htmlFor="description">詳細介紹</label>
+        <textarea className="textarea" id="description" name="description" />
+      </div>
+      <div className="field">
+        <label htmlFor="seo_title">SEO Title</label>
+        <input className="input" id="seo_title" name="seo_title" />
+      </div>
+      <div className="field">
+        <label htmlFor="meta_description">Meta Description</label>
+        <input className="input" id="meta_description" name="meta_description" />
+      </div>
+      <input type="hidden" name="og_image_url" value="" />
+      <input type="hidden" name="canonical_url" value="" />
+      <div className="field full">
+        <button className="button" type="submit">建立物件</button>
+      </div>
+    </form>
+  );
+}

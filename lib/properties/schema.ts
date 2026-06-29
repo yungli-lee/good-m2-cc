@@ -26,7 +26,7 @@ export const propertySchema = z.object({
   title: z.string().trim().min(1, "請輸入案名").max(120),
   slug: z.string().trim().min(1).max(140).regex(/^[a-z0-9-]+$/),
   address_public: z.string().trim().max(160).optional().or(z.literal("")),
-  address_private: z.string().trim().max(300).optional().or(z.literal("")),
+  address_private: z.string().trim().max(4000).optional().or(z.literal("")),
   price: optionalNumber,
   land_area_ping: optionalNumber,
   building_area_ping: optionalNumber,

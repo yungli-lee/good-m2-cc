@@ -264,6 +264,48 @@ td {
   border: 1px solid rgba(201, 154, 67, 0.3);
 }
 
+.ai-property-form {
+  margin-top: 18px;
+}
+
+.ai-quick-paste {
+  padding: 16px;
+  border: 1px solid rgba(16, 35, 67, 0.12);
+  border-radius: 8px;
+  background: #f8fafc;
+}
+
+.ai-quick-paste-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.ai-quick-paste-header h2 {
+  margin: 0 0 4px;
+  font-size: 1.15rem;
+}
+
+.ai-quick-paste-header p {
+  margin: 0;
+}
+
+.ai-copy-button {
+  min-width: 72px;
+}
+
+.ai-quick-paste-textarea {
+  min-height: 180px;
+}
+
+.ai-quick-paste-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
 .admin-users-shell {
   display: grid;
   gap: 18px;
