@@ -1,7 +1,31 @@
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 const publicPropertySelect = `
-  *,
+  id,
+  slug,
+  title,
+  address_public,
+  price,
+  land_area_ping,
+  building_area_ping,
+  layout,
+  age,
+  orientation,
+  floor,
+  property_type,
+  highlights,
+  description,
+  status,
+  is_featured,
+  sort_order,
+  seo_title,
+  meta_description,
+  og_image_url,
+  canonical_url,
+  published_at,
+  created_at,
+  updated_at,
+  deleted_at,
   property_media(*)
 `;
 

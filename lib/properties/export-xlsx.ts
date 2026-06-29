@@ -146,7 +146,13 @@ function listHighlights(value?: string[]) {
 }
 
 function filenameSafe(value: string) {
-  return value.replace(/[\\/:*?"<>|]/g, "-").replace(/\s+/g, "").slice(0, 80) || "property";
+  const cleaned = Array.from(value.normalize("NFKC"))
+    .map((char) => (/[\p{Script=Han}a-zA-Z0-9_-]/u.test(char) ? char : "-"))
+    .join("")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "")
+    .slice(0, 80);
+  return cleaned || "property";
 }
 
 function buildSheet(property: Property) {
