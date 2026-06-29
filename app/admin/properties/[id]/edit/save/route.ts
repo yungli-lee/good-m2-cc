@@ -11,6 +11,27 @@ function redirectTo(request: NextRequest, path: string) {
   return NextResponse.redirect(new URL(path, request.url), { status: 303 });
 }
 
+async function resolveUniqueSlug(
+  supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>,
+  baseSlug: string,
+  excludeId: string
+) {
+  const { data, error } = await supabase
+    .from("properties")
+    .select("id, slug")
+    .or(`slug.eq.${baseSlug},slug.like.${baseSlug}-%`)
+    .neq("id", excludeId);
+
+  if (error || !data?.length) return baseSlug;
+
+  const existing = new Set(data.map((property) => property.slug));
+  if (!existing.has(baseSlug)) return baseSlug;
+
+  let serial = 2;
+  while (existing.has(`${baseSlug}-${serial}`)) serial += 1;
+  return `${baseSlug}-${serial}`;
+}
+
 async function tryRecordAuditLog(input: Parameters<typeof recordAuditLog>[0]) {
   try {
     await recordAuditLog(input);
@@ -43,10 +64,12 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   }
 
   const payload = toPropertyPayload(input);
+  const slug = await resolveUniqueSlug(supabase, payload.slug, id);
   const safePayload = canPublishProperties(role)
-    ? payload
+    ? { ...payload, slug }
     : {
         ...payload,
+        slug,
         status: "draft" as const,
         is_featured: before.is_featured
       };

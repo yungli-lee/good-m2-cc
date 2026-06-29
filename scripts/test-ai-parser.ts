@@ -80,6 +80,9 @@ assert.equal(sampleTownhouse.owner_name, "王先生");
 assert.equal(sampleTownhouse.owner_phone, "0912-345-678");
 assert.equal(sampleTownhouse.developer_names, "淑美、阿勇");
 assert.equal(sampleTownhouse.showing_instructions, "鑰匙在電表上，請先通知屋主");
+assert.equal(sampleTownhouse.address_public, "員林市大同路一段");
+assert.match(sampleTownhouse.address_private || "", /完整地址：員林市大同路一段128巷23號/);
+assert.match(sampleTownhouse.address_private || "", /地號：員林市仁愛段668-3號/);
 assert.equal(sampleTownhouse.property_type, "townhouse");
 assert.equal(sampleTownhouse.price, "988");
 assert.equal(sampleTownhouse.land_area_ping, "21.17");
@@ -117,5 +120,13 @@ assert.equal(storefrontTownhouse.property_type, "townhouse");
 assert.equal(storefrontTownhouse.price, "6300");
 assert.equal(storefrontTownhouse.developer_names, "阿勇、淑美");
 assert.match(storefrontTownhouse.slug || "", /^20260124-/);
+
+const addressPrivacy = parsePastedProperty(`
+案名：福興測試
+地址：彰化縣福興鄉龍舟路680巷45號
+`);
+
+assert.equal(addressPrivacy.address_public, "彰化縣福興鄉龍舟路");
+assert.match(addressPrivacy.address_private || "", /完整地址：彰化縣福興鄉龍舟路680巷45號/);
 
 console.log("ai-parser tests passed");

@@ -4,7 +4,6 @@ import { PropertyForm } from "@/components/admin/property-form";
 import { requireRole } from "@/lib/auth";
 import { getAdminPropertyById } from "@/lib/properties/queries";
 import type { Property } from "@/lib/properties/types";
-import { updatePropertyAction } from "../../actions";
 
 export const runtime = "edge";
 
@@ -21,7 +20,6 @@ export default async function EditPropertyPage({ params, searchParams }: Props) 
   if (error || !data) notFound();
 
   const property = data as Property;
-  const updateAction = updatePropertyAction.bind(null, property.id);
 
   return (
     <main className="section">
@@ -32,7 +30,7 @@ export default async function EditPropertyPage({ params, searchParams }: Props) 
         {query.error ? <div className="notice">操作失敗：{query.error}</div> : null}
         <div className="card">
           <div className="card-body">
-            <PropertyForm key={property.id} property={property} role={current.profile.role} formAction={updateAction} />
+            <PropertyForm key={property.id} property={property} role={current.profile.role} formAction={`/admin/properties/${property.id}/edit/save`} />
             <div className="actions">
               <Link className="button ghost" href="/admin/properties">返回物件列表</Link>
             </div>

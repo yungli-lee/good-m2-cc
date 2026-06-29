@@ -169,13 +169,13 @@ function inlineStringCell(ref: string, value: CellValue, existingAttrs = "") {
 }
 
 function replaceCell(sheetXml: string, ref: string, value: CellValue) {
-  const cellPattern = new RegExp(`<c r="${ref}"([^>]*)>[\\s\\S]*?<\\/c>`);
-  if (cellPattern.test(sheetXml)) {
-    return sheetXml.replace(cellPattern, (_match, attrs: string) => inlineStringCell(ref, value, attrs));
-  }
   const selfClosingCellPattern = new RegExp(`<c r="${ref}"([^>]*)\\/>`);
   if (selfClosingCellPattern.test(sheetXml)) {
     return sheetXml.replace(selfClosingCellPattern, (_match, attrs: string) => inlineStringCell(ref, value, attrs));
+  }
+  const cellPattern = new RegExp(`<c r="${ref}"([^\\/>]*)>[\\s\\S]*?<\\/c>`);
+  if (cellPattern.test(sheetXml)) {
+    return sheetXml.replace(cellPattern, (_match, attrs: string) => inlineStringCell(ref, value, attrs));
   }
 
   const rowNumber = ref.match(/\d+/)?.[0];
@@ -253,6 +253,7 @@ function buildTemplateValues(property: Property) {
   const showing = property.showing_instructions || extractInternalValue(notes, "帶看") || extractInternalValue(notes, "帶看資訊");
   const completionDate = extractInternalValue(notes, "完工日");
   const lotNumber = extractInternalValue(notes, "地號");
+  const fullAddress = extractInternalValue(notes, "完整地址") || property.address_public || "";
   const highlights = listHighlights(property.highlights);
   const listingPeriod = [property.listing_start_date, property.listing_end_date].filter(Boolean).join(" - ");
   const managementNotes = [
@@ -273,7 +274,7 @@ function buildTemplateValues(property: Property) {
     C13: property.price == null ? "" : `${property.price}萬`,
     C14: bottomPrice,
     H14: developer,
-    C15: property.address_public || "",
+    C15: fullAddress,
     H15: showing,
     C16: lotNumber,
     C19: propertyUseLine(property),
@@ -287,7 +288,6 @@ function buildTemplateValues(property: Property) {
     H27: property.age == null ? "" : `${property.age}年`,
     B29: propertyTypeLabel(property.property_type),
     G29: highlights,
-    G35: property.description || "",
     B43: managementNotes
   } satisfies Record<string, CellValue>;
 }

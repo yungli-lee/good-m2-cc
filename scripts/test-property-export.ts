@@ -13,7 +13,7 @@ const property: Property = {
   slug: "test",
   title: "測試 & <快官> \"幸福宅\"",
   address_public: "彰化市互助一街 & Google Maps: https://maps.google.com/?q=24.1,120.5&z=18",
-  address_private: "底價：出價談\n開發：淑美 & 阿勇\n帶看：直接帶看\n完工日：70/6/26\n地號：彰化市廣鳳段1036地號\n特殊：A\u0001B",
+  address_private: "完整地址：彰化縣鹿港鎮民權路119號\n底價：出價談\n開發：淑美 & 阿勇\n帶看：直接帶看\n完工日：70/6/26\n地號：彰化市廣鳳段1036地號\n特殊：A\u0001B",
   listing_no: "AK5384529",
   listing_type: "專任",
   listing_start_date: "2026-01-22",
@@ -70,6 +70,21 @@ function readZipEntry(zipPath: string, entryName: string) {
   throw new Error(`ZIP entry not found: ${entryName}`);
 }
 
+function cellMap(sheetXml: string) {
+  const cells = new Map<string, string>();
+  for (const match of sheetXml.matchAll(/<c r="([A-Z]+\d+)"([^\/>]*)>([\s\S]*?)<\/c>/g)) {
+    const text = match[3]
+      .replace(/<[^>]+>/g, "")
+      .replace(/&lt;/g, "<")
+      .replace(/&gt;/g, ">")
+      .replace(/&quot;/g, '"')
+      .replace(/&apos;/g, "'")
+      .replace(/&amp;/g, "&");
+    if (text) cells.set(match[1], text);
+  }
+  return cells;
+}
+
 const outputDir = join(tmpdir(), "good-m2-export-test");
 mkdirSync(outputDir, { recursive: true });
 const outputPath = join(outputDir, "property-export-test.xlsx");
@@ -83,11 +98,33 @@ writeFileSync(sheetPath, sheetXml);
 execFileSync("python3", ["-c", "import sys, xml.etree.ElementTree as ET; ET.parse(sys.argv[1])", sheetPath], { stdio: "pipe" });
 
 assert.match(sheetXml, /測試 &amp; &lt;快官&gt; &quot;幸福宅&quot;/);
-assert.match(sheetXml, /https:\/\/maps\.google\.com\/\?q=24\.1,120\.5&amp;z=18/);
+assert.match(sheetXml, /https:\/\/maps\.google\.com\/\?q=a&amp;b=c/);
 assert.match(sheetXml, /AK5384529/);
 assert.match(sheetXml, /0912-345-678/);
 assert.match(sheetXml, /鑰匙在電表上/);
 assert.doesNotMatch(sheetXml, /\u0001/);
+
+const cells = cellMap(sheetXml);
+assert.equal(cells.get("C12"), property.title);
+assert.equal(cells.get("C13"), "798萬");
+assert.equal(cells.get("C14"), "出價談");
+assert.equal(cells.get("H14"), "淑美、阿勇");
+assert.equal(cells.get("C15"), "彰化縣鹿港鎮民權路119號");
+assert.equal(cells.get("H15"), property.showing_instructions);
+assert.equal(cells.get("C16"), "彰化市廣鳳段1036地號");
+assert.equal(cells.get("C23"), "27.13 坪");
+assert.equal(cells.get("C24"), "26.27 坪");
+assert.equal(cells.get("H24"), "坐西北朝東南");
+assert.equal(cells.get("C25"), "2樓");
+assert.equal(cells.get("C26"), "4房3廳2衛");
+assert.equal(cells.get("C27"), "70/6/26");
+assert.equal(cells.get("H27"), "55.1年");
+assert.match(cells.get("G29") || "", /近快官交流道 & 台鳳/);
+assert.match(cells.get("B43") || "", /委託期間：2026-01-22 - 2026-04-21/);
+assert.match(cells.get("B43") || "", /屋主電話：0912-345-678/);
+for (const ref of ["G35", "H35", "I35", "J35", "K35", "L35"]) {
+  assert.equal(cells.get(ref), undefined, `${ref} should stay blank for layout image`);
+}
 
 const buildingOutputPath = join(outputDir, "property-export-building-test.xlsx");
 writeFileSync(buildingOutputPath, buildPropertyExportXlsx({ ...property, property_type: "building" }));

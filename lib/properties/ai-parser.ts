@@ -103,6 +103,16 @@ function extractValue(text: string, labels: string[]) {
   return "";
 }
 
+function publicAddressFromFull(value: string) {
+  const trimmed = value.trim();
+  const match = trimmed.match(/^(.+?(?:路|街|大道|段))(?:\d|[一二三四五六七八九十百]+巷|[一二三四五六七八九十百]+弄|[一二三四五六七八九十百]+號|$)/);
+  return (match?.[1] || trimmed)
+    .replace(/\d+巷.*$/, "")
+    .replace(/\d+弄.*$/, "")
+    .replace(/\d+號.*$/, "")
+    .trim();
+}
+
 function normalizeNumber(value: string) {
   const cleaned = value.replace(/,/g, "").replace(/[坪元\s]/g, "");
   const match = cleaned.match(/(\d+(?:\.\d+)?)/);
@@ -236,6 +246,16 @@ function extractLeadingDate(text: string) {
 }
 
 function parseListingPeriod(value: string) {
+  const datePattern = /(20\d{2}|19\d{2})[/-年.]\d{1,2}(?:[/-月.]\d{1,2})?/g;
+  const dates = value.match(datePattern) || [];
+  if (dates.length >= 2) {
+    const [start, end] = dates as [string, string, ...string[]];
+    return {
+      start: normalizeDateText(start),
+      end: normalizeDateText(end)
+    };
+  }
+
   const [start = "", end = ""] = value.split(/\s*[-~～至到]\s*/);
   return {
     start: start ? normalizeDateText(start) : "",
@@ -287,6 +307,15 @@ export function parsePastedProperty(rawText: string): ParsedProperty {
     }
     const field = findAliasField(label);
     if (!field) continue;
+    if (field === "address_public") {
+      if (/^(地址|座落)$/.test(label)) {
+        parsed.address_public = publicAddressFromFull(value);
+        internalNotes.unshift(`完整地址：${value}`);
+      } else {
+        parsed.address_public = value;
+      }
+      continue;
+    }
     if (field === "bottom_price" || field === "lot_number" || field === "main_building" || field === "balcony" || field === "shared_area" || field === "completion_date" || field === "internal_notes") {
       internalNotes.push(`${label}：${value}`);
       if (field === "completion_date" && !parsed.age) parsed.age = calculateAgeFromDate(value);
@@ -300,7 +329,14 @@ export function parsePastedProperty(rawText: string): ParsedProperty {
   }
 
   parsed.title ||= extractValue(text, ["案名", "物件名稱", "社區"]);
-  parsed.address_public ||= extractValue(text, ["公開地址", "地址", "座落"]);
+  parsed.address_public ||= extractValue(text, ["公開地址"]);
+  if (!parsed.address_public) {
+    const fullAddress = extractValue(text, ["地址", "座落"]);
+    if (fullAddress) {
+      parsed.address_public = publicAddressFromFull(fullAddress);
+      if (!internalNotes.some((note) => note.startsWith("完整地址："))) internalNotes.unshift(`完整地址：${fullAddress}`);
+    }
+  }
   parsed.price ||= extractValue(text, ["開價", "售價", "總價"]);
   parsed.land_area_ping ||= extractValue(text, ["地坪", "土地坪數"]);
   parsed.building_area_ping ||= extractValue(text, ["建坪", "建物坪數", "權狀"]);
