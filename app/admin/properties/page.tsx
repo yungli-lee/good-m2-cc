@@ -137,6 +137,7 @@ export default async function AdminPropertiesPage({ searchParams }: Props) {
                     <td>
                       <div className="actions">
                         <Link className="button ghost" href={`/admin/properties/${property.id}/edit`}>編輯</Link>
+                        <Link className="button ghost" href={`/admin/properties/${property.id}/export`}>匯出 Excel</Link>
                         <PublishAction id={property.id} status={property.status} />
                         <FeaturedAction id={property.id} isFeatured={property.is_featured} />
                       </div>
