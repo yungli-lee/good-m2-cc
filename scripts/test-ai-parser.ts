@@ -1,6 +1,5 @@
 import assert from "node:assert/strict";
 
-// @ts-expect-error Node strip-types runs this script directly with a TypeScript extension import.
 const { parsePastedProperty } = await import("../lib/properties/ai-parser.ts");
 
 const parsed = parsePastedProperty(`

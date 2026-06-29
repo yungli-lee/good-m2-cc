@@ -1,10 +1,29 @@
-import { formatPing, propertyTypeLabel } from "@/lib/format";
-import { propertyExportTemplateFiles } from "./export-template";
+import { propertyExportTemplateFiles } from "./export-template.ts";
 import type { Property } from "./types";
 
 type CellValue = string | number | null | undefined;
 
 const textEncoder = new TextEncoder();
+
+function formatPing(value?: number | null) {
+  if (value == null) return "-";
+  return `${Number(value).toLocaleString("zh-TW", { maximumFractionDigits: 2 })} 坪`;
+}
+
+function propertyTypeLabel(value: string) {
+  const labels: Record<string, string> = {
+    townhouse: "透天",
+    apartment: "公寓",
+    building: "大樓",
+    land: "土地",
+    farmland: "農地",
+    building_land: "建地",
+    storefront: "店面",
+    factory: "廠房",
+    other: "其他"
+  };
+  return labels[value] || value;
+}
 
 const crcTable = new Uint32Array(256).map((_, index) => {
   let crc = index;
@@ -108,6 +127,7 @@ function makeZip(files: Array<{ name: string; content: string | Uint8Array }>) {
 
 function xml(value: CellValue) {
   return String(value ?? "")
+    .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, "")
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
@@ -136,7 +156,7 @@ function cellSortKey(ref: string) {
 }
 
 function inlineStringCell(ref: string, value: CellValue, existingAttrs = "") {
-  const attrs = existingAttrs.replace(/\s+t="[^"]*"/, "");
+  const attrs = existingAttrs.replace(/\s+t="[^"]*"/, "").replace(/\s*\/\s*$/, "");
   return `<c r="${ref}"${attrs} t="inlineStr"><is><t xml:space="preserve">${xml(value)}</t></is></c>`;
 }
 
@@ -144,6 +164,10 @@ function replaceCell(sheetXml: string, ref: string, value: CellValue) {
   const cellPattern = new RegExp(`<c r="${ref}"([^>]*)>[\\s\\S]*?<\\/c>`);
   if (cellPattern.test(sheetXml)) {
     return sheetXml.replace(cellPattern, (_match, attrs: string) => inlineStringCell(ref, value, attrs));
+  }
+  const selfClosingCellPattern = new RegExp(`<c r="${ref}"([^>]*)\\/>`);
+  if (selfClosingCellPattern.test(sheetXml)) {
+    return sheetXml.replace(selfClosingCellPattern, (_match, attrs: string) => inlineStringCell(ref, value, attrs));
   }
 
   const rowNumber = ref.match(/\d+/)?.[0];
