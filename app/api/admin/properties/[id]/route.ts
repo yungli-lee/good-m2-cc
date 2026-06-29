@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireApiRole, apiError } from "@/lib/auth-api";
-import { canDeleteProperties, canPublishProperties } from "@/lib/auth";
+import { canDeleteProperties, canManageSensitive, canPublishProperties } from "@/lib/auth";
 import { recordAuditLog } from "@/lib/audit/audit-log";
 import { propertySchema, toPropertyPayload } from "@/lib/properties/schema";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -9,6 +9,20 @@ import { routeIdParamsSchema } from "@/lib/validation/common";
 export const runtime = "edge";
 
 type Props = { params: Promise<{ id: string }> };
+
+function redactProgressNotes<T extends { progress_notes?: string | null }>(property: T, role: string) {
+  if (canManageSensitive(role as Parameters<typeof canManageSensitive>[0])) return property;
+  const safeProperty = { ...property };
+  delete safeProperty.progress_notes;
+  return safeProperty;
+}
+
+function progressNotesSafePayload<T extends { progress_notes?: string | null }>(payload: T, role: string) {
+  if (canManageSensitive(role as Parameters<typeof canManageSensitive>[0])) return payload;
+  const safePayload = { ...payload };
+  delete safePayload.progress_notes;
+  return safePayload;
+}
 
 export async function GET(_request: Request, { params }: Props) {
   const auth = await requireApiRole(["editor", "admin", "owner"]);
@@ -20,7 +34,7 @@ export async function GET(_request: Request, { params }: Props) {
   const { data, error } = await supabase.from("properties").select("*, property_media(*)").eq("id", id).is("deleted_at", null).maybeSingle();
   if (error) return apiError("Unable to load property", 500);
   if (!data) return apiError("Not found", 404);
-  return NextResponse.json({ data });
+  return NextResponse.json({ data: redactProgressNotes(data, auth.current!.profile.role) });
 }
 
 export async function PATCH(request: Request, { params }: Props) {
@@ -40,7 +54,9 @@ export async function PATCH(request: Request, { params }: Props) {
   if (!canPublishProperties(role) && before.status !== "draft") return apiError("Editor can edit draft properties only", 403);
 
   const payload = toPropertyPayload(parsed.data);
-  const safePayload = canPublishProperties(role) ? payload : { ...payload, status: "draft", is_featured: before.is_featured };
+  const safePayload = canPublishProperties(role)
+    ? progressNotesSafePayload(payload, role)
+    : progressNotesSafePayload({ ...payload, status: "draft", is_featured: before.is_featured }, role);
   const { data, error } = await supabase
     .from("properties")
     .update({

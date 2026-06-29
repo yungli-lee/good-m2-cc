@@ -296,7 +296,6 @@ export function parsePastedProperty(rawText: string): ParsedProperty {
   const labeled = extractLabeledLines(text);
   const parsed: ParsedProperty = {};
   const internalNotes: string[] = [];
-  const publicDetails: string[] = [];
 
   for (const [label, value] of labeled.entries()) {
     if (label === "委託期間") {
@@ -383,6 +382,7 @@ export function parsePastedProperty(rawText: string): ParsedProperty {
   parsed.age = parsed.age ? normalizeNumber(parsed.age) : "";
   parsed.floor ||= inferFloor(parsed.title || text);
   parsed.listing_type = parsed.listing_type === "一般" ? "一般委託" : parsed.listing_type;
+  parsed.listing_type = parsed.listing_type === "口頭約" ? "口頭" : parsed.listing_type;
   parsed.property_type = inferType(text);
   parsed.slug = normalizeSlug(parsed.title, extractLeadingDate(text));
   parsed.highlights = collectHighlights(text, parsed.highlights || "");
@@ -390,11 +390,7 @@ export function parsePastedProperty(rawText: string): ParsedProperty {
   if (parsed.address_private) internalNotes.unshift(`完整地址：${parsed.address_private}`);
   parsed.address_private = internalNotes.join("\n").slice(0, 4000);
 
-  if (parsed.address_public) publicDetails.push(parsed.address_public);
-  if (parsed.land_area_ping) publicDetails.push(`土地 ${parsed.land_area_ping} 坪`);
-  if (parsed.building_area_ping) publicDetails.push(`建物 ${parsed.building_area_ping} 坪`);
-  if (parsed.layout) publicDetails.push(parsed.layout);
-  parsed.description = [parsed.highlights, publicDetails.join(" / ")].filter(Boolean).join("\n\n").slice(0, 8000);
+  parsed.description = "";
   parsed.seo_title = `${parsed.title}｜阿勇不動產顧問`.slice(0, 180);
   parsed.meta_description = compactMetaDescription([parsed.title || "", parsed.address_public || "", parsed.layout || "", parsed.price ? `開價 ${parsed.price} 萬` : ""]);
 

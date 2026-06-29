@@ -88,6 +88,7 @@ assert.equal(sampleTownhouse.price, "988");
 assert.equal(sampleTownhouse.land_area_ping, "21.17");
 assert.equal(sampleTownhouse.building_area_ping, "27.58");
 assert.equal(sampleTownhouse.layout, "4房3廳3衛");
+assert.equal(sampleTownhouse.description, "");
 assert.match(sampleTownhouse.slug || "", /^20260122-/);
 assert.doesNotMatch(sampleTownhouse.slug || "", /AK5384529/i);
 

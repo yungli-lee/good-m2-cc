@@ -36,13 +36,14 @@ export const propertySchema = z.object({
   address_public: z.string().trim().max(160).optional().or(z.literal("")),
   address_private: z.string().trim().max(4000).optional().or(z.literal("")),
   listing_no: z.string().trim().max(80).optional().or(z.literal("")),
-  listing_type: z.enum(["專任", "一般委託", ""]).optional(),
+  listing_type: z.enum(["專任", "一般委託", "口頭", ""]).optional(),
   listing_start_date: z.string().trim().max(10).optional().or(z.literal("")),
   listing_end_date: z.string().trim().max(10).optional().or(z.literal("")),
   owner_name: z.string().trim().max(80).optional().or(z.literal("")),
   owner_phone: z.string().trim().max(80).optional().or(z.literal("")),
   developer_names: z.string().trim().max(160).optional().or(z.literal("")),
   showing_instructions: z.string().trim().max(1000).optional().or(z.literal("")),
+  progress_notes: z.string().trim().max(8000).optional().or(z.literal("")),
   price: optionalNumber,
   land_area_ping: optionalNumber,
   building_area_ping: optionalNumber,
@@ -99,6 +100,7 @@ export type PropertyFormValues = {
   owner_phone: string;
   developer_names: string;
   showing_instructions: string;
+  progress_notes: string;
   price: string;
   land_area_ping: string;
   building_area_ping: string;
@@ -148,6 +150,7 @@ export function propertyValuesFromFormData(formData: FormData): PropertyFormValu
     owner_phone: String(formData.get("owner_phone") || ""),
     developer_names: String(formData.get("developer_names") || ""),
     showing_instructions: String(formData.get("showing_instructions") || ""),
+    progress_notes: String(formData.get("progress_notes") || ""),
     price: String(formData.get("price") || ""),
     land_area_ping: String(formData.get("land_area_ping") || ""),
     building_area_ping: String(formData.get("building_area_ping") || ""),
@@ -218,6 +221,7 @@ export function toPropertyPayload(input: PropertyFormInput) {
     owner_phone: emptyToNull(input.owner_phone || ""),
     developer_names: emptyToNull(input.developer_names || ""),
     showing_instructions: emptyToNull(input.showing_instructions || ""),
+    progress_notes: emptyToNull(input.progress_notes || ""),
     layout: emptyToNull(input.layout || ""),
     age: input.age ?? null,
     orientation: emptyToNull(input.orientation || ""),

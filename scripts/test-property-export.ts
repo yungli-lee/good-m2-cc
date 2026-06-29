@@ -105,6 +105,8 @@ assert.match(sheetXml, /鑰匙在電表上/);
 assert.doesNotMatch(sheetXml, /\u0001/);
 
 const cells = cellMap(sheetXml);
+assert.equal(cells.get("C11"), "AK5384529");
+assert.equal(cells.get("H11"), "2026-01-22 - 2026-04-21");
 assert.equal(cells.get("C12"), property.title);
 assert.equal(cells.get("C13"), "798萬");
 assert.equal(cells.get("C14"), "出價談");
@@ -112,6 +114,7 @@ assert.equal(cells.get("H14"), "淑美、阿勇");
 assert.equal(cells.get("C15"), "彰化縣鹿港鎮民權路119號");
 assert.equal(cells.get("H15"), property.showing_instructions);
 assert.equal(cells.get("C16"), "彰化市廣鳳段1036地號");
+assert.equal(cells.get("C17"), "王先生 / 0912-345-678");
 assert.equal(cells.get("C23"), "27.13 坪");
 assert.equal(cells.get("C24"), "26.27 坪");
 assert.equal(cells.get("H24"), "坐西北朝東南");
@@ -120,8 +123,7 @@ assert.equal(cells.get("C26"), "4房3廳2衛");
 assert.equal(cells.get("C27"), "70/6/26");
 assert.equal(cells.get("H27"), "55.1年");
 assert.match(cells.get("G29") || "", /近快官交流道 & 台鳳/);
-assert.match(cells.get("B43") || "", /委託期間：2026-01-22 - 2026-04-21/);
-assert.match(cells.get("B43") || "", /屋主電話：0912-345-678/);
+assert.equal(cells.get("B43"), undefined);
 for (const ref of ["G35", "H35", "I35", "J35", "K35", "L35"]) {
   assert.equal(cells.get(ref), undefined, `${ref} should stay blank for layout image`);
 }

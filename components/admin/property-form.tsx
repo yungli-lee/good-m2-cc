@@ -23,6 +23,7 @@ export function PropertyForm({
   formAction: string | ((formData: FormData) => Promise<void>);
 }) {
   const canPublish = role === "admin" || role === "owner";
+  const canManageProgressNotes = role === "admin" || role === "owner";
   const actionPath = typeof formAction === "string" ? formAction : undefined;
 
   return (
@@ -53,6 +54,7 @@ export function PropertyForm({
           <option value="">未設定</option>
           <option value="專任">專任</option>
           <option value="一般委託">一般委託</option>
+          <option value="口頭">口頭</option>
         </select>
       </div>
       <div className="field">
@@ -79,6 +81,12 @@ export function PropertyForm({
         <label htmlFor="showing_instructions">帶看方式</label>
         <textarea className="textarea" id="showing_instructions" name="showing_instructions" defaultValue={property?.showing_instructions || ""} />
       </div>
+      {canManageProgressNotes ? (
+        <div className="field full">
+          <label htmlFor="progress_notes">物件追蹤紀錄</label>
+          <textarea className="textarea" id="progress_notes" name="progress_notes" defaultValue={property?.progress_notes || ""} />
+        </div>
+      ) : null}
       <div className="field">
         <label htmlFor="price">開價</label>
         <input className="input" id="price" name="price" type="number" min="0" defaultValue={property?.price || ""} />

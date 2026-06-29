@@ -256,20 +256,12 @@ function buildTemplateValues(property: Property) {
   const fullAddress = extractInternalValue(notes, "完整地址") || property.address_public || "";
   const highlights = listHighlights(property.highlights);
   const listingPeriod = [property.listing_start_date, property.listing_end_date].filter(Boolean).join(" - ");
-  const managementNotes = [
-    property.listing_no ? `委託書編號：${property.listing_no}` : "",
-    property.listing_type ? `委託類型：${property.listing_type}` : "",
-    listingPeriod ? `委託期間：${listingPeriod}` : "",
-    property.owner_name ? `屋主名稱：${property.owner_name}` : "",
-    property.owner_phone ? `屋主電話：${property.owner_phone}` : "",
-    developer ? `開發：${developer}` : "",
-    showing ? `帶看：${showing}` : "",
-    notes
-  ].filter(Boolean).join("\n");
 
   return {
-    A8: property.listing_type ? checkedOption(property.listing_type, ["專任", "一般委託", "口頭約"]) : "▪️口頭約",
+    A8: property.listing_type ? checkedOption(property.listing_type, ["專任", "一般委託", "口頭"]) : "□專任 □一般委託 □口頭",
     A9: "廣告▪️刊登 □不刊登(原因:______)                             ",
+    C11: property.listing_no || "",
+    H11: listingPeriod,
     C12: property.title,
     C13: property.price == null ? "" : `${property.price}萬`,
     C14: bottomPrice,
@@ -277,6 +269,7 @@ function buildTemplateValues(property: Property) {
     C15: fullAddress,
     H15: showing,
     C16: lotNumber,
+    C17: [property.owner_name, property.owner_phone].filter(Boolean).join(" / "),
     C19: propertyUseLine(property),
     C20: propertyTypeLine(property),
     C23: formatPing(property.land_area_ping),
@@ -288,7 +281,7 @@ function buildTemplateValues(property: Property) {
     H27: property.age == null ? "" : `${property.age}年`,
     B29: propertyTypeLabel(property.property_type),
     G29: highlights,
-    B43: managementNotes
+    B43: ""
   } satisfies Record<string, CellValue>;
 }
 

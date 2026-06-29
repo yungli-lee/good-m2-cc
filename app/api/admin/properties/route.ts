@@ -1,11 +1,25 @@
 import { NextResponse } from "next/server";
 import { requireApiRole, apiError } from "@/lib/auth-api";
-import { canPublishProperties } from "@/lib/auth";
+import { canManageSensitive, canPublishProperties } from "@/lib/auth";
 import { recordAuditLog } from "@/lib/audit/audit-log";
 import { propertySchema, toPropertyPayload } from "@/lib/properties/schema";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export const runtime = "edge";
+
+function redactProgressNotes<T extends { progress_notes?: string | null }>(property: T, role: string) {
+  if (canManageSensitive(role as Parameters<typeof canManageSensitive>[0])) return property;
+  const safeProperty = { ...property };
+  delete safeProperty.progress_notes;
+  return safeProperty;
+}
+
+function progressNotesSafePayload<T extends { progress_notes?: string | null }>(payload: T, role: string) {
+  if (canManageSensitive(role as Parameters<typeof canManageSensitive>[0])) return payload;
+  const safePayload = { ...payload };
+  delete safePayload.progress_notes;
+  return safePayload;
+}
 
 export async function GET() {
   const auth = await requireApiRole(["editor", "admin", "owner"]);
@@ -13,7 +27,7 @@ export async function GET() {
   const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase.from("properties").select("*, property_media(*)").is("deleted_at", null).order("updated_at", { ascending: false });
   if (error) return apiError("Unable to load properties", 500);
-  return NextResponse.json({ data });
+  return NextResponse.json({ data: (data || []).map((property) => redactProgressNotes(property, auth.current!.profile.role)) });
 }
 
 export async function POST(request: Request) {
@@ -25,7 +39,9 @@ export async function POST(request: Request) {
 
   const role = auth.current!.profile.role;
   const payload = toPropertyPayload(parsed.data);
-  const safePayload = canPublishProperties(role) ? payload : { ...payload, status: "draft", is_featured: false };
+  const safePayload = canPublishProperties(role)
+    ? progressNotesSafePayload(payload, role)
+    : progressNotesSafePayload({ ...payload, status: "draft", is_featured: false }, role);
   const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase
     .from("properties")

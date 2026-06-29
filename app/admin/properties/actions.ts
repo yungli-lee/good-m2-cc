@@ -7,6 +7,7 @@ import {
   canDeleteProperties,
   canManagePropertyMedia,
   canManageProperties,
+  canManageSensitive,
   canPublishProperties,
   requireRole
 } from "@/lib/auth";
@@ -107,6 +108,13 @@ async function resolveUniqueSlug(
   let serial = 2;
   while (existing.has(`${baseSlug}-${serial}`)) serial += 1;
   return `${baseSlug}-${serial}`;
+}
+
+function progressNotesSafePayload<T extends { progress_notes?: string | null }>(payload: T, role: string) {
+  if (canManageSensitive(role as Parameters<typeof canManageSensitive>[0])) return payload;
+  const safePayload = { ...payload };
+  delete safePayload.progress_notes;
+  return safePayload;
 }
 
 export async function createDraftPropertyAction(
@@ -325,8 +333,8 @@ export async function createPropertyAction(
   const slug = await resolveUniqueSlug(supabase, payload.slug);
   const role = current.profile.role;
   const safePayload = canPublishProperties(role)
-    ? { ...payload, slug }
-    : { ...payload, slug, status: "draft", is_featured: false };
+    ? progressNotesSafePayload({ ...payload, slug }, role)
+    : progressNotesSafePayload({ ...payload, slug, status: "draft", is_featured: false }, role);
 
   const { data, error } = await supabase
     .from("properties")
@@ -383,13 +391,13 @@ export async function updatePropertyAction(id: string, formData: FormData) {
   const payload = toPropertyPayload(input);
   const slug = await resolveUniqueSlug(supabase, payload.slug, id);
   const safePayload = canPublishProperties(role)
-    ? { ...payload, slug }
-    : {
+    ? progressNotesSafePayload({ ...payload, slug }, role)
+    : progressNotesSafePayload({
         ...payload,
         slug,
         status: "draft",
         is_featured: before.is_featured
-      };
+      }, role);
 
   const { data, error } = await supabase
     .from("properties")

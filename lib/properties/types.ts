@@ -14,6 +14,7 @@ export type Property = {
   owner_phone: string | null;
   developer_names: string | null;
   showing_instructions: string | null;
+  progress_notes?: string | null;
   price: number | null;
   land_area_ping: number | null;
   building_area_ping: number | null;

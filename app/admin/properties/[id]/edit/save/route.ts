@@ -1,6 +1,6 @@
 import { revalidatePath } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
-import { canManageProperties, canPublishProperties, getCurrentProfile } from "@/lib/auth";
+import { canManageProperties, canManageSensitive, canPublishProperties, getCurrentProfile } from "@/lib/auth";
 import { recordAuditLog } from "@/lib/audit/audit-log";
 import { normalizePropertyForm, toPropertyPayload } from "@/lib/properties/schema";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -30,6 +30,13 @@ async function resolveUniqueSlug(
   let serial = 2;
   while (existing.has(`${baseSlug}-${serial}`)) serial += 1;
   return `${baseSlug}-${serial}`;
+}
+
+function progressNotesSafePayload<T extends { progress_notes?: string | null }>(payload: T, role: string) {
+  if (canManageSensitive(role as Parameters<typeof canManageSensitive>[0])) return payload;
+  const safePayload = { ...payload };
+  delete safePayload.progress_notes;
+  return safePayload;
 }
 
 async function tryRecordAuditLog(input: Parameters<typeof recordAuditLog>[0]) {
@@ -66,13 +73,13 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   const payload = toPropertyPayload(input);
   const slug = await resolveUniqueSlug(supabase, payload.slug, id);
   const safePayload = canPublishProperties(role)
-    ? { ...payload, slug }
-    : {
+    ? progressNotesSafePayload({ ...payload, slug }, role)
+    : progressNotesSafePayload({
         ...payload,
         slug,
         status: "draft" as const,
         is_featured: before.is_featured
-      };
+      }, role);
 
   const { data, error } = await supabase
     .from("properties")
