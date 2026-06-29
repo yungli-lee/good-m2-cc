@@ -80,6 +80,8 @@ assert.equal(sampleTownhouse.owner_name, "王先生");
 assert.equal(sampleTownhouse.owner_phone, "0912-345-678");
 assert.equal(sampleTownhouse.developer_names, "淑美、阿勇");
 assert.equal(sampleTownhouse.showing_instructions, "鑰匙在電表上，請先通知屋主");
+assert.equal(sampleTownhouse.frontage, "4.6米");
+assert.equal(sampleTownhouse.depth, "15.7米");
 assert.equal(sampleTownhouse.address_public, "員林市大同路一段");
 assert.match(sampleTownhouse.address_private || "", /完整地址：員林市大同路一段128巷23號/);
 assert.match(sampleTownhouse.address_private || "", /地號：員林市仁愛段668-3號/);
@@ -129,5 +131,24 @@ const addressPrivacy = parsePastedProperty(`
 
 assert.equal(addressPrivacy.address_public, "彰化縣福興鄉龍舟路");
 assert.match(addressPrivacy.address_private || "", /完整地址：彰化縣福興鄉龍舟路680巷45號/);
+
+const landShape = parsePastedProperty(`
+新接物件-土地
+地號：福興鄉文昌段935號
+地坪：950坪
+面寬：35米
+深度：89~93米
+開價：877萬
+底價：出價談（3%）
+屋主名稱：劉玉梅
+`);
+
+assert.equal(landShape.property_type, "land");
+assert.equal(landShape.land_area_ping, "950");
+assert.equal(landShape.frontage, "35米");
+assert.equal(landShape.depth, "89~93米");
+assert.equal(landShape.owner_name, "劉玉梅");
+assert.match(landShape.address_private || "", /地號：福興鄉文昌段935號/);
+assert.match(landShape.address_private || "", /底價：出價談（3%）/);
 
 console.log("ai-parser tests passed");

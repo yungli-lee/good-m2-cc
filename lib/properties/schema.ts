@@ -44,6 +44,8 @@ export const propertySchema = z.object({
   developer_names: z.string().trim().max(160).optional().or(z.literal("")),
   showing_instructions: z.string().trim().max(1000).optional().or(z.literal("")),
   progress_notes: z.string().trim().max(8000).optional().or(z.literal("")),
+  frontage: z.string().trim().max(80).optional().or(z.literal("")),
+  depth: z.string().trim().max(80).optional().or(z.literal("")),
   price: optionalNumber,
   land_area_ping: optionalNumber,
   building_area_ping: optionalNumber,
@@ -101,6 +103,8 @@ export type PropertyFormValues = {
   developer_names: string;
   showing_instructions: string;
   progress_notes: string;
+  frontage: string;
+  depth: string;
   price: string;
   land_area_ping: string;
   building_area_ping: string;
@@ -151,6 +155,8 @@ export function propertyValuesFromFormData(formData: FormData): PropertyFormValu
     developer_names: String(formData.get("developer_names") || ""),
     showing_instructions: String(formData.get("showing_instructions") || ""),
     progress_notes: String(formData.get("progress_notes") || ""),
+    frontage: String(formData.get("frontage") || ""),
+    depth: String(formData.get("depth") || ""),
     price: String(formData.get("price") || ""),
     land_area_ping: String(formData.get("land_area_ping") || ""),
     building_area_ping: String(formData.get("building_area_ping") || ""),
@@ -222,6 +228,8 @@ export function toPropertyPayload(input: PropertyFormInput) {
     developer_names: emptyToNull(input.developer_names || ""),
     showing_instructions: emptyToNull(input.showing_instructions || ""),
     progress_notes: emptyToNull(input.progress_notes || ""),
+    frontage: emptyToNull(input.frontage || ""),
+    depth: emptyToNull(input.depth || ""),
     layout: emptyToNull(input.layout || ""),
     age: input.age ?? null,
     orientation: emptyToNull(input.orientation || ""),

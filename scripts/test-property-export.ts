@@ -22,6 +22,8 @@ const property: Property = {
   owner_phone: "0912-345-678",
   developer_names: "淑美、阿勇",
   showing_instructions: "鑰匙在電表上，請先通知屋主 & 帶 Google Maps",
+  frontage: "4.6米",
+  depth: "15.7米",
   price: 798,
   land_area_ping: 27.13,
   building_area_ping: 26.27,
@@ -100,7 +102,8 @@ execFileSync("python3", ["-c", "import sys, xml.etree.ElementTree as ET; ET.pars
 assert.match(sheetXml, /測試 &amp; &lt;快官&gt; &quot;幸福宅&quot;/);
 assert.match(sheetXml, /https:\/\/maps\.google\.com\/\?q=a&amp;b=c/);
 assert.match(sheetXml, /AK5384529/);
-assert.match(sheetXml, /0912-345-678/);
+assert.doesNotMatch(sheetXml, /王先生/);
+assert.doesNotMatch(sheetXml, /0912-345-678/);
 assert.match(sheetXml, /鑰匙在電表上/);
 assert.doesNotMatch(sheetXml, /\u0001/);
 
@@ -114,8 +117,10 @@ assert.equal(cells.get("H14"), "淑美、阿勇");
 assert.equal(cells.get("C15"), "彰化縣鹿港鎮民權路119號");
 assert.equal(cells.get("H15"), property.showing_instructions);
 assert.equal(cells.get("C16"), "彰化市廣鳳段1036地號");
-assert.equal(cells.get("C17"), "王先生 / 0912-345-678");
+assert.equal(cells.get("C17"), undefined);
+assert.equal(cells.get("H21"), "4.6米");
 assert.equal(cells.get("C23"), "27.13 坪");
+assert.equal(cells.get("H23"), "15.7米");
 assert.equal(cells.get("C24"), "26.27 坪");
 assert.equal(cells.get("H24"), "坐西北朝東南");
 assert.equal(cells.get("C25"), "2樓");
@@ -136,5 +141,57 @@ const buildingSheetPath = join(outputDir, "building-sheet1.xml");
 writeFileSync(buildingSheetPath, buildingSheetXml);
 execFileSync("python3", ["-c", "import sys, xml.etree.ElementTree as ET; ET.parse(sys.argv[1])", buildingSheetPath], { stdio: "pipe" });
 assert.match(buildingSheetXml, /大樓/);
+
+const landProperty: Property = {
+  ...property,
+  id: "land-test",
+  slug: "land-test",
+  title: "福興文昌段土地",
+  address_public: "",
+  address_private: "地號：福興鄉文昌段935號\n底價：出價談（3%）",
+  listing_no: null,
+  listing_type: null,
+  listing_start_date: null,
+  listing_end_date: null,
+  owner_name: "劉玉梅",
+  owner_phone: null,
+  developer_names: null,
+  showing_instructions: null,
+  frontage: "35米",
+  depth: "89~93米",
+  price: 877,
+  land_area_ping: 950,
+  building_area_ping: null,
+  layout: null,
+  age: null,
+  orientation: null,
+  floor: null,
+  property_type: "land",
+  highlights: [],
+  description: null
+};
+
+const landOutputPath = join(outputDir, "property-export-land-test.xlsx");
+writeFileSync(landOutputPath, buildPropertyExportXlsx(landProperty));
+execFileSync("unzip", ["-t", landOutputPath], { stdio: "pipe" });
+const landSheetXml = readZipEntry(landOutputPath, "xl/worksheets/sheet1.xml").toString("utf8");
+const landSheetPath = join(outputDir, "land-sheet1.xml");
+writeFileSync(landSheetPath, landSheetXml);
+execFileSync("python3", ["-c", "import sys, xml.etree.ElementTree as ET; ET.parse(sys.argv[1])", landSheetPath], { stdio: "pipe" });
+
+const landCells = cellMap(landSheetXml);
+assert.equal(landCells.get("C15"), undefined);
+assert.equal(landCells.get("C16"), "福興鄉文昌段935號");
+assert.equal(landCells.get("H21"), "35米");
+assert.equal(landCells.get("H23"), "89~93米");
+assert.equal(landCells.get("C13"), "877萬");
+assert.equal(landCells.get("C14"), "出價談（3%）");
+assert.equal(landCells.get("C17"), undefined);
+assert.doesNotMatch(landCells.get("C15") || "", /面寬|深度|底價|開發|屋主|35米|89~93米|出價談/);
+assert.doesNotMatch(landCells.get("C16") || "", /面寬|深度|底價|開發|屋主|35米|89~93米|出價談/);
+assert.doesNotMatch(landSheetXml, /劉玉梅/);
+for (const ref of ["G35", "H35", "I35", "J35", "K35", "L35"]) {
+  assert.equal(landCells.get(ref), undefined, `${ref} should stay blank for layout image`);
+}
 
 console.log("property export tests passed");

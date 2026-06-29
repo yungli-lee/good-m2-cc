@@ -70,6 +70,8 @@ export function AiPropertyForm({
       "owner_phone",
       "developer_names",
       "showing_instructions",
+      "frontage",
+      "depth",
       "price",
       "land_area_ping",
       "building_area_ping",
@@ -167,6 +169,14 @@ export function AiPropertyForm({
       <div className="field">
         <label htmlFor="showing_instructions">帶看方式</label>
         <textarea className="textarea" id="showing_instructions" name="showing_instructions" defaultValue={state.values.showing_instructions} />
+      </div>
+      <div className="field">
+        <label htmlFor="frontage">面寬</label>
+        <input className="input" id="frontage" name="frontage" defaultValue={state.values.frontage} />
+      </div>
+      <div className="field">
+        <label htmlFor="depth">深度</label>
+        <input className="input" id="depth" name="depth" defaultValue={state.values.depth} />
       </div>
       {canManageProgressNotes ? (
         <div className="field full">

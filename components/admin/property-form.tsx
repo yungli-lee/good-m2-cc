@@ -81,6 +81,14 @@ export function PropertyForm({
         <label htmlFor="showing_instructions">帶看方式</label>
         <textarea className="textarea" id="showing_instructions" name="showing_instructions" defaultValue={property?.showing_instructions || ""} />
       </div>
+      <div className="field">
+        <label htmlFor="frontage">面寬</label>
+        <input className="input" id="frontage" name="frontage" defaultValue={property?.frontage || ""} />
+      </div>
+      <div className="field">
+        <label htmlFor="depth">深度</label>
+        <input className="input" id="depth" name="depth" defaultValue={property?.depth || ""} />
+      </div>
       {canManageProgressNotes ? (
         <div className="field full">
           <label htmlFor="progress_notes">物件追蹤紀錄</label>

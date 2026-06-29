@@ -23,6 +23,8 @@ export default async function NewPropertyPage() {
       developer_names: "",
       showing_instructions: "",
       progress_notes: "",
+      frontage: "",
+      depth: "",
       price: "",
       land_area_ping: "",
       building_area_ping: "",

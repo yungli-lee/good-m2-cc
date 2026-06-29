@@ -11,6 +11,8 @@ export type ParsedProperty = {
   owner_phone?: string;
   developer_names?: string;
   showing_instructions?: string;
+  frontage?: string;
+  depth?: string;
   price?: string;
   land_area_ping?: string;
   building_area_ping?: string;
@@ -35,6 +37,8 @@ const fieldAliases: Array<[keyof ParsedProperty | "bottom_price" | "lot_number" 
   ["owner_phone", /^(屋主電話)$/],
   ["developer_names", /^(開發|開發人員|承辦|業務)$/],
   ["showing_instructions", /^(帶看|帶看資訊|帶看方式)$/],
+  ["frontage", /^(面寬)$/],
+  ["depth", /^(深度)$/],
   ["lot_number", /^(地號)$/],
   ["land_area_ping", /^(地坪|土地|土地坪數)$/],
   ["building_area_ping", /^(建坪|權狀|建物|建物坪數|總坪)$/],
@@ -49,7 +53,7 @@ const fieldAliases: Array<[keyof ParsedProperty | "bottom_price" | "lot_number" 
   ["bottom_price", /^(底價)$/],
   ["floor", /^(樓層|樓高)$/],
   ["highlights", /^(推薦特色|特色|賣點|亮點)$/],
-  ["internal_notes", /^(內部備註|密碼|鑰匙|門牌|聯絡|管理室|租金|面寬|深度)$/]
+  ["internal_notes", /^(內部備註|密碼|鑰匙|門牌|聯絡|管理室|租金)$/]
 ];
 
 const incomingCategoryPattern = /新接物件\s*[-－—]\s*(透天|土地|大樓華廈|大樓|華廈)/;
