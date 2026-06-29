@@ -70,12 +70,69 @@ export type DraftPropertyFormState = {
   formError?: string;
 };
 
+export type PropertyFormValues = {
+  title: string;
+  slug: string;
+  address_public: string;
+  address_private: string;
+  price: string;
+  land_area_ping: string;
+  building_area_ping: string;
+  layout: string;
+  age: string;
+  orientation: string;
+  floor: string;
+  property_type: string;
+  highlights: string;
+  description: string;
+  status: string;
+  is_featured: boolean;
+  sort_order: string;
+  seo_title: string;
+  meta_description: string;
+  og_image_url: string;
+  canonical_url: string;
+};
+
+export type PropertyFormState = {
+  values: PropertyFormValues;
+  fieldErrors: Partial<Record<keyof PropertyFormValues, string>>;
+  formError?: string;
+  formKey?: string;
+};
+
 export function draftPropertyValuesFromFormData(formData: FormData): DraftPropertyFormValues {
   return {
     title: String(formData.get("title") || ""),
     slug: String(formData.get("slug") || ""),
     price: String(formData.get("price") || ""),
     address_public: String(formData.get("address_public") || "")
+  };
+}
+
+export function propertyValuesFromFormData(formData: FormData): PropertyFormValues {
+  return {
+    title: String(formData.get("title") || ""),
+    slug: String(formData.get("slug") || ""),
+    address_public: String(formData.get("address_public") || ""),
+    address_private: String(formData.get("address_private") || ""),
+    price: String(formData.get("price") || ""),
+    land_area_ping: String(formData.get("land_area_ping") || ""),
+    building_area_ping: String(formData.get("building_area_ping") || ""),
+    layout: String(formData.get("layout") || ""),
+    age: String(formData.get("age") || ""),
+    orientation: String(formData.get("orientation") || ""),
+    floor: String(formData.get("floor") || ""),
+    property_type: String(formData.get("property_type") || "other"),
+    highlights: String(formData.get("highlights") || ""),
+    description: String(formData.get("description") || ""),
+    status: String(formData.get("status") || "draft"),
+    is_featured: formData.get("is_featured") === "on",
+    sort_order: String(formData.get("sort_order") || "1000"),
+    seo_title: String(formData.get("seo_title") || ""),
+    meta_description: String(formData.get("meta_description") || ""),
+    og_image_url: String(formData.get("og_image_url") || ""),
+    canonical_url: String(formData.get("canonical_url") || "")
   };
 }
 
@@ -90,14 +147,18 @@ export function toDraftPropertyPayload(input: DraftPropertyInput) {
 }
 
 export function normalizePropertyForm(formData: FormData) {
-  const raw = Object.fromEntries(formData.entries());
-  const title = String(formData.get("title") || "");
+  const values = propertyValuesFromFormData(formData);
+  return normalizePropertyValues(values);
+}
+
+export function normalizePropertyValues(values: PropertyFormValues) {
+  const title = values.title;
   return propertySchema.parse({
-    ...raw,
+    ...values,
     title,
-    slug: toSafeSlug(String(formData.get("slug") || ""), title),
-    is_featured: formData.get("is_featured") === "on",
-    highlights: String(formData.get("highlights") || "")
+    slug: toSafeSlug(values.slug, title),
+    is_featured: values.is_featured,
+    highlights: values.highlights
   });
 }
 

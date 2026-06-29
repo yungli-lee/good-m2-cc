@@ -34,7 +34,7 @@ const fieldAliases: Array<[keyof ParsedProperty | "bottom_price" | "lot_number" 
   ["price", /^(開價|售價|總價)$/],
   ["bottom_price", /^(底價)$/],
   ["developer", /^(開發|開發人員|承辦|業務)$/],
-  ["floor", /^(樓層)$/],
+  ["floor", /^(樓層|樓高)$/],
   ["highlights", /^(推薦特色|特色|賣點|亮點)$/],
   ["internal_notes", /^(內部備註|帶看資訊|帶看|密碼|鑰匙|門牌|屋主|聯絡|管理室)$/]
 ];
@@ -247,7 +247,7 @@ export function parsePastedProperty(rawText: string): ParsedProperty {
   parsed.building_area_ping ||= extractValue(text, ["建坪", "建物坪數", "權狀"]);
   parsed.layout ||= extractValue(text, ["格局"]);
   parsed.orientation ||= extractValue(text, ["坐向", "座向", "朝向"]);
-  parsed.floor ||= extractValue(text, ["樓層"]);
+  parsed.floor ||= extractValue(text, ["樓層", "樓高"]);
 
   const titleLine = text.split("\n").map((line) => line.trim()).find((line) => line && !line.includes("：") && !line.includes(":") && line.length <= 60);
   parsed.title ||= titleLine || "未命名物件";

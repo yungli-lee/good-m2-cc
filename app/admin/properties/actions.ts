@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { z } from "zod";
 import {
   canDeleteProperties,
   canManagePropertyMedia,
@@ -10,11 +11,14 @@ import {
   requireRole
 } from "@/lib/auth";
 import { recordAuditLog } from "@/lib/audit/audit-log";
-import type { DraftPropertyFormState, PropertyFormInput } from "@/lib/properties/schema";
+import type { DraftPropertyFormState, PropertyFormInput, PropertyFormState } from "@/lib/properties/schema";
 import {
   draftPropertySchema,
   draftPropertyValuesFromFormData,
   normalizePropertyForm,
+  normalizePropertyValues,
+  propertySchema,
+  propertyValuesFromFormData,
   toDraftPropertyPayload,
   toPropertyPayload
 } from "@/lib/properties/schema";
@@ -64,6 +68,22 @@ function draftFieldErrors(error: { issues: Array<{ path: Array<string | number>;
     }
     return errors;
   }, {});
+}
+
+function propertyFieldErrors(error: { issues: Array<{ path: Array<string | number>; message: string }> }) {
+  return error.issues.reduce<PropertyFormState["fieldErrors"]>((errors, issue) => {
+    const field = issue.path[0];
+    if (typeof field === "string" && field in propertySchema.shape) {
+      errors[field as keyof PropertyFormState["fieldErrors"]] = issue.message;
+    }
+    return errors;
+  }, {});
+}
+
+function propertyCreateErrorMessage(error: { code?: string; message?: string }) {
+  if (error.code === "23505") return "Slug 已存在，請使用其他 Slug。";
+  if (error.code === "42501") return "資料庫權限不足，請確認 properties insert grant 與 RLS policy。";
+  return `物件建立失敗${error.code ? `（${error.code}）` : ""}，請稍後再試。`;
 }
 
 export async function createDraftPropertyAction(
@@ -254,12 +274,27 @@ export async function togglePropertyFeaturedAction(id: string, isFeatured: boole
   redirect("/admin/properties");
 }
 
-export async function createPropertyAction(formData: FormData) {
+export async function createPropertyAction(
+  _previousState: PropertyFormState,
+  formData: FormData
+): Promise<PropertyFormState> {
   const current = await requireRole(["editor", "admin", "owner"]);
   if (!canManageProperties(current.profile.role)) redirect("/admin/login?error=forbidden");
 
   const supabase = await createSupabaseServerClient();
-  const input = parsePropertyFormOrRedirect(formData, "/admin/properties/new");
+  const values = propertyValuesFromFormData(formData);
+  let input: PropertyFormInput;
+  try {
+    input = normalizePropertyValues(values);
+  } catch (error) {
+    return {
+      values,
+      fieldErrors: error instanceof z.ZodError ? propertyFieldErrors(error) : {},
+      formError: "請確認欄位內容後再送出。",
+      formKey: `validation-${Date.now()}`
+    };
+  }
+
   const payload = toPropertyPayload(input);
   const role = current.profile.role;
   const safePayload = canPublishProperties(role)
@@ -277,7 +312,19 @@ export async function createPropertyAction(formData: FormData) {
     .select()
     .single();
 
-  if (error) redirect(`/admin/properties/new?error=${encodeURIComponent(error.code || "create_failed")}`);
+  if (error) {
+    console.error("property_create_failed", {
+      code: error.code,
+      message: error.message?.slice(0, 180),
+      actorRole: current.profile.role
+    });
+    return {
+      values,
+      fieldErrors: error.code === "23505" ? { slug: "Slug 已存在，請使用其他 Slug。" } : {},
+      formError: propertyCreateErrorMessage(error),
+      formKey: `db-${Date.now()}`
+    };
+  }
 
   await tryRecordAuditLog({
     action: "property_create",

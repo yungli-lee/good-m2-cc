@@ -1,8 +1,9 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useActionState, useMemo, useRef, useState } from "react";
 import type { AdminRole } from "@/lib/auth";
 import { parsePastedProperty, type ParsedProperty } from "@/lib/properties/ai-parser";
+import type { PropertyFormState } from "@/lib/properties/schema";
 
 const typeOptions = [
   ["townhouse", "透天"],
@@ -26,13 +27,20 @@ function setFormValue(form: HTMLFormElement, name: keyof ParsedProperty, value?:
   }
 }
 
+function FieldError({ message }: { message?: string }) {
+  return message ? <p style={{ color: "#b42318", fontWeight: 700, margin: 0 }}>{message}</p> : null;
+}
+
 export function AiPropertyForm({
   role,
-  formAction
+  formAction,
+  initialState
 }: {
   role: AdminRole;
-  formAction: (formData: FormData) => Promise<void>;
+  formAction: (state: PropertyFormState, formData: FormData) => Promise<PropertyFormState>;
+  initialState: PropertyFormState;
 }) {
+  const [state, action, pending] = useActionState(formAction, initialState);
   const formRef = useRef<HTMLFormElement>(null);
   const [quickPaste, setQuickPaste] = useState("");
   const [message, setMessage] = useState("");
@@ -70,23 +78,14 @@ export function AiPropertyForm({
     setMessage("已解析並填入表單，送出前請快速確認欄位。");
   }
 
-  async function copyQuickPaste() {
-    if (!quickPaste) return;
-    await navigator.clipboard?.writeText(quickPaste);
-    setMessage("已複製快速貼上內容。");
-  }
-
   return (
-    <form ref={formRef} action={formAction} className="form-grid ai-property-form">
+    <form key={state.formKey || "initial"} ref={formRef} action={action} className="form-grid ai-property-form">
       <section className="ai-quick-paste field full" aria-label="AI 快速建立物件">
         <div className="ai-quick-paste-header">
           <div>
             <h2>AI 快速建立物件</h2>
             <p className="muted">貼上 Line 或 Word 物件資料，解析後會先填入表單，可再人工校正。</p>
           </div>
-          <button className="button ghost ai-copy-button" type="button" onClick={copyQuickPaste} disabled={!quickPaste}>
-            複製
-          </button>
         </div>
         <textarea
           className="textarea ai-quick-paste-textarea"
@@ -102,54 +101,59 @@ export function AiPropertyForm({
         </div>
         {message ? <div className="notice">{message}</div> : null}
       </section>
+      {state.formError ? <div className="notice field full">{state.formError}</div> : null}
 
       <div className="field">
         <label htmlFor="title">案名</label>
-        <input className="input" id="title" name="title" required />
+        <input className="input" id="title" name="title" defaultValue={state.values.title} required aria-invalid={Boolean(state.fieldErrors.title)} />
+        <FieldError message={state.fieldErrors.title} />
       </div>
       <div className="field">
         <label htmlFor="slug">Slug</label>
-        <input className="input" id="slug" name="slug" placeholder="可留空，系統會自動產生" />
+        <input className="input" id="slug" name="slug" defaultValue={state.values.slug} placeholder="可留空，系統會自動產生" aria-invalid={Boolean(state.fieldErrors.slug)} />
+        <FieldError message={state.fieldErrors.slug} />
       </div>
       <div className="field">
         <label htmlFor="address_public">公開地址</label>
-        <input className="input" id="address_public" name="address_public" />
+        <input className="input" id="address_public" name="address_public" defaultValue={state.values.address_public} aria-invalid={Boolean(state.fieldErrors.address_public)} />
+        <FieldError message={state.fieldErrors.address_public} />
       </div>
       <div className="field">
         <label htmlFor="address_private">內部備註（後台限定）</label>
-        <textarea className="textarea" id="address_private" name="address_private" />
+        <textarea className="textarea" id="address_private" name="address_private" defaultValue={state.values.address_private} />
       </div>
       <div className="field">
         <label htmlFor="price">開價（萬）</label>
-        <input className="input" id="price" name="price" type="number" min="0" />
+        <input className="input" id="price" name="price" type="number" min="0" defaultValue={state.values.price} aria-invalid={Boolean(state.fieldErrors.price)} />
+        <FieldError message={state.fieldErrors.price} />
       </div>
       <div className="field">
         <label htmlFor="land_area_ping">土地坪數</label>
-        <input className="input" id="land_area_ping" name="land_area_ping" type="number" step="0.01" min="0" />
+        <input className="input" id="land_area_ping" name="land_area_ping" type="number" step="0.01" min="0" defaultValue={state.values.land_area_ping} />
       </div>
       <div className="field">
         <label htmlFor="building_area_ping">建物坪數</label>
-        <input className="input" id="building_area_ping" name="building_area_ping" type="number" step="0.01" min="0" />
+        <input className="input" id="building_area_ping" name="building_area_ping" type="number" step="0.01" min="0" defaultValue={state.values.building_area_ping} />
       </div>
       <div className="field">
         <label htmlFor="layout">格局</label>
-        <input className="input" id="layout" name="layout" />
+        <input className="input" id="layout" name="layout" defaultValue={state.values.layout} />
       </div>
       <div className="field">
         <label htmlFor="age">屋齡</label>
-        <input className="input" id="age" name="age" type="number" step="0.1" min="0" />
+        <input className="input" id="age" name="age" type="number" step="0.1" min="0" defaultValue={state.values.age} />
       </div>
       <div className="field">
         <label htmlFor="orientation">座向</label>
-        <input className="input" id="orientation" name="orientation" />
+        <input className="input" id="orientation" name="orientation" defaultValue={state.values.orientation} />
       </div>
       <div className="field">
         <label htmlFor="floor">樓層</label>
-        <input className="input" id="floor" name="floor" />
+        <input className="input" id="floor" name="floor" defaultValue={state.values.floor} />
       </div>
       <div className="field">
         <label htmlFor="property_type">類型</label>
-        <select className="select" id="property_type" name="property_type" defaultValue="other">
+        <select className="select" id="property_type" name="property_type" defaultValue={state.values.property_type || "other"}>
           {typeOptions.map(([value, label]) => (
             <option key={value} value={value}>{label}</option>
           ))}
@@ -157,11 +161,11 @@ export function AiPropertyForm({
       </div>
       <div className="field">
         <label htmlFor="sort_order">排序</label>
-        <input className="input" id="sort_order" name="sort_order" type="number" defaultValue={1000} />
+        <input className="input" id="sort_order" name="sort_order" type="number" defaultValue={state.values.sort_order || "1000"} />
       </div>
       <div className="field">
         <label htmlFor="status">上架狀態</label>
-        <select className="select" id="status" name="status" defaultValue="draft" disabled={!canPublish}>
+        <select className="select" id="status" name="status" defaultValue={state.values.status || "draft"} disabled={!canPublish}>
           <option value="draft">草稿</option>
           <option value="published">已上架</option>
           <option value="archived">下架</option>
@@ -171,30 +175,30 @@ export function AiPropertyForm({
       {canPublish ? (
         <div className="field">
           <label>
-            <input type="checkbox" name="is_featured" /> 設為精選
+            <input type="checkbox" name="is_featured" defaultChecked={state.values.is_featured} /> 設為精選
           </label>
         </div>
       ) : null}
       <div className="field full">
         <label htmlFor="highlights">推薦特色</label>
-        <textarea className="textarea" id="highlights" name="highlights" placeholder="每行一個特色" />
+        <textarea className="textarea" id="highlights" name="highlights" placeholder="每行一個特色" defaultValue={state.values.highlights} />
       </div>
       <div className="field full">
         <label htmlFor="description">詳細介紹</label>
-        <textarea className="textarea" id="description" name="description" />
+        <textarea className="textarea" id="description" name="description" defaultValue={state.values.description} />
       </div>
       <div className="field">
         <label htmlFor="seo_title">SEO Title</label>
-        <input className="input" id="seo_title" name="seo_title" />
+        <input className="input" id="seo_title" name="seo_title" defaultValue={state.values.seo_title} />
       </div>
       <div className="field">
         <label htmlFor="meta_description">Meta Description</label>
-        <input className="input" id="meta_description" name="meta_description" />
+        <input className="input" id="meta_description" name="meta_description" defaultValue={state.values.meta_description} />
       </div>
-      <input type="hidden" name="og_image_url" value="" />
-      <input type="hidden" name="canonical_url" value="" />
+      <input type="hidden" name="og_image_url" value={state.values.og_image_url} />
+      <input type="hidden" name="canonical_url" value={state.values.canonical_url} />
       <div className="field full">
-        <button className="button" type="submit">建立物件</button>
+        <button className="button" type="submit" disabled={pending}>{pending ? "建立中..." : "建立物件"}</button>
       </div>
     </form>
   );
