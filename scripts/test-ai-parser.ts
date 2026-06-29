@@ -12,4 +12,12 @@ const parsed = parsePastedProperty(`
 assert.equal(parsed.floor, "2樓");
 assert.equal(parsed.price, "1288");
 
+const mixedLine = parsePastedProperty(`
+案名：彰化市測試華廈
+坐向：坐西北朝東南 樓高：2樓
+`);
+
+assert.equal(mixedLine.floor, "2樓");
+assert.equal(mixedLine.orientation, "坐西北朝東南");
+
 console.log("ai-parser tests passed");

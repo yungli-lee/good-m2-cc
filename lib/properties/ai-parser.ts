@@ -153,6 +153,13 @@ function normalizeLayout(value: string) {
   return `${rooms}房${living}廳${baths}衛`;
 }
 
+function normalizeOrientation(value: string) {
+  return value
+    .replace(/\s*樓高\s*[:：]\s*[^\n,，。；;]+/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 function parseDateLike(value: string) {
   const western = value.match(/(20\d{2}|19\d{2})[/-年.](\d{1,2})(?:[/-月.](\d{1,2}))?/);
   if (western) return { year: Number(western[1]), month: Number(western[2] || 1) };
@@ -280,6 +287,7 @@ export function parsePastedProperty(rawText: string): ParsedProperty {
   parsed.land_area_ping = parsed.land_area_ping ? normalizeNumber(parsed.land_area_ping) : "";
   parsed.building_area_ping = parsed.building_area_ping ? normalizeNumber(parsed.building_area_ping) : "";
   parsed.layout = parsed.layout ? normalizeLayout(parsed.layout) : "";
+  parsed.orientation = parsed.orientation ? normalizeOrientation(parsed.orientation) : "";
   parsed.age = parsed.age ? normalizeNumber(parsed.age) : "";
   parsed.floor ||= inferFloor(parsed.title || text);
   parsed.property_type = inferType(text);

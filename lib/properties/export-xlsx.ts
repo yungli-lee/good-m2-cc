@@ -1,13 +1,8 @@
 import { formatPing, propertyTypeLabel } from "@/lib/format";
+import { propertyExportTemplateFiles } from "./export-template";
 import type { Property } from "./types";
 
 type CellValue = string | number | null | undefined;
-
-type Cell = {
-  ref: string;
-  value: CellValue;
-  style?: number;
-};
 
 const textEncoder = new TextEncoder();
 
@@ -119,21 +114,48 @@ function xml(value: CellValue) {
     .replace(/"/g, "&quot;");
 }
 
-function textCell(ref: string, value: CellValue, style = 1): Cell {
-  return { ref, value, style };
+function decodeBase64(value: string) {
+  const normalized = value.replace(/\s/g, "");
+  const binary = atob(normalized);
+  const bytes = new Uint8Array(binary.length);
+  for (let index = 0; index < binary.length; index += 1) {
+    bytes[index] = binary.charCodeAt(index);
+  }
+  return bytes;
 }
 
-function numberCell(ref: string, value: number | null | undefined, style = 3): Cell {
-  return { ref, value: value == null ? "" : value, style };
+function decodeText(bytes: Uint8Array) {
+  return new TextDecoder().decode(bytes);
 }
 
-function rowXml(rowNumber: number, cells: Cell[], height?: number) {
-  const attrs = height ? ` r="${rowNumber}" ht="${height}" customHeight="1"` : ` r="${rowNumber}"`;
-  return `<row${attrs}>${cells.map((cell) => {
-    const style = cell.style == null ? "" : ` s="${cell.style}"`;
-    if (typeof cell.value === "number") return `<c r="${cell.ref}"${style}><v>${cell.value}</v></c>`;
-    return `<c r="${cell.ref}" t="inlineStr"${style}><is><t xml:space="preserve">${xml(cell.value)}</t></is></c>`;
-  }).join("")}</row>`;
+function cellSortKey(ref: string) {
+  const column = ref.match(/[A-Z]+/)?.[0] || "";
+  let columnIndex = 0;
+  for (const char of column) columnIndex = columnIndex * 26 + char.charCodeAt(0) - 64;
+  return columnIndex;
+}
+
+function inlineStringCell(ref: string, value: CellValue, existingAttrs = "") {
+  const attrs = existingAttrs.replace(/\s+t="[^"]*"/, "");
+  return `<c r="${ref}"${attrs} t="inlineStr"><is><t xml:space="preserve">${xml(value)}</t></is></c>`;
+}
+
+function replaceCell(sheetXml: string, ref: string, value: CellValue) {
+  const cellPattern = new RegExp(`<c r="${ref}"([^>]*)>[\\s\\S]*?<\\/c>`);
+  if (cellPattern.test(sheetXml)) {
+    return sheetXml.replace(cellPattern, (_match, attrs: string) => inlineStringCell(ref, value, attrs));
+  }
+
+  const rowNumber = ref.match(/\d+/)?.[0];
+  if (!rowNumber) return sheetXml;
+  const rowPattern = new RegExp(`(<row[^>]* r="${rowNumber}"[^>]*>)([\\s\\S]*?)(<\\/row>)`);
+  return sheetXml.replace(rowPattern, (_match, open: string, cells: string, close: string) => {
+    const cellRefs = Array.from(cells.matchAll(/<c r="([A-Z]+\d+)"/g)).map((match) => match[1]);
+    const nextRef = cellRefs.find((cellRef) => cellSortKey(cellRef) > cellSortKey(ref));
+    const cellXml = inlineStringCell(ref, value);
+    if (!nextRef) return `${open}${cells}${cellXml}${close}`;
+    return `${open}${cells.replace(new RegExp(`(<c r="${nextRef}"[\\s\\S]*?<\\/c>)`), `${cellXml}$1`)}${close}`;
+  });
 }
 
 function extractInternalValue(notes: string, label: string) {
@@ -155,7 +177,44 @@ function filenameSafe(value: string) {
   return cleaned || "property";
 }
 
-function buildSheet(property: Property) {
+function checkedOption(label: string, options: string[]) {
+  return options.map((option) => `${option === label ? "▪️" : "□"}${option}`).join(" ");
+}
+
+function propertyUseLine(property: Property) {
+  if (property.property_type === "land" || property.property_type === "farmland" || property.property_type === "building_land") {
+    return checkedOption("土地", ["住宅", "店面", "辦公", "住辦", "住店", "車位", "廠房", "土地", "其他"]);
+  }
+  if (property.property_type === "factory") {
+    return checkedOption("廠房", ["住宅", "店面", "辦公", "住辦", "住店", "車位", "廠房", "土地", "其他"]);
+  }
+  if (property.property_type === "storefront") {
+    return checkedOption("店面", ["住宅", "店面", "辦公", "住辦", "住店", "車位", "廠房", "土地", "其他"]);
+  }
+  return checkedOption("住宅", ["住宅", "店面", "辦公", "住辦", "住店", "車位", "廠房", "土地", "其他"]);
+}
+
+function propertyTypeLine(property: Property) {
+  const firstLine = [
+    property.property_type === "townhouse" ? "▪️透天" : "□透天",
+    "□別墅",
+    "□一般套房",
+    "□商務套房",
+    "□學生套房",
+    "□農舍"
+  ].join(" ");
+  const usage = [
+    property.property_type === "storefront" ? "□住宅用 ▪️商業用" : "□住宅用 □商業用",
+    property.property_type === "factory" ? "▪️工業用" : "□工業用",
+    property.property_type === "farmland" ? "▪️農業用" : "□農業用",
+    "□特定用",
+    property.property_type === "building_land" ? "▪️法定用" : "□法定用",
+    "□其他用"
+  ].join(" ");
+  return `${firstLine}\n${usage}\n`;
+}
+
+function buildTemplateValues(property: Property) {
   const notes = property.address_private || "";
   const bottomPrice = extractInternalValue(notes, "底價");
   const developer = extractInternalValue(notes, "開發");
@@ -163,175 +222,50 @@ function buildSheet(property: Property) {
   const completionDate = extractInternalValue(notes, "完工日");
   const lotNumber = extractInternalValue(notes, "地號");
   const highlights = listHighlights(property.highlights);
-  const typeLabel = propertyTypeLabel(property.property_type);
-  const rows = [
-    rowXml(1, [textCell("A1", "物件發稿明細", 5), textCell("K1", "匯出 Excel", 6)], 30),
-    rowXml(4, [textCell("A4", "產出來源", 7), textCell("C4", "AI 快速建檔 / 後台物件資料", 2), textCell("K4", "阿勇不動產顧問", 6)]),
-    rowXml(7, [textCell("E7", "僅供內部參考，請勿轉傳", 8)], 26),
-    rowXml(10, [textCell("A10", "合約、帶看說明", 5)], 24),
-    rowXml(12, [textCell("A12", "案名", 7), textCell("C12", property.title, 2), textCell("G12", "類型", 7), textCell("H12", typeLabel, 2)]),
-    rowXml(13, [textCell("A13", "總價", 7), numberCell("C13", property.price, 4), textCell("D13", "萬", 2), textCell("G13", "帶看", 7), textCell("H13", showing, 2)]),
-    rowXml(14, [textCell("A14", "底價", 7), textCell("C14", bottomPrice, 2), textCell("G14", "開發", 7), textCell("H14", developer, 2)]),
-    rowXml(15, [textCell("A15", "地址", 7), textCell("C15", property.address_public || "", 2), textCell("G15", "內部備註摘要", 7), textCell("H15", notes, 2)], 48),
-    rowXml(16, [textCell("A16", "地號", 7), textCell("C16", lotNumber, 2)]),
-    rowXml(18, [textCell("A18", "房地基本資料", 5)], 24),
-    rowXml(20, [textCell("A20", "型態", 7), textCell("C20", typeLabel, 2)]),
-    rowXml(23, [textCell("A23", "地坪", 7), textCell("C23", formatPing(property.land_area_ping), 2)]),
-    rowXml(24, [textCell("A24", "建坪", 7), textCell("C24", formatPing(property.building_area_ping), 2), textCell("G24", "座向", 7), textCell("H24", property.orientation || "", 2)]),
-    rowXml(25, [textCell("A25", "樓層", 7), textCell("C25", property.floor || "", 2)]),
-    rowXml(26, [textCell("A26", "格局", 7), textCell("C26", property.layout || "", 2)]),
-    rowXml(27, [textCell("A27", "完工日", 7), textCell("C27", completionDate, 2), textCell("G27", "屋齡", 7), textCell("H27", property.age == null ? "" : `${property.age}年`, 2)]),
-    rowXml(28, [textCell("A28", "街景環境、社區說明", 5), textCell("G28", "推薦特色", 5)]),
-    rowXml(29, [textCell("A29", "SEO Title", 7), textCell("B29", property.seo_title || "", 2), textCell("G29", highlights, 2)], 96),
-    rowXml(34, [textCell("G34", "詳細介紹", 5)]),
-    rowXml(35, [textCell("G35", property.description || "", 2)], 96),
-    rowXml(43, [textCell("A43", "內部備註", 7), textCell("B43", notes, 2)], 96)
-  ];
 
-  const merges = [
-    "A1:D3",
-    "E7:J8",
-    "A10:L10",
-    "C12:F12",
-    "H12:L12",
-    "C14:F14",
-    "H14:L14",
-    "C15:F15",
-    "H15:L16",
-    "C16:F16",
-    "A18:L18",
-    "C20:F20",
-    "C23:F23",
-    "C24:F24",
-    "H24:L24",
-    "C25:F25",
-    "C26:F26",
-    "C27:F27",
-    "H27:L27",
-    "A28:F28",
-    "G28:L28",
-    "B29:F29",
-    "G29:L33",
-    "G34:L34",
-    "G35:L42",
-    "B43:L45"
-  ];
-
-  return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
-  <dimension ref="A1:L45"/>
-  <sheetViews><sheetView showGridLines="0" workbookViewId="0"/></sheetViews>
-  <sheetFormatPr defaultRowHeight="18"/>
-  <cols>
-    <col min="1" max="1" width="12.7" customWidth="1"/>
-    <col min="2" max="2" width="4.4" customWidth="1"/>
-    <col min="3" max="3" width="12.9" customWidth="1"/>
-    <col min="4" max="4" width="7" customWidth="1"/>
-    <col min="5" max="5" width="4.7" customWidth="1"/>
-    <col min="6" max="6" width="19.2" customWidth="1"/>
-    <col min="7" max="7" width="13.5" customWidth="1"/>
-    <col min="8" max="8" width="7.5" customWidth="1"/>
-    <col min="9" max="9" width="5.4" customWidth="1"/>
-    <col min="10" max="10" width="10.2" customWidth="1"/>
-    <col min="11" max="11" width="14.5" customWidth="1"/>
-    <col min="12" max="12" width="28.4" customWidth="1"/>
-  </cols>
-  <sheetData>${rows.join("")}</sheetData>
-  <mergeCells count="${merges.length}">${merges.map((ref) => `<mergeCell ref="${ref}"/>`).join("")}</mergeCells>
-</worksheet>`;
+  return {
+    A8: "▪️口頭約",
+    A9: "廣告▪️刊登 □不刊登(原因:______)                             ",
+    C12: property.title,
+    C13: property.price == null ? "" : `${property.price}萬`,
+    C14: bottomPrice,
+    H14: developer,
+    C15: property.address_public || "",
+    H15: showing,
+    C16: lotNumber,
+    C19: propertyUseLine(property),
+    C20: propertyTypeLine(property),
+    C23: formatPing(property.land_area_ping),
+    C24: formatPing(property.building_area_ping),
+    H24: property.orientation || "",
+    C25: property.floor || "",
+    C26: property.layout || "",
+    C27: completionDate,
+    H27: property.age == null ? "" : `${property.age}年`,
+    B29: propertyTypeLabel(property.property_type),
+    G29: highlights,
+    G35: property.description || "",
+    B43: notes
+  } satisfies Record<string, CellValue>;
 }
 
-const contentTypes = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
-  <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
-  <Default Extension="xml" ContentType="application/xml"/>
-  <Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>
-  <Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>
-  <Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>
-  <Override PartName="/docProps/core.xml" ContentType="application/vnd.openxmlformats-package.core-properties+xml"/>
-  <Override PartName="/docProps/app.xml" ContentType="application/vnd.openxmlformats-officedocument.extended-properties+xml"/>
-</Types>`;
-
-const rootRels = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
-  <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/>
-  <Relationship Id="rId2" Type="http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties" Target="docProps/core.xml"/>
-  <Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/extended-properties" Target="docProps/app.xml"/>
-</Relationships>`;
-
-const workbook = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
-  <sheets><sheet name="物件發稿明細" sheetId="1" r:id="rId1"/></sheets>
-</workbook>`;
-
-const workbookRels = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
-  <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/>
-  <Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>
-</Relationships>`;
-
-const styles = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
-  <fonts count="4">
-    <font><sz val="11"/><name val="Calibri"/></font>
-    <font><b/><sz val="11"/><color rgb="FFFFFFFF"/><name val="Calibri"/></font>
-    <font><b/><sz val="16"/><color rgb="FF102343"/><name val="Calibri"/></font>
-    <font><b/><sz val="11"/><color rgb="FF102343"/><name val="Calibri"/></font>
-  </fonts>
-  <fills count="5">
-    <fill><patternFill patternType="none"/></fill>
-    <fill><patternFill patternType="gray125"/></fill>
-    <fill><patternFill patternType="solid"><fgColor rgb="FF102343"/><bgColor indexed="64"/></patternFill></fill>
-    <fill><patternFill patternType="solid"><fgColor rgb="FFC99A43"/><bgColor indexed="64"/></patternFill></fill>
-    <fill><patternFill patternType="solid"><fgColor rgb="FFFFF7DF"/><bgColor indexed="64"/></patternFill></fill>
-  </fills>
-  <borders count="2">
-    <border><left/><right/><top/><bottom/><diagonal/></border>
-    <border><left style="thin"><color rgb="FFD9DEE8"/></left><right style="thin"><color rgb="FFD9DEE8"/></right><top style="thin"><color rgb="FFD9DEE8"/></top><bottom style="thin"><color rgb="FFD9DEE8"/></bottom><diagonal/></border>
-  </borders>
-  <cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>
-  <cellXfs count="9">
-    <xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>
-    <xf numFmtId="0" fontId="0" fillId="0" borderId="1" xfId="0" applyAlignment="1"><alignment vertical="top" wrapText="1"/></xf>
-    <xf numFmtId="0" fontId="0" fillId="0" borderId="1" xfId="0" applyAlignment="1"><alignment vertical="top" wrapText="1"/></xf>
-    <xf numFmtId="0" fontId="0" fillId="0" borderId="1" xfId="0" applyAlignment="1"><alignment horizontal="right" vertical="top"/></xf>
-    <xf numFmtId="0" fontId="0" fillId="0" borderId="1" xfId="0" applyAlignment="1"><alignment horizontal="right" vertical="top"/></xf>
-    <xf numFmtId="0" fontId="2" fillId="0" borderId="0" xfId="0" applyAlignment="1"><alignment vertical="center"/></xf>
-    <xf numFmtId="0" fontId="3" fillId="0" borderId="0" xfId="0" applyAlignment="1"><alignment horizontal="right" vertical="center"/></xf>
-    <xf numFmtId="0" fontId="3" fillId="4" borderId="1" xfId="0" applyAlignment="1"><alignment vertical="center" wrapText="1"/></xf>
-    <xf numFmtId="0" fontId="1" fillId="2" borderId="1" xfId="0" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf>
-  </cellXfs>
-  <cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles>
-</styleSheet>`;
-
-const appProps = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<Properties xmlns="http://schemas.openxmlformats.org/officeDocument/2006/extended-properties" xmlns:vt="http://schemas.openxmlformats.org/officeDocument/2006/docPropsVTypes">
-  <Application>阿勇不動產顧問</Application>
-</Properties>`;
-
-function coreProps(title: string) {
-  const now = new Date().toISOString();
-  return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-  <dc:title>${xml(title)}</dc:title>
-  <dc:creator>阿勇不動產顧問</dc:creator>
-  <cp:lastModifiedBy>阿勇不動產顧問</cp:lastModifiedBy>
-  <dcterms:created xsi:type="dcterms:W3CDTF">${now}</dcterms:created>
-  <dcterms:modified xsi:type="dcterms:W3CDTF">${now}</dcterms:modified>
-</cp:coreProperties>`;
+function buildSheetFromTemplate(property: Property, sheetXml: string) {
+  return Object.entries(buildTemplateValues(property)).reduce(
+    (xmlText, [ref, value]) => replaceCell(xmlText, ref, value),
+    sheetXml
+  );
 }
 
 export function buildPropertyExportXlsx(property: Property) {
-  return makeZip([
-    { name: "[Content_Types].xml", content: contentTypes },
-    { name: "_rels/.rels", content: rootRels },
-    { name: "docProps/app.xml", content: appProps },
-    { name: "docProps/core.xml", content: coreProps(property.title) },
-    { name: "xl/workbook.xml", content: workbook },
-    { name: "xl/_rels/workbook.xml.rels", content: workbookRels },
-    { name: "xl/styles.xml", content: styles },
-    { name: "xl/worksheets/sheet1.xml", content: buildSheet(property) }
-  ]);
+  const files = propertyExportTemplateFiles.map((file) => {
+    const content = decodeBase64(file.base64);
+    if (file.name === "xl/worksheets/sheet1.xml") {
+      return { name: file.name, content: buildSheetFromTemplate(property, decodeText(content)) };
+    }
+    return { name: file.name, content };
+  });
+
+  return makeZip(files);
 }
 
 export function propertyExportFilename(property: Pick<Property, "title" | "price">) {
