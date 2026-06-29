@@ -43,6 +43,7 @@ export default async function EditPropertyPage({ params, searchParams }: Props) 
         <div className="card">
           <div className="card-body">
             <DraftPropertyForm
+              key={property.id}
               action={updateAction}
               initialState={initialDraftPropertyFormState}
               submitLabel="儲存物件"

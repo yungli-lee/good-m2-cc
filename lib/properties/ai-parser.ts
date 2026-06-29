@@ -39,6 +39,8 @@ const fieldAliases: Array<[keyof ParsedProperty | "bottom_price" | "lot_number" 
   ["internal_notes", /^(內部備註|帶看資訊|帶看|密碼|鑰匙|門牌|屋主|聯絡|管理室)$/]
 ];
 
+const incomingCategoryPattern = /新接物件\s*[-－—]\s*(透天|土地|大樓華廈|大樓|華廈)/;
+
 function normalizeText(value: string) {
   return value.replace(/\r\n?/g, "\n").replace(/\u3000/g, " ").trim();
 }
@@ -179,6 +181,11 @@ function calculateAgeFromDate(value: string) {
 }
 
 function inferType(text: string) {
+  const incomingCategory = text.match(incomingCategoryPattern)?.[1];
+  if (incomingCategory === "透天") return "townhouse";
+  if (incomingCategory === "土地") return "land";
+  if (incomingCategory === "大樓華廈" || incomingCategory === "大樓" || incomingCategory === "華廈") return "building";
+
   if (/農地/.test(text)) return "farmland";
   if (/建地/.test(text)) return "building_land";
   if (/土地/.test(text)) return "land";
@@ -225,6 +232,10 @@ function compactMetaDescription(parts: string[]) {
   return parts.filter(Boolean).join("，").replace(/\s+/g, " ").slice(0, 150);
 }
 
+function extractIncomingCategory(text: string) {
+  return text.match(incomingCategoryPattern)?.[1] || "";
+}
+
 export function parsePastedProperty(rawText: string): ParsedProperty {
   const text = normalizeText(rawText);
   const labeled = extractLabeledLines(text);
@@ -258,6 +269,10 @@ export function parsePastedProperty(rawText: string): ParsedProperty {
 
   const titleLine = text.split("\n").map((line) => line.trim()).find((line) => line && !line.includes("：") && !line.includes(":") && line.length <= 60);
   parsed.title ||= titleLine || "未命名物件";
+  const incomingCategory = extractIncomingCategory(text);
+  if (incomingCategory && parsed.title === `新接物件-${incomingCategory}`) {
+    parsed.title = `${incomingCategory}新接物件`;
+  }
 
   const priceMatch = text.match(/(?:開價|售價|總價)?\s*(\d[\d,]*(?:\.\d+)?)\s*萬/);
   if (!parsed.price && priceMatch) parsed.price = priceMatch[1];

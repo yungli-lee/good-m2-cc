@@ -1,4 +1,4 @@
-import { propertyExportTemplateFiles } from "./export-template.ts";
+import { getPropertyExportTemplateFiles } from "./export-template.ts";
 import type { Property } from "./types";
 
 type CellValue = string | number | null | undefined;
@@ -127,7 +127,8 @@ function makeZip(files: Array<{ name: string; content: string | Uint8Array }>) {
 
 function xml(value: CellValue) {
   return String(value ?? "")
-    .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, "")
+    .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\uFFFE\uFFFF]/g, "")
+    .replace(/[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]/g, "")
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
@@ -156,7 +157,13 @@ function cellSortKey(ref: string) {
 }
 
 function inlineStringCell(ref: string, value: CellValue, existingAttrs = "") {
-  const attrs = existingAttrs.replace(/\s+t="[^"]*"/, "").replace(/\s*\/\s*$/, "");
+  const attrs = existingAttrs
+    .replace(/\s+r="[^"]*"/, "")
+    .replace(/\s+t="[^"]*"/, "")
+    .replace(/\s+cm="[^"]*"/, "")
+    .replace(/\s+vm="[^"]*"/, "")
+    .replace(/\s+ph="[^"]*"/, "")
+    .replace(/\s*\/\s*$/, "");
   return `<c r="${ref}"${attrs} t="inlineStr"><is><t xml:space="preserve">${xml(value)}</t></is></c>`;
 }
 
@@ -281,7 +288,7 @@ function buildSheetFromTemplate(property: Property, sheetXml: string) {
 }
 
 export function buildPropertyExportXlsx(property: Property) {
-  const files = propertyExportTemplateFiles.map((file) => {
+  const files = getPropertyExportTemplateFiles(property.property_type).map((file) => {
     const content = decodeBase64(file.base64);
     if (file.name === "xl/worksheets/sheet1.xml") {
       return { name: file.name, content: buildSheetFromTemplate(property, decodeText(content)) };

@@ -1,4 +1,4 @@
-export const propertyExportTemplateFiles = [
+const townhouseLandTemplateFiles = [
   {
     name: '[Content_Types].xml',
     base64: `PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiIHN0YW5kYWxvbmU9InllcyI/Pg0KPFR5cGVzIHhtbG5zPSJodHRw
@@ -2063,3 +2063,12 @@ U2hhcmVkRG9jPmZhbHNlPC9TaGFyZWREb2M+PEh5cGVybGlua3NDaGFuZ2VkPmZhbHNlPC9IeXBlcmxp
 VmVyc2lvbj4xNi4wMzAwPC9BcHBWZXJzaW9uPjwvUHJvcGVydGllcz4=`
   },
 ] as const;
+
+const buildingTemplateFiles = townhouseLandTemplateFiles;
+
+export function getPropertyExportTemplateFiles(propertyType: string) {
+  if (propertyType === "building" || propertyType === "apartment") return buildingTemplateFiles;
+  return townhouseLandTemplateFiles;
+}
+
+export const propertyExportTemplateFiles = townhouseLandTemplateFiles;

@@ -78,4 +78,13 @@ assert.match(sheetXml, /測試 &amp; &lt;快官&gt; &quot;幸福宅&quot;/);
 assert.match(sheetXml, /https:\/\/maps\.google\.com\/\?q=24\.1,120\.5&amp;z=18/);
 assert.doesNotMatch(sheetXml, /\u0001/);
 
+const buildingOutputPath = join(outputDir, "property-export-building-test.xlsx");
+writeFileSync(buildingOutputPath, buildPropertyExportXlsx({ ...property, property_type: "building" }));
+execFileSync("unzip", ["-t", buildingOutputPath], { stdio: "pipe" });
+const buildingSheetXml = readZipEntry(buildingOutputPath, "xl/worksheets/sheet1.xml").toString("utf8");
+const buildingSheetPath = join(outputDir, "building-sheet1.xml");
+writeFileSync(buildingSheetPath, buildingSheetXml);
+execFileSync("python3", ["-c", "import sys, xml.etree.ElementTree as ET; ET.parse(sys.argv[1])", buildingSheetPath], { stdio: "pipe" });
+assert.match(buildingSheetXml, /大樓/);
+
 console.log("property export tests passed");
