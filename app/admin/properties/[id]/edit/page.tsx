@@ -1,11 +1,10 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { DraftPropertyForm } from "@/components/admin/draft-property-form";
+import { PropertyForm } from "@/components/admin/property-form";
 import { requireRole } from "@/lib/auth";
 import { getAdminPropertyById } from "@/lib/properties/queries";
-import type { DraftPropertyFormState } from "@/lib/properties/schema";
 import type { Property } from "@/lib/properties/types";
-import { updateDraftPropertyAction } from "../../actions";
+import { updatePropertyAction } from "../../actions";
 
 export const runtime = "edge";
 
@@ -15,23 +14,14 @@ type Props = {
 };
 
 export default async function EditPropertyPage({ params, searchParams }: Props) {
-  await requireRole(["editor", "admin", "owner"]);
+  const current = await requireRole(["editor", "admin", "owner"]);
   const { id } = await params;
   const query = await searchParams;
   const { data, error } = await getAdminPropertyById(id);
   if (error || !data) notFound();
 
   const property = data as Property;
-  const initialDraftPropertyFormState: DraftPropertyFormState = {
-    values: {
-      title: property.title || "",
-      slug: property.slug || "",
-      price: property.price == null ? "" : String(property.price),
-      address_public: property.address_public || ""
-    },
-    fieldErrors: {}
-  };
-  const updateAction = updateDraftPropertyAction.bind(null, property.id);
+  const updateAction = updatePropertyAction.bind(null, property.id);
 
   return (
     <main className="section">
@@ -42,13 +32,7 @@ export default async function EditPropertyPage({ params, searchParams }: Props) 
         {query.error ? <div className="notice">操作失敗：{query.error}</div> : null}
         <div className="card">
           <div className="card-body">
-            <DraftPropertyForm
-              key={property.id}
-              action={updateAction}
-              initialState={initialDraftPropertyFormState}
-              submitLabel="儲存物件"
-              pendingLabel="儲存中..."
-            />
+            <PropertyForm key={property.id} property={property} role={current.profile.role} formAction={updateAction} />
             <div className="actions">
               <Link className="button ghost" href="/admin/properties">返回物件列表</Link>
             </div>

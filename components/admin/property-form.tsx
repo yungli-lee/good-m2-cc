@@ -44,6 +44,42 @@ export function PropertyForm({
         <input className="input" id="address_private" name="address_private" defaultValue={property?.address_private || ""} />
       </div>
       <div className="field">
+        <label htmlFor="listing_no">委託書編號</label>
+        <input className="input" id="listing_no" name="listing_no" defaultValue={property?.listing_no || ""} />
+      </div>
+      <div className="field">
+        <label htmlFor="listing_type">委託類型</label>
+        <select className="select" id="listing_type" name="listing_type" defaultValue={property?.listing_type || ""}>
+          <option value="">未設定</option>
+          <option value="專任">專任</option>
+          <option value="一般委託">一般委託</option>
+        </select>
+      </div>
+      <div className="field">
+        <label htmlFor="listing_start_date">委託起日</label>
+        <input className="input" id="listing_start_date" name="listing_start_date" placeholder="2026/01/22" defaultValue={property?.listing_start_date || ""} />
+      </div>
+      <div className="field">
+        <label htmlFor="listing_end_date">委託迄日</label>
+        <input className="input" id="listing_end_date" name="listing_end_date" placeholder="2026/04/21" defaultValue={property?.listing_end_date || ""} />
+      </div>
+      <div className="field">
+        <label htmlFor="owner_name">屋主名稱</label>
+        <input className="input" id="owner_name" name="owner_name" defaultValue={property?.owner_name || ""} />
+      </div>
+      <div className="field">
+        <label htmlFor="owner_phone">屋主電話</label>
+        <input className="input" id="owner_phone" name="owner_phone" defaultValue={property?.owner_phone || ""} />
+      </div>
+      <div className="field">
+        <label htmlFor="developer_names">開發人員</label>
+        <input className="input" id="developer_names" name="developer_names" defaultValue={property?.developer_names || ""} />
+      </div>
+      <div className="field">
+        <label htmlFor="showing_instructions">帶看方式</label>
+        <textarea className="textarea" id="showing_instructions" name="showing_instructions" defaultValue={property?.showing_instructions || ""} />
+      </div>
+      <div className="field">
         <label htmlFor="price">開價</label>
         <input className="input" id="price" name="price" type="number" min="0" defaultValue={property?.price || ""} />
       </div>

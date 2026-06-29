@@ -6,6 +6,14 @@ export type Property = {
   slug: string;
   address_public: string | null;
   address_private: string | null;
+  listing_no: string | null;
+  listing_type: string | null;
+  listing_start_date: string | null;
+  listing_end_date: string | null;
+  owner_name: string | null;
+  owner_phone: string | null;
+  developer_names: string | null;
+  showing_instructions: string | null;
   price: number | null;
   land_area_ping: number | null;
   building_area_ping: number | null;

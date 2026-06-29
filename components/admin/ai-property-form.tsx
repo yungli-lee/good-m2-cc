@@ -61,6 +61,14 @@ export function AiPropertyForm({
       "slug",
       "address_public",
       "address_private",
+      "listing_no",
+      "listing_type",
+      "listing_start_date",
+      "listing_end_date",
+      "owner_name",
+      "owner_phone",
+      "developer_names",
+      "showing_instructions",
       "price",
       "land_area_ping",
       "building_area_ping",
@@ -121,6 +129,42 @@ export function AiPropertyForm({
       <div className="field">
         <label htmlFor="address_private">內部備註（後台限定）</label>
         <textarea className="textarea" id="address_private" name="address_private" defaultValue={state.values.address_private} />
+      </div>
+      <div className="field">
+        <label htmlFor="listing_no">委託書編號</label>
+        <input className="input" id="listing_no" name="listing_no" defaultValue={state.values.listing_no} />
+      </div>
+      <div className="field">
+        <label htmlFor="listing_type">委託類型</label>
+        <select className="select" id="listing_type" name="listing_type" defaultValue={state.values.listing_type}>
+          <option value="">未設定</option>
+          <option value="專任">專任</option>
+          <option value="一般委託">一般委託</option>
+        </select>
+      </div>
+      <div className="field">
+        <label htmlFor="listing_start_date">委託起日</label>
+        <input className="input" id="listing_start_date" name="listing_start_date" placeholder="2026/01/22" defaultValue={state.values.listing_start_date} />
+      </div>
+      <div className="field">
+        <label htmlFor="listing_end_date">委託迄日</label>
+        <input className="input" id="listing_end_date" name="listing_end_date" placeholder="2026/04/21" defaultValue={state.values.listing_end_date} />
+      </div>
+      <div className="field">
+        <label htmlFor="owner_name">屋主名稱</label>
+        <input className="input" id="owner_name" name="owner_name" defaultValue={state.values.owner_name} />
+      </div>
+      <div className="field">
+        <label htmlFor="owner_phone">屋主電話</label>
+        <input className="input" id="owner_phone" name="owner_phone" defaultValue={state.values.owner_phone} />
+      </div>
+      <div className="field">
+        <label htmlFor="developer_names">開發人員</label>
+        <input className="input" id="developer_names" name="developer_names" defaultValue={state.values.developer_names} />
+      </div>
+      <div className="field">
+        <label htmlFor="showing_instructions">帶看方式</label>
+        <textarea className="textarea" id="showing_instructions" name="showing_instructions" defaultValue={state.values.showing_instructions} />
       </div>
       <div className="field">
         <label htmlFor="price">開價（萬）</label>

@@ -14,6 +14,14 @@ const property: Property = {
   title: "測試 & <快官> \"幸福宅\"",
   address_public: "彰化市互助一街 & Google Maps: https://maps.google.com/?q=24.1,120.5&z=18",
   address_private: "底價：出價談\n開發：淑美 & 阿勇\n帶看：直接帶看\n完工日：70/6/26\n地號：彰化市廣鳳段1036地號\n特殊：A\u0001B",
+  listing_no: "AK5384529",
+  listing_type: "專任",
+  listing_start_date: "2026-01-22",
+  listing_end_date: "2026-04-21",
+  owner_name: "王先生",
+  owner_phone: "0912-345-678",
+  developer_names: "淑美、阿勇",
+  showing_instructions: "鑰匙在電表上，請先通知屋主 & 帶 Google Maps",
   price: 798,
   land_area_ping: 27.13,
   building_area_ping: 26.27,
@@ -76,6 +84,9 @@ execFileSync("python3", ["-c", "import sys, xml.etree.ElementTree as ET; ET.pars
 
 assert.match(sheetXml, /測試 &amp; &lt;快官&gt; &quot;幸福宅&quot;/);
 assert.match(sheetXml, /https:\/\/maps\.google\.com\/\?q=24\.1,120\.5&amp;z=18/);
+assert.match(sheetXml, /AK5384529/);
+assert.match(sheetXml, /0912-345-678/);
+assert.match(sheetXml, /鑰匙在電表上/);
 assert.doesNotMatch(sheetXml, /\u0001/);
 
 const buildingOutputPath = join(outputDir, "property-export-building-test.xlsx");

@@ -5,6 +5,14 @@ const optionalNumber = z.preprocess(
   z.coerce.number().nonnegative().optional()
 );
 
+function normalizeDateInput(value: string) {
+  const trimmed = value.trim();
+  if (!trimmed) return "";
+  const match = trimmed.match(/^(\d{4})[/-](\d{1,2})[/-](\d{1,2})$/);
+  if (!match) return trimmed;
+  return `${match[1]}-${match[2].padStart(2, "0")}-${match[3].padStart(2, "0")}`;
+}
+
 function toSafeSlug(slug: string, title: string) {
   const cleaned = (slug || title)
     .trim()
@@ -27,6 +35,14 @@ export const propertySchema = z.object({
   slug: z.string().trim().min(1).max(140).regex(/^[a-z0-9-]+$/),
   address_public: z.string().trim().max(160).optional().or(z.literal("")),
   address_private: z.string().trim().max(4000).optional().or(z.literal("")),
+  listing_no: z.string().trim().max(80).optional().or(z.literal("")),
+  listing_type: z.enum(["專任", "一般委託", ""]).optional(),
+  listing_start_date: z.string().trim().max(10).optional().or(z.literal("")),
+  listing_end_date: z.string().trim().max(10).optional().or(z.literal("")),
+  owner_name: z.string().trim().max(80).optional().or(z.literal("")),
+  owner_phone: z.string().trim().max(80).optional().or(z.literal("")),
+  developer_names: z.string().trim().max(160).optional().or(z.literal("")),
+  showing_instructions: z.string().trim().max(1000).optional().or(z.literal("")),
   price: optionalNumber,
   land_area_ping: optionalNumber,
   building_area_ping: optionalNumber,
@@ -75,6 +91,14 @@ export type PropertyFormValues = {
   slug: string;
   address_public: string;
   address_private: string;
+  listing_no: string;
+  listing_type: string;
+  listing_start_date: string;
+  listing_end_date: string;
+  owner_name: string;
+  owner_phone: string;
+  developer_names: string;
+  showing_instructions: string;
   price: string;
   land_area_ping: string;
   building_area_ping: string;
@@ -116,6 +140,14 @@ export function propertyValuesFromFormData(formData: FormData): PropertyFormValu
     slug: String(formData.get("slug") || ""),
     address_public: String(formData.get("address_public") || ""),
     address_private: String(formData.get("address_private") || ""),
+    listing_no: String(formData.get("listing_no") || ""),
+    listing_type: String(formData.get("listing_type") || ""),
+    listing_start_date: normalizeDateInput(String(formData.get("listing_start_date") || "")),
+    listing_end_date: normalizeDateInput(String(formData.get("listing_end_date") || "")),
+    owner_name: String(formData.get("owner_name") || ""),
+    owner_phone: String(formData.get("owner_phone") || ""),
+    developer_names: String(formData.get("developer_names") || ""),
+    showing_instructions: String(formData.get("showing_instructions") || ""),
     price: String(formData.get("price") || ""),
     land_area_ping: String(formData.get("land_area_ping") || ""),
     building_area_ping: String(formData.get("building_area_ping") || ""),
@@ -178,6 +210,14 @@ export function toPropertyPayload(input: PropertyFormInput) {
     ...input,
     address_public: emptyToNull(input.address_public || ""),
     address_private: emptyToNull(input.address_private || ""),
+    listing_no: emptyToNull(input.listing_no || ""),
+    listing_type: emptyToNull(input.listing_type || ""),
+    listing_start_date: emptyToNull(input.listing_start_date || ""),
+    listing_end_date: emptyToNull(input.listing_end_date || ""),
+    owner_name: emptyToNull(input.owner_name || ""),
+    owner_phone: emptyToNull(input.owner_phone || ""),
+    developer_names: emptyToNull(input.developer_names || ""),
+    showing_instructions: emptyToNull(input.showing_instructions || ""),
     layout: emptyToNull(input.layout || ""),
     age: input.age ?? null,
     orientation: emptyToNull(input.orientation || ""),

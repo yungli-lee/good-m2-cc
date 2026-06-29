@@ -132,7 +132,8 @@ function xml(value: CellValue) {
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&apos;");
 }
 
 function decodeBase64(value: string) {
@@ -248,14 +249,25 @@ function propertyTypeLine(property: Property) {
 function buildTemplateValues(property: Property) {
   const notes = property.address_private || "";
   const bottomPrice = extractInternalValue(notes, "底價");
-  const developer = extractInternalValue(notes, "開發");
-  const showing = extractInternalValue(notes, "帶看") || extractInternalValue(notes, "帶看資訊");
+  const developer = property.developer_names || extractInternalValue(notes, "開發");
+  const showing = property.showing_instructions || extractInternalValue(notes, "帶看") || extractInternalValue(notes, "帶看資訊");
   const completionDate = extractInternalValue(notes, "完工日");
   const lotNumber = extractInternalValue(notes, "地號");
   const highlights = listHighlights(property.highlights);
+  const listingPeriod = [property.listing_start_date, property.listing_end_date].filter(Boolean).join(" - ");
+  const managementNotes = [
+    property.listing_no ? `委託書編號：${property.listing_no}` : "",
+    property.listing_type ? `委託類型：${property.listing_type}` : "",
+    listingPeriod ? `委託期間：${listingPeriod}` : "",
+    property.owner_name ? `屋主名稱：${property.owner_name}` : "",
+    property.owner_phone ? `屋主電話：${property.owner_phone}` : "",
+    developer ? `開發：${developer}` : "",
+    showing ? `帶看：${showing}` : "",
+    notes
+  ].filter(Boolean).join("\n");
 
   return {
-    A8: "▪️口頭約",
+    A8: property.listing_type ? checkedOption(property.listing_type, ["專任", "一般委託", "口頭約"]) : "▪️口頭約",
     A9: "廣告▪️刊登 □不刊登(原因:______)                             ",
     C12: property.title,
     C13: property.price == null ? "" : `${property.price}萬`,
@@ -276,7 +288,7 @@ function buildTemplateValues(property: Property) {
     B29: propertyTypeLabel(property.property_type),
     G29: highlights,
     G35: property.description || "",
-    B43: notes
+    B43: managementNotes
   } satisfies Record<string, CellValue>;
 }
 

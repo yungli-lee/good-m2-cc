@@ -3,6 +3,14 @@ export type ParsedProperty = {
   slug?: string;
   address_public?: string;
   address_private?: string;
+  listing_no?: string;
+  listing_type?: string;
+  listing_start_date?: string;
+  listing_end_date?: string;
+  owner_name?: string;
+  owner_phone?: string;
+  developer_names?: string;
+  showing_instructions?: string;
   price?: string;
   land_area_ping?: string;
   building_area_ping?: string;
@@ -17,10 +25,16 @@ export type ParsedProperty = {
   meta_description?: string;
 };
 
-const fieldAliases: Array<[keyof ParsedProperty | "bottom_price" | "lot_number" | "main_building" | "balcony" | "shared_area" | "completion_date" | "developer" | "internal_notes", RegExp]> = [
+const fieldAliases: Array<[keyof ParsedProperty | "bottom_price" | "lot_number" | "main_building" | "balcony" | "shared_area" | "completion_date" | "internal_notes", RegExp]> = [
   ["title", /^(案名|物件名稱|社區|標題)$/],
   ["address_public", /^(地址|公開地址|座落)$/],
   ["address_private", /^(完整地址|私有地址|後台地址)$/],
+  ["listing_no", /^(委託書編號|委託編號)$/],
+  ["listing_type", /^(委託類型)$/],
+  ["owner_name", /^(屋主名稱|屋主)$/],
+  ["owner_phone", /^(屋主電話)$/],
+  ["developer_names", /^(開發|開發人員|承辦|業務)$/],
+  ["showing_instructions", /^(帶看|帶看資訊|帶看方式)$/],
   ["lot_number", /^(地號)$/],
   ["land_area_ping", /^(地坪|土地|土地坪數)$/],
   ["building_area_ping", /^(建坪|權狀|建物|建物坪數|總坪)$/],
@@ -33,10 +47,9 @@ const fieldAliases: Array<[keyof ParsedProperty | "bottom_price" | "lot_number" 
   ["completion_date", /^(完工日|完工日期|建築完成日|使照日期)$/],
   ["price", /^(開價|售價|總價)$/],
   ["bottom_price", /^(底價)$/],
-  ["developer", /^(開發|開發人員|承辦|業務)$/],
   ["floor", /^(樓層|樓高)$/],
   ["highlights", /^(推薦特色|特色|賣點|亮點)$/],
-  ["internal_notes", /^(內部備註|帶看資訊|帶看|密碼|鑰匙|門牌|屋主|聯絡|管理室)$/]
+  ["internal_notes", /^(內部備註|密碼|鑰匙|門牌|聯絡|管理室|租金|面寬|深度)$/]
 ];
 
 const incomingCategoryPattern = /新接物件\s*[-－—]\s*(透天|土地|大樓華廈|大樓|華廈)/;
@@ -105,8 +118,9 @@ function normalizePrice(value: string) {
   return String(Math.round(number));
 }
 
-function normalizeSlug(value: string) {
+function normalizeSlug(value: string, prefix = "") {
   const tokenized = [
+    ["員林", "yuanlin"],
     ["彰化", "changhua"],
     ["快官", "kuaiguan"],
     ["生活圈", "life"],
@@ -133,8 +147,9 @@ function normalizeSlug(value: string) {
     ["農地", "farmland"],
     ["店面", "storefront"]
   ].reduce((slug, [term, replacement]) => slug.replaceAll(term, `-${replacement}-`), value);
-  const ascii = value
-    .concat("-", tokenized)
+  const ascii = [prefix, value.concat("-", tokenized)]
+    .filter(Boolean)
+    .join("-")
     .trim()
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
@@ -170,6 +185,12 @@ function parseDateLike(value: string) {
   if (roc) return { year: Number(roc[1]) + 1911, month: Number(roc[2] || 1) };
 
   return null;
+}
+
+function normalizeDateText(value: string) {
+  const date = value.trim().match(/(20\d{2}|19\d{2})[/-年.](\d{1,2})(?:[/-月.](\d{1,2}))?/);
+  if (!date) return value.trim();
+  return `${date[1]}/${date[2].padStart(2, "0")}/${(date[3] || "1").padStart(2, "0")}`;
 }
 
 function calculateAgeFromDate(value: string) {
@@ -208,6 +229,20 @@ function extractCompletionDate(value: string) {
   return match?.[1] || "";
 }
 
+function extractLeadingDate(text: string) {
+  const firstLine = text.split("\n").map((line) => line.trim()).find(Boolean) || "";
+  const match = firstLine.match(/^(20\d{2})(\d{2})(\d{2})$/);
+  return match ? `${match[1]}${match[2]}${match[3]}` : "";
+}
+
+function parseListingPeriod(value: string) {
+  const [start = "", end = ""] = value.split(/\s*[-~～至到]\s*/);
+  return {
+    start: start ? normalizeDateText(start) : "",
+    end: end ? normalizeDateText(end) : ""
+  };
+}
+
 function collectHighlights(text: string, labeledHighlights: string) {
   const source = labeledHighlights || extractSection(text, ["推薦特色", "特色", "賣點", "亮點"]);
   const delimiter = source.includes("\n") ? /\n/ : /[,，、\n]/;
@@ -244,9 +279,15 @@ export function parsePastedProperty(rawText: string): ParsedProperty {
   const publicDetails: string[] = [];
 
   for (const [label, value] of labeled.entries()) {
+    if (label === "委託期間") {
+      const period = parseListingPeriod(value);
+      parsed.listing_start_date ||= period.start;
+      parsed.listing_end_date ||= period.end;
+      continue;
+    }
     const field = findAliasField(label);
     if (!field) continue;
-    if (field === "bottom_price" || field === "lot_number" || field === "main_building" || field === "balcony" || field === "shared_area" || field === "completion_date" || field === "developer" || field === "internal_notes") {
+    if (field === "bottom_price" || field === "lot_number" || field === "main_building" || field === "balcony" || field === "shared_area" || field === "completion_date" || field === "internal_notes") {
       internalNotes.push(`${label}：${value}`);
       if (field === "completion_date" && !parsed.age) parsed.age = calculateAgeFromDate(value);
       continue;
@@ -267,7 +308,7 @@ export function parsePastedProperty(rawText: string): ParsedProperty {
   parsed.orientation ||= extractValue(text, ["坐向", "座向", "朝向"]);
   parsed.floor ||= extractValue(text, ["樓層", "樓高"]);
 
-  const titleLine = text.split("\n").map((line) => line.trim()).find((line) => line && !line.includes("：") && !line.includes(":") && line.length <= 60);
+  const titleLine = text.split("\n").map((line) => line.trim()).find((line) => line && !line.includes("：") && !line.includes(":") && !/^\d{8}$/.test(line) && !incomingCategoryPattern.test(line) && line.length <= 60);
   parsed.title ||= titleLine || "未命名物件";
   const incomingCategory = extractIncomingCategory(text);
   if (incomingCategory && parsed.title === `新接物件-${incomingCategory}`) {
@@ -305,8 +346,9 @@ export function parsePastedProperty(rawText: string): ParsedProperty {
   parsed.orientation = parsed.orientation ? normalizeOrientation(parsed.orientation) : "";
   parsed.age = parsed.age ? normalizeNumber(parsed.age) : "";
   parsed.floor ||= inferFloor(parsed.title || text);
+  parsed.listing_type = parsed.listing_type === "一般" ? "一般委託" : parsed.listing_type;
   parsed.property_type = inferType(text);
-  parsed.slug = normalizeSlug(parsed.title);
+  parsed.slug = normalizeSlug(parsed.title, extractLeadingDate(text));
   parsed.highlights = collectHighlights(text, parsed.highlights || "");
 
   if (parsed.address_private) internalNotes.unshift(`完整地址：${parsed.address_private}`);

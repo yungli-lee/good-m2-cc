@@ -12,6 +12,8 @@ type AdminPropertyListItem = {
   title: string;
   slug: string;
   address_public: string | null;
+  listing_no: string | null;
+  developer_names: string | null;
   price: number | null;
   status: PropertyStatus;
   is_featured: boolean;
@@ -36,7 +38,7 @@ function parsePublicLocation(address?: string | null) {
 }
 
 type Props = {
-  searchParams: Promise<{ error?: string }>;
+  searchParams: Promise<{ error?: string; q?: string }>;
 };
 
 function PublishAction({ id, status }: { id: string; status: PropertyStatus }) {
@@ -78,7 +80,8 @@ const errorMessage: Record<string, string> = {
 export default async function AdminPropertiesPage({ searchParams }: Props) {
   await requireRole(["editor", "admin", "owner"]);
   const query = await searchParams;
-  const { data, error } = await listAdminProperties();
+  const search = query.q?.trim() || "";
+  const { data, error } = await listAdminProperties(search);
   const properties = (data || []) as AdminPropertyListItem[];
 
   return (
@@ -96,11 +99,18 @@ export default async function AdminPropertiesPage({ searchParams }: Props) {
         </div>
         {error ? <div className="notice">物件資料讀取失敗。</div> : null}
         {query.error ? <div className="notice">{errorMessage[query.error] || `操作失敗：${query.error}`}</div> : null}
+        <form className="actions" style={{ marginBottom: 12 }} action="/admin/properties">
+          <input className="input" name="q" placeholder="搜尋案名、Slug、委託書編號、屋主名稱" defaultValue={search} />
+          <button className="button ghost" type="submit">搜尋</button>
+          {search ? <Link className="button ghost" href="/admin/properties">清除</Link> : null}
+        </form>
         <div className="table-wrap">
           <table>
             <thead>
               <tr>
                 <th>案名</th>
+                <th>委託書編號</th>
+                <th>開發人員</th>
                 <th>縣市</th>
                 <th>行政區</th>
                 <th>開價</th>
@@ -120,6 +130,8 @@ export default async function AdminPropertiesPage({ searchParams }: Props) {
                       <br />
                       <span className="muted">/{property.slug}</span>
                     </td>
+                    <td>{property.listing_no || "-"}</td>
+                    <td>{property.developer_names || "-"}</td>
                     <td>{location.city}</td>
                     <td>{location.district}</td>
                     <td>{formatPrice(property.price)}</td>
@@ -147,7 +159,7 @@ export default async function AdminPropertiesPage({ searchParams }: Props) {
               })}
               {properties.length === 0 ? (
                 <tr>
-                  <td colSpan={8}>尚未建立物件。可以先使用「新增物件」建立草稿。</td>
+                  <td colSpan={10}>尚未建立物件。可以先使用「新增物件」建立草稿。</td>
                 </tr>
               ) : null}
             </tbody>

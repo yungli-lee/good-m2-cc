@@ -87,13 +87,24 @@ export async function getPublishedPropertyBySlug(slug: string) {
     .maybeSingle();
 }
 
-export async function listAdminProperties() {
+function escapeSearchTerm(value: string) {
+  return value.replace(/[%_,]/g, "");
+}
+
+export async function listAdminProperties(search = "") {
   const supabase = await createSupabaseServerClient();
-  return supabase
+  let query = supabase
     .from("properties")
-    .select("id,title,slug,address_public,price,status,is_featured,published_at,updated_at")
+    .select("id,title,slug,address_public,listing_no,developer_names,owner_name,price,status,is_featured,published_at,updated_at")
     .is("deleted_at", null)
     .order("updated_at", { ascending: false });
+
+  const term = escapeSearchTerm(search.trim());
+  if (term) {
+    query = query.or(`title.ilike.%${term}%,slug.ilike.%${term}%,listing_no.ilike.%${term}%,owner_name.ilike.%${term}%`);
+  }
+
+  return query;
 }
 
 export async function getAdminPropertyById(id: string) {

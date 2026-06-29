@@ -81,9 +81,32 @@ function propertyFieldErrors(error: { issues: Array<{ path: Array<string | numbe
 }
 
 function propertyCreateErrorMessage(error: { code?: string; message?: string }) {
-  if (error.code === "23505") return "Slug 已存在，請使用其他 Slug。";
+  if (error.code === "23505") return "Slug 已重複，系統自動流水號處理失敗，請稍後再試。";
   if (error.code === "42501") return "資料庫權限不足，請確認 properties insert grant 與 RLS policy。";
   return `物件建立失敗${error.code ? `（${error.code}）` : ""}，請稍後再試。`;
+}
+
+async function resolveUniqueSlug(
+  supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>,
+  baseSlug: string,
+  excludeId?: string
+) {
+  let query = supabase
+    .from("properties")
+    .select("id, slug")
+    .or(`slug.eq.${baseSlug},slug.like.${baseSlug}-%`);
+
+  if (excludeId) query = query.neq("id", excludeId);
+
+  const { data, error } = await query;
+  if (error || !data?.length) return baseSlug;
+
+  const existing = new Set(data.map((property) => property.slug));
+  if (!existing.has(baseSlug)) return baseSlug;
+
+  let serial = 2;
+  while (existing.has(`${baseSlug}-${serial}`)) serial += 1;
+  return `${baseSlug}-${serial}`;
 }
 
 export async function createDraftPropertyAction(
@@ -105,10 +128,12 @@ export async function createDraftPropertyAction(
 
   const supabase = await createSupabaseServerClient();
   const payload = toDraftPropertyPayload(parsed.data);
+  const slug = await resolveUniqueSlug(supabase, payload.slug);
   const { data, error } = await supabase
     .from("properties")
     .insert({
       ...payload,
+      slug,
       created_by: current.user.id,
       updated_by: current.user.id
     })
@@ -118,8 +143,8 @@ export async function createDraftPropertyAction(
   if (error) {
     return {
       values,
-      fieldErrors: error.code === "23505" ? { slug: "Slug 已存在，請使用其他 Slug。" } : {},
-      formError: error.code === "23505" ? "Slug 已存在，請調整後再送出。" : "草稿建立失敗，請稍後再試。"
+      fieldErrors: {},
+      formError: error.code === "23505" ? "Slug 自動流水號處理失敗，請再送出一次。" : "草稿建立失敗，請稍後再試。"
     };
   }
 
@@ -159,11 +184,12 @@ export async function updateDraftPropertyAction(
   if (!before) redirect("/admin/properties?error=not_found");
 
   const payload = toDraftPropertyPayload(parsed.data);
+  const slug = await resolveUniqueSlug(supabase, payload.slug, id);
   const { data, error } = await supabase
     .from("properties")
     .update({
       title: payload.title,
-      slug: payload.slug,
+      slug,
       price: payload.price,
       address_public: payload.address_public,
       updated_by: current.user.id,
@@ -176,8 +202,8 @@ export async function updateDraftPropertyAction(
   if (error) {
     return {
       values,
-      fieldErrors: error.code === "23505" ? { slug: "Slug 已存在，請使用其他 Slug。" } : {},
-      formError: error.code === "23505" ? "Slug 已存在，請調整後再送出。" : "物件儲存失敗，請稍後再試。"
+      fieldErrors: {},
+      formError: error.code === "23505" ? "Slug 自動流水號處理失敗，請再送出一次。" : "物件儲存失敗，請稍後再試。"
     };
   }
 
@@ -296,10 +322,11 @@ export async function createPropertyAction(
   }
 
   const payload = toPropertyPayload(input);
+  const slug = await resolveUniqueSlug(supabase, payload.slug);
   const role = current.profile.role;
   const safePayload = canPublishProperties(role)
-    ? payload
-    : { ...payload, status: "draft", is_featured: false };
+    ? { ...payload, slug }
+    : { ...payload, slug, status: "draft", is_featured: false };
 
   const { data, error } = await supabase
     .from("properties")
@@ -320,7 +347,7 @@ export async function createPropertyAction(
     });
     return {
       values,
-      fieldErrors: error.code === "23505" ? { slug: "Slug 已存在，請使用其他 Slug。" } : {},
+      fieldErrors: {},
       formError: propertyCreateErrorMessage(error),
       formKey: `db-${Date.now()}`
     };
@@ -354,10 +381,12 @@ export async function updatePropertyAction(id: string, formData: FormData) {
 
   const input = parsePropertyFormOrRedirect(formData, `/admin/properties/${id}/edit`);
   const payload = toPropertyPayload(input);
+  const slug = await resolveUniqueSlug(supabase, payload.slug, id);
   const safePayload = canPublishProperties(role)
-    ? payload
+    ? { ...payload, slug }
     : {
         ...payload,
+        slug,
         status: "draft",
         is_featured: before.is_featured
       };
