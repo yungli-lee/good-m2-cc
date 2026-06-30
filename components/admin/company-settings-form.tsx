@@ -17,7 +17,7 @@ export function CompanySettingsForm({ settings }: { settings: CompanySettings })
   const [state, action, pending] = useActionState<FormState, FormData>(updateCompanySettingsAction, {});
 
   return (
-    <form className="form-grid" action={action}>
+    <form className="form-grid" action={action} encType="multipart/form-data">
       {state.error ? <div className="notice field full">{state.error}</div> : null}
       <div className="field full">
         <h2 style={{ margin: 0 }}>基本資料</h2>
@@ -106,9 +106,19 @@ export function CompanySettingsForm({ settings }: { settings: CompanySettings })
         <FieldError message={state.fieldErrors?.logo_url} />
       </div>
       <div className="field">
+        <label htmlFor="logo_file">上傳公司 Logo</label>
+        <input className="input" id="logo_file" name="logo_file" type="file" accept="image/*" />
+        <span className="muted">可直接上傳圖片；上傳後會自動寫入 Logo URL。</span>
+      </div>
+      <div className="field">
         <label htmlFor="line_qr_code_url">LINE QR Code URL</label>
         <input className="input" id="line_qr_code_url" name="line_qr_code_url" type="url" defaultValue={settings.line_qr_code_url} />
         <FieldError message={state.fieldErrors?.line_qr_code_url} />
+      </div>
+      <div className="field">
+        <label htmlFor="line_qr_code_file">上傳 LINE QR Code</label>
+        <input className="input" id="line_qr_code_file" name="line_qr_code_file" type="file" accept="image/*" />
+        <span className="muted">可直接上傳圖片；上傳後會自動寫入 LINE QR Code URL。</span>
       </div>
 
       <div className="field full">

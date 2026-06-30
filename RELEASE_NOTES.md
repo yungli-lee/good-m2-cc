@@ -2,6 +2,37 @@
 
 ---
 
+## admin-company-assets-upload (Draft)
+
+Tag:
+尚未建立
+
+Date:
+2026-06-30
+
+Completed
+
+- Add direct upload support for company Logo and LINE QR Code
+- Keep manual URL inputs for company images
+- Add public Supabase Storage bucket and staff upload policies for company assets
+- Validate company image uploads by image MIME type and size
+
+Not Included
+
+- None
+
+Verification
+
+- Timeline tests ✅
+- Parser tests ✅
+- Export tests ✅
+- Health tests ✅
+- TypeScript ✅
+- ESLint ✅
+- Build ✅
+
+---
+
 ## admin-company-settings-expanded (Draft)
 
 Tag:

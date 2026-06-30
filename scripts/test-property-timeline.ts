@@ -246,7 +246,10 @@ assert.match(adminGrantMigrationSource, /public\.is_admin_role\(array\['admin','
 
 const timelineCompanyMigrationSource = readFileSync(new URL("../supabase/migrations/202606300104_timeline_edit_and_company_settings.sql", import.meta.url), "utf8");
 const expandedCompanyMigrationSource = readFileSync(new URL("../supabase/migrations/202606300105_expand_company_settings.sql", import.meta.url), "utf8");
+const companyAssetsMigrationSource = readFileSync(new URL("../supabase/migrations/202606300106_company_settings_assets_storage.sql", import.meta.url), "utf8");
 const companySettingsSource = readFileSync(new URL("../lib/company-settings.ts", import.meta.url), "utf8");
+const companySettingsActionSource = readFileSync(new URL("../app/admin/settings/company/actions.ts", import.meta.url), "utf8");
+const companySettingsFormSource = readFileSync(new URL("../components/admin/company-settings-form.tsx", import.meta.url), "utf8");
 const propertyDetailSource = readFileSync(new URL("../app/(public)/properties/[slug]/page.tsx", import.meta.url), "utf8");
 assert.match(timelineCompanyMigrationSource, /add column if not exists updated_by uuid/);
 assert.match(timelineCompanyMigrationSource, /staff update property timeline/);
@@ -259,5 +262,12 @@ for (const field of ["company_phone", "company_address", "company_email", "googl
 }
 assert.match(companySettingsSource, /赫成開發有限公司/);
 assert.match(companySettingsSource, /太平洋房屋彰化縣府加盟店/);
+assert.match(companyAssetsMigrationSource, /company-assets/);
+assert.match(companyAssetsMigrationSource, /staff upload company assets bucket/);
+assert.match(companyAssetsMigrationSource, /image\/jpeg/);
+assert.match(companySettingsActionSource, /company-assets/);
+assert.match(companySettingsActionSource, /imageTypes/);
+assert.match(companySettingsFormSource, /name="logo_file"/);
+assert.match(companySettingsFormSource, /name="line_qr_code_file"/);
 
 console.log("property timeline tests passed");
