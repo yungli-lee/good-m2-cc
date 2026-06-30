@@ -232,6 +232,44 @@ td {
   flex-wrap: wrap;
 }
 
+.company-info-panel {
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(16, 35, 67, 0.12);
+}
+
+.company-info-panel h2 {
+  margin: 0 0 8px;
+  font-size: 1.08rem;
+}
+
+.company-info-panel p {
+  margin: 0 0 12px;
+  font-weight: 700;
+}
+
+.company-info-panel dl {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+}
+
+.company-info-panel div {
+  display: grid;
+  gap: 3px;
+}
+
+.company-info-panel dt {
+  color: #64708a;
+  font-size: 0.88rem;
+}
+
+.company-info-panel dd {
+  margin: 0;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
 .detail-layout {
   display: grid;
   grid-template-columns: minmax(0, 1.4fr) minmax(300px, 0.6fr);
@@ -544,6 +582,23 @@ td {
 .property-timeline-body p {
   margin: 0;
   line-height: 1.7;
+}
+
+.property-timeline-edit {
+  margin-top: 8px;
+}
+
+.property-timeline-edit summary {
+  width: fit-content;
+  list-style: none;
+}
+
+.property-timeline-edit summary::-webkit-details-marker {
+  display: none;
+}
+
+.property-timeline-edit[open] summary {
+  margin-bottom: 12px;
 }
 
 .media-dropzone {

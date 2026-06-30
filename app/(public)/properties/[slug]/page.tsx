@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { getPublicCompanySettings } from "@/lib/company-settings";
 import { formatPing, formatPrice, propertyTypeLabel } from "@/lib/format";
 import { getPublishedPropertyBySlug } from "@/lib/properties/queries";
 import type { Property } from "@/lib/properties/types";
@@ -38,6 +39,7 @@ export default async function PropertyDetailPage({ params }: Props) {
   if (error || !data) notFound();
 
   const property = data as Property;
+  const companySettings = await getPublicCompanySettings();
   const cover = getCoverMedia(property);
   const media = property.property_media?.filter((item) => item.media_type === "image" && !item.deleted_at) || [];
 
@@ -76,6 +78,20 @@ export default async function PropertyDetailPage({ params }: Props) {
                   填寫服務表單
                 </Link>
               </div>
+              <section className="company-info-panel" aria-label="公司資訊">
+                <h2>{companySettings.company_name}</h2>
+                <p>{companySettings.franchise_name}</p>
+                <dl>
+                  <div>
+                    <dt>經紀業特許字號</dt>
+                    <dd>{companySettings.brokerage_license_no}</dd>
+                  </div>
+                  <div>
+                    <dt>不動產經紀人證號</dt>
+                    <dd>{companySettings.realtor_certificate_no}</dd>
+                  </div>
+                </dl>
+              </section>
             </div>
           </aside>
         </div>

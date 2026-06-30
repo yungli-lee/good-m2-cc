@@ -1,12 +1,14 @@
 import {
   canCreatePropertyTimeline,
   canManagePropertyTimeline,
+  canUpdatePropertyTimeline,
   formatTimelineDate,
   getPropertyTimelineLabel,
   propertyTimelineCreatePath,
   propertyTimelineDeletePath,
   propertyTimelineEventTypes,
   propertyTimelineLabels,
+  propertyTimelineUpdatePath,
   todayTaipeiDate
 } from "@/lib/properties/timeline";
 import type { PropertyTimelineEvent } from "@/lib/properties/timeline";
@@ -15,6 +17,8 @@ import type { AdminRole } from "@/lib/auth";
 const timelineErrorMessage: Record<string, string> = {
   invalid_form: "時間軸資料格式不完整，請確認日期、類型與標題。",
   create_failed: "時間軸新增失敗，請稍後再試。",
+  update_failed: "時間軸修改失敗，請稍後再試。",
+  not_found: "找不到指定的時間軸事件。",
   delete_failed: "時間軸刪除失敗，請稍後再試。"
 };
 
@@ -24,11 +28,13 @@ type Props = {
   role: AdminRole;
   errorCode?: string;
   saved?: boolean;
+  updated?: boolean;
   deleted?: boolean;
 };
 
-export function PropertyTimeline({ propertyId, events, role, errorCode, saved, deleted }: Props) {
+export function PropertyTimeline({ propertyId, events, role, errorCode, saved, updated, deleted }: Props) {
   const canCreate = canCreatePropertyTimeline(role);
+  const canEdit = canUpdatePropertyTimeline(role);
   const canDelete = canManagePropertyTimeline(role);
 
   return (
@@ -41,6 +47,7 @@ export function PropertyTimeline({ propertyId, events, role, errorCode, saved, d
       </div>
 
       {saved ? <div className="notice">時間軸已新增。</div> : null}
+      {updated ? <div className="notice">時間軸已更新。</div> : null}
       {deleted ? <div className="notice">時間軸已刪除。</div> : null}
       {errorCode ? <div className="notice">{timelineErrorMessage[errorCode] || "時間軸操作失敗。"}</div> : null}
 
@@ -86,6 +93,36 @@ export function PropertyTimeline({ propertyId, events, role, errorCode, saved, d
                 </div>
                 {event.content ? <p>{event.content}</p> : null}
                 {event.created_by_email ? <p className="muted">建立者：{event.created_by_email}</p> : null}
+                {canEdit && event.id ? (
+                  <details className="property-timeline-edit">
+                    <summary className="button secondary">編輯</summary>
+                    <form className="property-timeline-form" action={propertyTimelineUpdatePath(propertyId, event.id)} method="post">
+                      <div className="field">
+                        <label htmlFor={`timeline-event-date-${event.id}`}>日期</label>
+                        <input className="input" id={`timeline-event-date-${event.id}`} name="event_date" type="date" defaultValue={event.event_date || todayTaipeiDate()} required />
+                      </div>
+                      <div className="field">
+                        <label htmlFor={`timeline-event-type-${event.id}`}>類型</label>
+                        <select className="select" id={`timeline-event-type-${event.id}`} name="event_type" defaultValue={getPropertyTimelineLabel(event.event_type) === propertyTimelineLabels.note && event.event_type !== "note" ? "note" : event.event_type || "note"}>
+                          {propertyTimelineEventTypes.map((type) => (
+                            <option key={type} value={type}>{propertyTimelineLabels[type].label}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div className="field">
+                        <label htmlFor={`timeline-title-${event.id}`}>標題</label>
+                        <input className="input" id={`timeline-title-${event.id}`} name="title" maxLength={120} defaultValue={event.title || label.label} required />
+                      </div>
+                      <div className="field full">
+                        <label htmlFor={`timeline-content-${event.id}`}>內容</label>
+                        <textarea className="textarea" id={`timeline-content-${event.id}`} name="content" maxLength={2000} defaultValue={event.content || ""} />
+                      </div>
+                      <div className="field full">
+                        <button className="button" type="submit">儲存時間軸事件</button>
+                      </div>
+                    </form>
+                  </details>
+                ) : null}
               </div>
               {canDelete && event.id ? (
                 <form action={propertyTimelineDeletePath(propertyId, event.id)} method="post">

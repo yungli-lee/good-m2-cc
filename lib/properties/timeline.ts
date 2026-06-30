@@ -30,6 +30,7 @@ export type PropertyTimelineEvent = {
   created_by_email: string | null;
   created_at: string | null;
   updated_at: string | null;
+  updated_by?: string | null;
 };
 
 export type PropertyTimelineInput = {
@@ -40,6 +41,10 @@ export type PropertyTimelineInput = {
   content?: string | null;
   created_by?: string | null;
   created_by_email?: string | null;
+};
+
+export type PropertyTimelineUpdateInput = Omit<PropertyTimelineInput, "property_id" | "created_by" | "created_by_email"> & {
+  updated_by?: string | null;
 };
 
 export const propertyTimelineLabels: Record<PropertyTimelineEventType, { label: string; icon: string }> = {
@@ -95,6 +100,10 @@ export function canManagePropertyTimeline(role: AdminRole) {
   return role === "admin" || role === "owner";
 }
 
+export function canUpdatePropertyTimeline(role: AdminRole) {
+  return role === "editor" || role === "admin" || role === "owner";
+}
+
 export function sortPropertyTimelineEvents<T extends Pick<PropertyTimelineEvent, "event_date" | "created_at">>(events: T[]) {
   return [...events].sort((a, b) => {
     const dateCompare = (b.event_date || "").localeCompare(a.event_date || "");
@@ -138,6 +147,28 @@ export async function insertPropertyTimelineEvent(
   }).select("id").single();
 }
 
+export async function updatePropertyTimelineEvent(
+  supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>,
+  propertyId: string,
+  eventId: string,
+  input: PropertyTimelineUpdateInput
+) {
+  return supabase
+    .from("property_timeline_events")
+    .update({
+      event_date: input.event_date,
+      event_type: input.event_type,
+      title: input.title,
+      content: input.content || null,
+      updated_by: input.updated_by || null,
+      updated_at: new Date().toISOString()
+    })
+    .eq("id", eventId)
+    .eq("property_id", propertyId)
+    .select("id")
+    .single();
+}
+
 export function sanitizeTimelineDbError(error: { code?: string; message?: string } | null | undefined) {
   return {
     code: error?.code || "unknown",
@@ -155,12 +186,26 @@ export function timelineCreateRedirectPath(
   return `/admin/properties/${propertyId}/edit?timeline_saved=1`;
 }
 
+export function timelineUpdateRedirectPath(
+  propertyId: string,
+  result: { data?: { id?: string } | null; error?: { code?: string; message?: string } | null }
+) {
+  if (result.error || !result.data?.id) {
+    return `/admin/properties/${propertyId}/edit?timeline_error=update_failed`;
+  }
+  return `/admin/properties/${propertyId}/edit?timeline_updated=1`;
+}
+
 export function propertyTimelineCreatePath(propertyId: string) {
   return `/admin/properties/${propertyId}/edit/timeline`;
 }
 
 export function propertyTimelineDeletePath(propertyId: string, eventId: string) {
   return `/admin/properties/${propertyId}/edit/timeline/${eventId}/delete`;
+}
+
+export function propertyTimelineUpdatePath(propertyId: string, eventId: string) {
+  return `/admin/properties/${propertyId}/edit/timeline/${eventId}/update`;
 }
 
 export async function tryInsertPropertyTimelineEvent(

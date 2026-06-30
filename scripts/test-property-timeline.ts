@@ -5,15 +5,19 @@ const {
   canCreatePropertyTimeline,
   canManagePropertyTimeline,
   canReadPropertyTimeline,
+  canUpdatePropertyTimeline,
   formatTimelineDate,
   getPropertyTimelineLabel,
   insertPropertyTimelineEvent,
   priceChangedContent,
   propertyTimelineCreatePath,
   propertyTimelineDeletePath,
+  propertyTimelineUpdatePath,
   propertyTimelineFormSchema,
   sortPropertyTimelineEvents,
-  timelineCreateRedirectPath
+  timelineCreateRedirectPath,
+  timelineUpdateRedirectPath,
+  updatePropertyTimelineEvent
 } = await import("../lib/properties/timeline.ts");
 const {
   expiredListingTimelineContent,
@@ -86,10 +90,12 @@ assert.deepEqual(sorted.map((event) => `${event.event_date}/${event.created_at}`
 assert.equal(canReadPropertyTimeline("viewer"), false);
 assert.equal(canCreatePropertyTimeline("viewer"), false);
 assert.equal(canManagePropertyTimeline("viewer"), false);
+assert.equal(canUpdatePropertyTimeline("viewer"), false);
 
 for (const role of ["owner", "admin", "editor"] as const) {
   assert.equal(canReadPropertyTimeline(role), true, `${role} should read timeline`);
   assert.equal(canCreatePropertyTimeline(role), true, `${role} should create timeline`);
+  assert.equal(canUpdatePropertyTimeline(role), true, `${role} should update timeline`);
 }
 
 assert.equal(canManagePropertyTimeline("owner"), true);
@@ -145,6 +151,45 @@ assert.equal(
 assert.notEqual(timelineCreateRedirectPath("property-1", insertFailure), "/admin/properties/property-1/edit?timeline_saved=1");
 assert.equal(timelineCreateRedirectPath("property-1", { data: null, error: null }), "/admin/properties/property-1/edit?timeline_error=create_failed");
 
+const updatePayloads: unknown[] = [];
+const updateSupabase = {
+  from(table: string) {
+    assert.equal(table, "property_timeline_events");
+    return {
+      update(payload: unknown) {
+        updatePayloads.push(payload);
+        return {
+          eq(field: string, value: string) {
+            assert.ok(["id", "property_id"].includes(field));
+            assert.ok(value);
+            return this;
+          },
+          select(columns: string) {
+            assert.equal(columns, "id");
+            return {
+              async single() {
+                return { data: { id: "event-1" }, error: null };
+              }
+            };
+          }
+        };
+      }
+    };
+  }
+};
+
+const updateSuccess = await updatePropertyTimelineEvent(updateSupabase as unknown as Parameters<typeof updatePropertyTimelineEvent>[0], "property-1", "event-1", {
+  event_date: "2026-06-30",
+  event_type: "showing",
+  title: "帶看更新",
+  content: "已更新內容",
+  updated_by: "user-1"
+});
+assert.equal(updateSuccess.data?.id, "event-1");
+assert.equal(updatePayloads.length, 1);
+assert.equal(timelineUpdateRedirectPath("property-1", updateSuccess), "/admin/properties/property-1/edit?timeline_updated=1");
+assert.equal(timelineUpdateRedirectPath("property-1", { data: null, error: { code: "42501" } }), "/admin/properties/property-1/edit?timeline_error=update_failed");
+
 assert.equal(formatTimelineDate("2026-07-05"), "2026/07/05");
 assert.equal(formatTimelineDate("2026/07/05"), "日期未設定");
 assert.equal(formatTimelineDate(null), "日期未設定");
@@ -153,6 +198,7 @@ assert.equal(getPropertyTimelineLabel("unknown").label, "一般備註");
 assert.equal(getPropertyTimelineLabel(null).icon, "📝");
 assert.equal(propertyTimelineCreatePath("property-1"), "/admin/properties/property-1/edit/timeline");
 assert.equal(propertyTimelineDeletePath("property-1", "event-1"), "/admin/properties/property-1/edit/timeline/event-1/delete");
+assert.equal(propertyTimelineUpdatePath("property-1", "event-1"), "/admin/properties/property-1/edit/timeline/event-1/update");
 assert.notEqual(propertyTimelineCreatePath("property-1"), "/admin/properties/property-1/edit");
 
 const expiredListings = selectExpiredPublishedListings([
@@ -197,5 +243,14 @@ assert.match(propertyActionsSource, /formData\.getAll\("file"\)/);
 assert.match(adminGrantMigrationSource, /grant select, insert, update, delete on table public\.properties to authenticated;/);
 assert.match(adminGrantMigrationSource, /grant select, insert, update, delete on table public\.property_media to authenticated;/);
 assert.match(adminGrantMigrationSource, /public\.is_admin_role\(array\['admin','owner'\]\)/);
+
+const timelineCompanyMigrationSource = readFileSync(new URL("../supabase/migrations/202606300104_timeline_edit_and_company_settings.sql", import.meta.url), "utf8");
+const companySettingsSource = readFileSync(new URL("../lib/company-settings.ts", import.meta.url), "utf8");
+assert.match(timelineCompanyMigrationSource, /add column if not exists updated_by uuid/);
+assert.match(timelineCompanyMigrationSource, /staff update property timeline/);
+assert.match(timelineCompanyMigrationSource, /create table if not exists public\.company_settings/);
+assert.match(timelineCompanyMigrationSource, /public read company settings/);
+assert.match(companySettingsSource, /赫成開發有限公司/);
+assert.match(companySettingsSource, /太平洋房屋彰化縣府加盟店/);
 
 console.log("property timeline tests passed");

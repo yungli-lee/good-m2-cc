@@ -13,7 +13,7 @@ export const runtime = "edge";
 
 type Props = {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ error?: string; saved?: string; timeline_error?: string; timeline_saved?: string; timeline_deleted?: string }>;
+  searchParams: Promise<{ error?: string; saved?: string; timeline_error?: string; timeline_saved?: string; timeline_updated?: string; timeline_deleted?: string }>;
 };
 
 const errorMessage: Record<string, string> = {
@@ -78,6 +78,7 @@ export default async function EditPropertyPage({ params, searchParams }: Props) 
           role={current.profile.role}
           errorCode={query.timeline_error}
           saved={query.timeline_saved === "1"}
+          updated={query.timeline_updated === "1"}
           deleted={query.timeline_deleted === "1"}
         />
       </div>

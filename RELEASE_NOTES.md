@@ -2,6 +2,34 @@
 
 ---
 
+## admin-timeline-edit-company-settings (Draft)
+
+Tag:
+尚未建立
+
+Date:
+2026-06-30
+
+Completed
+
+- Add inline edit forms for property timeline events
+- Allow owner/admin/editor to update timeline events while retaining delete behavior
+- Add company settings table with public defaults and admin maintenance page
+- Show public company information below property detail CTA buttons
+
+Not Included
+
+- Push to main or staging
+
+Verification
+
+- Timeline tests ✅
+- TypeScript ✅
+- ESLint ✅
+- Build ✅
+
+---
+
 ## admin-property-save-media-hotfix (Draft)
 
 Tag:
