@@ -1,4 +1,6 @@
 import type { Property } from "@/lib/properties/types";
+import { getCoverMedia } from "@/lib/properties/types";
+import { resolvePropertySeo } from "@/lib/properties/seo";
 import type { AdminRole } from "@/lib/auth";
 
 const typeOptions = [
@@ -23,6 +25,8 @@ export function PropertyForm({
   const canPublish = role === "admin" || role === "owner";
   const canManageProgressNotes = role === "admin" || role === "owner";
   const actionPath = typeof formAction === "string" ? formAction : undefined;
+  const seoPreview = resolvePropertySeo(property || {});
+  const cover = property ? getCoverMedia(property) : null;
 
   return (
     <form action={formAction} method={actionPath ? "post" : undefined} className="form-grid">
@@ -165,22 +169,30 @@ export function PropertyForm({
         <label htmlFor="description">詳細介紹</label>
         <textarea className="textarea" id="description" name="description" defaultValue={property?.description || ""} />
       </div>
-      <div className="field">
-        <label htmlFor="seo_title">SEO 網頁標題</label>
-        <input className="input" id="seo_title" name="seo_title" defaultValue={property?.seo_title || ""} />
-      </div>
-      <div className="field">
-        <label htmlFor="meta_description">Meta Description</label>
-        <input className="input" id="meta_description" name="meta_description" defaultValue={property?.meta_description || ""} />
-      </div>
-      <div className="field">
-        <label htmlFor="og_image_url">OG Image</label>
-        <input className="input" id="og_image_url" name="og_image_url" defaultValue={property?.og_image_url || ""} />
-      </div>
-      <div className="field">
-        <label htmlFor="canonical_url">Canonical URL</label>
-        <input className="input" id="canonical_url" name="canonical_url" defaultValue={property?.canonical_url || ""} />
-      </div>
+      <details className="field full">
+        <summary>進階 SEO 設定</summary>
+        <div className="form-grid" style={{ marginTop: 12 }}>
+          <div className="field full">
+            <label htmlFor="seo_title">SEO 網頁標題</label>
+            <input className="input" id="seo_title" name="seo_title" defaultValue={property?.seo_title || ""} placeholder={seoPreview.title} />
+            <p className="muted">空白時使用系統預設：{seoPreview.title}</p>
+          </div>
+          <div className="field full">
+            <label htmlFor="meta_description">Meta Description</label>
+            <textarea className="textarea" id="meta_description" name="meta_description" maxLength={300} defaultValue={property?.meta_description || ""} placeholder={seoPreview.description} />
+            <p className="muted">建議 80～150 字。空白時使用系統預設：{seoPreview.description}</p>
+          </div>
+          <div className="field full">
+            <strong>OG Image</strong>
+            <p className="muted">{cover?.url ? "系統預設使用物件封面圖片。" : "尚未設定封面圖片；上傳並設為封面後會自動作為 OG Image。"}</p>
+            {cover?.url ? <img className="property-image" src={cover.url} alt={cover.alt_text || property?.title || "OG Image"} loading="lazy" /> : null}
+          </div>
+          <div className="field full">
+            <strong>Canonical URL</strong>
+            <p className="muted">{seoPreview.canonical}</p>
+          </div>
+        </div>
+      </details>
       <div className="field full">
         <button className="button" type="submit" formAction={actionPath} formMethod={actionPath ? "post" : undefined}>儲存物件</button>
       </div>

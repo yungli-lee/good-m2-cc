@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { getPublicCompanySettings } from "@/lib/company-settings";
 import { formatPing, formatPrice, propertyTypeLabel } from "@/lib/format";
 import { getPublishedPropertyBySlug } from "@/lib/properties/queries";
+import { resolvePropertySeo } from "@/lib/properties/seo";
 import type { Property } from "@/lib/properties/types";
 import { getCoverMedia } from "@/lib/properties/types";
 
@@ -20,16 +21,16 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { data } = await getPublishedPropertyBySlug(slug);
   const property = data as Property | null;
   if (!property) return { title: "物件不存在｜阿勇不動產顧問" };
-  const cover = getCoverMedia(property);
+  const seo = resolvePropertySeo(property);
   return {
-    title: property.seo_title || `${property.title}｜阿勇不動產顧問`,
-    description: property.meta_description || property.description?.slice(0, 120) || "主推物件詳細資訊",
+    title: seo.title,
+    description: seo.description,
     openGraph: {
-      title: property.seo_title || property.title,
-      description: property.meta_description || property.description || undefined,
-      images: property.og_image_url || cover?.url ? [property.og_image_url || cover!.url] : undefined
+      title: seo.ogTitle,
+      description: seo.ogDescription,
+      images: seo.ogImage ? [seo.ogImage] : undefined
     },
-    alternates: property.canonical_url ? { canonical: property.canonical_url } : undefined
+    alternates: { canonical: seo.canonical }
   };
 }
 
