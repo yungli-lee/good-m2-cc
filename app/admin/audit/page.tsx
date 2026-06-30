@@ -89,7 +89,7 @@ function JsonBlock({ label, value }: { label: string; value: unknown }) {
 }
 
 export default async function AdminAuditPage({ searchParams }: Props) {
-  await requireRole(["owner"]);
+  await requireRole(["admin", "owner"]);
   const filters = await searchParams;
   const currentPage = Math.max(1, Number(filters.page || "1") || 1);
   const from = filters.from?.trim();
