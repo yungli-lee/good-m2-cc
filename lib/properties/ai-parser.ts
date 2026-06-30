@@ -11,6 +11,8 @@ export type ParsedProperty = {
   owner_phone?: string;
   developer_names?: string;
   showing_instructions?: string;
+  service_fee_rate?: string;
+  floor_price?: string;
   frontage?: string;
   depth?: string;
   price?: string;
@@ -27,7 +29,7 @@ export type ParsedProperty = {
   meta_description?: string;
 };
 
-const fieldAliases: Array<[keyof ParsedProperty | "bottom_price" | "lot_number" | "main_building" | "balcony" | "shared_area" | "completion_date" | "internal_notes", RegExp]> = [
+const fieldAliases: Array<[keyof ParsedProperty | "lot_number" | "main_building" | "balcony" | "shared_area" | "completion_date" | "internal_notes", RegExp]> = [
   ["title", /^(案名|物件名稱|社區|標題)$/],
   ["address_public", /^(地址|公開地址|座落)$/],
   ["address_private", /^(完整地址|私有地址|後台地址)$/],
@@ -50,7 +52,8 @@ const fieldAliases: Array<[keyof ParsedProperty | "bottom_price" | "lot_number" 
   ["age", /^(屋齡)$/],
   ["completion_date", /^(完工日|完工日期|建築完成日|使照日期)$/],
   ["price", /^(開價|售價|總價)$/],
-  ["bottom_price", /^(底價)$/],
+  ["floor_price", /^(底價)$/],
+  ["service_fee_rate", /^(服務費|服務費%|仲介服務費)$/],
   ["floor", /^(樓層|樓高)$/],
   ["highlights", /^(推薦特色|特色|賣點|亮點)$/],
   ["internal_notes", /^(內部備註|密碼|鑰匙|門牌|聯絡|管理室|租金)$/]
@@ -319,12 +322,12 @@ export function parsePastedProperty(rawText: string): ParsedProperty {
       }
       continue;
     }
-    if (field === "bottom_price" || field === "lot_number" || field === "main_building" || field === "balcony" || field === "shared_area" || field === "completion_date" || field === "internal_notes") {
+    if (field === "lot_number" || field === "main_building" || field === "balcony" || field === "shared_area" || field === "completion_date" || field === "internal_notes") {
       internalNotes.push(`${label}：${value}`);
       if (field === "completion_date" && !parsed.age) parsed.age = calculateAgeFromDate(value);
       continue;
     }
-    parsed[field] = value;
+    parsed[field] ||= value;
     if (field === "age") {
       const completionDate = extractCompletionDate(value);
       if (completionDate) internalNotes.push(`完工日：${completionDate}`);
@@ -341,6 +344,8 @@ export function parsePastedProperty(rawText: string): ParsedProperty {
     }
   }
   parsed.price ||= extractValue(text, ["開價", "售價", "總價"]);
+  parsed.floor_price ||= extractValue(text, ["底價"]);
+  parsed.service_fee_rate ||= extractValue(text, ["服務費%", "服務費", "仲介服務費"]);
   parsed.land_area_ping ||= extractValue(text, ["地坪", "土地坪數"]);
   parsed.building_area_ping ||= extractValue(text, ["建坪", "建物坪數", "權狀"]);
   parsed.layout ||= extractValue(text, ["格局"]);

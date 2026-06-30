@@ -6,7 +6,7 @@ export function formatPrice(value?: number | null) {
 
 export function formatPing(value?: number | null) {
   if (value == null) return "-";
-  return `${Number(value).toLocaleString("zh-TW", { maximumFractionDigits: 2 })} 坪`;
+  return `${Number(value).toLocaleString("zh-TW", { maximumFractionDigits: 3 })} 坪`;
 }
 
 export function formatDateTime(value?: string | null) {

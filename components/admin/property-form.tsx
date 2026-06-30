@@ -96,16 +96,24 @@ export function PropertyForm({
         </div>
       ) : null}
       <div className="field">
+        <label htmlFor="service_fee_rate">服務費 %</label>
+        <input className="input" id="service_fee_rate" name="service_fee_rate" defaultValue={property?.service_fee_rate || ""} placeholder="4%" />
+      </div>
+      <div className="field">
+        <label htmlFor="floor_price">底價</label>
+        <input className="input" id="floor_price" name="floor_price" defaultValue={property?.floor_price || ""} placeholder="出價談" />
+      </div>
+      <div className="field">
         <label htmlFor="price">開價</label>
         <input className="input" id="price" name="price" type="number" min="0" defaultValue={property?.price || ""} />
       </div>
       <div className="field">
         <label htmlFor="land_area_ping">土地坪數</label>
-        <input className="input" id="land_area_ping" name="land_area_ping" type="number" step="0.01" min="0" defaultValue={property?.land_area_ping || ""} />
+        <input className="input" id="land_area_ping" name="land_area_ping" type="number" step="0.001" min="0" defaultValue={property?.land_area_ping || ""} />
       </div>
       <div className="field">
         <label htmlFor="building_area_ping">建物坪數</label>
-        <input className="input" id="building_area_ping" name="building_area_ping" type="number" step="0.01" min="0" defaultValue={property?.building_area_ping || ""} />
+        <input className="input" id="building_area_ping" name="building_area_ping" type="number" step="0.001" min="0" defaultValue={property?.building_area_ping || ""} />
       </div>
       <div className="field">
         <label htmlFor="layout">格局</label>

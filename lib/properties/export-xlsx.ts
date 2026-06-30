@@ -7,7 +7,7 @@ const textEncoder = new TextEncoder();
 
 function formatPing(value?: number | null) {
   if (value == null) return "-";
-  return `${Number(value).toLocaleString("zh-TW", { maximumFractionDigits: 2 })} 坪`;
+  return `${Number(value).toLocaleString("zh-TW", { maximumFractionDigits: 3 })} 坪`;
 }
 
 function propertyTypeLabel(value: string) {
@@ -195,6 +195,10 @@ function extractInternalValue(notes: string, label: string) {
   return notes.match(pattern)?.[1]?.trim() || "";
 }
 
+function internalFieldOrFallback(value: string | null | undefined, notes: string, label: string) {
+  return value || extractInternalValue(notes, label);
+}
+
 function listHighlights(value?: string[]) {
   return (value || []).filter(Boolean).join("\n");
 }
@@ -248,7 +252,7 @@ function propertyTypeLine(property: Property) {
 
 function buildTemplateValues(property: Property) {
   const notes = property.address_private || "";
-  const bottomPrice = extractInternalValue(notes, "底價");
+  const bottomPrice = internalFieldOrFallback(property.floor_price, notes, "底價");
   const developer = property.developer_names || extractInternalValue(notes, "開發");
   const showing = property.showing_instructions || extractInternalValue(notes, "帶看") || extractInternalValue(notes, "帶看資訊");
   const completionDate = extractInternalValue(notes, "完工日");

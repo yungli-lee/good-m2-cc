@@ -89,6 +89,7 @@ assert.equal(sampleTownhouse.property_type, "townhouse");
 assert.equal(sampleTownhouse.price, "988");
 assert.equal(sampleTownhouse.land_area_ping, "21.17");
 assert.equal(sampleTownhouse.building_area_ping, "27.58");
+assert.equal(sampleTownhouse.floor_price, "出價談");
 assert.equal(sampleTownhouse.layout, "4房3廳3衛");
 assert.equal(sampleTownhouse.description, "");
 assert.match(sampleTownhouse.slug || "", /^20260122-/);
@@ -149,6 +150,28 @@ assert.equal(landShape.frontage, "35米");
 assert.equal(landShape.depth, "89~93米");
 assert.equal(landShape.owner_name, "劉玉梅");
 assert.match(landShape.address_private || "", /地號：福興鄉文昌段935號/);
-assert.match(landShape.address_private || "", /底價：出價談（3%）/);
+assert.equal(landShape.floor_price, "出價談（3%）");
+
+const precisionAndInternalFields = parsePastedProperty(`
+案名：三位小數測試
+地坪：21.175坪
+建坪：56.565坪
+服務費：4%
+底價：980萬
+`);
+
+assert.equal(precisionAndInternalFields.land_area_ping, "21.175");
+assert.equal(precisionAndInternalFields.building_area_ping, "56.565");
+assert.equal(precisionAndInternalFields.service_fee_rate, "4%");
+assert.equal(precisionAndInternalFields.floor_price, "980萬");
+assert.doesNotMatch(precisionAndInternalFields.address_private || "", /服務費|980萬/);
+
+const serviceFeeAliases = parsePastedProperty(`
+案名：服務費測試
+服務費%：3%
+仲介服務費：2.5%
+`);
+
+assert.equal(serviceFeeAliases.service_fee_rate, "3%");
 
 console.log("ai-parser tests passed");

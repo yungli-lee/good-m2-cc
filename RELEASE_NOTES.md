@@ -2,6 +2,40 @@
 
 ---
 
+## B-admin-property-internal-fields-expiry (Draft)
+
+Tag:
+尚未建立
+
+Date:
+2026-06-30
+
+Completed
+
+- Land/building ping input and export support up to 3 decimal places
+- Internal property fields: `service_fee_rate`, `floor_price`
+- AI parser support for service fee and floor price
+- Admin-only listing expiry tool
+- Expired published listings are moved back to draft and write timeline events
+
+Not Included
+
+- Public display of internal fields
+- Automatic DB writes from public requests
+- Push to main or staging
+
+Verification
+
+- Parser tests ✅
+- Export tests ✅
+- Timeline tests ✅
+- Health tests ✅
+- TypeScript ✅
+- ESLint ✅
+- Build ✅
+
+---
+
 ## B-002-property-timeline (Draft)
 
 Tag:

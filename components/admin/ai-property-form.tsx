@@ -70,6 +70,8 @@ export function AiPropertyForm({
       "owner_phone",
       "developer_names",
       "showing_instructions",
+      "service_fee_rate",
+      "floor_price",
       "frontage",
       "depth",
       "price",
@@ -185,17 +187,25 @@ export function AiPropertyForm({
         </div>
       ) : null}
       <div className="field">
+        <label htmlFor="service_fee_rate">服務費 %</label>
+        <input className="input" id="service_fee_rate" name="service_fee_rate" defaultValue={state.values.service_fee_rate} placeholder="4%" />
+      </div>
+      <div className="field">
+        <label htmlFor="floor_price">底價</label>
+        <input className="input" id="floor_price" name="floor_price" defaultValue={state.values.floor_price} placeholder="出價談" />
+      </div>
+      <div className="field">
         <label htmlFor="price">開價（萬）</label>
         <input className="input" id="price" name="price" type="number" min="0" defaultValue={state.values.price} aria-invalid={Boolean(state.fieldErrors.price)} />
         <FieldError message={state.fieldErrors.price} />
       </div>
       <div className="field">
         <label htmlFor="land_area_ping">土地坪數</label>
-        <input className="input" id="land_area_ping" name="land_area_ping" type="number" step="0.01" min="0" defaultValue={state.values.land_area_ping} />
+        <input className="input" id="land_area_ping" name="land_area_ping" type="number" step="0.001" min="0" defaultValue={state.values.land_area_ping} />
       </div>
       <div className="field">
         <label htmlFor="building_area_ping">建物坪數</label>
-        <input className="input" id="building_area_ping" name="building_area_ping" type="number" step="0.01" min="0" defaultValue={state.values.building_area_ping} />
+        <input className="input" id="building_area_ping" name="building_area_ping" type="number" step="0.001" min="0" defaultValue={state.values.building_area_ping} />
       </div>
       <div className="field">
         <label htmlFor="layout">格局</label>

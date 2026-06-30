@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 
 const {
   canCreatePropertyTimeline,
@@ -14,6 +15,11 @@ const {
   sortPropertyTimelineEvents,
   timelineCreateRedirectPath
 } = await import("../lib/properties/timeline.ts");
+const {
+  expiredListingTimelineContent,
+  isListingExpired,
+  selectExpiredPublishedListings
+} = await import("../lib/properties/expire-listings.ts");
 
 const validTypes = [
   "created",
@@ -148,5 +154,23 @@ assert.equal(getPropertyTimelineLabel(null).icon, "📝");
 assert.equal(propertyTimelineCreatePath("property-1"), "/admin/properties/property-1/edit/timeline");
 assert.equal(propertyTimelineDeletePath("property-1", "event-1"), "/admin/properties/property-1/edit/timeline/event-1/delete");
 assert.notEqual(propertyTimelineCreatePath("property-1"), "/admin/properties/property-1/edit");
+
+const expiredListings = selectExpiredPublishedListings([
+  { id: "published-expired", title: "已上架過期", status: "published", listing_end_date: "2026-06-29" },
+  { id: "draft-expired", title: "草稿過期", status: "draft", listing_end_date: "2026-06-29" },
+  { id: "published-active", title: "已上架未到期", status: "published", listing_end_date: "2026-07-01" },
+  { id: "published-no-date", title: "已上架無日期", status: "published", listing_end_date: null }
+], "2026-06-30");
+
+assert.deepEqual(expiredListings.map((property) => property.id), ["published-expired"]);
+assert.equal(isListingExpired("2026-06-29", "2026-06-30"), true);
+assert.equal(isListingExpired("2026-06-30", "2026-06-30"), false);
+assert.equal(expiredListingTimelineContent("2026-06-29"), "委託期限 2026/06/29 已到期，系統自動下架");
+
+const queriesSource = readFileSync(new URL("../lib/properties/queries.ts", import.meta.url), "utf8");
+const publicSelectSource = queriesSource.slice(queriesSource.indexOf("const publicPropertySelect"), queriesSource.indexOf("const featuredPropertySelect"));
+const featuredSelectSource = queriesSource.slice(queriesSource.indexOf("const featuredPropertySelect"), queriesSource.indexOf("export async function listPublishedProperties"));
+assert.doesNotMatch(publicSelectSource, /service_fee_rate|floor_price/);
+assert.doesNotMatch(featuredSelectSource, /service_fee_rate|floor_price/);
 
 console.log("property timeline tests passed");

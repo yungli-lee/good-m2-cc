@@ -22,11 +22,13 @@ const property: Property = {
   owner_phone: "0912-345-678",
   developer_names: "淑美、阿勇",
   showing_instructions: "鑰匙在電表上，請先通知屋主 & 帶 Google Maps",
+  service_fee_rate: "4%",
+  floor_price: "980萬",
   frontage: "4.6米",
   depth: "15.7米",
   price: 798,
-  land_area_ping: 27.13,
-  building_area_ping: 26.27,
+  land_area_ping: 27.135,
+  building_area_ping: 26.275,
   layout: "4房3廳2衛",
   age: 55.1,
   orientation: "坐西北朝東南",
@@ -112,16 +114,16 @@ assert.equal(cells.get("C11"), "AK5384529");
 assert.equal(cells.get("H11"), "2026-01-22 - 2026-04-21");
 assert.equal(cells.get("C12"), property.title);
 assert.equal(cells.get("C13"), "798萬");
-assert.equal(cells.get("C14"), "出價談");
+assert.equal(cells.get("C14"), "980萬");
 assert.equal(cells.get("H14"), "淑美、阿勇");
 assert.equal(cells.get("C15"), "彰化縣鹿港鎮民權路119號");
 assert.equal(cells.get("H15"), property.showing_instructions);
 assert.equal(cells.get("C16"), "彰化市廣鳳段1036地號");
 assert.equal(cells.get("C17"), undefined);
 assert.equal(cells.get("H21"), "4.6米");
-assert.equal(cells.get("C23"), "27.13 坪");
+assert.equal(cells.get("C23"), "27.135 坪");
 assert.equal(cells.get("H23"), "15.7米");
-assert.equal(cells.get("C24"), "26.27 坪");
+assert.equal(cells.get("C24"), "26.275 坪");
 assert.equal(cells.get("H24"), "坐西北朝東南");
 assert.equal(cells.get("C25"), "2樓");
 assert.equal(cells.get("C26"), "4房3廳2衛");
@@ -157,6 +159,8 @@ const landProperty: Property = {
   owner_phone: null,
   developer_names: null,
   showing_instructions: null,
+  service_fee_rate: null,
+  floor_price: null,
   frontage: "35米",
   depth: "89~93米",
   price: 877,

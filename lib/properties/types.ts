@@ -15,6 +15,8 @@ export type Property = {
   developer_names: string | null;
   showing_instructions: string | null;
   progress_notes?: string | null;
+  service_fee_rate?: string | null;
+  floor_price?: string | null;
   frontage: string | null;
   depth: string | null;
   price: number | null;

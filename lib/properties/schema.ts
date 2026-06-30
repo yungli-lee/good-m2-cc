@@ -44,6 +44,8 @@ export const propertySchema = z.object({
   developer_names: z.string().trim().max(160).optional().or(z.literal("")),
   showing_instructions: z.string().trim().max(1000).optional().or(z.literal("")),
   progress_notes: z.string().trim().max(8000).optional().or(z.literal("")),
+  service_fee_rate: z.string().trim().max(40).optional().or(z.literal("")),
+  floor_price: z.string().trim().max(80).optional().or(z.literal("")),
   frontage: z.string().trim().max(80).optional().or(z.literal("")),
   depth: z.string().trim().max(80).optional().or(z.literal("")),
   price: optionalNumber,
@@ -103,6 +105,8 @@ export type PropertyFormValues = {
   developer_names: string;
   showing_instructions: string;
   progress_notes: string;
+  service_fee_rate: string;
+  floor_price: string;
   frontage: string;
   depth: string;
   price: string;
@@ -155,6 +159,8 @@ export function propertyValuesFromFormData(formData: FormData): PropertyFormValu
     developer_names: String(formData.get("developer_names") || ""),
     showing_instructions: String(formData.get("showing_instructions") || ""),
     progress_notes: String(formData.get("progress_notes") || ""),
+    service_fee_rate: String(formData.get("service_fee_rate") || ""),
+    floor_price: String(formData.get("floor_price") || ""),
     frontage: String(formData.get("frontage") || ""),
     depth: String(formData.get("depth") || ""),
     price: String(formData.get("price") || ""),
@@ -228,6 +234,8 @@ export function toPropertyPayload(input: PropertyFormInput) {
     developer_names: emptyToNull(input.developer_names || ""),
     showing_instructions: emptyToNull(input.showing_instructions || ""),
     progress_notes: emptyToNull(input.progress_notes || ""),
+    service_fee_rate: emptyToNull(input.service_fee_rate || ""),
+    floor_price: emptyToNull(input.floor_price || ""),
     frontage: emptyToNull(input.frontage || ""),
     depth: emptyToNull(input.depth || ""),
     layout: emptyToNull(input.layout || ""),

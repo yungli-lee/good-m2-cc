@@ -97,6 +97,10 @@ Admin API 必須檢查登入與角色。
 
 `property_timeline_events` 記錄每件物件的結構化 CRM 歷程，例如新接委託、上架、下架、精選、調價、帶看、出價、議價、追蹤、成交與一般備註。第一版只顯示於後台物件編輯頁，不納入 public property query。
 
+## Admin Internal Property Fields
+
+`properties.service_fee_rate` 與 `properties.floor_price` 為後台內部管理欄位。前台公開物件頁與 public property query 不讀取這兩個欄位；Excel 匯出可使用 `floor_price`，舊資料仍可從內部備註中的「底價」fallback。
+
 ## Cloudflare Pages
 
 Preview deployment 依賴 Cloudflare Pages 與 next-on-pages output。
