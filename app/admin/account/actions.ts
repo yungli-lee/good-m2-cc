@@ -21,6 +21,20 @@ function accountRedirect(params: Record<string, string>): never {
   redirect(`/admin/account?${new URLSearchParams(params).toString()}`);
 }
 
+function sanitizedSupabaseError(error: {
+  code?: string;
+  message?: string;
+  details?: string;
+  hint?: string;
+}) {
+  return {
+    code: error.code || null,
+    message: error.message || null,
+    details: error.details || null,
+    hint: error.hint || null
+  };
+}
+
 export async function updateOwnDisplayNameAction(formData: FormData) {
   const current = await requireRole(["editor", "admin", "owner"]);
   const parsedDisplayName = displayNameSchema.safeParse(String(formData.get("display_name") || ""));
@@ -35,7 +49,10 @@ export async function updateOwnDisplayNameAction(formData: FormData) {
     .eq("id", current.user.id);
 
   if (error) {
-    console.error("own_display_name_update_failed", { userId: current.user.id, code: error.code });
+    console.error("own_display_name_update_failed", {
+      userId: current.user.id,
+      ...sanitizedSupabaseError(error)
+    });
     accountRedirect({ error: "profile_update_failed" });
   }
 
