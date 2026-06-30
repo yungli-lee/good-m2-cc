@@ -8,6 +8,8 @@ const {
   getPropertyTimelineLabel,
   insertPropertyTimelineEvent,
   priceChangedContent,
+  propertyTimelineCreatePath,
+  propertyTimelineDeletePath,
   propertyTimelineFormSchema,
   sortPropertyTimelineEvents,
   timelineCreateRedirectPath
@@ -143,5 +145,8 @@ assert.equal(formatTimelineDate(null), "日期未設定");
 assert.equal(getPropertyTimelineLabel("showing").label, "帶看");
 assert.equal(getPropertyTimelineLabel("unknown").label, "一般備註");
 assert.equal(getPropertyTimelineLabel(null).icon, "📝");
+assert.equal(propertyTimelineCreatePath("property-1"), "/admin/properties/property-1/edit/timeline");
+assert.equal(propertyTimelineDeletePath("property-1", "event-1"), "/admin/properties/property-1/edit/timeline/event-1/delete");
+assert.notEqual(propertyTimelineCreatePath("property-1"), "/admin/properties/property-1/edit");
 
 console.log("property timeline tests passed");

@@ -3,13 +3,14 @@ import {
   canManagePropertyTimeline,
   formatTimelineDate,
   getPropertyTimelineLabel,
+  propertyTimelineCreatePath,
+  propertyTimelineDeletePath,
   propertyTimelineEventTypes,
   propertyTimelineLabels,
   todayTaipeiDate
 } from "@/lib/properties/timeline";
 import type { PropertyTimelineEvent } from "@/lib/properties/timeline";
 import type { AdminRole } from "@/lib/auth";
-import { createPropertyTimelineEventAction, deletePropertyTimelineEventAction } from "@/app/admin/properties/timeline-actions";
 
 const timelineErrorMessage: Record<string, string> = {
   invalid_form: "時間軸資料格式不完整，請確認日期、類型與標題。",
@@ -44,7 +45,7 @@ export function PropertyTimeline({ propertyId, events, role, errorCode, saved, d
       {errorCode ? <div className="notice">{timelineErrorMessage[errorCode] || "時間軸操作失敗。"}</div> : null}
 
       {canCreate ? (
-        <form className="property-timeline-form" action={createPropertyTimelineEventAction.bind(null, propertyId)}>
+        <form className="property-timeline-form" action={propertyTimelineCreatePath(propertyId)} method="post">
           <div className="field">
             <label htmlFor="timeline-event-date">日期</label>
             <input className="input" id="timeline-event-date" name="event_date" type="date" defaultValue={todayTaipeiDate()} required />
@@ -87,7 +88,7 @@ export function PropertyTimeline({ propertyId, events, role, errorCode, saved, d
                 {event.created_by_email ? <p className="muted">建立者：{event.created_by_email}</p> : null}
               </div>
               {canDelete && event.id ? (
-                <form action={deletePropertyTimelineEventAction.bind(null, propertyId, event.id)}>
+                <form action={propertyTimelineDeletePath(propertyId, event.id)} method="post">
                   <button className="button danger" type="submit">刪除</button>
                 </form>
               ) : null}

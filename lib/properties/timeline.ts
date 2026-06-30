@@ -155,6 +155,14 @@ export function timelineCreateRedirectPath(
   return `/admin/properties/${propertyId}/edit?timeline_saved=1`;
 }
 
+export function propertyTimelineCreatePath(propertyId: string) {
+  return `/admin/properties/${propertyId}/edit/timeline`;
+}
+
+export function propertyTimelineDeletePath(propertyId: string, eventId: string) {
+  return `/admin/properties/${propertyId}/edit/timeline/${eventId}/delete`;
+}
+
 export async function tryInsertPropertyTimelineEvent(
   supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>,
   input: PropertyTimelineInput
