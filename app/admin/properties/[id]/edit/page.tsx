@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { PropertyForm } from "@/components/admin/property-form";
+import { PropertyMediaManager } from "@/components/admin/property-media-manager";
 import { PropertyTimeline } from "@/components/admin/property-timeline";
 import { requireRole } from "@/lib/auth";
 import { calculatePropertyHealthScore } from "@/lib/properties/health-score";
@@ -26,6 +27,7 @@ export default async function EditPropertyPage({ params, searchParams }: Props) 
   const property = data as Property;
   const health = calculatePropertyHealthScore(property);
   const missing = health.missing.slice(0, 6);
+  const activeMedia = (property.property_media || []).filter((item) => !item.deleted_at);
 
   return (
     <main className="section">
@@ -46,6 +48,12 @@ export default async function EditPropertyPage({ params, searchParams }: Props) 
         <div className="card">
           <div className="card-body">
             <PropertyForm key={property.id} property={property} role={current.profile.role} formAction={`/admin/properties/${property.id}/edit/save`} />
+            <PropertyMediaManager
+              media={activeMedia}
+              uploadAction={`/admin/properties/${property.id}/edit/upload`}
+              setCoverAction={`/admin/properties/${property.id}/edit/cover`}
+              deleteActionBase={`/admin/properties/${property.id}/edit/media`}
+            />
             <div className="actions">
               <Link className="button ghost" href="/admin/properties">返回物件列表</Link>
             </div>

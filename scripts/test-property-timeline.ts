@@ -173,4 +173,15 @@ const featuredSelectSource = queriesSource.slice(queriesSource.indexOf("const fe
 assert.doesNotMatch(publicSelectSource, /service_fee_rate|floor_price/);
 assert.doesNotMatch(featuredSelectSource, /service_fee_rate|floor_price/);
 
+const aiFormSource = readFileSync(new URL("../components/admin/ai-property-form.tsx", import.meta.url), "utf8");
+const propertyFormSource = readFileSync(new URL("../components/admin/property-form.tsx", import.meta.url), "utf8");
+for (const label of ["建地", "房屋", "農林漁牧地", "工業用地", "廠房", "大廈", "公寓"]) {
+  assert.match(aiFormSource, new RegExp(label));
+  assert.match(propertyFormSource, new RegExp(label));
+}
+for (const label of ["透天", "土地", "店面", "其他"]) {
+  assert.doesNotMatch(aiFormSource.slice(aiFormSource.indexOf("const typeOptions"), aiFormSource.indexOf("function setFormValue")), new RegExp(`"${label}"`));
+  assert.doesNotMatch(propertyFormSource.slice(propertyFormSource.indexOf("const typeOptions"), propertyFormSource.indexOf("export function PropertyForm")), new RegExp(`"${label}"`));
+}
+
 console.log("property timeline tests passed");

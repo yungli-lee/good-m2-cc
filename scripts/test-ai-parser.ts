@@ -31,7 +31,7 @@ const incomingLand = parsePastedProperty(`
 案名：彰化市土地測試
 `);
 
-assert.equal(incomingLand.property_type, "land");
+assert.equal(incomingLand.property_type, "building_land");
 
 const incomingBuilding = parsePastedProperty(`
 新接物件-大樓華廈
@@ -144,7 +144,7 @@ const landShape = parsePastedProperty(`
 屋主名稱：劉玉梅
 `);
 
-assert.equal(landShape.property_type, "land");
+assert.equal(landShape.property_type, "building_land");
 assert.equal(landShape.land_area_ping, "950");
 assert.equal(landShape.frontage, "35米");
 assert.equal(landShape.depth, "89~93米");

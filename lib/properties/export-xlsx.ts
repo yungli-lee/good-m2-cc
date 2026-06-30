@@ -12,12 +12,13 @@ function formatPing(value?: number | null) {
 
 function propertyTypeLabel(value: string) {
   const labels: Record<string, string> = {
-    townhouse: "透天",
+    townhouse: "房屋",
     apartment: "公寓",
-    building: "大樓",
+    building: "大廈",
     land: "土地",
-    farmland: "農地",
+    farmland: "農林漁牧地",
     building_land: "建地",
+    industrial_land: "工業用地",
     storefront: "店面",
     factory: "廠房",
     other: "其他"
@@ -218,7 +219,7 @@ function checkedOption(label: string, options: string[]) {
 }
 
 function propertyUseLine(property: Property) {
-  if (property.property_type === "land" || property.property_type === "farmland" || property.property_type === "building_land") {
+  if (property.property_type === "land" || property.property_type === "farmland" || property.property_type === "building_land" || property.property_type === "industrial_land") {
     return checkedOption("土地", ["住宅", "店面", "辦公", "住辦", "住店", "車位", "廠房", "土地", "其他"]);
   }
   if (property.property_type === "factory") {
@@ -241,7 +242,7 @@ function propertyTypeLine(property: Property) {
   ].join(" ");
   const usage = [
     property.property_type === "storefront" ? "□住宅用 ▪️商業用" : "□住宅用 □商業用",
-    property.property_type === "factory" ? "▪️工業用" : "□工業用",
+    property.property_type === "factory" || property.property_type === "industrial_land" ? "▪️工業用" : "□工業用",
     property.property_type === "farmland" ? "▪️農業用" : "□農業用",
     "□特定用",
     property.property_type === "building_land" ? "▪️法定用" : "□法定用",

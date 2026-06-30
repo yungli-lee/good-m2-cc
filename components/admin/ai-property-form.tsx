@@ -1,20 +1,19 @@
 "use client";
 
 import { useActionState, useMemo, useRef, useState } from "react";
+import type { DragEvent } from "react";
 import type { AdminRole } from "@/lib/auth";
 import { parsePastedProperty, type ParsedProperty } from "@/lib/properties/ai-parser";
 import type { PropertyFormState } from "@/lib/properties/schema";
 
 const typeOptions = [
-  ["townhouse", "透天"],
-  ["apartment", "公寓"],
-  ["building", "大樓"],
-  ["land", "土地"],
-  ["farmland", "農地"],
   ["building_land", "建地"],
-  ["storefront", "店面"],
+  ["townhouse", "房屋"],
+  ["farmland", "農林漁牧地"],
+  ["industrial_land", "工業用地"],
   ["factory", "廠房"],
-  ["other", "其他"]
+  ["building", "大廈"],
+  ["apartment", "公寓"]
 ];
 
 function setFormValue(form: HTMLFormElement, name: keyof ParsedProperty, value?: string) {
@@ -44,6 +43,9 @@ export function AiPropertyForm({
   const formRef = useRef<HTMLFormElement>(null);
   const [quickPaste, setQuickPaste] = useState("");
   const [message, setMessage] = useState("");
+  const [selectedFileName, setSelectedFileName] = useState("");
+  const [isDraggingFile, setIsDraggingFile] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const canPublish = role === "admin" || role === "owner";
   const canManageProgressNotes = role === "admin" || role === "owner";
   const quickPasteStats = useMemo(() => quickPaste.trim().length, [quickPaste]);
@@ -91,6 +93,15 @@ export function AiPropertyForm({
     setMessage("已解析並填入表單，送出前請快速確認欄位。");
   }
 
+  function handleFileDrop(event: DragEvent<HTMLDivElement>) {
+    event.preventDefault();
+    setIsDraggingFile(false);
+    const file = event.dataTransfer.files?.[0];
+    if (!file || !fileInputRef.current) return;
+    fileInputRef.current.files = event.dataTransfer.files;
+    setSelectedFileName(file.name);
+  }
+
   return (
     <form key={state.formKey || "initial"} ref={formRef} action={action} className="form-grid ai-property-form">
       <section className="ai-quick-paste field full" aria-label="AI 快速建立物件">
@@ -104,7 +115,7 @@ export function AiPropertyForm({
           className="textarea ai-quick-paste-textarea"
           value={quickPaste}
           onChange={(event) => setQuickPaste(event.target.value)}
-          placeholder="貼上案名、地址、地號、地坪、建坪、格局、坐向、屋齡、完工日、開價、底價、開發、帶看資訊、密碼、推薦特色等資料"
+          placeholder="貼上案名、地址、地號、地坪、建坪、格局、坐向、屋齡、完工日、開價、底價、服務費、開發、帶看資訊、密碼、推薦特色等資料"
         />
         <div className="ai-quick-paste-actions">
           <button className="button secondary" type="button" onClick={handleParse}>
@@ -225,7 +236,7 @@ export function AiPropertyForm({
       </div>
       <div className="field">
         <label htmlFor="property_type">類型</label>
-        <select className="select" id="property_type" name="property_type" defaultValue={state.values.property_type || "other"}>
+        <select className="select" id="property_type" name="property_type" defaultValue={state.values.property_type || "townhouse"}>
           {typeOptions.map(([value, label]) => (
             <option key={value} value={value}>{label}</option>
           ))}
@@ -269,6 +280,31 @@ export function AiPropertyForm({
       </div>
       <input type="hidden" name="og_image_url" value={state.values.og_image_url} />
       <input type="hidden" name="canonical_url" value={state.values.canonical_url} />
+      <div
+        className={`field full media-dropzone${isDraggingFile ? " is-dragging" : ""}`}
+        onDragOver={(event) => {
+          event.preventDefault();
+          setIsDraggingFile(true);
+        }}
+        onDragLeave={() => setIsDraggingFile(false)}
+        onDrop={handleFileDrop}
+      >
+        <label htmlFor="file">物件照片</label>
+        <input
+          ref={fileInputRef}
+          className="input"
+          id="file"
+          name="file"
+          type="file"
+          accept="image/jpeg,image/png,image/webp"
+          onChange={(event) => setSelectedFileName(event.currentTarget.files?.[0]?.name || "")}
+        />
+        <span className="muted">{selectedFileName ? `已選擇：${selectedFileName}` : "可點選選擇檔案，或將照片拖曳到此欄位。建立後可在編輯頁繼續上傳、設封面或刪除。"}</span>
+      </div>
+      <div className="field">
+        <label htmlFor="alt_text">照片說明</label>
+        <input className="input" id="alt_text" name="alt_text" />
+      </div>
       <div className="field full">
         <button className="button" type="submit" disabled={pending}>{pending ? "建立中..." : "建立物件"}</button>
       </div>

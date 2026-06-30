@@ -162,6 +162,7 @@ function normalizeSlug(value: string, prefix = "") {
     ["土地", "land"],
     ["建地", "building-land"],
     ["農地", "farmland"],
+    ["工業用地", "industrial-land"],
     ["店面", "storefront"]
   ].reduce((slug, [term, replacement]) => slug.replaceAll(term, `-${replacement}-`), value);
   const ascii = [prefix, value.concat("-", tokenized)]
@@ -221,12 +222,13 @@ function calculateAgeFromDate(value: string) {
 function inferType(text: string) {
   const incomingCategory = text.match(incomingCategoryPattern)?.[1];
   if (incomingCategory === "透天") return "townhouse";
-  if (incomingCategory === "土地") return "land";
+  if (incomingCategory === "土地") return "building_land";
   if (incomingCategory === "大樓華廈" || incomingCategory === "大樓" || incomingCategory === "華廈") return "building";
 
-  if (/農地/.test(text)) return "farmland";
+  if (/農林漁牧地|農地|林地|漁牧地/.test(text)) return "farmland";
+  if (/工業用地/.test(text)) return "industrial_land";
   if (/建地/.test(text)) return "building_land";
-  if (/土地/.test(text)) return "land";
+  if (/土地/.test(text)) return "building_land";
   if (/透天|別墅/.test(text)) return "townhouse";
   if (/店面|店鋪/.test(text)) return "storefront";
   if (/廠房|工業/.test(text)) return "factory";

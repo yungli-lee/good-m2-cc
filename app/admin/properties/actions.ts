@@ -46,6 +46,10 @@ function assertImageFile(file: File) {
   }
 }
 
+function isUploadedImageFile(value: FormDataEntryValue | null): value is File {
+  return value instanceof File && value.size > 0;
+}
+
 function parsePropertyFormOrRedirect(formData: FormData, redirectTo: string): PropertyFormInput {
   try {
     return normalizePropertyForm(formData);
@@ -67,6 +71,65 @@ async function tryRecordPropertyTimeline(
   input: Parameters<typeof tryInsertPropertyTimelineEvent>[1]
 ) {
   await tryInsertPropertyTimelineEvent(supabase, input);
+}
+
+async function tryUploadInitialPropertyImage({
+  supabase,
+  file,
+  propertyId,
+  userId,
+  userEmail,
+  altText
+}: {
+  supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>;
+  file: File;
+  propertyId: string;
+  userId: string;
+  userEmail?: string | null;
+  altText?: string | null;
+}) {
+  try {
+    assertImageFile(file);
+    const filename = cleanFilename(file.name);
+    const storagePath = `${userId}/${propertyId}/${filename}`;
+    const { error: uploadError } = await supabase.storage.from("property-media").upload(storagePath, file, {
+      contentType: file.type,
+      upsert: false
+    });
+    if (uploadError) throw uploadError;
+
+    const { data: publicUrl } = supabase.storage.from("property-media").getPublicUrl(storagePath);
+    const { data, error } = await supabase
+      .from("property_media")
+      .insert({
+        property_id: propertyId,
+        media_type: "image",
+        url: publicUrl.publicUrl,
+        storage_path: storagePath,
+        alt_text: altText || null,
+        is_cover: true
+      })
+      .select()
+      .single();
+
+    if (error) {
+      await supabase.storage.from("property-media").remove([storagePath]);
+      throw error;
+    }
+
+    await tryRecordAuditLog({
+      action: "property_image_upload",
+      resourceType: "property_media",
+      resourceId: data.id,
+      afterData: data,
+      userId,
+      userEmail
+    });
+  } catch (error) {
+    console.error("initial_property_image_upload_failed", {
+      message: error instanceof Error ? error.message.slice(0, 180) : "unknown"
+    });
+  }
 }
 
 function draftFieldErrors(error: { issues: Array<{ path: Array<string | number>; message: string }> }) {
@@ -417,6 +480,18 @@ export async function createPropertyAction(
     created_by: current.user.id,
     created_by_email: current.user.email || current.profile.email || null
   });
+
+  const file = formData.get("file");
+  if (isUploadedImageFile(file)) {
+    await tryUploadInitialPropertyImage({
+      supabase,
+      file,
+      propertyId: data.id,
+      userId: current.user.id,
+      userEmail: current.user.email,
+      altText: String(formData.get("alt_text") || "")
+    });
+  }
 
   revalidatePath("/properties");
   redirect(`/admin/properties/${data.id}/edit`);

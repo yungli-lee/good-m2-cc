@@ -546,6 +546,22 @@ td {
   line-height: 1.7;
 }
 
+.media-dropzone {
+  padding: 16px;
+  border: 1px dashed rgba(16, 35, 67, 0.32);
+  border-radius: 8px;
+  background: #f8fafc;
+}
+
+.media-dropzone.is-dragging {
+  border-color: #c99a43;
+  background: #fff7e6;
+}
+
+.media-dropzone input[type="file"] {
+  background: #fff;
+}
+
 .audit-result.is-failed {
   color: #694a00;
   background: #fff1c2;

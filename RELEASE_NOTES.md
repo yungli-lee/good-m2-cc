@@ -2,6 +2,37 @@
 
 ---
 
+## admin-property-form-media-fix (Draft)
+
+Tag:
+尚未建立
+
+Date:
+2026-06-30
+
+Completed
+
+- Show floor price and service fee fields on new/edit property forms
+- Restore new property photo upload with drag-and-drop support
+- Restore edit property media manager with upload, cover, and delete actions
+- Restrict property type dropdown to 7 requested options
+
+Not Included
+
+- Push to main or staging
+
+Verification
+
+- Parser tests ✅
+- Export tests ✅
+- Timeline tests ✅
+- Health tests ✅
+- TypeScript ✅
+- ESLint ✅
+- Build ✅
+
+---
+
 ## B-admin-property-internal-fields-expiry (Draft)
 
 Tag:

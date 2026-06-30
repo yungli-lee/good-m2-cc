@@ -34,7 +34,7 @@ export default async function NewPropertyPage() {
       age: "",
       orientation: "",
       floor: "",
-      property_type: "other",
+      property_type: "townhouse",
       highlights: "",
       description: "",
       status: "draft",

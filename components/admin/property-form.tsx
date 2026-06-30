@@ -2,15 +2,13 @@ import type { Property } from "@/lib/properties/types";
 import type { AdminRole } from "@/lib/auth";
 
 const typeOptions = [
-  ["townhouse", "透天"],
-  ["apartment", "公寓"],
-  ["building", "大樓"],
-  ["land", "土地"],
-  ["farmland", "農地"],
   ["building_land", "建地"],
-  ["storefront", "店面"],
+  ["townhouse", "房屋"],
+  ["farmland", "農林漁牧地"],
+  ["industrial_land", "工業用地"],
   ["factory", "廠房"],
-  ["other", "其他"]
+  ["building", "大廈"],
+  ["apartment", "公寓"]
 ];
 
 export function PropertyForm({
@@ -133,7 +131,7 @@ export function PropertyForm({
       </div>
       <div className="field">
         <label htmlFor="property_type">類型</label>
-        <select className="select" id="property_type" name="property_type" defaultValue={property?.property_type || "other"}>
+        <select className="select" id="property_type" name="property_type" defaultValue={property?.property_type || "townhouse"}>
           {typeOptions.map(([value, label]) => (
             <option key={value} value={value}>{label}</option>
           ))}

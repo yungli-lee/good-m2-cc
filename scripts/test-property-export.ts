@@ -142,7 +142,7 @@ const buildingSheetXml = readZipEntry(buildingOutputPath, "xl/worksheets/sheet1.
 const buildingSheetPath = join(outputDir, "building-sheet1.xml");
 writeFileSync(buildingSheetPath, buildingSheetXml);
 execFileSync("python3", ["-c", "import sys, xml.etree.ElementTree as ET; ET.parse(sys.argv[1])", buildingSheetPath], { stdio: "pipe" });
-assert.match(buildingSheetXml, /大樓/);
+assert.match(buildingSheetXml, /大廈/);
 
 const landProperty: Property = {
   ...property,
