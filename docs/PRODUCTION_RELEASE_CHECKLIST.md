@@ -9,6 +9,7 @@
 - main branch 不可直接開發
 - release notes 已整理
 - production backup 已完成
+- DB schema drift check 已完成：見 `docs/DB_RELEASE_CHECKLIST.md`
 - 不得帶 debug log 進 main
 
 ## 2. Git Checks
@@ -35,6 +36,8 @@
 - 不可直接 Table Editor 手改 schema
 - 不可手動改 enum / trigger / RLS，必須走 migration
 - `schema_migrations` 必須和 release 版本一致
+- migration history compare 必須完成：staging / production / repo latest migration 需一致
+- migration 後必須 reload PostgREST schema cache
 
 ## 4. Production Environment
 
@@ -69,11 +72,14 @@ Cloudflare production env 必須指向 production Supabase：
 1. production backup
 2. 套 migration
 3. 確認 `schema_migrations`
-4. 確認 functions
-5. 確認 triggers
-6. 確認 grants
-7. 確認 RLS
-8. 確認 `profiles` / `audit_logs` table privilege
+4. 執行 DB schema drift check：`npm run db:check` 並依 `docs/DB_RELEASE_CHECKLIST.md` 跑 SQL
+5. 確認 functions
+6. 確認 triggers
+7. 確認 grants
+8. 確認 RLS
+9. 確認 Storage policies
+10. 確認 `profiles` / `audit_logs` table privilege
+11. reload PostgREST schema cache：`notify pgrst, 'reload schema';`
 
 ## 7. Deployment
 
@@ -92,6 +98,9 @@ Cloudflare production env 必須指向 production Supabase：
 - `/admin/users`
 - `/admin/audit`
 - `/admin/properties`
+- property image upload
+- property create / edit / publish / unpublish
+- deleted property not visible on frontend
 - `/admin/inquiries`
 - public homepage
 - public property pages
@@ -122,6 +131,7 @@ Go 條件：
 - production backup 完成
 - migration 完成
 - production smoke test 全過
+- production smoke test 包含 users / audit / image upload / frontend deleted exclusion
 - audit 正常
 - Cloudflare logs 無重大錯誤
 
