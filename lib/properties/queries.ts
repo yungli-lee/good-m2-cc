@@ -95,7 +95,46 @@ export async function listAdminProperties(search = "") {
   const supabase = await createSupabaseServerClient();
   let query = supabase
     .from("properties")
-    .select("id,title,slug,address_public,listing_no,developer_names,owner_name,price,status,is_featured,published_at,updated_at")
+    .select(`
+      id,
+      title,
+      slug,
+      address_public,
+      address_private,
+      listing_no,
+      listing_type,
+      listing_start_date,
+      listing_end_date,
+      owner_name,
+      owner_phone,
+      developer_names,
+      showing_instructions,
+      price,
+      land_area_ping,
+      building_area_ping,
+      layout,
+      age,
+      orientation,
+      floor,
+      property_type,
+      highlights,
+      description,
+      status,
+      is_featured,
+      seo_title,
+      meta_description,
+      og_image_url,
+      canonical_url,
+      published_at,
+      updated_at,
+      property_media(
+        id,
+        property_id,
+        url,
+        is_cover,
+        deleted_at
+      )
+    `)
     .is("deleted_at", null)
     .order("updated_at", { ascending: false });
 

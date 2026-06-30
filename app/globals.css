@@ -428,6 +428,56 @@ td {
   background: #ffe4df;
 }
 
+.property-health {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 180px;
+}
+
+.property-health-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 999px;
+  flex: 0 0 44px;
+  font-weight: 900;
+}
+
+.property-health-badge.is-good {
+  color: #075e46;
+  background: #dff7ec;
+}
+
+.property-health-badge.is-attention {
+  color: #7a4c00;
+  background: #fff1c7;
+}
+
+.property-health-badge.is-weak {
+  color: #8a1f17;
+  background: #ffe4df;
+}
+
+.property-health-panel {
+  margin: 16px 0;
+  padding: 16px;
+  border: 1px solid rgba(16, 35, 67, 0.1);
+  border-radius: 8px;
+  background: #fff;
+}
+
+.property-health-panel h2 {
+  margin: 0 0 4px;
+  font-size: 1.15rem;
+}
+
+.property-health-panel p {
+  margin: 0;
+}
+
 .audit-result.is-failed {
   color: #694a00;
   background: #fff1c2;

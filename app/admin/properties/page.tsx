@@ -1,8 +1,9 @@
 import Link from "next/link";
 import { requireRole } from "@/lib/auth";
 import { formatDateTime, formatPrice } from "@/lib/format";
+import { calculatePropertyHealthScore } from "@/lib/properties/health-score";
 import { listAdminProperties } from "@/lib/properties/queries";
-import type { PropertyStatus } from "@/lib/properties/types";
+import type { PropertyMedia, PropertyStatus } from "@/lib/properties/types";
 import { togglePropertyFeaturedAction, togglePropertyPublishAction } from "./actions";
 
 export const runtime = "edge";
@@ -13,12 +14,33 @@ type AdminPropertyListItem = {
   slug: string;
   address_public: string | null;
   listing_no: string | null;
+  listing_type: string | null;
+  listing_start_date: string | null;
+  listing_end_date: string | null;
   developer_names: string | null;
+  owner_name: string | null;
+  owner_phone: string | null;
+  address_private: string | null;
+  showing_instructions: string | null;
   price: number | null;
+  land_area_ping: number | null;
+  building_area_ping: number | null;
+  layout: string | null;
+  age: number | null;
+  orientation: string | null;
+  floor: string | null;
+  property_type: string;
+  highlights: string[];
+  description: string | null;
   status: PropertyStatus;
   is_featured: boolean;
+  seo_title: string | null;
+  meta_description: string | null;
+  og_image_url: string | null;
+  canonical_url: string | null;
   published_at: string | null;
   updated_at: string | null;
+  property_media?: PropertyMedia[];
 };
 
 const statusLabel: Record<PropertyStatus, string> = {
@@ -71,6 +93,22 @@ function FeaturedAction({ id, isFeatured }: { id: string; isFeatured: boolean })
   );
 }
 
+function HealthScoreCell({ property }: { property: AdminPropertyListItem }) {
+  const health = calculatePropertyHealthScore(property);
+  const missing = health.missing.slice(0, 3).map((item) => item.label).join("、");
+
+  return (
+    <div className="property-health">
+      <span className={`property-health-badge is-${health.level}`}>{health.score}</span>
+      <div>
+        <strong>{health.label}</strong>
+        <br />
+        <span className="muted">{missing ? `待補：${missing}` : "資料完整度良好"}</span>
+      </div>
+    </div>
+  );
+}
+
 const errorMessage: Record<string, string> = {
   not_found: "找不到指定物件。",
   publish_failed: "物件狀態更新失敗，請稍後再試。",
@@ -90,7 +128,7 @@ export default async function AdminPropertiesPage({ searchParams }: Props) {
         <div className="actions" style={{ justifyContent: "space-between", marginBottom: 18 }}>
           <div>
             <h1 style={{ margin: 0 }}>物件管理</h1>
-            <p className="muted">M2-003：可從列表管理發布狀態與精選物件標記。</p>
+            <p className="muted">B-001：列表顯示物件健康度，協助優先補齊可上架資料。</p>
           </div>
           <div className="actions">
             <Link className="button ghost" href="/admin">返回後台</Link>
@@ -114,6 +152,7 @@ export default async function AdminPropertiesPage({ searchParams }: Props) {
                 <th>縣市</th>
                 <th>行政區</th>
                 <th>開價</th>
+                <th>健康度</th>
                 <th>狀態</th>
                 <th>精選</th>
                 <th>更新時間</th>
@@ -135,6 +174,7 @@ export default async function AdminPropertiesPage({ searchParams }: Props) {
                     <td>{location.city}</td>
                     <td>{location.district}</td>
                     <td>{formatPrice(property.price)}</td>
+                    <td><HealthScoreCell property={property} /></td>
                     <td>
                       {statusLabel[property.status]}
                       {property.status === "published" ? (
@@ -159,7 +199,7 @@ export default async function AdminPropertiesPage({ searchParams }: Props) {
               })}
               {properties.length === 0 ? (
                 <tr>
-                  <td colSpan={10}>尚未建立物件。可以先使用「新增物件」建立草稿。</td>
+                  <td colSpan={11}>尚未建立物件。可以先使用「新增物件」建立草稿。</td>
                 </tr>
               ) : null}
             </tbody>

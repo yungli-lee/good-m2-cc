@@ -2,6 +2,35 @@
 
 ---
 
+## B-001-property-health-score (Draft)
+
+Tag:
+尚未建立
+
+Date:
+2026-06-30
+
+Completed
+
+- Admin Property Health Score helper
+- Health score display on `/admin/properties`
+- Health score summary on `/admin/properties/[id]/edit`
+
+Not Included
+
+- Database schema changes
+- Publish workflow changes
+- Public property page changes
+- Push to main or staging
+
+Verification
+
+- TypeScript ✅
+- ESLint ✅
+- Build ✅
+
+---
+
 ## property-management-v1
 
 Tag:
