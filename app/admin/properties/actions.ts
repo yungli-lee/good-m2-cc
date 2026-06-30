@@ -690,56 +690,6 @@ export async function updatePropertyAction(id: string, formData: FormData) {
   redirect(`/admin/properties/${id}/edit?saved=1`);
 }
 
-export async function publishPropertyAction(id: string, status: "published" | "archived") {
-  const current = await requireRole(["admin", "owner"]);
-  if (!canPublishProperties(current.profile.role)) redirect("/admin/login?error=forbidden");
-  const supabase = await createSupabaseServerClient();
-  const { data: before } = await supabase.from("properties").select("*").eq("id", id).maybeSingle();
-  if (!before) redirect("/admin/properties?error=not_found");
-
-  const { data, error } = await supabase
-    .from("properties")
-    .update({
-      status,
-      published_at: status === "published" && !before.published_at ? new Date().toISOString() : before.published_at,
-      updated_by: current.user.id,
-      updated_at: new Date().toISOString()
-    })
-    .eq("id", id)
-    .select()
-    .single();
-
-  if (error) redirect(`/admin/properties?error=${encodeURIComponent(error.code || "publish_failed")}`);
-
-  await recordAuditLog({
-    action: status === "published" ? "property_publish" : "property_unpublish",
-    resourceType: "property",
-    resourceId: id,
-    beforeData: before,
-    afterData: data,
-    userId: current.user.id,
-    userEmail: current.user.email
-  });
-
-  await tryRecordPropertyTimeline(supabase, {
-    property_id: id,
-    event_date: todayTaipeiDate(),
-    event_type: status === "published" ? "published" : "unpublished",
-    title: status === "published" ? "上架" : "下架",
-    content: data.title,
-    created_by: current.user.id,
-    created_by_email: current.user.email || current.profile.email || null
-  });
-
-  revalidatePath("/properties");
-  revalidatePath(`/properties/${data.slug}`);
-  redirect("/admin/properties");
-}
-
-export async function deletePropertyAction(id: string, formData?: FormData) {
-  return softDeletePropertyAction(id, formData || new FormData());
-}
-
 export async function softDeletePropertyAction(id: string, formData: FormData) {
   const current = await requireRole(["admin", "owner"]);
   if (!canDeleteProperties(current.profile.role)) redirect("/admin/login?error=forbidden");
@@ -776,6 +726,16 @@ export async function softDeletePropertyAction(id: string, formData: FormData) {
     userId: current.user.id,
     userEmail: current.user.email,
     metadata: { reason }
+  });
+
+  await tryRecordPropertyTimeline(supabase, {
+    property_id: id,
+    event_date: todayTaipeiDate(),
+    event_type: "note",
+    title: "刪除物件",
+    content: `原因：${reason || "-"}\n建立者：${actorEmail(current) || "-"}\n操作時間：${now}`,
+    created_by: current.user.id,
+    created_by_email: actorEmail(current)
   });
 
   revalidatePath("/properties");
@@ -818,6 +778,17 @@ export async function restorePropertyAction(id: string) {
     userEmail: current.user.email
   });
 
+  const now = new Date().toISOString();
+  await tryRecordPropertyTimeline(supabase, {
+    property_id: id,
+    event_date: todayTaipeiDate(),
+    event_type: "note",
+    title: "還原物件",
+    content: `原因：${before.delete_reason || "-"}\n建立者：${actorEmail(current) || "-"}\n操作時間：${now}`,
+    created_by: current.user.id,
+    created_by_email: actorEmail(current)
+  });
+
   revalidatePath("/admin/properties");
   revalidatePath(`/admin/properties/${id}/edit`);
   redirect("/admin/properties?lifecycle=all");
@@ -851,58 +822,6 @@ export async function permanentDeletePropertyAction(id: string) {
   revalidatePath("/admin/properties");
   revalidatePath("/properties");
   redirect("/admin/properties?lifecycle=deleted");
-}
-
-export async function uploadPropertyImageAction(id: string, formData: FormData) {
-  const current = await requireRole(["editor", "admin", "owner"]);
-  if (!canManagePropertyMedia(current.profile.role)) redirect("/admin/login?error=forbidden");
-
-  const file = formData.get("file");
-  if (!(file instanceof File)) redirect(`/admin/properties/${id}/edit?error=no_file`);
-  try {
-    assertImageFile(file);
-  } catch {
-    redirect(`/admin/properties/${id}/edit?error=invalid_file`);
-  }
-
-  const supabase = await createSupabaseServerClient();
-  const filename = cleanFilename(file.name);
-  const storagePath = `${current.user.id}/${id}/${filename}`;
-  const { error: uploadError } = await supabase.storage.from("property-media").upload(storagePath, file, {
-    contentType: file.type,
-    upsert: false
-  });
-
-  if (uploadError) redirect(`/admin/properties/${id}/edit?error=${encodeURIComponent(uploadError.message)}`);
-
-  const { data: publicUrl } = supabase.storage.from("property-media").getPublicUrl(storagePath);
-  const { data, error } = await supabase
-    .from("property_media")
-    .insert({
-      property_id: id,
-      media_type: "image",
-      url: publicUrl.publicUrl
-    })
-    .select()
-    .single();
-
-  if (error) {
-    await supabase.storage.from("property-media").remove([storagePath]);
-    const message = error.code === "23502" ? "media_metadata_missing_required_field" : error.code || "media_failed";
-    redirect(`/admin/properties/${id}/edit?error=${encodeURIComponent(message)}`);
-  }
-
-  await recordAuditLog({
-    action: "property_cover_set",
-    resourceType: "property_media",
-    resourceId: data.id,
-    afterData: data,
-    userId: current.user.id,
-    userEmail: current.user.email
-  });
-
-  revalidatePath(`/admin/properties/${id}/edit`);
-  redirect(`/admin/properties/${id}/edit?saved=1`);
 }
 
 export async function setCoverImageAction(propertyId: string, mediaId: string) {
