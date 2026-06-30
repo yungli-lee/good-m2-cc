@@ -1,10 +1,20 @@
 import Link from "next/link";
-import { requireRole } from "@/lib/auth";
+import { canDeleteProperties, canPublishProperties, requireRole } from "@/lib/auth";
 import { formatDateTime, formatPrice } from "@/lib/format";
 import { calculatePropertyHealthScore } from "@/lib/properties/health-score";
 import { listAdminProperties } from "@/lib/properties/queries";
+import type { AdminPropertyLifecycleFilter } from "@/lib/properties/queries";
+import { unpublishReasons } from "@/lib/properties/lifecycle";
 import type { PropertyMedia, PropertyStatus } from "@/lib/properties/types";
-import { togglePropertyFeaturedAction, togglePropertyPublishAction } from "./actions";
+import {
+  permanentDeletePropertyAction,
+  republishPropertyAction,
+  restorePropertyAction,
+  softDeletePropertyAction,
+  togglePropertyFeaturedAction,
+  togglePropertyPublishAction,
+  unpublishPropertyAction
+} from "./actions";
 
 export const runtime = "edge";
 
@@ -40,6 +50,9 @@ type AdminPropertyListItem = {
   canonical_url: string | null;
   published_at: string | null;
   updated_at: string | null;
+  deleted_at: string | null;
+  deleted_by: string | null;
+  delete_reason: string | null;
   property_media?: PropertyMedia[];
 };
 
@@ -60,10 +73,26 @@ function parsePublicLocation(address?: string | null) {
 }
 
 type Props = {
-  searchParams: Promise<{ error?: string; q?: string }>;
+  searchParams: Promise<{ error?: string; q?: string; lifecycle?: string }>;
 };
 
-function PublishAction({ id, status }: { id: string; status: PropertyStatus }) {
+const lifecycleFilters: Array<{ value: AdminPropertyLifecycleFilter; label: string }> = [
+  { value: "all", label: "全部" },
+  { value: "published", label: "已上架" },
+  { value: "archived", label: "已下架" },
+  { value: "draft", label: "草稿" },
+  { value: "deleted", label: "已刪除" }
+];
+
+function filterHref(filter: AdminPropertyLifecycleFilter, search: string) {
+  const params = new URLSearchParams();
+  if (search) params.set("q", search);
+  if (filter !== "all") params.set("lifecycle", filter);
+  return `/admin/properties${params.toString() ? `?${params.toString()}` : ""}`;
+}
+
+function PublishAction({ id, status, canPublish, deleted }: { id: string; status: PropertyStatus; canPublish: boolean; deleted: boolean }) {
+  if (!canPublish || deleted) return null;
   if (status === "draft") {
     return (
       <form action={togglePropertyPublishAction.bind(null, id, "published")}>
@@ -74,22 +103,75 @@ function PublishAction({ id, status }: { id: string; status: PropertyStatus }) {
 
   if (status === "published") {
     return (
-      <form action={togglePropertyPublishAction.bind(null, id, "draft")}>
-        <button className="button ghost" type="submit">下架回草稿</button>
-      </form>
+      <details className="property-lifecycle-action">
+        <summary className="button ghost">下架</summary>
+        <form className="property-lifecycle-form" action={unpublishPropertyAction.bind(null, id)}>
+          <p className="muted">下架需填寫原因，紀錄會寫入時間軸。</p>
+          <label className="field">
+            <span>下架原因</span>
+            <select className="select" name="unpublish_reason" defaultValue="成交" required>
+              {unpublishReasons.map((reason) => <option key={reason} value={reason}>{reason}</option>)}
+            </select>
+          </label>
+          <label className="field">
+            <span>其他原因</span>
+            <input className="input" name="unpublish_reason_other" placeholder="選其他時填寫" />
+          </label>
+          <button className="button danger" type="submit">確認下架</button>
+        </form>
+      </details>
     );
   }
 
-  return <span className="muted">暫無操作</span>;
+  return (
+    <form action={republishPropertyAction.bind(null, id)}>
+      <button className="button" type="submit">重新上架</button>
+    </form>
+  );
 }
 
-function FeaturedAction({ id, isFeatured }: { id: string; isFeatured: boolean }) {
+function FeaturedAction({ id, isFeatured, deleted }: { id: string; isFeatured: boolean; deleted: boolean }) {
+  if (deleted) return null;
   return (
     <form action={togglePropertyFeaturedAction.bind(null, id, !isFeatured)}>
       <button className={isFeatured ? "button ghost" : "button"} type="submit">
         {isFeatured ? "取消精選" : "設為精選"}
       </button>
     </form>
+  );
+}
+
+function DeleteAction({ id, deleted, canDelete }: { id: string; deleted: boolean; canDelete: boolean }) {
+  if (!canDelete) return null;
+  if (deleted) {
+    return (
+      <>
+        <form action={restorePropertyAction.bind(null, id)}>
+          <button className="button" type="submit">還原</button>
+        </form>
+        <details className="property-lifecycle-action">
+          <summary className="button danger">永久刪除</summary>
+          <form className="property-lifecycle-form" action={permanentDeletePropertyAction.bind(null, id)}>
+            <p className="notice">此動作不可復原。</p>
+            <button className="button danger" type="submit">確認永久刪除</button>
+          </form>
+        </details>
+      </>
+    );
+  }
+
+  return (
+    <details className="property-lifecycle-action">
+      <summary className="button danger">刪除</summary>
+      <form className="property-lifecycle-form" action={softDeletePropertyAction.bind(null, id)}>
+        <p className="notice">確定要刪除此物件？刪除後不會出現在前台，但仍可於後台查看及還原。</p>
+        <label className="field">
+          <span>刪除原因</span>
+          <input className="input" name="delete_reason" placeholder="可留空" />
+        </label>
+        <button className="button danger" type="submit">確認刪除</button>
+      </form>
+    </details>
   );
 }
 
@@ -112,15 +194,28 @@ function HealthScoreCell({ property }: { property: AdminPropertyListItem }) {
 const errorMessage: Record<string, string> = {
   not_found: "找不到指定物件。",
   publish_failed: "物件狀態更新失敗，請稍後再試。",
-  featured_failed: "精選狀態更新失敗，請稍後再試。"
+  featured_failed: "精選狀態更新失敗，請稍後再試。",
+  unpublish_reason_required: "請選擇下架原因；選「其他」時請填寫原因。",
+  unpublish_failed: "下架失敗，請稍後再試。",
+  not_published: "此物件目前不是已上架狀態。",
+  already_published: "此物件已經是上架狀態。",
+  republish_failed: "重新上架失敗，請稍後再試。",
+  delete_failed: "刪除失敗，請稍後再試。",
+  restore_failed: "還原失敗，請稍後再試。",
+  permanent_delete_failed: "永久刪除失敗，請稍後再試。"
 };
 
 export default async function AdminPropertiesPage({ searchParams }: Props) {
-  await requireRole(["editor", "admin", "owner"]);
+  const current = await requireRole(["editor", "admin", "owner"]);
   const query = await searchParams;
   const search = query.q?.trim() || "";
-  const { data, error } = await listAdminProperties(search);
+  const lifecycle = lifecycleFilters.some((item) => item.value === query.lifecycle)
+    ? query.lifecycle as AdminPropertyLifecycleFilter
+    : "all";
+  const { data, error } = await listAdminProperties(search, lifecycle);
   const properties = (data || []) as AdminPropertyListItem[];
+  const canPublish = canPublishProperties(current.profile.role);
+  const canDelete = canDeleteProperties(current.profile.role);
 
   return (
     <main className="section">
@@ -139,9 +234,21 @@ export default async function AdminPropertiesPage({ searchParams }: Props) {
         {query.error ? <div className="notice">{errorMessage[query.error] || `操作失敗：${query.error}`}</div> : null}
         <form className="actions" style={{ marginBottom: 12 }} action="/admin/properties">
           <input className="input" name="q" placeholder="搜尋案名、Slug、委託書編號、屋主名稱" defaultValue={search} />
+          <input type="hidden" name="lifecycle" value={lifecycle === "all" ? "" : lifecycle} />
           <button className="button ghost" type="submit">搜尋</button>
           {search ? <Link className="button ghost" href="/admin/properties">清除</Link> : null}
         </form>
+        <div className="actions" style={{ marginBottom: 12 }}>
+          {lifecycleFilters.map((filter) => (
+            <Link
+              key={filter.value}
+              className={filter.value === lifecycle ? "button" : "button ghost"}
+              href={filterHref(filter.value, search)}
+            >
+              {filter.value === lifecycle ? "☑" : "□"} {filter.label}
+            </Link>
+          ))}
+        </div>
         <div className="table-wrap">
           <table>
             <thead>
@@ -168,6 +275,12 @@ export default async function AdminPropertiesPage({ searchParams }: Props) {
                       <strong>{property.title}</strong>
                       <br />
                       <span className="muted">/{property.slug}</span>
+                      {property.deleted_at ? (
+                        <>
+                          <br />
+                          <span className="muted">已刪除：{formatDateTime(property.deleted_at)}</span>
+                        </>
+                      ) : null}
                     </td>
                     <td>{property.listing_no || "-"}</td>
                     <td>{property.developer_names || "-"}</td>
@@ -176,7 +289,7 @@ export default async function AdminPropertiesPage({ searchParams }: Props) {
                     <td>{formatPrice(property.price)}</td>
                     <td><HealthScoreCell property={property} /></td>
                     <td>
-                      {statusLabel[property.status]}
+                      {property.deleted_at ? "已刪除" : statusLabel[property.status]}
                       {property.status === "published" ? (
                         <>
                           <br />
@@ -189,9 +302,10 @@ export default async function AdminPropertiesPage({ searchParams }: Props) {
                     <td>
                       <div className="actions">
                         <Link className="button ghost" href={`/admin/properties/${property.id}/edit`}>編輯</Link>
-                        <Link className="button ghost" href={`/admin/properties/${property.id}/export`}>匯出 Excel</Link>
-                        <PublishAction id={property.id} status={property.status} />
-                        <FeaturedAction id={property.id} isFeatured={property.is_featured} />
+                        {!property.deleted_at ? <Link className="button ghost" href={`/admin/properties/${property.id}/export`}>匯出 Excel</Link> : null}
+                        <PublishAction id={property.id} status={property.status} canPublish={canPublish} deleted={Boolean(property.deleted_at)} />
+                        {canPublish ? <FeaturedAction id={property.id} isFeatured={property.is_featured} deleted={Boolean(property.deleted_at)} /> : null}
+                        <DeleteAction id={property.id} deleted={Boolean(property.deleted_at)} canDelete={canDelete} />
                       </div>
                     </td>
                   </tr>

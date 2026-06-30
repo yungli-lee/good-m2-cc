@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { requireApiRole, apiError } from "@/lib/auth-api";
 import { canDeleteProperties, canManageSensitive, canPublishProperties } from "@/lib/auth";
 import { recordAuditLog } from "@/lib/audit/audit-log";
+import { normalizeDeleteReason } from "@/lib/properties/lifecycle";
 import { propertySchema, toPropertyPayload } from "@/lib/properties/schema";
 import { priceChangedContent, todayTaipeiDate, tryInsertPropertyTimelineEvent } from "@/lib/properties/timeline";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -32,7 +33,7 @@ export async function GET(_request: Request, { params }: Props) {
   if (!parsedParams.success) return apiError("Invalid request data", 422);
   const { id } = parsedParams.data;
   const supabase = await createSupabaseServerClient();
-  const { data, error } = await supabase.from("properties").select("*, property_media(*)").eq("id", id).is("deleted_at", null).maybeSingle();
+  const { data, error } = await supabase.from("properties").select("*, property_media(*)").eq("id", id).maybeSingle();
   if (error) return apiError("Unable to load property", 500);
   if (!data) return apiError("Not found", 404);
   return NextResponse.json({ data: redactProgressNotes(data, auth.current!.profile.role) });
@@ -58,6 +59,13 @@ export async function PATCH(request: Request, { params }: Props) {
   const safePayload = canPublishProperties(role)
     ? progressNotesSafePayload(payload, role)
     : progressNotesSafePayload({ ...payload, status: "draft", is_featured: before.is_featured }, role);
+  if (
+    canPublishProperties(role) &&
+    ((before.status === "published" && safePayload.status !== "published") ||
+      (before.status !== "published" && safePayload.status === "published"))
+  ) {
+    return apiError("Use lifecycle action for publish status changes", 422);
+  }
   const { data, error } = await supabase
     .from("properties")
     .update({
@@ -93,31 +101,44 @@ export async function PATCH(request: Request, { params }: Props) {
   return NextResponse.json({ data });
 }
 
-export async function DELETE(_request: Request, { params }: Props) {
+export async function DELETE(request: Request, { params }: Props) {
   const auth = await requireApiRole(["admin", "owner"]);
   if (auth.response) return auth.response;
   if (!canDeleteProperties(auth.current!.profile.role)) return apiError("Forbidden", 403);
   const parsedParams = routeIdParamsSchema.safeParse(await params);
   if (!parsedParams.success) return apiError("Invalid request data", 422);
   const { id } = parsedParams.data;
+  const body = await request.json().catch(() => ({}));
+  const reason = normalizeDeleteReason(typeof body.delete_reason === "string" ? body.delete_reason : null);
   const supabase = await createSupabaseServerClient();
   const { data: before } = await supabase.from("properties").select("*").eq("id", id).maybeSingle();
-  if (!before) return apiError("Not found", 404);
+  if (!before || before.deleted_at) return apiError("Not found", 404);
+  const now = new Date().toISOString();
   const { data, error } = await supabase
     .from("properties")
-    .update({ deleted_at: new Date().toISOString(), updated_by: auth.current!.user.id, updated_at: new Date().toISOString() })
+    .update({
+      status: "archived",
+      is_featured: false,
+      published_at: null,
+      deleted_at: now,
+      deleted_by: auth.current!.user.id,
+      delete_reason: reason,
+      updated_by: auth.current!.user.id,
+      updated_at: now
+    })
     .eq("id", id)
     .select()
     .single();
   if (error) return apiError("Unable to delete property", 500);
   await recordAuditLog({
-    action: "property_delete",
+    action: "delete_property",
     resourceType: "property",
     resourceId: id,
     beforeData: before,
     afterData: data,
     userId: auth.current!.user.id,
-    userEmail: auth.current!.user.email
+    userEmail: auth.current!.user.email,
+    metadata: { reason }
   });
   return NextResponse.json({ data });
 }

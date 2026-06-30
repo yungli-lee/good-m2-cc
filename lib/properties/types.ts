@@ -40,6 +40,8 @@ export type Property = {
   updated_at: string;
   published_at: string | null;
   deleted_at: string | null;
+  deleted_by?: string | null;
+  delete_reason?: string | null;
   property_media?: PropertyMedia[];
 };
 

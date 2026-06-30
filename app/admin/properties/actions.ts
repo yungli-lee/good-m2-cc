@@ -23,6 +23,7 @@ import {
   toDraftPropertyPayload,
   toPropertyPayload
 } from "@/lib/properties/schema";
+import { normalizeDeleteReason, normalizeUnpublishReason } from "@/lib/properties/lifecycle";
 import { priceChangedContent, todayTaipeiDate, tryInsertPropertyTimelineEvent } from "@/lib/properties/timeline";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
@@ -75,6 +76,10 @@ async function tryRecordPropertyTimeline(
   input: Parameters<typeof tryInsertPropertyTimelineEvent>[1]
 ) {
   await tryInsertPropertyTimelineEvent(supabase, input);
+}
+
+function actorEmail(current: Awaited<ReturnType<typeof requireRole>>) {
+  return current.user.email || current.profile.email || null;
 }
 
 async function tryUploadInitialPropertyImage({
@@ -320,8 +325,8 @@ export async function updateDraftPropertyAction(
 }
 
 export async function togglePropertyPublishAction(id: string, nextStatus: "draft" | "published") {
-  const current = await requireRole(["editor", "admin", "owner"]);
-  if (!canManageProperties(current.profile.role)) redirect("/admin/login?error=forbidden");
+  const current = await requireRole(["admin", "owner"]);
+  if (!canPublishProperties(current.profile.role)) redirect("/admin/login?error=forbidden");
 
   const supabase = await createSupabaseServerClient();
   const { data: before } = await supabase.from("properties").select("*").eq("id", id).is("deleted_at", null).maybeSingle();
@@ -366,6 +371,113 @@ export async function togglePropertyPublishAction(id: string, nextStatus: "draft
   revalidatePath("/properties");
   revalidatePath(`/properties/${data.slug}`);
   redirect("/admin/properties");
+}
+
+export async function unpublishPropertyAction(id: string, formData: FormData) {
+  const current = await requireRole(["admin", "owner"]);
+  if (!canPublishProperties(current.profile.role)) redirect("/admin/login?error=forbidden");
+
+  const reason = normalizeUnpublishReason(formData.get("unpublish_reason"), formData.get("unpublish_reason_other"));
+  if (!reason) redirect("/admin/properties?error=unpublish_reason_required");
+
+  const supabase = await createSupabaseServerClient();
+  const { data: before } = await supabase.from("properties").select("*").eq("id", id).is("deleted_at", null).maybeSingle();
+  if (!before) redirect("/admin/properties?error=not_found");
+  if (before.status !== "published") redirect("/admin/properties?error=not_published");
+
+  const now = new Date().toISOString();
+  const { data, error } = await supabase
+    .from("properties")
+    .update({
+      status: "archived",
+      published_at: null,
+      is_featured: false,
+      updated_by: current.user.id,
+      updated_at: now
+    })
+    .eq("id", id)
+    .select()
+    .single();
+
+  if (error) redirect(`/admin/properties?error=${encodeURIComponent(error.code || "unpublish_failed")}`);
+
+  await recordAuditLog({
+    action: "unpublish_property",
+    resourceType: "property",
+    resourceId: id,
+    beforeData: before,
+    afterData: data,
+    userId: current.user.id,
+    userEmail: current.user.email,
+    metadata: { reason }
+  });
+
+  await tryRecordPropertyTimeline(supabase, {
+    property_id: id,
+    event_date: todayTaipeiDate(),
+    event_type: "unpublished",
+    title: "下架",
+    content: `原因：${reason}\n建立者：${actorEmail(current) || "-"}\n操作日期：${todayTaipeiDate().replaceAll("-", "/")}`,
+    created_by: current.user.id,
+    created_by_email: actorEmail(current)
+  });
+
+  revalidatePath("/admin/properties");
+  revalidatePath(`/admin/properties/${id}/edit`);
+  revalidatePath("/properties");
+  revalidatePath(`/properties/${data.slug}`);
+  redirect("/admin/properties?lifecycle=archived");
+}
+
+export async function republishPropertyAction(id: string) {
+  const current = await requireRole(["admin", "owner"]);
+  if (!canPublishProperties(current.profile.role)) redirect("/admin/login?error=forbidden");
+
+  const supabase = await createSupabaseServerClient();
+  const { data: before } = await supabase.from("properties").select("*").eq("id", id).is("deleted_at", null).maybeSingle();
+  if (!before) redirect("/admin/properties?error=not_found");
+  if (before.status === "published") redirect("/admin/properties?error=already_published");
+
+  const now = new Date().toISOString();
+  const { data, error } = await supabase
+    .from("properties")
+    .update({
+      status: "published",
+      published_at: now,
+      updated_by: current.user.id,
+      updated_at: now
+    })
+    .eq("id", id)
+    .select()
+    .single();
+
+  if (error) redirect(`/admin/properties?error=${encodeURIComponent(error.code || "republish_failed")}`);
+
+  await recordAuditLog({
+    action: "republish_property",
+    resourceType: "property",
+    resourceId: id,
+    beforeData: before,
+    afterData: data,
+    userId: current.user.id,
+    userEmail: current.user.email
+  });
+
+  await tryRecordPropertyTimeline(supabase, {
+    property_id: id,
+    event_date: todayTaipeiDate(),
+    event_type: "published",
+    title: "重新上架",
+    content: `建立者：${actorEmail(current) || "-"}\n操作日期：${todayTaipeiDate().replaceAll("-", "/")}`,
+    created_by: current.user.id,
+    created_by_email: actorEmail(current)
+  });
+
+  revalidatePath("/admin/properties");
+  revalidatePath(`/admin/properties/${id}/edit`);
+  revalidatePath("/properties");
+  revalidatePath(`/properties/${data.slug}`);
+  redirect("/admin/properties?lifecycle=published");
 }
 
 export async function togglePropertyFeaturedAction(id: string, isFeatured: boolean) {
@@ -529,6 +641,14 @@ export async function updatePropertyAction(id: string, formData: FormData) {
         is_featured: before.is_featured
       }, role);
 
+  if (
+    canPublishProperties(role) &&
+    ((before.status === "published" && safePayload.status !== "published") ||
+      (before.status !== "published" && safePayload.status === "published"))
+  ) {
+    redirect(`/admin/properties/${id}/edit?error=use_lifecycle_action`);
+  }
+
   const { data, error } = await supabase
     .from("properties")
     .update({
@@ -616,16 +736,31 @@ export async function publishPropertyAction(id: string, status: "published" | "a
   redirect("/admin/properties");
 }
 
-export async function deletePropertyAction(id: string) {
+export async function deletePropertyAction(id: string, formData?: FormData) {
+  return softDeletePropertyAction(id, formData || new FormData());
+}
+
+export async function softDeletePropertyAction(id: string, formData: FormData) {
   const current = await requireRole(["admin", "owner"]);
   if (!canDeleteProperties(current.profile.role)) redirect("/admin/login?error=forbidden");
   const supabase = await createSupabaseServerClient();
   const { data: before } = await supabase.from("properties").select("*").eq("id", id).maybeSingle();
-  if (!before) redirect("/admin/properties?error=not_found");
+  if (!before || before.deleted_at) redirect("/admin/properties?error=not_found");
 
+  const now = new Date().toISOString();
+  const reason = normalizeDeleteReason(formData.get("delete_reason"));
   const { data, error } = await supabase
     .from("properties")
-    .update({ deleted_at: new Date().toISOString(), updated_by: current.user.id, updated_at: new Date().toISOString() })
+    .update({
+      status: "archived",
+      is_featured: false,
+      published_at: null,
+      deleted_at: now,
+      deleted_by: current.user.id,
+      delete_reason: reason,
+      updated_by: current.user.id,
+      updated_at: now
+    })
     .eq("id", id)
     .select()
     .single();
@@ -633,7 +768,48 @@ export async function deletePropertyAction(id: string) {
   if (error) redirect(`/admin/properties?error=${encodeURIComponent(error.code || "delete_failed")}`);
 
   await recordAuditLog({
-    action: "property_delete",
+    action: "delete_property",
+    resourceType: "property",
+    resourceId: id,
+    beforeData: before,
+    afterData: data,
+    userId: current.user.id,
+    userEmail: current.user.email,
+    metadata: { reason }
+  });
+
+  revalidatePath("/properties");
+  revalidatePath(`/properties/${data.slug}`);
+  revalidatePath("/admin/properties");
+  revalidatePath(`/admin/properties/${id}/edit`);
+  redirect("/admin/properties?lifecycle=deleted");
+}
+
+export async function restorePropertyAction(id: string) {
+  const current = await requireRole(["admin", "owner"]);
+  if (!canDeleteProperties(current.profile.role)) redirect("/admin/login?error=forbidden");
+
+  const supabase = await createSupabaseServerClient();
+  const { data: before } = await supabase.from("properties").select("*").eq("id", id).maybeSingle();
+  if (!before || !before.deleted_at) redirect("/admin/properties?error=not_found");
+
+  const { data, error } = await supabase
+    .from("properties")
+    .update({
+      deleted_at: null,
+      deleted_by: null,
+      delete_reason: null,
+      updated_by: current.user.id,
+      updated_at: new Date().toISOString()
+    })
+    .eq("id", id)
+    .select()
+    .single();
+
+  if (error) redirect(`/admin/properties?error=${encodeURIComponent(error.code || "restore_failed")}`);
+
+  await recordAuditLog({
+    action: "restore_property",
     resourceType: "property",
     resourceId: id,
     beforeData: before,
@@ -642,8 +818,39 @@ export async function deletePropertyAction(id: string) {
     userEmail: current.user.email
   });
 
+  revalidatePath("/admin/properties");
+  revalidatePath(`/admin/properties/${id}/edit`);
+  redirect("/admin/properties?lifecycle=all");
+}
+
+export async function permanentDeletePropertyAction(id: string) {
+  const current = await requireRole(["admin", "owner"]);
+  if (!canDeleteProperties(current.profile.role)) redirect("/admin/login?error=forbidden");
+
+  const supabase = await createSupabaseServerClient();
+  const { data: before } = await supabase.from("properties").select("*").eq("id", id).maybeSingle();
+  if (!before || !before.deleted_at) redirect("/admin/properties?error=not_found");
+
+  const { error } = await supabase
+    .from("properties")
+    .delete()
+    .eq("id", id)
+    .not("deleted_at", "is", null);
+
+  if (error) redirect(`/admin/properties?error=${encodeURIComponent(error.code || "permanent_delete_failed")}`);
+
+  await recordAuditLog({
+    action: "permanent_delete_property",
+    resourceType: "property",
+    resourceId: id,
+    beforeData: before,
+    userId: current.user.id,
+    userEmail: current.user.email
+  });
+
+  revalidatePath("/admin/properties");
   revalidatePath("/properties");
-  redirect("/admin/properties");
+  redirect("/admin/properties?lifecycle=deleted");
 }
 
 export async function uploadPropertyImageAction(id: string, formData: FormData) {

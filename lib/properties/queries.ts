@@ -91,7 +91,9 @@ function escapeSearchTerm(value: string) {
   return value.replace(/[%_,]/g, "");
 }
 
-export async function listAdminProperties(search = "") {
+export type AdminPropertyLifecycleFilter = "all" | "published" | "archived" | "draft" | "deleted";
+
+export async function listAdminProperties(search = "", filter: AdminPropertyLifecycleFilter = "all") {
   const supabase = await createSupabaseServerClient();
   let query = supabase
     .from("properties")
@@ -127,6 +129,9 @@ export async function listAdminProperties(search = "") {
       canonical_url,
       published_at,
       updated_at,
+      deleted_at,
+      deleted_by,
+      delete_reason,
       property_media(
         id,
         property_id,
@@ -135,8 +140,14 @@ export async function listAdminProperties(search = "") {
         deleted_at
       )
     `)
-    .is("deleted_at", null)
     .order("updated_at", { ascending: false });
+
+  if (filter === "deleted") {
+    query = query.not("deleted_at", "is", null);
+  } else {
+    query = query.is("deleted_at", null);
+    if (filter !== "all") query = query.eq("status", filter);
+  }
 
   const term = escapeSearchTerm(search.trim());
   if (term) {
@@ -152,6 +163,5 @@ export async function getAdminPropertyById(id: string) {
     .from("properties")
     .select("*, property_media(*)")
     .eq("id", id)
-    .is("deleted_at", null)
     .maybeSingle();
 }

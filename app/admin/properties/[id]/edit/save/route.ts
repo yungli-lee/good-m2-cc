@@ -89,6 +89,14 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         is_featured: before.is_featured
       }, role);
 
+  if (
+    canPublishProperties(role) &&
+    ((before.status === "published" && safePayload.status !== "published") ||
+      (before.status !== "published" && safePayload.status === "published"))
+  ) {
+    return redirectTo(request, `/admin/properties/${id}/edit?error=use_lifecycle_action`);
+  }
+
   const { data, error } = await supabase
     .from("properties")
     .update({
