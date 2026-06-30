@@ -16,16 +16,24 @@ export function PropertyMediaManager({
   deleteActionBase?: string;
 }) {
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [selectedFileName, setSelectedFileName] = useState("");
+  const selectedFilesRef = useRef<File[]>([]);
+  const [selectedFileNames, setSelectedFileNames] = useState<string[]>([]);
   const [isDraggingFile, setIsDraggingFile] = useState(false);
+
+  function appendFiles(files: FileList | null) {
+    if (!files?.length || !fileInputRef.current) return;
+    const transfer = new DataTransfer();
+    selectedFilesRef.current.forEach((file) => transfer.items.add(file));
+    Array.from(files).forEach((file) => transfer.items.add(file));
+    fileInputRef.current.files = transfer.files;
+    selectedFilesRef.current = Array.from(transfer.files);
+    setSelectedFileNames(Array.from(transfer.files).map((file) => file.name));
+  }
 
   function handleFileDrop(event: DragEvent<HTMLDivElement>) {
     event.preventDefault();
     setIsDraggingFile(false);
-    const file = event.dataTransfer.files?.[0];
-    if (!file || !fileInputRef.current) return;
-    fileInputRef.current.files = event.dataTransfer.files;
-    setSelectedFileName(file.name);
+    appendFiles(event.dataTransfer.files);
   }
 
   return (
@@ -49,10 +57,13 @@ export function PropertyMediaManager({
             name="file"
             type="file"
             accept="image/jpeg,image/png,image/webp"
+            multiple
             required
-            onChange={(event) => setSelectedFileName(event.currentTarget.files?.[0]?.name || "")}
+            onChange={(event) => appendFiles(event.currentTarget.files)}
           />
-          <span className="muted">{selectedFileName ? `已選擇：${selectedFileName}` : "可點選選擇檔案，或將照片拖曳到此欄位。"}</span>
+          <span className="muted">
+            {selectedFileNames.length ? `已選擇 ${selectedFileNames.length} 張：${selectedFileNames.join("、")}` : "可點選選擇多張檔案，或將照片拖曳到此欄位。"}
+          </span>
         </div>
         <div className="field">
           <label htmlFor="alt_text">照片說明</label>

@@ -50,6 +50,10 @@ function isUploadedImageFile(value: FormDataEntryValue | null): value is File {
   return value instanceof File && value.size > 0;
 }
 
+function uploadedImageFiles(formData: FormData) {
+  return formData.getAll("file").filter(isUploadedImageFile);
+}
+
 function parsePropertyFormOrRedirect(formData: FormData, redirectTo: string): PropertyFormInput {
   try {
     return normalizePropertyForm(formData);
@@ -79,7 +83,8 @@ async function tryUploadInitialPropertyImage({
   propertyId,
   userId,
   userEmail,
-  altText
+  altText,
+  isCover = false
 }: {
   supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>;
   file: File;
@@ -87,6 +92,7 @@ async function tryUploadInitialPropertyImage({
   userId: string;
   userEmail?: string | null;
   altText?: string | null;
+  isCover?: boolean;
 }) {
   try {
     assertImageFile(file);
@@ -107,7 +113,7 @@ async function tryUploadInitialPropertyImage({
         url: publicUrl.publicUrl,
         storage_path: storagePath,
         alt_text: altText || null,
-        is_cover: true
+        is_cover: isCover
       })
       .select()
       .single();
@@ -481,15 +487,16 @@ export async function createPropertyAction(
     created_by_email: current.user.email || current.profile.email || null
   });
 
-  const file = formData.get("file");
-  if (isUploadedImageFile(file)) {
+  const files = uploadedImageFiles(formData);
+  for (const [index, file] of files.entries()) {
     await tryUploadInitialPropertyImage({
       supabase,
       file,
       propertyId: data.id,
       userId: current.user.id,
       userEmail: current.user.email,
-      altText: String(formData.get("alt_text") || "")
+      altText: String(formData.get("alt_text") || ""),
+      isCover: index === 0
     });
   }
 

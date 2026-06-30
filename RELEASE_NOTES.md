@@ -2,6 +2,37 @@
 
 ---
 
+## admin-property-save-media-hotfix (Draft)
+
+Tag:
+尚未建立
+
+Date:
+2026-06-30
+
+Completed
+
+- Add admin property grants/RLS refresh for owner/admin property updates
+- Add sanitized server logs for edit save DB failures
+- Support multi-image append upload on new and edit property forms
+- Keep existing property photos when uploading more images
+
+Not Included
+
+- Push to main or staging
+
+Verification
+
+- Parser tests ✅
+- Export tests ✅
+- Timeline tests ✅
+- Health tests ✅
+- TypeScript ✅
+- ESLint ✅
+- Build ✅
+
+---
+
 ## admin-property-form-media-fix (Draft)
 
 Tag:

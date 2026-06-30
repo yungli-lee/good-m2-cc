@@ -25,6 +25,10 @@ function isImageFile(file: File) {
   return imageTypes.has(file.type) && imageExtensions.has(extension) && file.size > 0 && file.size <= maxImageSize;
 }
 
+function uploadedImageFiles(formData: FormData) {
+  return formData.getAll("file").filter((value): value is File => value instanceof File && value.size > 0);
+}
+
 async function tryRecordAuditLog(input: Parameters<typeof recordAuditLog>[0]) {
   try {
     await recordAuditLog(input);
@@ -40,47 +44,79 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   if (!canManagePropertyMedia(current.profile.role)) return redirectTo(request, "/admin/login?error=forbidden");
 
   const formData = await request.formData();
-  const file = formData.get("file");
-  if (!(file instanceof File)) return redirectTo(request, `/admin/properties/${id}/edit?error=no_file`);
-  if (!isImageFile(file)) return redirectTo(request, `/admin/properties/${id}/edit?error=invalid_file`);
+  const files = uploadedImageFiles(formData);
+  if (!files.length) return redirectTo(request, `/admin/properties/${id}/edit?error=no_file`);
+  if (files.some((file) => !isImageFile(file))) return redirectTo(request, `/admin/properties/${id}/edit?error=invalid_file`);
 
   const supabase = await createSupabaseServerClient();
-  const filename = cleanFilename(file.name);
-  const storagePath = `${current.user.id}/${id}/${filename}`;
-  const { error: uploadError } = await supabase.storage.from("property-media").upload(storagePath, file, {
-    contentType: file.type,
-    upsert: false
-  });
+  const { data: property } = await supabase.from("properties").select("id").eq("id", id).is("deleted_at", null).maybeSingle();
+  if (!property) return redirectTo(request, "/admin/properties?error=not_found");
 
-  if (uploadError) return redirectTo(request, `/admin/properties/${id}/edit?error=${encodeURIComponent(uploadError.message)}`);
-
-  const { data: publicUrl } = supabase.storage.from("property-media").getPublicUrl(storagePath);
-  if (!publicUrl.publicUrl) return redirectTo(request, `/admin/properties/${id}/edit?error=media_url_failed`);
-
-  const { data, error } = await supabase
+  const { data: existingCover } = await supabase
     .from("property_media")
-    .insert({
+    .select("id")
+    .eq("property_id", id)
+    .eq("is_cover", true)
+    .is("deleted_at", null)
+    .maybeSingle();
+
+  const rows = [];
+  const uploadedPaths: string[] = [];
+  for (const [index, file] of files.entries()) {
+    const filename = cleanFilename(file.name);
+    const storagePath = `${current.user.id}/${id}/${filename}`;
+    const { error: uploadError } = await supabase.storage.from("property-media").upload(storagePath, file, {
+      contentType: file.type,
+      upsert: false
+    });
+
+    if (uploadError) {
+      if (uploadedPaths.length) await supabase.storage.from("property-media").remove(uploadedPaths);
+      return redirectTo(request, `/admin/properties/${id}/edit?error=${encodeURIComponent(uploadError.message)}`);
+    }
+    uploadedPaths.push(storagePath);
+
+    const { data: publicUrl } = supabase.storage.from("property-media").getPublicUrl(storagePath);
+    if (!publicUrl.publicUrl) {
+      await supabase.storage.from("property-media").remove(uploadedPaths);
+      return redirectTo(request, `/admin/properties/${id}/edit?error=media_url_failed`);
+    }
+
+    rows.push({
       property_id: id,
       media_type: "image",
-      url: publicUrl.publicUrl
-    })
-    .select()
-    .single();
+      url: publicUrl.publicUrl,
+      storage_path: storagePath,
+      alt_text: String(formData.get("alt_text") || "").trim() || null,
+      is_cover: !existingCover && index === 0
+    });
+  }
+
+  const { data: inserted, error } = await supabase
+    .from("property_media")
+    .insert(rows)
+    .select();
 
   if (error) {
-    await supabase.storage.from("property-media").remove([storagePath]);
+    await supabase.storage.from("property-media").remove(uploadedPaths);
     const message = error.code === "23502" ? "media_metadata_missing_required_field" : error.code || "media_failed";
+    console.error("property_media_insert_failed", {
+      code: error.code,
+      message: error.message?.slice(0, 180)
+    });
     return redirectTo(request, `/admin/properties/${id}/edit?error=${encodeURIComponent(message)}`);
   }
 
-  await tryRecordAuditLog({
-    action: "property_image_upload",
-    resourceType: "property_media",
-    resourceId: data.id,
-    afterData: data,
-    userId: current.user.id,
-    userEmail: current.user.email
-  });
+  for (const data of inserted || []) {
+    await tryRecordAuditLog({
+      action: "property_image_upload",
+      resourceType: "property_media",
+      resourceId: data.id,
+      afterData: data,
+      userId: current.user.id,
+      userEmail: current.user.email
+    });
+  }
 
   revalidatePath(`/admin/properties/${id}/edit`);
   return redirectTo(request, `/admin/properties/${id}/edit?saved=1`);

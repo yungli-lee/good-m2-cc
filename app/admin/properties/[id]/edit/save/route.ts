@@ -101,7 +101,15 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     .select()
     .single();
 
-  if (error) return redirectTo(request, `/admin/properties/${id}/edit?error=${encodeURIComponent(error.code || "update_failed")}`);
+  if (error) {
+    console.error("property_update_failed", {
+      code: error.code,
+      message: error.message?.slice(0, 180),
+      propertyId: id,
+      actorRole: current.profile.role
+    });
+    return redirectTo(request, `/admin/properties/${id}/edit?error=${encodeURIComponent(error.code || "update_failed")}`);
+  }
 
   await tryRecordAuditLog({
     action: "property_update",

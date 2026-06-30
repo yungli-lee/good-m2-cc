@@ -16,6 +16,18 @@ type Props = {
   searchParams: Promise<{ error?: string; saved?: string; timeline_error?: string; timeline_saved?: string; timeline_deleted?: string }>;
 };
 
+const errorMessage: Record<string, string> = {
+  "42501": "資料庫權限不足，請確認此帳號的後台角色與物件 RLS 權限。",
+  forbidden: "此帳號沒有足夠權限。",
+  invalid_form: "表單欄位格式有誤，請檢查後再儲存。",
+  no_file: "請先選擇照片。",
+  invalid_file: "照片格式或大小不符合規定，請使用 JPG、PNG 或 WebP，單張 5MB 以內。",
+  media_failed: "照片資料寫入失敗，請稍後再試。",
+  media_metadata_missing_required_field: "照片資料缺少必要欄位，請重新上傳。",
+  media_not_found: "找不到要刪除的照片。",
+  not_found: "找不到此物件。"
+};
+
 export default async function EditPropertyPage({ params, searchParams }: Props) {
   const current = await requireRole(["editor", "admin", "owner"]);
   const { id } = await params;
@@ -35,7 +47,7 @@ export default async function EditPropertyPage({ params, searchParams }: Props) 
         <h1>編輯物件</h1>
         <p className="muted">B-001：物件健康度協助檢查上架資料完整度。目前狀態：{property.status}</p>
         {query.saved ? <div className="notice">已儲存。</div> : null}
-        {query.error ? <div className="notice">操作失敗：{query.error}</div> : null}
+        {query.error ? <div className="notice">{errorMessage[query.error] || `操作失敗：${query.error}`}</div> : null}
         <div className="property-health-panel">
           <div className="property-health">
             <span className={`property-health-badge is-${health.level}`}>{health.score}</span>

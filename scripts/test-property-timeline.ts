@@ -175,6 +175,10 @@ assert.doesNotMatch(featuredSelectSource, /service_fee_rate|floor_price/);
 
 const aiFormSource = readFileSync(new URL("../components/admin/ai-property-form.tsx", import.meta.url), "utf8");
 const propertyFormSource = readFileSync(new URL("../components/admin/property-form.tsx", import.meta.url), "utf8");
+const propertyMediaManagerSource = readFileSync(new URL("../components/admin/property-media-manager.tsx", import.meta.url), "utf8");
+const editUploadRouteSource = readFileSync(new URL("../app/admin/properties/[id]/edit/upload/route.ts", import.meta.url), "utf8");
+const propertyActionsSource = readFileSync(new URL("../app/admin/properties/actions.ts", import.meta.url), "utf8");
+const adminGrantMigrationSource = readFileSync(new URL("../supabase/migrations/202606300103_fix_property_admin_grants.sql", import.meta.url), "utf8");
 for (const label of ["建地", "房屋", "農林漁牧地", "工業用地", "廠房", "大廈", "公寓"]) {
   assert.match(aiFormSource, new RegExp(label));
   assert.match(propertyFormSource, new RegExp(label));
@@ -183,5 +187,15 @@ for (const label of ["透天", "土地", "店面", "其他"]) {
   assert.doesNotMatch(aiFormSource.slice(aiFormSource.indexOf("const typeOptions"), aiFormSource.indexOf("function setFormValue")), new RegExp(`"${label}"`));
   assert.doesNotMatch(propertyFormSource.slice(propertyFormSource.indexOf("const typeOptions"), propertyFormSource.indexOf("export function PropertyForm")), new RegExp(`"${label}"`));
 }
+
+assert.match(aiFormSource, /multiple/);
+assert.match(propertyMediaManagerSource, /multiple/);
+assert.match(aiFormSource, /selectedFilesRef/);
+assert.match(propertyMediaManagerSource, /selectedFilesRef/);
+assert.match(editUploadRouteSource, /formData\.getAll\("file"\)/);
+assert.match(propertyActionsSource, /formData\.getAll\("file"\)/);
+assert.match(adminGrantMigrationSource, /grant select, insert, update, delete on table public\.properties to authenticated;/);
+assert.match(adminGrantMigrationSource, /grant select, insert, update, delete on table public\.property_media to authenticated;/);
+assert.match(adminGrantMigrationSource, /public\.is_admin_role\(array\['admin','owner'\]\)/);
 
 console.log("property timeline tests passed");
