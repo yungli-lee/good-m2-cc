@@ -4,9 +4,13 @@ const {
   canCreatePropertyTimeline,
   canManagePropertyTimeline,
   canReadPropertyTimeline,
+  formatTimelineDate,
+  getPropertyTimelineLabel,
+  insertPropertyTimelineEvent,
   priceChangedContent,
   propertyTimelineFormSchema,
-  sortPropertyTimelineEvents
+  sortPropertyTimelineEvents,
+  timelineCreateRedirectPath
 } = await import("../lib/properties/timeline.ts");
 
 const validTypes = [
@@ -84,5 +88,60 @@ assert.equal(canManagePropertyTimeline("owner"), true);
 assert.equal(canManagePropertyTimeline("admin"), true);
 assert.equal(canManagePropertyTimeline("editor"), false);
 assert.equal(priceChangedContent(988, 958), "開價 988 萬 → 958 萬");
+
+const insertedPayloads: unknown[] = [];
+const successSupabase = {
+  from(table: string) {
+    assert.equal(table, "property_timeline_events");
+    return {
+      insert(payload: unknown) {
+        insertedPayloads.push(payload);
+        return {
+          select(columns: string) {
+            assert.equal(columns, "id");
+            return {
+              async single() {
+                return { data: { id: "timeline-1" }, error: null };
+              }
+            };
+          }
+        };
+      }
+    };
+  }
+};
+
+const insertSuccess = await insertPropertyTimelineEvent(successSupabase as unknown as Parameters<typeof insertPropertyTimelineEvent>[0], {
+  property_id: "property-1",
+  event_date: "2026-06-30",
+  event_type: "follow_up",
+  title: "追蹤屋主",
+  content: "屋主確認可帶看",
+  created_by: "user-1",
+  created_by_email: "editor@example.com"
+});
+
+assert.equal(insertSuccess.data?.id, "timeline-1");
+assert.equal(insertedPayloads.length, 1);
+assert.equal(timelineCreateRedirectPath("property-1", insertSuccess), "/admin/properties/property-1/edit?timeline_saved=1");
+
+const insertFailure = {
+  data: null,
+  error: { code: "42501", message: "new row violates row-level security policy" }
+};
+
+assert.equal(
+  timelineCreateRedirectPath("property-1", insertFailure),
+  "/admin/properties/property-1/edit?timeline_error=create_failed"
+);
+assert.notEqual(timelineCreateRedirectPath("property-1", insertFailure), "/admin/properties/property-1/edit?timeline_saved=1");
+assert.equal(timelineCreateRedirectPath("property-1", { data: null, error: null }), "/admin/properties/property-1/edit?timeline_error=create_failed");
+
+assert.equal(formatTimelineDate("2026-07-05"), "2026/07/05");
+assert.equal(formatTimelineDate("2026/07/05"), "日期未設定");
+assert.equal(formatTimelineDate(null), "日期未設定");
+assert.equal(getPropertyTimelineLabel("showing").label, "帶看");
+assert.equal(getPropertyTimelineLabel("unknown").label, "一般備註");
+assert.equal(getPropertyTimelineLabel(null).icon, "📝");
 
 console.log("property timeline tests passed");

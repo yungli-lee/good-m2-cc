@@ -9,7 +9,9 @@ import {
   canManagePropertyTimeline,
   insertPropertyTimelineEvent,
   propertyTimelineFormSchema,
-  propertyTimelineValuesFromFormData
+  propertyTimelineValuesFromFormData,
+  sanitizeTimelineDbError,
+  timelineCreateRedirectPath
 } from "@/lib/properties/timeline";
 
 export async function createPropertyTimelineEventAction(propertyId: string, formData: FormData) {
@@ -25,7 +27,7 @@ export async function createPropertyTimelineEventAction(propertyId: string, form
   const { data: property } = await supabase.from("properties").select("id").eq("id", propertyId).is("deleted_at", null).maybeSingle();
   if (!property) redirect("/admin/properties?error=not_found");
 
-  const { error } = await insertPropertyTimelineEvent(supabase, {
+  const result = await insertPropertyTimelineEvent(supabase, {
     property_id: propertyId,
     event_date: parsed.data.event_date,
     event_type: parsed.data.event_type,
@@ -35,10 +37,14 @@ export async function createPropertyTimelineEventAction(propertyId: string, form
     created_by_email: current.user.email || current.profile.email || null
   });
 
-  if (error) redirect(`/admin/properties/${propertyId}/edit?timeline_error=create_failed`);
+  const redirectPath = timelineCreateRedirectPath(propertyId, result);
+  if (result.error || !result.data?.id) {
+    console.error("property_timeline_create_failed", sanitizeTimelineDbError(result.error));
+    redirect(redirectPath);
+  }
 
   revalidatePath(`/admin/properties/${propertyId}/edit`);
-  redirect(`/admin/properties/${propertyId}/edit?timeline_saved=1`);
+  redirect(redirectPath);
 }
 
 export async function deletePropertyTimelineEventAction(propertyId: string, eventId: string) {
@@ -52,7 +58,10 @@ export async function deletePropertyTimelineEventAction(propertyId: string, even
     .eq("id", eventId)
     .eq("property_id", propertyId);
 
-  if (error) redirect(`/admin/properties/${propertyId}/edit?timeline_error=delete_failed`);
+  if (error) {
+    console.error("property_timeline_delete_failed", sanitizeTimelineDbError(error));
+    redirect(`/admin/properties/${propertyId}/edit?timeline_error=delete_failed`);
+  }
 
   revalidatePath(`/admin/properties/${propertyId}/edit`);
   redirect(`/admin/properties/${propertyId}/edit?timeline_deleted=1`);

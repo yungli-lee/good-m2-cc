@@ -2,6 +2,7 @@ import {
   canCreatePropertyTimeline,
   canManagePropertyTimeline,
   formatTimelineDate,
+  getPropertyTimelineLabel,
   propertyTimelineEventTypes,
   propertyTimelineLabels,
   todayTaipeiDate
@@ -71,10 +72,11 @@ export function PropertyTimeline({ propertyId, events, role, errorCode, saved, d
       ) : null}
 
       <div className="property-timeline-list">
-        {events.map((event) => {
-          const label = propertyTimelineLabels[event.event_type];
+        {(events || []).map((event, index) => {
+          const label = getPropertyTimelineLabel(event.event_type);
+          const eventId = event.id || `${event.event_date || "unknown"}-${event.created_at || index}`;
           return (
-            <article className="property-timeline-item" key={event.id}>
+            <article className="property-timeline-item" key={eventId}>
               <div className="property-timeline-date">{formatTimelineDate(event.event_date)}</div>
               <div className="property-timeline-body">
                 <div className="property-timeline-title">
@@ -84,7 +86,7 @@ export function PropertyTimeline({ propertyId, events, role, errorCode, saved, d
                 {event.content ? <p>{event.content}</p> : null}
                 {event.created_by_email ? <p className="muted">建立者：{event.created_by_email}</p> : null}
               </div>
-              {canDelete ? (
+              {canDelete && event.id ? (
                 <form action={deletePropertyTimelineEventAction.bind(null, propertyId, event.id)}>
                   <button className="button danger" type="submit">刪除</button>
                 </form>
@@ -92,7 +94,7 @@ export function PropertyTimeline({ propertyId, events, role, errorCode, saved, d
             </article>
           );
         })}
-        {events.length === 0 ? <div className="notice">尚未建立時間軸事件。</div> : null}
+        {(events || []).length === 0 ? <div className="notice">尚未建立時間軸事件。</div> : null}
       </div>
     </section>
   );

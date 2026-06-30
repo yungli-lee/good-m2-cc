@@ -22,14 +22,14 @@ export type PropertyTimelineEventType = (typeof propertyTimelineEventTypes)[numb
 export type PropertyTimelineEvent = {
   id: string;
   property_id: string;
-  event_date: string;
-  event_type: PropertyTimelineEventType;
-  title: string;
+  event_date: string | null;
+  event_type: PropertyTimelineEventType | string | null;
+  title: string | null;
   content: string | null;
   created_by: string | null;
   created_by_email: string | null;
-  created_at: string;
-  updated_at: string;
+  created_at: string | null;
+  updated_at: string | null;
 };
 
 export type PropertyTimelineInput = {
@@ -56,6 +56,16 @@ export const propertyTimelineLabels: Record<PropertyTimelineEventType, { label: 
   closed: { label: "成交 / 結案", icon: "✅" },
   note: { label: "一般備註", icon: "📝" }
 };
+
+const fallbackTimelineLabel = propertyTimelineLabels.note;
+
+export function isPropertyTimelineEventType(value: unknown): value is PropertyTimelineEventType {
+  return typeof value === "string" && propertyTimelineEventTypes.includes(value as PropertyTimelineEventType);
+}
+
+export function getPropertyTimelineLabel(value: unknown) {
+  return isPropertyTimelineEventType(value) ? propertyTimelineLabels[value] : fallbackTimelineLabel;
+}
 
 export const propertyTimelineFormSchema = z.object({
   event_date: z.string().trim().regex(/^\d{4}-\d{2}-\d{2}$/, "請選擇日期"),
@@ -87,9 +97,9 @@ export function canManagePropertyTimeline(role: AdminRole) {
 
 export function sortPropertyTimelineEvents<T extends Pick<PropertyTimelineEvent, "event_date" | "created_at">>(events: T[]) {
   return [...events].sort((a, b) => {
-    const dateCompare = b.event_date.localeCompare(a.event_date);
+    const dateCompare = (b.event_date || "").localeCompare(a.event_date || "");
     if (dateCompare !== 0) return dateCompare;
-    return b.created_at.localeCompare(a.created_at);
+    return (b.created_at || "").localeCompare(a.created_at || "");
   });
 }
 
@@ -102,7 +112,8 @@ export function todayTaipeiDate() {
   }).format(new Date());
 }
 
-export function formatTimelineDate(value: string) {
+export function formatTimelineDate(value?: string | null) {
+  if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return "日期未設定";
   return value.replaceAll("-", "/");
 }
 
@@ -124,7 +135,24 @@ export async function insertPropertyTimelineEvent(
     content: input.content || null,
     created_by: input.created_by || null,
     created_by_email: input.created_by_email || null
-  });
+  }).select("id").single();
+}
+
+export function sanitizeTimelineDbError(error: { code?: string; message?: string } | null | undefined) {
+  return {
+    code: error?.code || "unknown",
+    message: (error?.message || "Unknown timeline database error").slice(0, 180)
+  };
+}
+
+export function timelineCreateRedirectPath(
+  propertyId: string,
+  result: { data?: { id?: string } | null; error?: { code?: string; message?: string } | null }
+) {
+  if (result.error || !result.data?.id) {
+    return `/admin/properties/${propertyId}/edit?timeline_error=create_failed`;
+  }
+  return `/admin/properties/${propertyId}/edit?timeline_saved=1`;
 }
 
 export async function tryInsertPropertyTimelineEvent(
