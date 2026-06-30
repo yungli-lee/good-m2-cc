@@ -93,42 +93,46 @@ export function PropertyTimeline({ propertyId, events, role, errorCode, saved, u
                 </div>
                 {event.content ? <p>{event.content}</p> : null}
                 {event.created_by_email ? <p className="muted">建立者：{event.created_by_email}</p> : null}
-                {canEdit && event.id ? (
-                  <details className="property-timeline-edit">
-                    <summary className="button secondary">編輯</summary>
-                    <form className="property-timeline-form" action={propertyTimelineUpdatePath(propertyId, event.id)} method="post">
-                      <div className="field">
-                        <label htmlFor={`timeline-event-date-${event.id}`}>日期</label>
-                        <input className="input" id={`timeline-event-date-${event.id}`} name="event_date" type="date" defaultValue={event.event_date || todayTaipeiDate()} required />
-                      </div>
-                      <div className="field">
-                        <label htmlFor={`timeline-event-type-${event.id}`}>類型</label>
-                        <select className="select" id={`timeline-event-type-${event.id}`} name="event_type" defaultValue={getPropertyTimelineLabel(event.event_type) === propertyTimelineLabels.note && event.event_type !== "note" ? "note" : event.event_type || "note"}>
-                          {propertyTimelineEventTypes.map((type) => (
-                            <option key={type} value={type}>{propertyTimelineLabels[type].label}</option>
-                          ))}
-                        </select>
-                      </div>
-                      <div className="field">
-                        <label htmlFor={`timeline-title-${event.id}`}>標題</label>
-                        <input className="input" id={`timeline-title-${event.id}`} name="title" maxLength={120} defaultValue={event.title || label.label} required />
-                      </div>
-                      <div className="field full">
-                        <label htmlFor={`timeline-content-${event.id}`}>內容</label>
-                        <textarea className="textarea" id={`timeline-content-${event.id}`} name="content" maxLength={2000} defaultValue={event.content || ""} />
-                      </div>
-                      <div className="field full">
-                        <button className="button" type="submit">儲存時間軸事件</button>
-                      </div>
-                    </form>
-                  </details>
+                {(canEdit || canDelete) && event.id ? (
+                  <div className="property-timeline-actions">
+                    {canEdit ? (
+                      <details className="property-timeline-edit">
+                        <summary className="button secondary">編輯</summary>
+                        <form className="property-timeline-form" action={propertyTimelineUpdatePath(propertyId, event.id)} method="post">
+                          <div className="field">
+                            <label htmlFor={`timeline-event-date-${event.id}`}>日期</label>
+                            <input className="input" id={`timeline-event-date-${event.id}`} name="event_date" type="date" defaultValue={event.event_date || todayTaipeiDate()} required />
+                          </div>
+                          <div className="field">
+                            <label htmlFor={`timeline-event-type-${event.id}`}>類型</label>
+                            <select className="select" id={`timeline-event-type-${event.id}`} name="event_type" defaultValue={getPropertyTimelineLabel(event.event_type) === propertyTimelineLabels.note && event.event_type !== "note" ? "note" : event.event_type || "note"}>
+                              {propertyTimelineEventTypes.map((type) => (
+                                <option key={type} value={type}>{propertyTimelineLabels[type].label}</option>
+                              ))}
+                            </select>
+                          </div>
+                          <div className="field">
+                            <label htmlFor={`timeline-title-${event.id}`}>標題</label>
+                            <input className="input" id={`timeline-title-${event.id}`} name="title" maxLength={120} defaultValue={event.title || label.label} required />
+                          </div>
+                          <div className="field full">
+                            <label htmlFor={`timeline-content-${event.id}`}>內容</label>
+                            <textarea className="textarea" id={`timeline-content-${event.id}`} name="content" maxLength={2000} defaultValue={event.content || ""} />
+                          </div>
+                          <div className="field full">
+                            <button className="button" type="submit">儲存時間軸事件</button>
+                          </div>
+                        </form>
+                      </details>
+                    ) : null}
+                    {canDelete ? (
+                      <form action={propertyTimelineDeletePath(propertyId, event.id)} method="post">
+                        <button className="button danger" type="submit">刪除</button>
+                      </form>
+                    ) : null}
+                  </div>
                 ) : null}
               </div>
-              {canDelete && event.id ? (
-                <form action={propertyTimelineDeletePath(propertyId, event.id)} method="post">
-                  <button className="button danger" type="submit">刪除</button>
-                </form>
-              ) : null}
             </article>
           );
         })}

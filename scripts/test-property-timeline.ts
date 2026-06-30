@@ -245,11 +245,18 @@ assert.match(adminGrantMigrationSource, /grant select, insert, update, delete on
 assert.match(adminGrantMigrationSource, /public\.is_admin_role\(array\['admin','owner'\]\)/);
 
 const timelineCompanyMigrationSource = readFileSync(new URL("../supabase/migrations/202606300104_timeline_edit_and_company_settings.sql", import.meta.url), "utf8");
+const expandedCompanyMigrationSource = readFileSync(new URL("../supabase/migrations/202606300105_expand_company_settings.sql", import.meta.url), "utf8");
 const companySettingsSource = readFileSync(new URL("../lib/company-settings.ts", import.meta.url), "utf8");
+const propertyDetailSource = readFileSync(new URL("../app/(public)/properties/[slug]/page.tsx", import.meta.url), "utf8");
 assert.match(timelineCompanyMigrationSource, /add column if not exists updated_by uuid/);
 assert.match(timelineCompanyMigrationSource, /staff update property timeline/);
 assert.match(timelineCompanyMigrationSource, /create table if not exists public\.company_settings/);
 assert.match(timelineCompanyMigrationSource, /public read company settings/);
+for (const field of ["company_phone", "company_address", "company_email", "google_maps_url", "line_qr_code_url", "copyright_text"]) {
+  assert.match(expandedCompanyMigrationSource, new RegExp(field));
+  assert.match(companySettingsSource, new RegExp(field));
+  assert.match(propertyDetailSource, new RegExp(field));
+}
 assert.match(companySettingsSource, /赫成開發有限公司/);
 assert.match(companySettingsSource, /太平洋房屋彰化縣府加盟店/);
 

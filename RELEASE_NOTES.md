@@ -2,6 +2,38 @@
 
 ---
 
+## admin-company-settings-expanded (Draft)
+
+Tag:
+尚未建立
+
+Date:
+2026-06-30
+
+Completed
+
+- Harden company settings save with update-then-insert behavior and clearer DB errors
+- Expand company settings with phone, address, email, links, logo, LINE QR, and copyright
+- Render expanded company information on public property detail pages
+- Show timeline edit/delete actions in the same row
+- Add robust company settings migration covering table, columns, grants, and RLS
+
+Not Included
+
+- Push to main or staging
+
+Verification
+
+- Timeline tests ✅
+- Parser tests ✅
+- Export tests ✅
+- Health tests ✅
+- TypeScript ✅
+- ESLint ✅
+- Build ✅
+
+---
+
 ## admin-timeline-edit-company-settings (Draft)
 
 Tag:

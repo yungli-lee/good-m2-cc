@@ -243,6 +243,16 @@ td {
   font-size: 1.08rem;
 }
 
+.company-info-logo {
+  display: block;
+  max-width: 160px;
+  max-height: 72px;
+  width: auto;
+  height: auto;
+  margin-bottom: 12px;
+  object-fit: contain;
+}
+
 .company-info-panel p {
   margin: 0 0 12px;
   font-weight: 700;
@@ -268,6 +278,33 @@ td {
   margin: 0;
   font-weight: 700;
   line-height: 1.5;
+}
+
+.company-info-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.company-info-links .button {
+  min-height: 36px;
+  padding: 7px 10px;
+  font-size: 0.9rem;
+}
+
+.company-info-qr {
+  margin-top: 14px;
+}
+
+.company-info-qr img {
+  display: block;
+  width: min(160px, 100%);
+  aspect-ratio: 1;
+  object-fit: contain;
+  border: 1px solid rgba(16, 35, 67, 0.12);
+  border-radius: 8px;
+  background: #fff;
 }
 
 .detail-layout {
@@ -554,7 +591,7 @@ td {
 
 .property-timeline-item {
   display: grid;
-  grid-template-columns: 120px minmax(0, 1fr) auto;
+  grid-template-columns: 120px minmax(0, 1fr);
   gap: 16px;
   align-items: start;
   padding: 16px;
@@ -584,8 +621,17 @@ td {
   line-height: 1.7;
 }
 
-.property-timeline-edit {
+.property-timeline-actions {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  flex-wrap: wrap;
   margin-top: 8px;
+}
+
+.property-timeline-edit {
+  display: grid;
+  gap: 12px;
 }
 
 .property-timeline-edit summary {
@@ -598,7 +644,11 @@ td {
 }
 
 .property-timeline-edit[open] summary {
-  margin-bottom: 12px;
+  margin-bottom: 0;
+}
+
+.property-timeline-edit[open] {
+  width: 100%;
 }
 
 .media-dropzone {

@@ -40,6 +40,14 @@ export default async function PropertyDetailPage({ params }: Props) {
 
   const property = data as Property;
   const companySettings = await getPublicCompanySettings();
+  const companyLinks = [
+    ["Google Maps", companySettings.google_maps_url],
+    ["Facebook", companySettings.facebook_url],
+    ["Instagram", companySettings.instagram_url],
+    ["YouTube", companySettings.youtube_url],
+    ["TikTok", companySettings.tiktok_url],
+    ["LINE", companySettings.line_url]
+  ].filter(([, href]) => href);
   const cover = getCoverMedia(property);
   const media = property.property_media?.filter((item) => item.media_type === "image" && !item.deleted_at) || [];
 
@@ -79,6 +87,7 @@ export default async function PropertyDetailPage({ params }: Props) {
                 </Link>
               </div>
               <section className="company-info-panel" aria-label="公司資訊">
+                {companySettings.logo_url ? <img className="company-info-logo" src={companySettings.logo_url} alt={companySettings.company_name} loading="lazy" /> : null}
                 <h2>{companySettings.company_name}</h2>
                 <p>{companySettings.franchise_name}</p>
                 <dl>
@@ -90,7 +99,38 @@ export default async function PropertyDetailPage({ params }: Props) {
                     <dt>不動產經紀人證號</dt>
                     <dd>{companySettings.realtor_certificate_no}</dd>
                   </div>
+                  {companySettings.salesperson_registration_no ? (
+                    <div>
+                      <dt>營業員登記證號</dt>
+                      <dd>{companySettings.salesperson_registration_no}</dd>
+                    </div>
+                  ) : null}
+                  <div>
+                    <dt>電話</dt>
+                    <dd>{companySettings.company_phone ? <a href={`tel:${companySettings.company_phone}`}>{companySettings.company_phone}</a> : "-"}</dd>
+                  </div>
+                  <div>
+                    <dt>地址</dt>
+                    <dd>{companySettings.company_address || "-"}</dd>
+                  </div>
+                  <div>
+                    <dt>Email</dt>
+                    <dd>{companySettings.company_email ? <a href={`mailto:${companySettings.company_email}`}>{companySettings.company_email}</a> : "-"}</dd>
+                  </div>
                 </dl>
+                {companyLinks.length ? (
+                  <div className="company-info-links">
+                    {companyLinks.map(([label, href]) => (
+                      <a key={label} className="button ghost" href={href} target="_blank" rel="noreferrer">{label}</a>
+                    ))}
+                  </div>
+                ) : null}
+                {companySettings.line_qr_code_url ? (
+                  <div className="company-info-qr">
+                    <img src={companySettings.line_qr_code_url} alt="LINE QR Code" loading="lazy" />
+                  </div>
+                ) : null}
+                {companySettings.copyright_text ? <p className="muted">{companySettings.copyright_text}</p> : null}
               </section>
             </div>
           </aside>
