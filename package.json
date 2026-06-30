@@ -7,7 +7,9 @@
     "pages:build": "npx @cloudflare/next-on-pages@1",
     "lint": "eslint .",
     "test:export": "node --experimental-strip-types --experimental-specifier-resolution=node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/test-property-export.ts",
+    "test:health": "node --experimental-strip-types --experimental-specifier-resolution=node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/test-property-health.ts",
     "test:parser": "node --experimental-strip-types --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/test-ai-parser.ts",
+    "test:timeline": "node --experimental-strip-types --experimental-specifier-resolution=node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/test-property-timeline.ts",
     "start": "next start",
     "typecheck": "tsc --noEmit"
   },

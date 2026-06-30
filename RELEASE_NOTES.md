@@ -2,6 +2,42 @@
 
 ---
 
+## B-002-property-timeline (Draft)
+
+Tag:
+尚未建立
+
+Date:
+2026-06-30
+
+Completed
+
+- `property_timeline_events` migration with RLS
+- Admin property timeline list and create form on `/admin/properties/[id]/edit`
+- Timeline delete for owner/admin
+- Automatic timeline events for property create, publish/unpublish, featured/unfeatured, and price changes
+- `npm run test:timeline`
+- `npm run test:health`
+
+Not Included
+
+- Public timeline display
+- Progress notes migration into timeline
+- Health Score rule changes
+- Push to main or staging
+
+Verification
+
+- Timeline tests ✅
+- Health tests ✅
+- Parser tests ✅
+- Export tests ✅
+- TypeScript ✅
+- ESLint ✅
+- Build ✅
+
+---
+
 ## B-001-property-health-score (Draft)
 
 Tag:

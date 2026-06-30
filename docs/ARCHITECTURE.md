@@ -38,6 +38,7 @@ Supabase 負責：
 - `profiles`
 - `properties`
 - `property_media`
+- `property_timeline_events`
 - `inquiries`
 - `blocklist`
 - `rate_limit_events`
@@ -92,6 +93,10 @@ RLS 由 Supabase migration 啟用。原則：
 
 Admin API 必須檢查登入與角色。
 
+## Admin CRM Timeline
+
+`property_timeline_events` 記錄每件物件的結構化 CRM 歷程，例如新接委託、上架、下架、精選、調價、帶看、出價、議價、追蹤、成交與一般備註。第一版只顯示於後台物件編輯頁，不納入 public property query。
+
 ## Cloudflare Pages
 
 Preview deployment 依賴 Cloudflare Pages 與 next-on-pages output。
@@ -145,4 +150,3 @@ Wrangler 設定：
 6. 才能考慮 production branch 或 production deployment 切換。
 
 目前結論：不建議直接 production go-live，請先完成 [GO_LIVE_CHECKLIST.md](GO_LIVE_CHECKLIST.md) 的 MUST 項。
-

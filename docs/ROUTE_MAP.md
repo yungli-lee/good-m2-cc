@@ -24,7 +24,7 @@
 | `/admin/properties` | Existing | 物件列表 | `app/admin/properties/page.tsx` |
 | `/admin/properties/new` | Existing | 新增物件 | `app/admin/properties/new/page.tsx` |
 | `/admin/properties/[id]` | Existing | 導向編輯頁 | `app/admin/properties/[id]/page.tsx` |
-| `/admin/properties/[id]/edit` | Existing | 編輯物件、圖片、封面 | `app/admin/properties/[id]/edit/page.tsx` |
+| `/admin/properties/[id]/edit` | Existing | 編輯物件、圖片、封面、物件時間軸 | `app/admin/properties/[id]/edit/page.tsx` |
 | `/admin/inquiries` | Existing | 詢問單列表 | `app/admin/inquiries/page.tsx` |
 | `/admin/inquiries/[id]` | Existing | 詢問單詳細頁 | `app/admin/inquiries/[id]/page.tsx` |
 | `/admin/videos` | Planned | 影音管理 | 未建立 |
@@ -57,4 +57,3 @@
 ## Planned Routes
 
 計畫路由請以 [../ROADMAP.md](../ROADMAP.md) 為優先順序來源。
-

@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { canManageProperties, canManageSensitive, canPublishProperties, getCurrentProfile } from "@/lib/auth";
 import { recordAuditLog } from "@/lib/audit/audit-log";
 import { normalizePropertyForm, toPropertyPayload } from "@/lib/properties/schema";
+import { priceChangedContent, todayTaipeiDate, tryInsertPropertyTimelineEvent } from "@/lib/properties/timeline";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export const runtime = "edge";
@@ -45,6 +46,13 @@ async function tryRecordAuditLog(input: Parameters<typeof recordAuditLog>[0]) {
   } catch {
     // Audit logging should not block the primary property write path.
   }
+}
+
+async function tryRecordPropertyTimeline(
+  supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>,
+  input: Parameters<typeof tryInsertPropertyTimelineEvent>[1]
+) {
+  await tryInsertPropertyTimelineEvent(supabase, input);
 }
 
 export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -104,6 +112,18 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     userId: current.user.id,
     userEmail: current.user.email
   });
+
+  if (before.price !== data.price) {
+    await tryRecordPropertyTimeline(supabase, {
+      property_id: id,
+      event_date: todayTaipeiDate(),
+      event_type: "price_changed",
+      title: "價格調整",
+      content: priceChangedContent(before.price, data.price),
+      created_by: current.user.id,
+      created_by_email: current.user.email || current.profile.email || null
+    });
+  }
 
   revalidatePath("/properties");
   revalidatePath(`/properties/${data.slug}`);

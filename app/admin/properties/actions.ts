@@ -23,6 +23,7 @@ import {
   toDraftPropertyPayload,
   toPropertyPayload
 } from "@/lib/properties/schema";
+import { priceChangedContent, todayTaipeiDate, tryInsertPropertyTimelineEvent } from "@/lib/properties/timeline";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 const imageTypes = new Set(["image/jpeg", "image/png", "image/webp"]);
@@ -59,6 +60,13 @@ async function tryRecordAuditLog(input: Parameters<typeof recordAuditLog>[0]) {
   } catch {
     // Audit logging should not block the primary property write path.
   }
+}
+
+async function tryRecordPropertyTimeline(
+  supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>,
+  input: Parameters<typeof tryInsertPropertyTimelineEvent>[1]
+) {
+  await tryInsertPropertyTimelineEvent(supabase, input);
 }
 
 function draftFieldErrors(error: { issues: Array<{ path: Array<string | number>; message: string }> }) {
@@ -165,6 +173,16 @@ export async function createDraftPropertyAction(
     userEmail: current.user.email
   });
 
+  await tryRecordPropertyTimeline(supabase, {
+    property_id: data.id,
+    event_date: todayTaipeiDate(),
+    event_type: "created",
+    title: "新接委託",
+    content: data.title,
+    created_by: current.user.id,
+    created_by_email: current.user.email || current.profile.email || null
+  });
+
   revalidatePath("/admin/properties");
   redirect("/admin/properties");
 }
@@ -265,6 +283,16 @@ export async function togglePropertyPublishAction(id: string, nextStatus: "draft
     userEmail: current.user.email
   });
 
+  await tryRecordPropertyTimeline(supabase, {
+    property_id: id,
+    event_date: todayTaipeiDate(),
+    event_type: nextStatus === "published" ? "published" : "unpublished",
+    title: nextStatus === "published" ? "上架" : "下架",
+    content: data.title,
+    created_by: current.user.id,
+    created_by_email: current.user.email || current.profile.email || null
+  });
+
   revalidatePath("/admin/properties");
   revalidatePath("/properties");
   revalidatePath(`/properties/${data.slug}`);
@@ -300,6 +328,16 @@ export async function togglePropertyFeaturedAction(id: string, isFeatured: boole
     afterData: data,
     userId: current.user.id,
     userEmail: current.user.email
+  });
+
+  await tryRecordPropertyTimeline(supabase, {
+    property_id: id,
+    event_date: todayTaipeiDate(),
+    event_type: isFeatured ? "featured" : "unfeatured",
+    title: isFeatured ? "設為精選" : "取消精選",
+    content: data.title,
+    created_by: current.user.id,
+    created_by_email: current.user.email || current.profile.email || null
   });
 
   revalidatePath("/admin/properties");
@@ -370,6 +408,16 @@ export async function createPropertyAction(
     userEmail: current.user.email
   });
 
+  await tryRecordPropertyTimeline(supabase, {
+    property_id: data.id,
+    event_date: todayTaipeiDate(),
+    event_type: "created",
+    title: "新接委託",
+    content: data.title,
+    created_by: current.user.id,
+    created_by_email: current.user.email || current.profile.email || null
+  });
+
   revalidatePath("/properties");
   redirect(`/admin/properties/${data.id}/edit`);
 }
@@ -423,6 +471,18 @@ export async function updatePropertyAction(id: string, formData: FormData) {
     userEmail: current.user.email
   });
 
+  if (before.price !== data.price) {
+    await tryRecordPropertyTimeline(supabase, {
+      property_id: id,
+      event_date: todayTaipeiDate(),
+      event_type: "price_changed",
+      title: "價格調整",
+      content: priceChangedContent(before.price, data.price),
+      created_by: current.user.id,
+      created_by_email: current.user.email || current.profile.email || null
+    });
+  }
+
   revalidatePath("/properties");
   revalidatePath(`/properties/${data.slug}`);
   redirect(`/admin/properties/${id}/edit?saved=1`);
@@ -457,6 +517,16 @@ export async function publishPropertyAction(id: string, status: "published" | "a
     afterData: data,
     userId: current.user.id,
     userEmail: current.user.email
+  });
+
+  await tryRecordPropertyTimeline(supabase, {
+    property_id: id,
+    event_date: todayTaipeiDate(),
+    event_type: status === "published" ? "published" : "unpublished",
+    title: status === "published" ? "上架" : "下架",
+    content: data.title,
+    created_by: current.user.id,
+    created_by_email: current.user.email || current.profile.email || null
   });
 
   revalidatePath("/properties");

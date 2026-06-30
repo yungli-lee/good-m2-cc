@@ -3,6 +3,7 @@ import { requireApiRole, apiError } from "@/lib/auth-api";
 import { canDeleteProperties, canManageSensitive, canPublishProperties } from "@/lib/auth";
 import { recordAuditLog } from "@/lib/audit/audit-log";
 import { propertySchema, toPropertyPayload } from "@/lib/properties/schema";
+import { priceChangedContent, todayTaipeiDate, tryInsertPropertyTimelineEvent } from "@/lib/properties/timeline";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { routeIdParamsSchema } from "@/lib/validation/common";
 
@@ -78,6 +79,17 @@ export async function PATCH(request: Request, { params }: Props) {
     userId: auth.current!.user.id,
     userEmail: auth.current!.user.email
   });
+  if (before.price !== data.price) {
+    await tryInsertPropertyTimelineEvent(supabase, {
+      property_id: id,
+      event_date: todayTaipeiDate(),
+      event_type: "price_changed",
+      title: "價格調整",
+      content: priceChangedContent(before.price, data.price),
+      created_by: auth.current!.user.id,
+      created_by_email: auth.current!.user.email || auth.current!.profile.email || null
+    });
+  }
   return NextResponse.json({ data });
 }
 

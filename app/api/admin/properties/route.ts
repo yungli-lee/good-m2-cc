@@ -3,6 +3,7 @@ import { requireApiRole, apiError } from "@/lib/auth-api";
 import { canManageSensitive, canPublishProperties } from "@/lib/auth";
 import { recordAuditLog } from "@/lib/audit/audit-log";
 import { propertySchema, toPropertyPayload } from "@/lib/properties/schema";
+import { todayTaipeiDate, tryInsertPropertyTimelineEvent } from "@/lib/properties/timeline";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export const runtime = "edge";
@@ -61,6 +62,15 @@ export async function POST(request: Request) {
     afterData: data,
     userId: auth.current!.user.id,
     userEmail: auth.current!.user.email
+  });
+  await tryInsertPropertyTimelineEvent(supabase, {
+    property_id: data.id,
+    event_date: todayTaipeiDate(),
+    event_type: "created",
+    title: "新接委託",
+    content: data.title,
+    created_by: auth.current!.user.id,
+    created_by_email: auth.current!.user.email || auth.current!.profile.email || null
   });
   return NextResponse.json({ data }, { status: 201 });
 }

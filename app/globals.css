@@ -478,6 +478,74 @@ td {
   margin: 0;
 }
 
+.property-timeline-section {
+  display: grid;
+  gap: 16px;
+  margin-top: 24px;
+}
+
+.property-timeline-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.property-timeline-header h2 {
+  margin: 0 0 4px;
+}
+
+.property-timeline-header p {
+  margin: 0;
+}
+
+.property-timeline-form {
+  display: grid;
+  grid-template-columns: minmax(160px, 0.4fr) minmax(180px, 0.4fr) minmax(220px, 1fr);
+  gap: 16px;
+  padding: 16px;
+  border: 1px solid rgba(16, 35, 67, 0.1);
+  border-radius: 8px;
+  background: #fff;
+}
+
+.property-timeline-list {
+  display: grid;
+  gap: 12px;
+}
+
+.property-timeline-item {
+  display: grid;
+  grid-template-columns: 120px minmax(0, 1fr) auto;
+  gap: 16px;
+  align-items: start;
+  padding: 16px;
+  border: 1px solid rgba(16, 35, 67, 0.1);
+  border-radius: 8px;
+  background: #fff;
+}
+
+.property-timeline-date {
+  font-weight: 800;
+  color: #102343;
+}
+
+.property-timeline-body {
+  display: grid;
+  gap: 6px;
+}
+
+.property-timeline-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.property-timeline-body p {
+  margin: 0;
+  line-height: 1.7;
+}
+
 .audit-result.is-failed {
   color: #694a00;
   background: #fff1c2;

@@ -12,6 +12,7 @@
 - Honeypot 欄位流程已出現在 public inquiries API。
 - Blocklist 資料表已建立，public inquiries API 有檢查流程。
 - Audit log 資料表與 helper 已建立，部分物件與媒體操作有寫入。
+- Property timeline 資料表已建立 RLS：owner/admin/editor 可讀取與新增，owner/admin 可編輯與刪除，viewer 與前台不可讀取。
 - `next.config.ts` 已設定部分安全 header：`X-Frame-Options`、`X-Content-Type-Options`、`Referrer-Policy`、`Permissions-Policy`。
 
 ## Partially Implemented

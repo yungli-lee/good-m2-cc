@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireApiRole, apiError } from "@/lib/auth-api";
 import { recordAuditLog } from "@/lib/audit/audit-log";
+import { todayTaipeiDate, tryInsertPropertyTimelineEvent } from "@/lib/properties/timeline";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { publishStatusSchema, routeIdParamsSchema } from "@/lib/validation/common";
 
@@ -41,6 +42,15 @@ export async function POST(request: Request, { params }: Props) {
     afterData: data,
     userId: auth.current!.user.id,
     userEmail: auth.current!.user.email
+  });
+  await tryInsertPropertyTimelineEvent(supabase, {
+    property_id: id,
+    event_date: todayTaipeiDate(),
+    event_type: status === "published" ? "published" : "unpublished",
+    title: status === "published" ? "上架" : "下架",
+    content: data.title,
+    created_by: auth.current!.user.id,
+    created_by_email: auth.current!.user.email || auth.current!.profile.email || null
   });
   return NextResponse.json({ data });
 }
