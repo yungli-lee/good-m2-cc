@@ -20,6 +20,10 @@ const warningMessage: Record<string, string> = {
   role_pending: "使用者已建立，但角色升級未完成，目前會保留 viewer pending 狀態。"
 };
 
+const savedMessage: Record<string, string> = {
+  password_reset_email: "已寄送密碼重設 Email。"
+};
+
 export default async function AdminUsersPage({ searchParams }: Props) {
   const current = await requireRole(["admin", "owner"]);
   const query = await searchParams;
@@ -41,7 +45,7 @@ export default async function AdminUsersPage({ searchParams }: Props) {
           <Link className="button ghost" href="/admin">返回後台</Link>
         </div>
 
-        {query.saved ? <div className="notice">已儲存。</div> : null}
+        {query.saved ? <div className="notice">{savedMessage[query.saved] || "已儲存。"}</div> : null}
         {query.warning ? <div className="notice">{warningMessage[query.warning] || "操作已完成，但有部分狀態需要確認。"}</div> : null}
         {query.error ? <div className="notice">{errorMessage[query.error] || "操作失敗，請稍後再試。"}</div> : null}
 

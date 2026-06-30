@@ -69,6 +69,71 @@ select {
   opacity: 0.9;
 }
 
+.account-menu {
+  position: relative;
+}
+
+.account-menu summary {
+  min-height: 36px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-weight: 800;
+  list-style: none;
+}
+
+.account-menu summary::-webkit-details-marker {
+  display: none;
+}
+
+.account-menu summary::after {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  transform: translateY(-2px) rotate(45deg);
+}
+
+.account-menu-panel {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 8px);
+  z-index: 30;
+  width: 190px;
+  display: grid;
+  padding: 8px;
+  border: 1px solid rgba(16, 35, 67, 0.12);
+  border-radius: 8px;
+  background: #fff;
+  color: #102343;
+  box-shadow: 0 18px 48px rgba(16, 35, 67, 0.2);
+}
+
+.account-menu-panel a,
+.account-menu-panel button {
+  width: 100%;
+  min-height: 38px;
+  display: flex;
+  align-items: center;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.account-menu-panel a:hover,
+.account-menu-panel button:hover,
+.account-menu-panel a:focus-visible,
+.account-menu-panel button:focus-visible {
+  background: #f6f3eb;
+}
+
 .hero-lite {
   padding: 56px 0 36px;
   background: linear-gradient(135deg, #102343, #183b69);
@@ -465,6 +530,41 @@ td {
   justify-content: flex-end;
   gap: 12px;
   flex-wrap: wrap;
+}
+
+.account-settings {
+  display: grid;
+  gap: 18px;
+}
+
+.account-settings-header {
+  justify-content: space-between;
+  margin-bottom: 0;
+}
+
+.account-settings-panel {
+  display: grid;
+  grid-template-columns: minmax(220px, 0.45fr) minmax(280px, 1fr);
+  gap: 18px;
+  align-items: start;
+  padding: 18px;
+  border: 1px solid rgba(16, 35, 67, 0.1);
+  border-radius: 8px;
+  background: #fff;
+}
+
+.account-settings-panel h2,
+.account-settings-panel p {
+  margin: 0;
+}
+
+.account-settings-panel h2 {
+  margin-bottom: 6px;
+}
+
+.account-settings-form {
+  display: grid;
+  gap: 14px;
 }
 
 .audit-filters {
@@ -970,6 +1070,16 @@ td {
     padding: 16px 0;
   }
 
+  .account-menu {
+    width: 100%;
+  }
+
+  .account-menu-panel {
+    position: static;
+    width: 100%;
+    margin-top: 8px;
+  }
+
   .grid,
   .form-grid,
   .detail-layout,
@@ -1004,7 +1114,8 @@ td {
   }
 
   .audit-filters,
-  .audit-detail-grid {
+  .audit-detail-grid,
+  .account-settings-panel {
     grid-template-columns: 1fr;
   }
 }

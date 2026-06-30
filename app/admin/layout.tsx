@@ -16,6 +16,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   if (!current || pathname === "/admin/login" || pathname === "/admin/login/" || pathname === "/admin/pending" || pathname === "/admin/pending/") {
     return <>{children}</>;
   }
+  const accountLabel = current.profile.display_name || current.profile.email || current.user.email || "我的帳號";
 
   return (
     <>
@@ -32,12 +33,16 @@ export default async function AdminLayout({ children }: { children: React.ReactN
             {canManageUsers(current.profile.role) ? <Link href="/admin/users">使用者管理</Link> : null}
             {current.profile.role === "owner" ? <Link href="/admin/audit">稽核紀錄</Link> : null}
             <Link href="/properties" target="_blank" rel="noopener noreferrer">前台物件</Link>
-            {current ? <span>{current.profile.email || current.user.email}</span> : null}
-            {current ? (
-              <form action={logoutAction}>
-                <button className="button ghost" type="submit">登出</button>
-              </form>
-            ) : null}
+            <details className="account-menu">
+              <summary>{accountLabel}</summary>
+              <div className="account-menu-panel">
+                <Link href="/admin/account">我的帳號</Link>
+                <Link href="/admin/account#password">修改密碼</Link>
+                <form action={logoutAction}>
+                  <button type="submit">登出</button>
+                </form>
+              </div>
+            </details>
           </nav>
         </div>
       </header>

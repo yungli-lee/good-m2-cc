@@ -7,7 +7,8 @@ import {
   updateUserRoleAction,
   disableUserAction,
   restoreUserAction,
-  updateDisplayNameAction
+  updateDisplayNameAction,
+  sendPasswordResetEmailAction
 } from "@/app/admin/users/actions";
 
 export type AdminUserListItem = {
@@ -24,7 +25,8 @@ export type AdminUserListItem = {
 type PendingConfirmation =
   | { type: "role"; user: AdminUserListItem; nextRole: "viewer" | "editor" | "admin" }
   | { type: "disable"; user: AdminUserListItem }
-  | { type: "restore"; user: AdminUserListItem };
+  | { type: "restore"; user: AdminUserListItem }
+  | { type: "reset-password"; user: AdminUserListItem };
 
 const pageSize = 10;
 
@@ -93,6 +95,10 @@ function canEditUser(actorRole: AdminRole, user: AdminUserListItem) {
   return false;
 }
 
+function canSendPasswordReset(actorRole: AdminRole, user: AdminUserListItem) {
+  return actorRole === "owner" && Boolean(user.email) && !user.deleted_at;
+}
+
 function statusLabel(user: AdminUserListItem) {
   return user.deleted_at ? "Disabled" : "Active";
 }
@@ -137,17 +143,23 @@ function ConfirmationModal({ confirmation, onClose }: { confirmation: PendingCon
     ? disableUserAction.bind(null, confirmation.user.id)
     : confirmation.type === "restore"
       ? restoreUserAction.bind(null, confirmation.user.id)
-      : updateUserRoleAction.bind(null, confirmation.user.id);
+      : confirmation.type === "reset-password"
+        ? sendPasswordResetEmailAction.bind(null, confirmation.user.id)
+        : updateUserRoleAction.bind(null, confirmation.user.id);
   const title = confirmation.type === "disable"
     ? "停用使用者"
     : confirmation.type === "restore"
       ? "還原使用者"
-      : "變更角色";
+      : confirmation.type === "reset-password"
+        ? "寄送密碼重設 Email"
+        : "變更角色";
   const body = confirmation.type === "disable"
     ? `確定要停用 ${userLabel}？停用後此帳號不得進入後台。`
     : confirmation.type === "restore"
       ? `確定要還原 ${userLabel}？還原後會依目前 role 恢復權限。`
-      : `確定要將 ${userLabel} 的角色從 ${confirmation.user.role} 改為 ${confirmation.nextRole}？`;
+      : confirmation.type === "reset-password"
+        ? `確定要寄送密碼重設 Email 給 ${userLabel}？`
+        : `確定要將 ${userLabel} 的角色從 ${confirmation.user.role} 改為 ${confirmation.nextRole}？`;
 
   return (
     <div className="admin-users-modal-backdrop" role="presentation">
@@ -266,6 +278,7 @@ export function UsersManager({
             {!ready ? <SkeletonRows /> : null}
             {ready && visibleUsers.map((user) => {
               const editable = canEditUser(actorRole, user);
+              const canResetPassword = canSendPasswordReset(actorRole, user);
               return (
                 <tr key={user.id}>
                   <td>{user.email || "-"}</td>
@@ -307,6 +320,9 @@ export function UsersManager({
                           停用
                         </button>
                       )}
+                      <button className="button ghost" type="button" disabled={!canResetPassword} onClick={() => setConfirmation({ type: "reset-password", user })}>
+                        重設密碼 Email
+                      </button>
                     </div>
                   </td>
                 </tr>
@@ -340,6 +356,7 @@ export function UsersManager({
         ) : null}
         {ready && visibleUsers.map((user) => {
           const editable = canEditUser(actorRole, user);
+          const canResetPassword = canSendPasswordReset(actorRole, user);
           return (
             <article className="card" key={user.id}>
               <div className="card-body admin-users-card-body">
@@ -395,6 +412,9 @@ export function UsersManager({
                     停用
                   </button>
                 )}
+                <button className="button ghost" type="button" disabled={!canResetPassword} onClick={() => setConfirmation({ type: "reset-password", user })}>
+                  重設密碼 Email
+                </button>
               </div>
             </article>
           );

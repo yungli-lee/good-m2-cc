@@ -580,3 +580,64 @@ export async function updateDisplayNameAction(targetId: string, formData: FormDa
   revalidatePath("/admin/users");
   redirect("/admin/users?saved=1");
 }
+
+export async function sendPasswordResetEmailAction(targetId: string) {
+  const current = await requireRole(["owner"]);
+  const parsedTargetId = parseTargetId(targetId);
+  const supabase = await createSupabaseServerClient();
+  const target = await getTargetProfile(supabase, parsedTargetId);
+
+  if (target.deleted_at || !target.email) {
+    await recordFailedPermissionAttempt({
+      actorId: current.user.id,
+      actorEmail: current.user.email,
+      targetId: parsedTargetId,
+      targetEmail: target.email,
+      action: "password_reset_email_sent",
+      beforeData: { deleted_at: target.deleted_at, has_email: Boolean(target.email) }
+    });
+    safeErrorRedirect("invalid_request");
+  }
+
+  let adminSupabase: ReturnType<typeof createSupabaseAdminClient>;
+  try {
+    adminSupabase = createSupabaseAdminClient();
+  } catch (error) {
+    console.error("admin_client_create_failed", { message: error instanceof Error ? error.message : "unknown" });
+    safeErrorRedirect("request_failed");
+  }
+
+  const { error } = await adminSupabase.auth.resetPasswordForEmail(target.email);
+  if (error) {
+    console.error("password_reset_email_failed", { targetId: parsedTargetId, status: error.status, code: error.code });
+    await recordAuditLog({
+      action: "password_reset_email_sent",
+      resourceType: "auth",
+      resourceId: parsedTargetId,
+      userId: current.user.id,
+      userEmail: current.user.email,
+      actorRole: current.profile.role,
+      targetUserId: parsedTargetId,
+      targetEmail: target.email,
+      result: "failed",
+      reason: "email_send_failed"
+    });
+    safeErrorRedirect("request_failed");
+  }
+
+  await recordAuditLog({
+    action: "password_reset_email_sent",
+    resourceType: "auth",
+    resourceId: parsedTargetId,
+    afterData: { delivery: "email" },
+    userId: current.user.id,
+    userEmail: current.user.email,
+    actorRole: current.profile.role,
+    targetUserId: parsedTargetId,
+    targetEmail: target.email,
+    result: "success"
+  });
+
+  revalidatePath("/admin/users");
+  redirect("/admin/users?saved=password_reset_email");
+}
