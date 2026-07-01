@@ -13,7 +13,9 @@ type AuditAction =
   | "admin_login_success" | "admin_login_failure" | "admin_logout" | "login_success" | "login_denied"
   | "role_changed" | "user.role_change" | "user_created" | "user_disabled" | "user_restored" | "display_name_updated" | "failed_permission_attempt"
   | "password_changed" | "password_change_failed" | "password_reset_email_sent"
-  | "content_create" | "content_update" | "content_publish" | "content_unpublish" | "content_delete" | "content_restore";
+  | "content_create" | "content_update" | "content_publish" | "content_unpublish" | "content_delete" | "content_restore"
+  | "media_upload" | "media_update" | "media_delete" | "media_restore" | "media_attach" | "media_detach"
+  | "media_cover_set" | "media_alt_update" | "media_caption_update";
 
 type AuditResult = "success" | "denied" | "failed";
 
