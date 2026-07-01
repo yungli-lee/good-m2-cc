@@ -161,6 +161,55 @@ async function loadPropertyList(kind) {
   }
 }
 
+const latestKnowledgeSection = document.querySelector("[data-latest-knowledge-section]");
+const latestKnowledgeList = document.querySelector("[data-latest-knowledge-list]");
+
+function formatDisplayDate(value) {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  return new Intl.DateTimeFormat("zh-TW", { dateStyle: "medium" }).format(date);
+}
+
+function knowledgeCardHtml(item) {
+  const category = item.content_categories?.name || "不動產知識";
+  const date = formatDisplayDate(item.published_at || item.updated_at);
+  const meta = [category, date].filter(Boolean).join(" · ");
+  const summary = item.summary ? `<p>${escapeHtml(item.summary)}</p>` : "";
+  const image = item.cover_image_url
+    ? `<img src="${escapeHtml(item.cover_image_url)}" alt="${escapeHtml(item.title)}" loading="lazy">`
+    : "";
+
+  return `
+    <article class="knowledge-preview-card">
+      ${image}
+      <div>
+        <span>${escapeHtml(meta)}</span>
+        <h3>${escapeHtml(item.title)}</h3>
+        ${summary}
+        <a class="button" href="/knowledge/${encodeURIComponent(item.slug)}">閱讀全文</a>
+      </div>
+    </article>
+  `;
+}
+
+async function loadLatestKnowledge() {
+  if (!latestKnowledgeSection || !latestKnowledgeList) return;
+
+  try {
+    const response = await fetch("/api/public/knowledge?limit=3");
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(result.error || "knowledge_failed");
+    const items = result.data || [];
+    latestKnowledgeSection.hidden = items.length === 0;
+    latestKnowledgeList.innerHTML = items.map(knowledgeCardHtml).join("");
+  } catch {
+    if (latestKnowledgeList.children.length > 0) return;
+    latestKnowledgeList.innerHTML = "";
+    latestKnowledgeSection.hidden = true;
+  }
+}
+
 function scrollPropertyCarousel(kind, direction) {
   const carousel = document.querySelector(`[data-property-carousel="${kind}"]`);
   const card = carousel?.querySelector(".property-discovery-card");
@@ -179,6 +228,7 @@ function initPropertyDiscovery() {
   const load = () => {
     loadPropertyList("featured");
     loadPropertyList("latest");
+    loadLatestKnowledge();
   };
 
   if (document.readyState === "loading") {
