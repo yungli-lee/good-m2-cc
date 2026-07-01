@@ -53,42 +53,122 @@ const featuredPropertySelect = `
   )
 `;
 
-export async function listPublishedProperties() {
-  const supabase = await createSupabaseServerClient();
+function publishedPropertiesQuery<const Select extends string>(
+  supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>,
+  select: Select
+) {
   return supabase
     .from("properties")
-    .select(publicPropertySelect)
+    .select(select)
     .eq("status", "published")
-    .is("deleted_at", null)
+    .not("published_at", "is", null)
+    .is("deleted_at", null);
+}
+
+export async function listPublishedProperties() {
+  const supabase = await createSupabaseServerClient();
+  const query = publishedPropertiesQuery(supabase, publicPropertySelect);
+  return query
     .order("sort_order", { ascending: true })
-    .order("created_at", { ascending: false });
+    .order("published_at", { ascending: false })
+    .order("updated_at", { ascending: false });
 }
 
 export async function listFeaturedProperties(limit = 3) {
   const supabase = await createSupabaseServerClient();
-  return supabase
-    .from("properties")
-    .select(featuredPropertySelect)
-    .eq("status", "published")
+  const query = publishedPropertiesQuery(supabase, featuredPropertySelect);
+  return query
     .eq("is_featured", true)
-    .is("deleted_at", null)
     .order("published_at", { ascending: false })
+    .order("updated_at", { ascending: false })
+    .limit(limit);
+}
+
+export async function getFeaturedPublishedProperties(limit = 12) {
+  return listFeaturedProperties(limit);
+}
+
+export async function getLatestPublishedProperties(limit = 12) {
+  const supabase = await createSupabaseServerClient();
+  const query = publishedPropertiesQuery(supabase, featuredPropertySelect);
+  return query
+    .order("published_at", { ascending: false })
+    .order("updated_at", { ascending: false })
     .limit(limit);
 }
 
 export async function getPublishedPropertyBySlug(slug: string) {
   const supabase = await createSupabaseServerClient();
-  return supabase
-    .from("properties")
-    .select(publicPropertySelect)
+  const query = publishedPropertiesQuery(supabase, publicPropertySelect);
+  return query
     .eq("slug", slug)
-    .eq("status", "published")
-    .is("deleted_at", null)
     .maybeSingle();
 }
 
 function escapeSearchTerm(value: string) {
   return value.replace(/[%_,]/g, "");
+}
+
+function priceFromWan(value: string) {
+  const match = value.match(/(\d+(?:\.\d+)?)/);
+  if (!match) return null;
+  const amount = Number(match[1]);
+  if (!Number.isFinite(amount) || amount <= 0) return null;
+  return value.includes("萬") ? Math.round(amount * 10000) : Math.round(amount);
+}
+
+function propertyTypeKeyword(value: string) {
+  const keywords: Array<[string, string]> = [
+    ["農舍", "farmhouse"],
+    ["農地", "farmland"],
+    ["建地", "building_land"],
+    ["工業用地", "industrial_land"],
+    ["廠房", "factory"],
+    ["大廈", "building"],
+    ["公寓", "apartment"],
+    ["透天", "townhouse"],
+    ["房屋", "townhouse"],
+    ["店面", "storefront"]
+  ];
+  return keywords.find(([keyword]) => value.includes(keyword))?.[1] || "";
+}
+
+export async function searchPublishedProperties(input = "", limit = 24) {
+  const rawTerm = input.trim();
+  const term = escapeSearchTerm(rawTerm);
+  const propertyType = propertyTypeKeyword(rawTerm);
+  const price = priceFromWan(rawTerm);
+  const isBelow = /以下|以內|內|below|under/i.test(rawTerm);
+  const isAbove = /以上|起|above|over/i.test(rawTerm);
+
+  const supabase = await createSupabaseServerClient();
+  const query = publishedPropertiesQuery(supabase, featuredPropertySelect);
+  let searchQuery = query
+    .order("published_at", { ascending: false })
+    .order("updated_at", { ascending: false })
+    .limit(limit);
+
+  if (price) {
+    if (isBelow) searchQuery = searchQuery.lte("price", price);
+    else if (isAbove) searchQuery = searchQuery.gte("price", price);
+    else searchQuery = searchQuery.gte("price", Math.round(price * 0.85)).lte("price", Math.round(price * 1.15));
+  }
+
+  if (propertyType) searchQuery = searchQuery.eq("property_type", propertyType);
+
+  if (term && !/^\d+(?:\.\d+)?\s*萬?(?:以下|以內|內|以上|起)?$/.test(term)) {
+    searchQuery = searchQuery.or(
+      [
+        `title.ilike.%${term}%`,
+        `address_public.ilike.%${term}%`,
+        `property_type.ilike.%${term}%`,
+        `layout.ilike.%${term}%`,
+        `description.ilike.%${term}%`
+      ].join(",")
+    );
+  }
+
+  return searchQuery;
 }
 
 export type AdminPropertyLifecycleFilter = "all" | "published" | "archived" | "draft" | "deleted";

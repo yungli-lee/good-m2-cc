@@ -13,20 +13,32 @@ import {
   toSafeSlug,
   valuesFromFormData
 } from "@/lib/content/schema";
-import type { ContentItem, ContentTag } from "@/lib/content/types";
+import type { ContentCategory, ContentItem, ContentTag } from "@/lib/content/types";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+
+export type KnowledgeActionResult = {
+  ok: boolean;
+  message?: string;
+  redirectTo?: string;
+};
 
 function actorEmail(current: Awaited<ReturnType<typeof requireRole>>) {
   return current.user.email || current.profile.email || null;
 }
 
-function auditMetadata(item: Pick<ContentItem, "id" | "content_type" | "title" | "status" | "legal_status">) {
+function categoryLabel(item: Pick<ContentItem, "category_id"> & { content_categories?: Pick<ContentCategory, "name"> | null }) {
+  return item.content_categories?.name || item.category_id || null;
+}
+
+function auditMetadata(item: Pick<ContentItem, "id" | "content_type" | "title" | "slug" | "status" | "legal_status" | "category_id"> & { content_categories?: Pick<ContentCategory, "name"> | null }) {
   return {
     content_id: item.id,
     content_type: item.content_type,
     title: item.title,
+    slug: item.slug,
     status: item.status,
-    legal_status: item.legal_status
+    legal_status: item.legal_status,
+    category: categoryLabel(item)
   };
 }
 
@@ -136,7 +148,7 @@ async function syncTags(contentId: string, tagText: string | undefined, role: st
   }
 }
 
-export async function createKnowledgeAction(formData: FormData) {
+export async function createKnowledgeAction(formData: FormData): Promise<KnowledgeActionResult> {
   const current = await requireRole(["editor", "admin", "owner"]);
   const values = valuesFromFormData(formData);
   const parsed = knowledgeFormSchema.safeParse(values);
@@ -177,10 +189,14 @@ export async function createKnowledgeAction(formData: FormData) {
   });
 
   revalidatePath("/admin/knowledge");
-  redirect(`/admin/knowledge/${data.id}/edit?saved=1`);
+  return {
+    ok: true,
+    message: "儲存成功",
+    redirectTo: `/admin/knowledge/${data.id}/edit?saved=1`
+  };
 }
 
-export async function updateKnowledgeAction(id: string, formData: FormData) {
+export async function updateKnowledgeAction(id: string, formData: FormData): Promise<KnowledgeActionResult> {
   const current = await requireRole(["editor", "admin", "owner"]);
   const { data: item } = await getKnowledgeItem(id);
   if (!item) redirect("/admin/knowledge?error=not_found");
@@ -222,7 +238,11 @@ export async function updateKnowledgeAction(id: string, formData: FormData) {
   });
 
   revalidatePath("/admin/knowledge");
-  redirect(`/admin/knowledge/${id}/edit?saved=1`);
+  revalidatePath(`/admin/knowledge/${id}/edit`);
+  return {
+    ok: true,
+    message: "儲存成功"
+  };
 }
 
 export async function publishKnowledgeAction(id: string) {
@@ -379,4 +399,3 @@ export async function restoreKnowledgeAction(id: string) {
   revalidatePath("/admin/knowledge");
   redirect("/admin/knowledge?saved=restored");
 }
-

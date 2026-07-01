@@ -52,6 +52,12 @@ const actionOptions = [
   "password_changed",
   "password_change_failed",
   "password_reset_email_sent",
+  "content_create",
+  "content_update",
+  "content_publish",
+  "content_unpublish",
+  "content_delete",
+  "content_restore",
   "property_create",
   "property_update",
   "property_delete",
@@ -94,6 +100,31 @@ function JsonBlock({ label, value }: { label: string; value: unknown }) {
       <pre className="audit-json">{JSON.stringify(maskAuditData(value) || {}, null, 2)}</pre>
     </div>
   );
+}
+
+function metadataObject(value: unknown) {
+  return value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : {};
+}
+
+function textValue(value: unknown) {
+  return typeof value === "string" && value.trim() ? value.trim() : null;
+}
+
+function resourceLabel(log: AuditLogRow) {
+  if (log.resource_type !== "content_item") {
+    return {
+      title: log.resource_type,
+      detail: log.resource_id || "-"
+    };
+  }
+
+  const metadata = metadataObject(log.metadata);
+  const after = metadataObject(log.after_data);
+  const before = metadataObject(log.before_data);
+  return {
+    title: textValue(metadata.title) || textValue(after.title) || textValue(before.title) || log.resource_id || "content_item",
+    detail: log.resource_id || "-"
+  };
 }
 
 export default async function AdminAuditPage({ searchParams }: Props) {
@@ -192,27 +223,30 @@ export default async function AdminAuditPage({ searchParams }: Props) {
               </tr>
             </thead>
             <tbody>
-              {logs.map((log) => (
-                <tr key={log.id}>
-                  <td>{formatDateTime(log.created_at)}</td>
-                  <td>
-                    <strong>{log.user_email || "-"}</strong>
-                    <div className="muted">{log.actor_role || "-"}</div>
-                  </td>
-                  <td>{log.action}</td>
-                  <td>
-                    <strong>{log.resource_type}</strong>
-                    <div className="muted">{log.resource_id || "-"}</div>
-                  </td>
-                  <td>{log.target_email || "-"}</td>
-                  <td><span className={`audit-result is-${log.result}`}>{log.result}</span></td>
-                  <td>{log.reason || "-"}</td>
-                  <td>
-                    <div>{log.device || "-"}</div>
-                    <div className="muted audit-ip">{log.ip_hash || "-"}</div>
-                  </td>
-                </tr>
-              ))}
+              {logs.map((log) => {
+                const resource = resourceLabel(log);
+                return (
+                  <tr key={log.id}>
+                    <td>{formatDateTime(log.created_at)}</td>
+                    <td>
+                      <strong>{log.user_email || "-"}</strong>
+                      <div className="muted">{log.actor_role || "-"}</div>
+                    </td>
+                    <td>{log.action}</td>
+                    <td>
+                      <strong>{resource.title}</strong>
+                      <div className="muted">{resource.detail}</div>
+                    </td>
+                    <td>{log.target_email || "-"}</td>
+                    <td><span className={`audit-result is-${log.result}`}>{log.result}</span></td>
+                    <td>{log.reason || "-"}</td>
+                    <td>
+                      <div>{log.device || "-"}</div>
+                      <div className="muted audit-ip">{log.ip_hash || "-"}</div>
+                    </td>
+                  </tr>
+                );
+              })}
               {!logs.length ? (
                 <tr>
                   <td colSpan={8}>

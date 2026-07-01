@@ -23,6 +23,7 @@ html {
 
 #philosophy,
 #featured-properties,
+#knowledge-preview,
 #services,
 #calculators,
 #process,
@@ -321,6 +322,201 @@ section {
 
 .problem-grid article {
   padding: 28px;
+}
+
+.property-discovery {
+  max-width: 1180px;
+  margin: 0 auto;
+}
+
+.property-carousel-actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.property-carousel-actions .button {
+  min-width: 46px;
+}
+
+.property-carousel {
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scroll-padding-inline: 2px;
+  -webkit-overflow-scrolling: touch;
+}
+
+.property-card-track {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: calc((100% - 16px) / 2);
+  gap: 16px;
+}
+
+.property-discovery-card {
+  min-width: 0;
+  overflow: hidden;
+  scroll-snap-align: start;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--white);
+}
+
+.property-discovery-card img,
+.property-card-placeholder {
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  object-fit: cover;
+  background: var(--soft);
+}
+
+.property-card-placeholder {
+  display: grid;
+  place-items: center;
+}
+
+.property-discovery-body {
+  display: grid;
+  gap: 8px;
+  padding: 22px;
+}
+
+.property-discovery-body h3,
+.property-discovery-body p {
+  margin: 0;
+}
+
+.property-discovery-body p {
+  color: var(--muted);
+}
+
+.property-discovery-body strong {
+  color: var(--gold);
+  font-size: 22px;
+}
+
+.property-search-section {
+  background: var(--soft);
+}
+
+.property-search-form,
+.property-search-results {
+  max-width: 1180px;
+  margin: 0 auto;
+}
+
+.property-search-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: end;
+  padding: clamp(18px, 3vw, 26px);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--white);
+}
+
+.property-search-form label {
+  display: grid;
+  gap: 8px;
+  color: var(--ink);
+  font-weight: 900;
+}
+
+.property-search-form input {
+  width: 100%;
+  min-height: 46px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  color: var(--ink);
+  font: inherit;
+}
+
+.property-search-results {
+  margin-top: 20px;
+}
+
+.property-search-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.property-search-heading h3 {
+  margin: 0;
+}
+
+.property-empty-cta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  padding: 20px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--white);
+}
+
+.property-empty-cta p {
+  margin: 0;
+  color: var(--muted);
+}
+
+.knowledge-preview-section {
+  background: var(--paper);
+}
+
+.knowledge-preview-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  max-width: 1180px;
+  margin: 0 auto;
+}
+
+.knowledge-preview-card {
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--white);
+}
+
+.knowledge-preview-card img {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+}
+
+.knowledge-preview-card div {
+  display: grid;
+  gap: 10px;
+  padding: 22px;
+}
+
+.knowledge-preview-card span {
+  color: var(--gold);
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.knowledge-preview-card h3,
+.knowledge-preview-card p {
+  margin: 0;
+}
+
+.knowledge-preview-card p {
+  color: var(--muted);
+}
+
+.knowledge-preview-actions {
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
 }
 
 h3 {
@@ -1086,6 +1282,7 @@ h3 {
   .quote-grid,
   .timeline,
   .article-grid,
+  .knowledge-preview-grid,
   .team-grid,
   .problem-grid,
   .calculator-tool-grid,
@@ -1101,6 +1298,22 @@ h3 {
   .contact-card,
   .site-footer {
     grid-template-columns: 1fr;
+  }
+
+  .property-search-form,
+  .property-empty-cta {
+    grid-template-columns: 1fr;
+  }
+
+  .property-card-track {
+    grid-auto-columns: minmax(280px, 82vw);
+  }
+
+  .property-carousel-actions,
+  .property-search-heading,
+  .property-empty-cta {
+    align-items: stretch;
+    flex-wrap: wrap;
   }
 
   .quote-grid {

@@ -7,6 +7,63 @@ const contentItemSelect = `
   content_item_tags(content_tags(id,name,slug,description,deleted_at))
 `;
 
+const publicKnowledgeSelect = `
+  id,
+  content_type,
+  status,
+  legal_status,
+  title,
+  slug,
+  summary,
+  body,
+  body_format,
+  category_id,
+  cover_image_url,
+  seo_title,
+  meta_description,
+  og_image_url,
+  canonical_url,
+  published_at,
+  first_published_at,
+  is_featured,
+  sort_order,
+  ai_searchable,
+  noindex,
+  source_type,
+  source_name,
+  source_url,
+  source_published_at,
+  source_updated_at,
+  effective_from,
+  effective_to,
+  last_reviewed_at,
+  next_review_at,
+  review_cycle_days,
+  review_owner,
+  version,
+  supersedes_id,
+  superseded_by_id,
+  created_by,
+  updated_by,
+  deleted_at,
+  created_at,
+  updated_at,
+  content_categories(id,name,slug),
+  content_item_tags(content_tags(id,name,slug,description,deleted_at))
+`;
+
+function publicKnowledgeQuery(supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>) {
+  return supabase
+    .from("content_items")
+    .select(publicKnowledgeSelect)
+    .eq("content_type", "knowledge")
+    .eq("status", "published")
+    .eq("noindex", false)
+    .not("published_at", "is", null)
+    .is("deleted_at", null)
+    .or("legal_status.is.null,legal_status.eq.current");
+}
+
 export type KnowledgeListFilter = "all" | ContentStatus | "deleted" | "review";
 
 export async function listKnowledgeItems(options: { q?: string; filter?: KnowledgeListFilter } = {}) {
@@ -86,3 +143,27 @@ export async function listContentTags() {
   return (data || []) as ContentTag[];
 }
 
+export async function listPublicKnowledgeItems(limit = 24) {
+  const supabase = await createSupabaseServerClient();
+  const { data, error } = await publicKnowledgeQuery(supabase)
+    .order("published_at", { ascending: false })
+    .order("updated_at", { ascending: false })
+    .limit(limit);
+
+  if (error) {
+    console.error("public_knowledge_list_failed", { code: error.code, message: error.message });
+    return { data: [] as ContentItem[], error };
+  }
+
+  return { data: (data || []) as unknown as ContentItem[], error: null };
+}
+
+export async function getPublicKnowledgeBySlug(slug: string) {
+  const supabase = await createSupabaseServerClient();
+  const { data, error } = await publicKnowledgeQuery(supabase)
+    .eq("slug", slug)
+    .maybeSingle();
+
+  if (error) console.error("public_knowledge_item_failed", { code: error.code, message: error.message });
+  return { data: data as unknown as ContentItem | null, error };
+}

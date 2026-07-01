@@ -4,9 +4,12 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 
-const navItems = [
+type NavItem = { hash: string; label: string } | { href: string; label: string };
+
+const navItems: NavItem[] = [
   { hash: "philosophy", label: "服務理念" },
   { hash: "featured-properties", label: "精選物件" },
+  { href: "/knowledge", label: "知識庫" },
   { hash: "services", label: "服務項目" },
   { hash: "calculators", label: "房產試算工具" },
   { hash: "process", label: "買屋流程" },
@@ -42,8 +45,8 @@ export function SiteHeader() {
       <nav className={`site-app-nav${isOpen ? " is-open" : ""}`} aria-label="主選單">
         {navItems.map((item) => (
           <Link
-            href={isHome ? `#${item.hash}` : `/?scrollTo=${item.hash}`}
-            key={item.hash}
+            href={"href" in item ? item.href : (isHome ? `#${item.hash}` : `/?scrollTo=${item.hash}`)}
+            key={item.label}
             onClick={() => setIsOpen(false)}
           >
             {item.label}
