@@ -63,8 +63,62 @@
           <h2>精選物件</h2>
           <p>阿勇嚴選目前主推案源，歡迎進一步了解。</p>
         </div>
-        <div class="problem-grid" id="featured-property-list" data-featured-property-list></div>
+        <div class="property-discovery">
+          <div class="property-carousel-actions" aria-label="精選物件切換">
+            <button class="button ghost" type="button" data-property-carousel-prev="featured">←</button>
+            <button class="button ghost" type="button" data-property-carousel-next="featured">→</button>
+            <a class="button" href="/properties">查看更多物件</a>
+          </div>
+          <div class="property-carousel" data-property-carousel="featured">
+            <div class="property-card-track" id="featured-property-list" data-featured-property-list data-property-list="featured"></div>
+          </div>
+        </div>
         <p class="note" data-featured-property-empty>目前精選物件整理中，歡迎先透過 Line 洽詢阿勇。</p>
+      </section>
+
+      <section class="property-search-section" id="property-search">
+        <div class="section-heading">
+          <p class="eyebrow">Property Search</p>
+          <h2>找找看適合的物件</h2>
+          <p>輸入地點、預算、類型或生活需求，先看目前公開上架的物件。</p>
+        </div>
+        <form class="property-search-form" data-property-search-form>
+          <label>
+            搜尋條件
+            <input name="q" type="search" placeholder="鹿港、福興、1000萬、800以下、農地、三房">
+          </label>
+          <button class="button primary" type="submit">搜尋物件</button>
+        </form>
+        <div class="property-search-results" data-property-search-results hidden>
+          <div class="property-search-heading">
+            <h3>搜尋結果</h3>
+            <a class="button ghost" href="/properties">查看所有物件</a>
+          </div>
+          <div class="property-card-track" data-property-search-list></div>
+          <div class="property-empty-cta" data-property-search-empty hidden>
+            <p>目前沒有符合條件的公開物件，可以直接把需求傳給阿勇協助留意。</p>
+            <a class="button primary" href="https://line.me/ti/p/abQv5LYzzE">Line 阿勇諮詢</a>
+          </div>
+        </div>
+      </section>
+
+      <section class="problem-section" id="latest-properties">
+        <div class="section-heading">
+          <p class="eyebrow">Latest Listings</p>
+          <h2>最新上架物件</h2>
+          <p>依最近上架時間整理，方便快速掌握新內容。</p>
+        </div>
+        <div class="property-discovery">
+          <div class="property-carousel-actions" aria-label="最新上架物件切換">
+            <button class="button ghost" type="button" data-property-carousel-prev="latest">←</button>
+            <button class="button ghost" type="button" data-property-carousel-next="latest">→</button>
+            <a class="button" href="/properties">查看更多物件</a>
+          </div>
+          <div class="property-carousel" data-property-carousel="latest">
+            <div class="property-card-track" data-property-list="latest"></div>
+          </div>
+        </div>
+        <p class="note" data-latest-property-empty>目前物件整理中，歡迎先透過 Line 洽詢阿勇。</p>
       </section>
 
       <section class="intro-band" id="philosophy">

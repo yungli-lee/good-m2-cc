@@ -70,7 +70,7 @@ function formatPropertyPrice(value) {
 
 function formatPing(value) {
   if (value === null || value === undefined || value === "") return "-";
-  return `${Number(value).toLocaleString("zh-TW", { maximumFractionDigits: 2 })} 坪`;
+  return `${Number(value).toLocaleString("zh-TW", { maximumFractionDigits: 3 })} 坪`;
 }
 
 function escapeHtml(value) {
@@ -95,27 +95,25 @@ function getFeaturedPropertyElements() {
   };
 }
 
-function renderFeaturedProperties(properties) {
-  const { empty: featuredPropertyEmpty, list: featuredPropertyList } = getFeaturedPropertyElements();
-  if (!featuredPropertyList || !featuredPropertyEmpty) return;
+function getPropertyListElements(kind) {
+  if (kind === "featured") return getFeaturedPropertyElements();
+  return {
+    empty: document.querySelector("[data-latest-property-empty]"),
+    list: document.querySelector(`[data-property-list="${kind}"]`),
+  };
+}
 
-  if (!Array.isArray(properties) || properties.length === 0) {
-    featuredPropertyList.innerHTML = "";
-    featuredPropertyEmpty.hidden = false;
-    return;
-  }
+function propertyCardHtml(property) {
+  const cover = getCoverMedia(property);
+  const image = cover?.url
+    ? `<img src="${escapeHtml(cover.url)}" alt="${escapeHtml(cover.alt_text || property.title)}" loading="lazy">`
+    : `<div class="property-card-placeholder" aria-label="${escapeHtml(property.title)} 尚未設定封面照片"></div>`;
+  const highlights = Array.isArray(property.highlights) ? property.highlights.slice(0, 2).join("、") : "";
 
-  featuredPropertyEmpty.hidden = true;
-  featuredPropertyList.innerHTML = properties.map((property) => {
-    const cover = getCoverMedia(property);
-    const image = cover?.url
-      ? `<img src="${escapeHtml(cover.url)}" alt="${escapeHtml(cover.alt_text || property.title)}" loading="lazy">`
-      : "";
-    const highlights = Array.isArray(property.highlights) ? property.highlights.slice(0, 2).join("、") : "";
-
-    return `
-      <article>
-        ${image}
+  return `
+    <article class="property-discovery-card">
+      ${image}
+      <div class="property-discovery-body">
         <h3>${escapeHtml(property.title)}</h3>
         <p><strong>${escapeHtml(formatPropertyPrice(property.price))}</strong></p>
         <p>${escapeHtml(property.address_public || "地址洽詢")}</p>
@@ -123,34 +121,103 @@ function renderFeaturedProperties(properties) {
         <p>${escapeHtml(property.layout || "格局洽詢")}</p>
         ${highlights ? `<p>${escapeHtml(highlights)}</p>` : ""}
         <a class="button" href="/properties/${encodeURIComponent(property.slug)}">查看詳情</a>
-      </article>
-    `;
-  }).join("");
+      </div>
+    </article>
+  `;
 }
 
-async function loadFeaturedProperties() {
-  const { list: featuredPropertyList } = getFeaturedPropertyElements();
-  if (!featuredPropertyList) return;
+function renderPropertyList(kind, properties) {
+  const { empty, list } = getPropertyListElements(kind);
+  if (!list || !empty) return;
 
-  try {
-    const response = await fetch("/api/public/featured-properties");
-    const result = await response.json().catch(() => ({}));
-    if (!response.ok) throw new Error(result.error || "featured_properties_failed");
-    renderFeaturedProperties(result.data || []);
-  } catch {
-    if (featuredPropertyList.children.length > 0) return;
-    renderFeaturedProperties([]);
-  }
-}
-
-function initFeaturedProperties() {
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", loadFeaturedProperties, { once: true });
+  if (!Array.isArray(properties) || properties.length === 0) {
+    list.innerHTML = "";
+    empty.hidden = false;
     return;
   }
 
-  loadFeaturedProperties();
+  empty.hidden = true;
+  list.innerHTML = properties.map(propertyCardHtml).join("");
 }
+
+async function fetchPublicProperties(mode, q = "") {
+  const params = new URLSearchParams({ mode, limit: mode === "search" ? "24" : "12" });
+  if (q) params.set("q", q);
+  const response = await fetch(`/api/public/properties?${params}`);
+  const result = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(result.error || "properties_failed");
+  return result.data || [];
+}
+
+async function loadPropertyList(kind) {
+  const { list } = getPropertyListElements(kind);
+  if (!list) return;
+
+  try {
+    renderPropertyList(kind, await fetchPublicProperties(kind));
+  } catch {
+    if (list.children.length > 0) return;
+    renderPropertyList(kind, []);
+  }
+}
+
+function scrollPropertyCarousel(kind, direction) {
+  const carousel = document.querySelector(`[data-property-carousel="${kind}"]`);
+  const card = carousel?.querySelector(".property-discovery-card");
+  if (!carousel || !card) return;
+  carousel.scrollBy({ left: direction * (card.getBoundingClientRect().width + 18), behavior: "smooth" });
+}
+
+function initPropertyDiscovery() {
+  document.querySelectorAll("[data-property-carousel-prev]").forEach((button) => {
+    button.addEventListener("click", () => scrollPropertyCarousel(button.dataset.propertyCarouselPrev, -1));
+  });
+  document.querySelectorAll("[data-property-carousel-next]").forEach((button) => {
+    button.addEventListener("click", () => scrollPropertyCarousel(button.dataset.propertyCarouselNext, 1));
+  });
+
+  const load = () => {
+    loadPropertyList("featured");
+    loadPropertyList("latest");
+  };
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", load, { once: true });
+    return;
+  }
+
+  load();
+}
+
+const propertySearchForm = document.querySelector("[data-property-search-form]");
+const propertySearchResults = document.querySelector("[data-property-search-results]");
+const propertySearchList = document.querySelector("[data-property-search-list]");
+const propertySearchEmpty = document.querySelector("[data-property-search-empty]");
+
+propertySearchForm?.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const submitButton = propertySearchForm.querySelector("button[type='submit']");
+  const formData = new FormData(propertySearchForm);
+  const q = String(formData.get("q") || "").trim();
+  if (!propertySearchResults || !propertySearchList || !propertySearchEmpty || !submitButton) return;
+
+  propertySearchResults.hidden = false;
+  propertySearchEmpty.hidden = true;
+  propertySearchList.innerHTML = "";
+  submitButton.disabled = true;
+  submitButton.textContent = "搜尋中...";
+
+  try {
+    const properties = await fetchPublicProperties("search", q);
+    propertySearchList.innerHTML = properties.map(propertyCardHtml).join("");
+    propertySearchEmpty.hidden = properties.length > 0;
+  } catch {
+    propertySearchEmpty.hidden = false;
+  } finally {
+    submitButton.disabled = false;
+    submitButton.textContent = "搜尋物件";
+  }
+});
 
 function readNumber(id) {
   return Number(document.querySelector(id)?.value || 0);
@@ -362,7 +429,7 @@ if (mortgageForm) {
   calculateMortgage();
 }
 
-initFeaturedProperties();
+initPropertyDiscovery();
 
 function showConsultMessage(message, type) {
   if (!consultFormMessage) return;
