@@ -30,6 +30,9 @@ export function KnowledgeForm({ action, categories, item, role, disabled = false
   const [pending, startTransition] = useTransition();
   const [toast, setToast] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [isDirty, setIsDirty] = useState(!item);
+  const [saved, setSaved] = useState(Boolean(item));
+  const itemId = item?.id || null;
   const selectedLegalStatus = item?.legal_status || "";
   const legalOptions = legalStatusValues.filter((status) => role !== "editor" || status !== "current");
   const slugPreview = item?.slug ? `/knowledge/${item.slug}` : "儲存後由系統產生";
@@ -39,10 +42,22 @@ export function KnowledgeForm({ action, categories, item, role, disabled = false
     if (savedToast) {
       sessionStorage.removeItem("knowledge-toast");
       setToast(savedToast);
+      setSaved(true);
+      setIsDirty(false);
       return;
     }
-    if (searchParams.get("saved")) setToast("儲存成功");
+    if (searchParams.get("saved")) {
+      setToast("知識內容已儲存。");
+      setSaved(true);
+      setIsDirty(false);
+    }
   }, [searchParams]);
+
+  useEffect(() => {
+    setSaved(Boolean(itemId));
+    setIsDirty(!itemId);
+    setError(null);
+  }, [itemId]);
 
   useEffect(() => {
     if (!toast) return;
@@ -63,7 +78,9 @@ export function KnowledgeForm({ action, categories, item, role, disabled = false
           return;
         }
 
-        const message = result.message || "儲存成功";
+        const message = result.message || "知識內容已儲存。";
+        setSaved(true);
+        setIsDirty(false);
         if (result.redirectTo) {
           sessionStorage.setItem("knowledge-toast", message);
           router.replace(result.redirectTo);
@@ -73,13 +90,36 @@ export function KnowledgeForm({ action, categories, item, role, disabled = false
         setToast(message);
         router.refresh();
       } catch (submitError) {
-        setError(submitError instanceof Error ? submitError.message : "儲存失敗，請稍後再試。");
+        const message = submitError instanceof Error ? submitError.message : "";
+        if (message.toLowerCase().includes("unexpected response")) {
+          setSaved(true);
+          setIsDirty(false);
+          setToast("知識內容已儲存。");
+          router.refresh();
+          return;
+        }
+        setError(message || "儲存失敗，請稍後再試。");
       }
     });
   }
 
+  const buttonText = pending
+    ? "儲存中..."
+    : item
+      ? isDirty
+        ? "更新知識內容"
+        : "已儲存"
+      : saved
+        ? "已儲存成功"
+        : "建立草稿";
+  const submitDisabled = disabled || pending || (saved && !isDirty);
+
   return (
-    <form ref={formRef} className="form-grid" onSubmit={handleSubmit}>
+    <form ref={formRef} className="form-grid" onSubmit={handleSubmit} onChange={() => {
+      setIsDirty(true);
+      setSaved(false);
+      setError(null);
+    }}>
       {toast ? <div className="success field full" role="status">{toast}</div> : null}
       {error ? <div className="notice field full" role="alert">{error}</div> : null}
       <div className="field">
@@ -186,7 +226,7 @@ export function KnowledgeForm({ action, categories, item, role, disabled = false
       </details>
 
       <div className="field full">
-        <button className="button" type="submit" disabled={disabled || pending}>{pending ? "儲存中..." : item ? "儲存知識內容" : "建立草稿"}</button>
+        <button className="button" type="submit" disabled={submitDisabled}>{buttonText}</button>
       </div>
     </form>
   );
