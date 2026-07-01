@@ -37,7 +37,19 @@
 - 不可手動改 enum / trigger / RLS，必須走 migration
 - `schema_migrations` 必須和 release 版本一致
 - migration history compare 必須完成：staging / production / repo latest migration 需一致
+- seed data compare 必須完成：staging / production 的 content categories、settings、lookup data 需一致
 - migration 後必須 reload PostgREST schema cache
+
+### Production DB Checklist
+
+- [ ] migration 已套用
+- [ ] seed 已套用
+- [ ] `notify pgrst, 'reload schema';`
+- [ ] `content_categories` 筆數與 staging 一致
+- [ ] `company_settings` 一致
+- [ ] storage bucket / policy 一致
+- [ ] RLS policy 一致
+- [ ] enum / lookup table 一致
 
 ## 4. Production Environment
 
@@ -73,13 +85,14 @@ Cloudflare production env 必須指向 production Supabase：
 2. 套 migration
 3. 確認 `schema_migrations`
 4. 執行 DB schema drift check：`npm run db:check` 並依 `docs/DB_RELEASE_CHECKLIST.md` 跑 SQL
-5. 確認 functions
-6. 確認 triggers
-7. 確認 grants
-8. 確認 RLS
-9. 確認 Storage policies
-10. 確認 `profiles` / `audit_logs` table privilege
-11. reload PostgREST schema cache：`notify pgrst, 'reload schema';`
+5. 確認 seed data：`content_categories`、`company_settings`、enum / lookup table 與 staging 一致
+6. 確認 functions
+7. 確認 triggers
+8. 確認 grants
+9. 確認 RLS
+10. 確認 Storage policies
+11. 確認 `profiles` / `audit_logs` table privilege
+12. reload PostgREST schema cache：`notify pgrst, 'reload schema';`
 
 ## 7. Deployment
 
@@ -130,6 +143,7 @@ Go 條件：
 - staging 全過
 - production backup 完成
 - migration 完成
+- seed data 完成，且 production / staging 重要 seed 一致
 - production smoke test 全過
 - production smoke test 包含 users / audit / image upload / frontend deleted exclusion
 - audit 正常
@@ -139,6 +153,7 @@ No-Go 條件：
 
 - production env 指錯 Supabase
 - migration 未套
+- seed 未套或 lookup table 與 staging 不一致
 - users / audit 讀取失敗
 - auth login 異常
 - service role 遺漏
