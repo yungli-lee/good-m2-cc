@@ -114,7 +114,7 @@ function priceFromWan(value: string) {
   if (!match) return null;
   const amount = Number(match[1]);
   if (!Number.isFinite(amount) || amount <= 0) return null;
-  return value.includes("萬") ? Math.round(amount * 10000) : Math.round(amount);
+  return Math.round(amount);
 }
 
 function propertyTypeKeyword(value: string) {
@@ -160,8 +160,8 @@ export async function searchPublishedProperties(input = "", limit = 24) {
     searchQuery = searchQuery.or(
       [
         `title.ilike.%${term}%`,
+        `slug.ilike.%${term}%`,
         `address_public.ilike.%${term}%`,
-        `property_type.ilike.%${term}%`,
         `layout.ilike.%${term}%`,
         `description.ilike.%${term}%`
       ].join(",")

@@ -64,8 +64,7 @@ function formatMoney(value) {
 function formatPropertyPrice(value) {
   const price = Number(value || 0);
   if (!price) return "洽詢";
-  if (price >= 10000) return `${money.format(Math.round(price / 10000))} 萬`;
-  return `${money.format(price)} 元`;
+  return `${money.format(price)} 萬元`;
 }
 
 function formatPing(value) {

@@ -1,7 +1,6 @@
 export function formatPrice(value?: number | null) {
   if (!value) return "洽詢";
-  if (value >= 10000) return `${Math.round(value / 10000).toLocaleString("zh-TW")} 萬`;
-  return `${value.toLocaleString("zh-TW")} 元`;
+  return `${value.toLocaleString("zh-TW")} 萬元`;
 }
 
 export function formatPing(value?: number | null) {
