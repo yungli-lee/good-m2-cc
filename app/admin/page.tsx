@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { requireRole } from "@/lib/auth";
 import { canManageUsers } from "@/lib/auth/permissions";
+import { countTodayAutoExpiredListings } from "@/lib/properties/expire-listings";
 
 export const runtime = "edge";
 
@@ -8,6 +9,7 @@ export default async function AdminIndexPage() {
   const current = await requireRole(["editor", "admin", "owner"]);
   const email = current.profile.email || current.user.email || "-";
   const role = current.profile.role;
+  const autoExpiredCount = await countTodayAutoExpiredListings();
 
   return (
     <main className="section">
@@ -24,6 +26,13 @@ export default async function AdminIndexPage() {
             <h2 style={{ marginTop: 0 }}>登入狀態</h2>
             <p>Email：{email}</p>
             <p>Role：{role}</p>
+          </div>
+        </div>
+
+        <div className="card" style={{ marginBottom: 18 }}>
+          <div className="card-body">
+            <h2 style={{ marginTop: 0 }}>物件生命週期提醒</h2>
+            <p>今日自動下架：{autoExpiredCount.toLocaleString("zh-TW")} 筆</p>
           </div>
         </div>
 

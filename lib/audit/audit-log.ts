@@ -7,6 +7,7 @@ type AuditAction =
   | "property_create" | "property_update" | "property_delete" | "property_publish" | "property_unpublish"
   | "property_featured_change" | "property_image_upload" | "property_image_delete" | "property_cover_set"
   | "delete_property" | "restore_property" | "permanent_delete_property" | "unpublish_property" | "republish_property"
+  | "property_auto_expired"
   | "timeline_event_update"
   | "inquiry_view" | "inquiry_status_update" | "inquiry_note_create" | "inquiry_mark_spam" | "inquiry_delete"
   | "admin_login_success" | "admin_login_failure" | "admin_logout" | "login_success" | "login_denied"

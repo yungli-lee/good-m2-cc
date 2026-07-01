@@ -43,6 +43,7 @@ type AdminPropertyListItem = {
   highlights: string[];
   description: string | null;
   status: PropertyStatus;
+  expired_at: string | null;
   is_featured: boolean;
   seo_title: string | null;
   meta_description: string | null;
@@ -59,7 +60,8 @@ type AdminPropertyListItem = {
 const statusLabel: Record<PropertyStatus, string> = {
   draft: "草稿",
   published: "已上架",
-  archived: "下架"
+  archived: "下架",
+  expired: "委託到期"
 };
 
 const cityPattern = /^(?<city>[^縣市]+[縣市])(?<district>[^鄉鎮市區]+[鄉鎮市區])?/;
@@ -80,6 +82,7 @@ const lifecycleFilters: Array<{ value: AdminPropertyLifecycleFilter; label: stri
   { value: "all", label: "全部" },
   { value: "published", label: "已上架" },
   { value: "archived", label: "已下架" },
+  { value: "expired", label: "委託到期" },
   { value: "draft", label: "草稿" },
   { value: "deleted", label: "已刪除" }
 ];
@@ -294,6 +297,12 @@ export default async function AdminPropertiesPage({ searchParams }: Props) {
                         <>
                           <br />
                           <span className="muted">{formatDateTime(property.published_at)}</span>
+                        </>
+                      ) : null}
+                      {property.status === "expired" ? (
+                        <>
+                          <br />
+                          <span className="muted">{formatDateTime(property.expired_at)}</span>
                         </>
                       ) : null}
                     </td>

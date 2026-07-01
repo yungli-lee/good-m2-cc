@@ -260,6 +260,7 @@ export function AiPropertyForm({
           <option value="draft">草稿</option>
           <option value="published">已上架</option>
           <option value="archived">下架</option>
+          <option value="expired">委託到期</option>
         </select>
         {!canPublish ? <input type="hidden" name="status" value="draft" /> : null}
       </div>

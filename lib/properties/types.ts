@@ -1,4 +1,4 @@
-export type PropertyStatus = "draft" | "published" | "archived";
+export type PropertyStatus = "draft" | "published" | "archived" | "expired";
 
 export type Property = {
   id: string;
@@ -39,6 +39,7 @@ export type Property = {
   created_at: string;
   updated_at: string;
   published_at: string | null;
+  expired_at?: string | null;
   deleted_at: string | null;
   deleted_by?: string | null;
   delete_reason?: string | null;
