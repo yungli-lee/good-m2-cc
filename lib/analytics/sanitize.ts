@@ -44,6 +44,7 @@ export function sanitizeAnalyticsEventInput(input: AnalyticsEventInput): Analyti
     utm_campaign: truncate(input.utm_campaign, 160),
     device_type: truncate(input.device_type, 40),
     browser: truncate(input.browser, 80),
+    os: truncate(input.os, 80),
     ip_hash: truncate(input.ip_hash, 128),
     user_agent_hash: truncate(input.user_agent_hash, 128),
     session_id: truncate(input.session_id, analyticsSessionIdMaxLength),

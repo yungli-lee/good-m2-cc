@@ -29,7 +29,7 @@ export const analyticsDeviceTypes = [
   "unknown"
 ] as const;
 
-export const analyticsSearchQueryMaxLength = 300;
+export const analyticsSearchQueryMaxLength = 200;
 export const analyticsPathMaxLength = 500;
 export const analyticsReferrerMaxLength = 500;
 export const analyticsSessionIdMaxLength = 120;
