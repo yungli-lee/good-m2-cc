@@ -9,3 +9,5 @@ dist
 coverage
 tsconfig.tsbuildinfo
 supabase/.temp/
+.DS_Store
+**/.DS_Store
