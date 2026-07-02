@@ -52,10 +52,13 @@ const publicKnowledgeSelect = `
   content_item_tags(content_tags(id,name,slug,description,deleted_at))
 `;
 
-function publicKnowledgeQuery(supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>) {
+function publicKnowledgeQuery(
+  supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>,
+  options?: { count?: "exact" }
+) {
   return supabase
     .from("content_items")
-    .select(publicKnowledgeSelect)
+    .select(publicKnowledgeSelect, options)
     .eq("content_type", "knowledge")
     .eq("status", "published")
     .eq("noindex", false)
@@ -65,6 +68,69 @@ function publicKnowledgeQuery(supabase: Awaited<ReturnType<typeof createSupabase
 }
 
 export type KnowledgeListFilter = "all" | ContentStatus | "deleted" | "review";
+export type PublicKnowledgeListOptions = {
+  q?: string;
+  category?: string;
+  page?: number;
+  pageSize?: number;
+};
+
+const publicKnowledgePageSize = 12;
+
+function normalizePublicSearchTerm(value?: string | null) {
+  return String(value || "")
+    .trim()
+    .replace(/[%,()]/g, " ")
+    .replace(/\s+/g, " ")
+    .slice(0, 80);
+}
+
+function normalizePublicSlug(value?: string | null) {
+  return String(value || "")
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9-]/g, "")
+    .slice(0, 120);
+}
+
+function positiveInteger(value: unknown, fallback: number) {
+  const numberValue = Number(value);
+  return Number.isFinite(numberValue) && numberValue > 0 ? Math.floor(numberValue) : fallback;
+}
+
+async function publicKnowledgeSearchIds(
+  supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>,
+  term: string
+) {
+  if (!term) return { categoryIds: [] as string[], itemIds: [] as string[] };
+
+  const [{ data: categories }, { data: tags }] = await Promise.all([
+    supabase
+      .from("content_categories")
+      .select("id")
+      .or(`name.ilike.%${term}%,slug.ilike.%${term}%`)
+      .or("content_type.is.null,content_type.eq.knowledge")
+      .is("deleted_at", null)
+      .limit(30),
+    supabase
+      .from("content_tags")
+      .select("id,content_item_tags(content_id)")
+      .or(`name.ilike.%${term}%,slug.ilike.%${term}%`)
+      .is("deleted_at", null)
+      .limit(30)
+  ]);
+
+  const categoryIds = ((categories || []) as Array<{ id: string }>).map((category) => category.id);
+  const itemIds = ((tags || []) as Array<{ content_item_tags?: Array<{ content_id?: string | null }> | null }>)
+    .flatMap((tag) => tag.content_item_tags || [])
+    .map((relation) => relation.content_id)
+    .filter(Boolean) as string[];
+
+  return {
+    categoryIds: Array.from(new Set(categoryIds)),
+    itemIds: Array.from(new Set(itemIds))
+  };
+}
 
 export async function listKnowledgeItems(options: { q?: string; filter?: KnowledgeListFilter } = {}) {
   const supabase = await createSupabaseServerClient();
@@ -143,19 +209,68 @@ export async function listContentTags() {
   return (data || []) as ContentTag[];
 }
 
-export async function listPublicKnowledgeItems(limit = 24) {
+export async function listPublicKnowledgeItems(options: number | PublicKnowledgeListOptions = 24) {
   const supabase = await createSupabaseServerClient();
-  const { data, error } = await publicKnowledgeQuery(supabase)
+  const legacyLimit = typeof options === "number" ? options : null;
+  const optionInput = typeof options === "number" ? {} : options;
+  const pageSize = legacyLimit || positiveInteger(optionInput.pageSize, publicKnowledgePageSize);
+  const page = legacyLimit ? 1 : positiveInteger(optionInput.page, 1);
+  const from = (page - 1) * pageSize;
+  const to = from + pageSize - 1;
+  const q = normalizePublicSearchTerm(optionInput.q);
+  const categorySlug = normalizePublicSlug(optionInput.category);
+
+  let categoryId: string | null = null;
+  if (categorySlug) {
+    const { data: category, error: categoryError } = await supabase
+      .from("content_categories")
+      .select("id")
+      .eq("slug", categorySlug)
+      .or("content_type.is.null,content_type.eq.knowledge")
+      .is("deleted_at", null)
+      .maybeSingle();
+
+    if (categoryError) {
+      console.error("public_knowledge_category_failed", { code: categoryError.code, message: categoryError.message });
+      return { data: [] as ContentItem[], error: categoryError, count: 0, page, pageSize, totalPages: 0 };
+    }
+    if (!category) return { data: [] as ContentItem[], error: null, count: 0, page, pageSize, totalPages: 0 };
+    categoryId = category.id as string;
+  }
+
+  const searchIds = await publicKnowledgeSearchIds(supabase, q);
+  let query = publicKnowledgeQuery(supabase, { count: "exact" });
+
+  if (categoryId) query = query.eq("category_id", categoryId);
+  if (q) {
+    const filters = [
+      `title.ilike.%${q}%`,
+      `summary.ilike.%${q}%`,
+      `body.ilike.%${q}%`
+    ];
+    if (searchIds.categoryIds.length) filters.push(`category_id.in.(${searchIds.categoryIds.join(",")})`);
+    if (searchIds.itemIds.length) filters.push(`id.in.(${searchIds.itemIds.join(",")})`);
+    query = query.or(filters.join(","));
+  }
+
+  const { data, error, count } = await query
     .order("published_at", { ascending: false })
     .order("updated_at", { ascending: false })
-    .limit(limit);
+    .range(from, to);
 
   if (error) {
     console.error("public_knowledge_list_failed", { code: error.code, message: error.message });
-    return { data: [] as ContentItem[], error };
+    return { data: [] as ContentItem[], error, count: 0, page, pageSize, totalPages: 0 };
   }
 
-  return { data: (data || []) as unknown as ContentItem[], error: null };
+  return {
+    data: (data || []) as unknown as ContentItem[],
+    error: null,
+    count: count || 0,
+    page,
+    pageSize,
+    totalPages: Math.ceil((count || 0) / pageSize)
+  };
 }
 
 export async function getPublicKnowledgeBySlug(slug: string) {
