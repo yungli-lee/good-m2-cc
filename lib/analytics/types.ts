@@ -20,6 +20,7 @@ export type AnalyticsEventInput = {
   utm_campaign?: string | null;
   device_type?: AnalyticsDeviceType | string | null;
   browser?: string | null;
+  os?: string | null;
   ip_hash?: string | null;
   user_agent_hash?: string | null;
   session_id?: string | null;
