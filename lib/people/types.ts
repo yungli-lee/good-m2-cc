@@ -11,6 +11,8 @@ export type PersonRoleName = (typeof personRoleNames)[number];
 export type Person = {
   id: string;
   name: string;
+  display_name: string;
+  legal_name: string | null;
   phone: string | null;
   normalized_phone: string | null;
   line_id: string | null;
@@ -39,4 +41,10 @@ export type PersonRole = {
 
 export type PersonWithRoles = Person & {
   roles: PersonRoleName[];
+};
+
+export type PersonAssignee = {
+  id: string;
+  email: string | null;
+  display_name: string | null;
 };
