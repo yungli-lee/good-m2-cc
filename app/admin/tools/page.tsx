@@ -15,13 +15,13 @@ const tools = [
     href: "/admin/tools/owner-net-all-in"
   },
   {
-    title: "屋主實拿｜仲介費另計",
-    description: "仲介費另外計算，其他稅費按一般交易慣例由屋主端估算。",
+    title: "屋主售價｜仲介費另計",
+    description: "屋主售價固定，仲介服務費另外計算，並估算售價扣除稅費後的屋主淨收。",
     href: "/admin/tools/owner-net-brokerage-extra"
   },
   {
-    title: "買方預算反推最高出價",
-    description: "依自備款、貸款額度、附加成本與預留現金，反推買方最高可出價。",
+    title: "購屋能力分析",
+    description: "依自備款、貸款成數與購屋成本，快速估算買方可優先看的房價帶。",
     href: "/admin/tools/buyer-budget"
   }
 ];

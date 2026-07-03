@@ -3,7 +3,7 @@ import { totalWan } from "@/lib/calculators/tax";
 
 export type BuyerBudgetInput = {
   availableCashWan: number;
-  loanAmountWan: number;
+  loanLimitWan: number | null;
   loanToValuePercent: number;
   buyerBrokerFeeRatePercent: number;
   deedTaxWan: number;
@@ -22,13 +22,13 @@ export type BuyerBudgetResult = {
   buyerBrokerFeeWan: number;
   purchaseExtraCostsWan: number;
   totalFundingNeedWan: number;
-  safetyGapWan: number;
+  cashUsedWan: number;
   suggestedOfferReductionWan: number;
 };
 
 export function validateBuyerBudgetInput(input: BuyerBudgetInput) {
   if (input.availableCashWan < 0) return "可用自備款不可為負數。";
-  if (input.loanAmountWan < 0) return "可貸款金額不可為負數。";
+  if (input.loanLimitWan !== null && input.loanLimitWan < 0) return "貸款上限金額不可為負數。";
   if (input.loanToValuePercent <= 0 || input.loanToValuePercent > 100) return "預估貸款成數需介於 0% 到 100% 之間。";
   const brokerMessage = assertPercentRange(input.buyerBrokerFeeRatePercent, "買方仲介服務費率");
   if (brokerMessage) return brokerMessage;
@@ -59,14 +59,14 @@ export function calculateBuyerBudget(input: BuyerBudgetInput): BuyerBudgetResult
   const brokerRate = input.buyerBrokerFeeRatePercent / 100;
   const fixedCostsWan = fixedBuyerCostsWan(input);
   const maxByCashWan = (input.availableCashWan - fixedCostsWan) / (1 - loanRate + brokerRate);
-  const maxByLoanWan = input.loanAmountWan / loanRate;
+  const maxByLoanWan = input.loanLimitWan === null ? Number.POSITIVE_INFINITY : input.loanLimitWan / loanRate;
   const maxOfferWan = Math.max(0, Math.min(maxByCashWan, maxByLoanWan));
-  const estimatedLoanWan = Math.min(input.loanAmountWan, maxOfferWan * loanRate);
+  const estimatedLoanWan = maxOfferWan * loanRate;
   const buyerBrokerFeeWan = calculateBrokerageFeeWan(maxOfferWan, input.buyerBrokerFeeRatePercent);
-  const requiredCashWan = maxOfferWan - estimatedLoanWan + buyerBrokerFeeWan + fixedCostsWan;
+  const requiredCashWan = maxOfferWan - estimatedLoanWan;
   const totalFundingNeedWan = maxOfferWan + buyerBrokerFeeWan + fixedCostsWan;
-  const totalBudgetWan = input.availableCashWan + input.loanAmountWan;
-  const safetyGapWan = totalBudgetWan - totalFundingNeedWan;
+  const cashUsedWan = requiredCashWan + buyerBrokerFeeWan + fixedCostsWan;
+  const cashRemainingWan = input.availableCashWan - cashUsedWan;
 
   return {
     maxOfferWan,
@@ -75,7 +75,7 @@ export function calculateBuyerBudget(input: BuyerBudgetInput): BuyerBudgetResult
     buyerBrokerFeeWan,
     purchaseExtraCostsWan: fixedCostsWan + buyerBrokerFeeWan,
     totalFundingNeedWan,
-    safetyGapWan,
-    suggestedOfferReductionWan: Math.max(0, -safetyGapWan)
+    cashUsedWan,
+    suggestedOfferReductionWan: Math.max(0, -cashRemainingWan)
   };
 }

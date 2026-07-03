@@ -29,6 +29,25 @@ export type SellerCarryCostsResult = {
   verificationDifferenceWan: number;
 };
 
+export type SellerFixedPriceBrokerageExtraInput = Omit<SellerCarryCostsInput, "targetNetWan"> & {
+  sellerPriceWan: number;
+};
+
+export type SellerFixedPriceBrokerageExtraResult = {
+  salePriceWan: number;
+  saleBrokerFeeWan: number;
+  buyerTotalPaymentWan: number;
+  houseLandTaxWan: number;
+  landValueIncrementTaxWan: number;
+  ownerBurdenFeesWan: number;
+  ownerEstimatedNetWan: number;
+};
+
+type SellerCostBasisInput = Pick<
+  SellerCarryCostsInput,
+  "originalCostWan" | "purchaseBrokerFeeWan" | "improvementCostsWan" | "landValueIncrementTaxWan" | "notaryAndMiscWan" | "settlementFeeWan" | "otherFeesWan"
+>;
+
 export function validateSellerCarryCostsInput(input: SellerCarryCostsInput) {
   if (!input.purchaseDate || !input.saleDate) return "請輸入取得日期與預計出售日期。";
   if (new Date(`${input.saleDate}T00:00:00`) < new Date(`${input.purchaseDate}T00:00:00`)) return "預計出售日期不可早於取得日期。";
@@ -43,11 +62,25 @@ export function validateSellerCarryCostsInput(input: SellerCarryCostsInput) {
   return assertPercentRange(input.saleBrokerFeeRatePercent, "出售仲介服務費率") || assertPercentRange(input.houseLandTaxRatePercent, "房地合一稅率");
 }
 
-function baseCostWan(input: SellerCarryCostsInput) {
+export function validateSellerFixedPriceBrokerageExtraInput(input: SellerFixedPriceBrokerageExtraInput) {
+  if (!input.purchaseDate || !input.saleDate) return "請輸入取得日期與預計出售日期。";
+  if (new Date(`${input.saleDate}T00:00:00`) < new Date(`${input.purchaseDate}T00:00:00`)) return "預計出售日期不可早於取得日期。";
+  if (input.sellerPriceWan <= 0) return "屋主售價金額需大於 0。";
+  if (input.originalCostWan < 0) return "原始取得成本不可為負數。";
+  if (input.purchaseBrokerFeeWan < 0) return "買入仲介費不可為負數。";
+  if (input.improvementCostsWan < 0) return "裝修及其他必要支出不可為負數。";
+  if (input.landValueIncrementTaxWan < 0) return "土地增值稅不可為負數。";
+  if (input.notaryAndMiscWan < 0) return "代書與雜支不可為負數。";
+  if (input.settlementFeeWan < 0) return "清償相關費用不可為負數。";
+  if (input.otherFeesWan < 0) return "其他費用不可為負數。";
+  return assertPercentRange(input.saleBrokerFeeRatePercent, "出售仲介服務費率") || assertPercentRange(input.houseLandTaxRatePercent, "房地合一稅率");
+}
+
+function baseCostWan(input: SellerCostBasisInput) {
   return input.originalCostWan + input.purchaseBrokerFeeWan + input.improvementCostsWan;
 }
 
-function fixedSellerFeesWan(input: SellerCarryCostsInput) {
+function fixedSellerFeesWan(input: SellerCostBasisInput) {
   return totalWan([
     input.landValueIncrementTaxWan,
     input.notaryAndMiscWan,
@@ -106,5 +139,24 @@ export function calculateSellerCarryCosts(input: SellerCarryCostsInput, mode: Se
     totalFeesWan: result.totalFeesWan,
     ownerNetWan: result.ownerNetWan,
     verificationDifferenceWan: result.ownerNetWan - input.targetNetWan
+  };
+}
+
+export function calculateSellerFixedPriceBrokerageExtra(input: SellerFixedPriceBrokerageExtraInput): SellerFixedPriceBrokerageExtraResult {
+  const salePriceWan = input.sellerPriceWan;
+  const saleBrokerFeeWan = calculateBrokerageFeeWan(salePriceWan, input.saleBrokerFeeRatePercent);
+  const taxableIncomeWan = salePriceWan - baseCostWan(input);
+  const houseLandTaxWan = calculateManualTaxWan(taxableIncomeWan, input.houseLandTaxRatePercent);
+  const fixedFeesWan = fixedSellerFeesWan(input);
+  const ownerBurdenFeesWan = houseLandTaxWan + fixedFeesWan;
+
+  return {
+    salePriceWan,
+    saleBrokerFeeWan,
+    buyerTotalPaymentWan: salePriceWan + saleBrokerFeeWan,
+    houseLandTaxWan,
+    landValueIncrementTaxWan: input.landValueIncrementTaxWan,
+    ownerBurdenFeesWan,
+    ownerEstimatedNetWan: salePriceWan - ownerBurdenFeesWan
   };
 }

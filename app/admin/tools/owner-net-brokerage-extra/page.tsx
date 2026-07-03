@@ -12,8 +12,8 @@ export default async function AdminOwnerNetBrokerageExtraToolPage() {
       <div className="container">
         <div className="actions" style={{ justifyContent: "space-between", marginBottom: 18 }}>
           <div>
-            <h1 style={{ margin: 0 }}>屋主實拿｜仲介費另計</h1>
-            <p className="muted">反推成交價，仲介費另外列示，屋主實拿回到指定目標。</p>
+            <h1 style={{ margin: 0 }}>屋主售價｜仲介費另計</h1>
+            <p className="muted">屋主售價固定，仲介服務費另計，並估算屋主端稅費後淨收。</p>
           </div>
           <Link className="button ghost" href="/admin/tools">回成交試算中心</Link>
         </div>
