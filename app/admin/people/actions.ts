@@ -108,10 +108,12 @@ export async function createPersonAction(
 
   const supabase = await createSupabaseServerClient();
   const payload = buildPersonPayload(parsed.data);
+  const assignedTo = payload.assigned_to || (current.profile.role === "editor" ? current.user.id : null);
   const { data, error } = await supabase
     .from("people")
     .insert({
       ...payload,
+      assigned_to: assignedTo,
       created_by: current.user.id,
       updated_by: current.user.id
     })
