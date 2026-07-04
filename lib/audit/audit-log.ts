@@ -20,7 +20,7 @@ type AuditAction =
 
 type AuditResult = "success" | "denied" | "failed";
 
-const sensitiveKey = /password|passcode|secret|token|key|api[_-]?key|authorization|cookie|session|service[_-]?role|bank|id[_-]?number|tax|owner[_-]?phone|private[_-]?phone/i;
+const sensitiveKey = /^(phone|normalized_phone|email|normalized_email|line_id|normalized_line_id|name|display_name|legal_name|notes)$|password|passcode|secret|token|key|api[_-]?key|authorization|cookie|session|service[_-]?role|bank|id[_-]?number|tax|owner[_-]?phone|private[_-]?phone/i;
 
 export function maskAuditData(value: unknown): unknown {
   if (!value || typeof value !== "object") return value;
