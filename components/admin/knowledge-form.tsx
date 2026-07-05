@@ -1,12 +1,12 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import type { AdminRole } from "@/lib/auth";
 import { itemTagText, legalStatusValues } from "@/lib/content/schema";
 import type { ContentCategory, ContentItem } from "@/lib/content/types";
 import { legalStatusLabels } from "@/lib/content/types";
-import { mediaUsageTypeLabels } from "@/lib/media";
+import { MediaPicker } from "@/components/admin/media-picker";
 import type { MediaLibraryAsset, MediaUsageType } from "@/lib/media";
 
 type Props = {
@@ -24,26 +24,20 @@ function dateInputValue(value?: string | null) {
   return date.toISOString().slice(0, 10);
 }
 
-const coverPreferredUsageTypes = new Set<MediaUsageType>([
+const coverPreferredUsageTypes: MediaUsageType[] = [
   "knowledge_hero",
   "knowledge_inline",
   "knowledge_gallery",
   "general",
   "hero_banner"
-]);
+];
 
-const inlinePreferredUsageTypes = new Set<MediaUsageType>([
+const inlinePreferredUsageTypes: MediaUsageType[] = [
   "knowledge_inline",
   "knowledge_gallery",
   "general",
   "property_image"
-]);
-
-function mediaLabel(asset: MediaLibraryAsset, preferred: Set<MediaUsageType>) {
-  const prefix = preferred.has(asset.usage_type) ? "建議" : "可用";
-  const name = asset.original_filename || asset.alt_text || asset.id;
-  return `${prefix}｜${mediaUsageTypeLabels[asset.usage_type]}｜${name}`;
-}
+];
 
 type KnowledgeSaveResponse = {
   ok?: boolean;
@@ -65,21 +59,11 @@ export function KnowledgeForm({ categories, mediaAssets = [], item, role, disabl
   const initialCoverAsset = mediaAssets.find((asset) => asset.public_url === item?.cover_image_url) || null;
   const [coverMediaId, setCoverMediaId] = useState(initialCoverAsset?.id || "");
   const [coverImageUrl, setCoverImageUrl] = useState(item?.cover_image_url || "");
-  const [inlineMediaId, setInlineMediaId] = useState(mediaAssets[0]?.id || "");
   const [inlineMediaIds, setInlineMediaIds] = useState<string[]>([]);
   const itemId = item?.id || null;
   const selectedLegalStatus = item?.legal_status || "";
   const legalOptions = legalStatusValues.filter((status) => role !== "editor" || status !== "current");
   const slugPreview = item?.slug ? `/knowledge/${item.slug}` : "儲存後由系統產生";
-  const mediaById = useMemo(() => new Map(mediaAssets.map((asset) => [asset.id, asset])), [mediaAssets]);
-  const coverOptions = useMemo(
-    () => [...mediaAssets].sort((a, b) => Number(coverPreferredUsageTypes.has(b.usage_type)) - Number(coverPreferredUsageTypes.has(a.usage_type))),
-    [mediaAssets]
-  );
-  const inlineOptions = useMemo(
-    () => [...mediaAssets].sort((a, b) => Number(inlinePreferredUsageTypes.has(b.usage_type)) - Number(inlinePreferredUsageTypes.has(a.usage_type))),
-    [mediaAssets]
-  );
 
   function markDirty() {
     setIsDirty(true);
@@ -151,18 +135,15 @@ export function KnowledgeForm({ categories, mediaAssets = [], item, role, disabl
     });
   }
 
-  function handleCoverChange(event: React.ChangeEvent<HTMLSelectElement>) {
-    const nextId = event.target.value;
-    const asset = mediaById.get(nextId) || null;
-    setCoverMediaId(nextId);
-    setCoverImageUrl(asset?.public_url || "");
+  function handleCoverSelect(asset: MediaLibraryAsset) {
+    setCoverMediaId(asset.id);
+    setCoverImageUrl(asset.public_url);
     markDirty();
   }
 
-  function insertInlineImage() {
-    const asset = mediaById.get(inlineMediaId);
+  function insertInlineImage(asset: MediaLibraryAsset) {
     const textarea = bodyRef.current;
-    if (!asset || !textarea) return;
+    if (!textarea) return;
 
     const alt = asset.alt_text || asset.original_filename || "圖片";
     const markdown = `\n\n![${alt}](${asset.public_url})\n\n`;
@@ -236,32 +217,32 @@ export function KnowledgeForm({ categories, mediaAssets = [], item, role, disabl
         <div className="form-grid" style={{ marginTop: 12 }}>
           <input type="hidden" name="cover_image_url" value={coverImageUrl} />
           <input type="hidden" name="inline_media_ids" value={inlineMediaIds.join(",")} />
-          <label className="field full">
-            <span>封面圖片</span>
-            <select className="select" name="cover_media_id" value={coverMediaId} onChange={handleCoverChange} disabled={disabled || pending}>
-              <option value="">不設定封面</option>
-              {coverOptions.map((asset) => (
-                <option key={asset.id} value={asset.id}>{mediaLabel(asset, coverPreferredUsageTypes)}</option>
-              ))}
-            </select>
+          <input type="hidden" name="cover_media_id" value={coverMediaId} />
+          <div className="field full">
+            <MediaPicker
+              assets={mediaAssets}
+              disabled={disabled || pending}
+              preferredUsageTypes={coverPreferredUsageTypes}
+              selectedId={coverMediaId}
+              title="封面圖片"
+              onSelect={handleCoverSelect}
+            />
             <small className="muted">優先建議：知識庫封面、知識庫內文、知識庫圖庫、一般圖片、首頁 Banner；其他啟用圖片也可引用。</small>
-          </label>
+          </div>
           {coverImageUrl ? (
             <div className="field full">
               <img className="knowledge-card-image" src={coverImageUrl} alt={item?.title || "知識封面預覽"} />
             </div>
           ) : null}
-          <label className="field">
-            <span>插入內文圖片</span>
-            <select className="select" value={inlineMediaId} onChange={(event) => setInlineMediaId(event.target.value)} disabled={disabled || pending || !inlineOptions.length}>
-              {inlineOptions.map((asset) => (
-                <option key={asset.id} value={asset.id}>{mediaLabel(asset, inlinePreferredUsageTypes)}</option>
-              ))}
-            </select>
-            <small className="muted">優先建議：知識庫內文、知識庫圖庫、一般圖片、物件圖片；其他啟用圖片也可引用。</small>
-          </label>
-          <div className="field" style={{ alignSelf: "end" }}>
-            <button className="button ghost" type="button" onClick={insertInlineImage} disabled={disabled || pending || !inlineMediaId}>插入圖片</button>
+          <div className="field full">
+            <MediaPicker
+              assets={mediaAssets}
+              disabled={disabled || pending}
+              preferredUsageTypes={inlinePreferredUsageTypes}
+              title="插入內文圖片"
+              onSelect={insertInlineImage}
+            />
+            <small className="muted">優先建議：知識庫內文、知識庫圖庫、一般圖片、物件圖片；其他啟用圖片也可引用。點擊圖片即可插入 Markdown。</small>
           </div>
         </div>
       </details>
