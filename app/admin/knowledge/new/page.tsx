@@ -18,7 +18,7 @@ export default async function NewKnowledgePage({ searchParams }: Props) {
   const supabase = await createSupabaseServerClient();
   const [categories, mediaResult] = await Promise.all([
     listKnowledgeCategories(),
-    listAdminMediaAssets({ supabase, category: "knowledge", status: "active", sort: "newest" })
+    listAdminMediaAssets({ supabase, category: "all", status: "active", sort: "newest" })
   ]);
 
   return (

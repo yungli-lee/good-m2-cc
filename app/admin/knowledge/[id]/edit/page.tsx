@@ -23,7 +23,7 @@ export default async function EditKnowledgePage({ params, searchParams }: Props)
   const [{ data: item }, categories, mediaResult] = await Promise.all([
     getKnowledgeItem(id),
     listKnowledgeCategories(),
-    listAdminMediaAssets({ supabase, category: "knowledge", status: "active", sort: "newest" })
+    listAdminMediaAssets({ supabase, category: "all", status: "active", sort: "newest" })
   ]);
 
   if (!item) notFound();
@@ -45,7 +45,7 @@ export default async function EditKnowledgePage({ params, searchParams }: Props)
 
         {query.saved ? <div className="success">知識內容已儲存。</div> : null}
         {query.error ? <div className="notice">儲存失敗：{query.error}</div> : null}
-        {!canEdit ? <div className="notice">目前角色只能編輯草稿內容。</div> : null}
+        {!canEdit ? <div className="notice">目前角色只能編輯草稿內容；已發布或封存內容請由 admin / owner 編輯。</div> : null}
 
         <KnowledgeForm
           action={action}

@@ -36,17 +36,17 @@ function usageTypesForCategory(category: MediaCategoryFilter): MediaUsageType[] 
 
 function roleLabel(role: string) {
   const labels: Record<string, string> = {
-    hero_image: "Hero Image",
-    inline_image: "Inline Image",
-    gallery_image: "Gallery",
-    cover_image: "Cover Image",
-    floor_plan: "Floor Plan",
-    document_image: "Document Image",
-    company_logo: "Logo",
-    company_line_qr: "LINE QR",
-    hero_banner: "Hero Banner",
-    thumbnail: "Thumbnail",
-    general: "General"
+    hero_image: "主圖",
+    inline_image: "內文圖片",
+    gallery_image: "圖庫",
+    cover_image: "封面",
+    floor_plan: "平面圖",
+    document_image: "文件圖片",
+    company_logo: "公司 Logo",
+    company_line_qr: "公司 LINE QRCode",
+    hero_banner: "首頁 Banner",
+    thumbnail: "縮圖",
+    general: "一般圖片"
   };
   return labels[role] || role;
 }

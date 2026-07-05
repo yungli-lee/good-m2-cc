@@ -16,6 +16,7 @@ const lineUrl = "https://line.me/ti/p/abQv5LYzzE";
 
 type ArticleBlock =
   | { type: "heading"; level: 1 | 2 | 3; text: string; id: string }
+  | { type: "image"; alt: string; url: string }
   | { type: "paragraph"; text: string }
   | { type: "list"; ordered: boolean; items: string[] }
   | { type: "quote"; text: string }
@@ -102,6 +103,12 @@ function parseArticleBody(body?: string | null) {
       return;
     }
 
+    const image = block.match(/^!\[([^\]]*)\]\((https?:\/\/[^)\s]+)\)$/);
+    if (image) {
+      parsed.push({ type: "image", alt: image[1].trim() || "文章圖片", url: image[2].trim() });
+      return;
+    }
+
     const callout = block.match(/^\[!(INFO|TIP|WARNING)\]\s*(.*)\n?([\s\S]*)$/i);
     if (callout) {
       const tone = callout[1].toLowerCase() as "info" | "tip" | "warning";
@@ -149,6 +156,7 @@ function renderArticleBlocks(blocks: ArticleBlock[]) {
       const Heading = `h${block.level}` as "h1" | "h2" | "h3";
       return <Heading key={index} id={block.id}>{block.text}</Heading>;
     }
+    if (block.type === "image") return <img key={index} className="knowledge-inline-image" src={block.url} alt={block.alt} loading="lazy" />;
     if (block.type === "list") {
       const List = block.ordered ? "ol" : "ul";
       return <List key={index}>{block.items.map((item, itemIndex) => <li key={itemIndex}>{item}</li>)}</List>;

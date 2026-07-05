@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { apiError, requireApiRole } from "@/lib/auth-api";
 import { recordAuditLog } from "@/lib/audit/audit-log";
+import { mediaBucketName } from "@/lib/media";
 import { mediaMetadataSchema } from "@/lib/media/schema";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { routeIdParamsSchema } from "@/lib/validation/common";
@@ -21,6 +22,7 @@ export async function PATCH(request: Request, { params }: Props) {
   const body = await request.json().catch(() => null);
   const parsed = mediaMetadataSchema.safeParse(body);
   if (!parsed.success) return apiError("Invalid request data", 422);
+  const restoreActive = body?.status === "active";
 
   const supabase = await createSupabaseServerClient();
   const { data: before } = await supabase
@@ -36,6 +38,7 @@ export async function PATCH(request: Request, { params }: Props) {
       alt_text: parsed.data.alt_text || null,
       caption: parsed.data.caption || null,
       usage_type: parsed.data.usage_type,
+      ...(restoreActive ? { status: "active", deleted_at: null, deleted_by: null } : {}),
       updated_by: auth.current!.user.id
     })
     .eq("id", parsedParams.data.id)
@@ -54,7 +57,16 @@ export async function PATCH(request: Request, { params }: Props) {
     actorRole: auth.current!.profile.role
   });
 
-  return NextResponse.json({ data });
+  const { data: publicUrl } = supabase.storage.from(mediaBucketName).getPublicUrl(data.storage_path);
+  return NextResponse.json({
+    data: {
+      ...data,
+      public_url: publicUrl.publicUrl,
+      created_by_label: null,
+      references: [],
+      usages: []
+    }
+  });
 }
 
 export async function DELETE(_request: Request, { params }: Props) {

@@ -335,6 +335,14 @@ select {
   background: #d9dee8;
 }
 
+.knowledge-inline-image {
+  width: 100%;
+  max-height: 520px;
+  object-fit: contain;
+  border-radius: 8px;
+  background: #f3f5f8;
+}
+
 .knowledge-body {
   padding: clamp(22px, 4vw, 42px);
   border: 1px solid rgba(16, 35, 67, 0.1);
