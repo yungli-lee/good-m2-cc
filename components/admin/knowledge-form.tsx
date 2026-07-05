@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, useTransition } from "react";
+import { useActionState, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import type { AdminRole } from "@/lib/auth";
 import { itemTagText, legalStatusValues } from "@/lib/content/schema";
@@ -52,7 +52,10 @@ export function KnowledgeForm({ action, categories, mediaAssets = [], item, role
   const bodyRef = useRef<HTMLTextAreaElement>(null);
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [pending, startTransition] = useTransition();
+  const [actionState, formAction, pending] = useActionState(
+    async (_previousState: KnowledgeActionResult, formData: FormData) => action(formData),
+    { ok: false } as KnowledgeActionResult
+  );
   const [toast, setToast] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isDirty, setIsDirty] = useState(!item);
@@ -112,36 +115,25 @@ export function KnowledgeForm({ action, categories, mediaAssets = [], item, role
     return () => window.clearTimeout(timer);
   }, [toast]);
 
-  function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+  useEffect(() => {
+    if (!actionState.message) return;
+    if (!actionState.ok) {
+      setError(actionState.message || "儲存失敗，請稍後再試。");
+      return;
+    }
+
+    const message = actionState.message || "知識內容已儲存。";
+    setSaved(true);
+    setIsDirty(false);
     setError(null);
-    const formData = new FormData(event.currentTarget);
-
-    startTransition(async () => {
-      try {
-        const result = await action(formData);
-        if (!result.ok) {
-          setError(result.message || "儲存失敗，請稍後再試。");
-          return;
-        }
-
-        const message = result.message || "知識內容已儲存。";
-        setSaved(true);
-        setIsDirty(false);
-        if (result.redirectTo) {
-          sessionStorage.setItem("knowledge-toast", message);
-          router.replace(result.redirectTo);
-          return;
-        }
-
-        setToast(message);
-        router.refresh();
-      } catch (submitError) {
-        const message = submitError instanceof Error ? submitError.message : "";
-        setError(message || "儲存失敗，請稍後再試。");
-      }
-    });
-  }
+    if (actionState.redirectTo) {
+      sessionStorage.setItem("knowledge-toast", message);
+      router.replace(actionState.redirectTo);
+      return;
+    }
+    setToast(message);
+    router.refresh();
+  }, [actionState, router]);
 
   function handleCoverChange(event: React.ChangeEvent<HTMLSelectElement>) {
     const nextId = event.target.value;
@@ -180,7 +172,7 @@ export function KnowledgeForm({ action, categories, mediaAssets = [], item, role
   const submitDisabled = disabled || pending || (saved && !isDirty);
 
   return (
-    <form ref={formRef} className="form-grid" onSubmit={handleSubmit} onChange={markDirty}>
+    <form ref={formRef} className="form-grid" action={formAction} onChange={markDirty}>
       {toast ? <div className="success field full" role="status">{toast}</div> : null}
       {error ? <div className="notice field full" role="alert">{error}</div> : null}
       <div className="field">
