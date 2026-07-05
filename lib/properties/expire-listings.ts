@@ -12,6 +12,7 @@ export type ExpiredListingResult = {
   id: string;
   title: string;
   listing_end_date: string;
+  expired_at?: string;
 };
 
 export function todayDateString() {
@@ -35,4 +36,37 @@ export function expireListingsSummaryParam(results: ExpiredListingResult[]) {
 
 export function expiredListingTimelineContent(listingEndDate: string) {
   return `委託期限 ${listingEndDate.replaceAll("-", "/")} 已到期，系統自動下架`;
+}
+
+export function nextDateString(date: string) {
+  const [year, month, day] = date.split("-").map(Number);
+  const next = new Date(Date.UTC(year, month - 1, day + 1));
+  return next.toISOString().slice(0, 10);
+}
+
+export function taipeiDayTimestampRange(date = todayDateString()) {
+  return {
+    start: `${date}T00:00:00+08:00`,
+    end: `${nextDateString(date)}T00:00:00+08:00`
+  };
+}
+
+export async function countTodayAutoExpiredListings() {
+  const { createSupabaseServerClient } = await import("../supabase/server");
+  const supabase = await createSupabaseServerClient();
+  const range = taipeiDayTimestampRange();
+  const { count, error } = await supabase
+    .from("properties")
+    .select("id", { count: "exact", head: true })
+    .eq("status", "expired")
+    .is("deleted_at", null)
+    .gte("expired_at", range.start)
+    .lt("expired_at", range.end);
+
+  if (error) {
+    console.error("auto_expired_count_failed", { code: error.code, message: error.message?.slice(0, 180) });
+    return 0;
+  }
+
+  return count || 0;
 }

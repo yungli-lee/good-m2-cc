@@ -22,6 +22,7 @@ const {
 const {
   expiredListingTimelineContent,
   isListingExpired,
+  nextDateString,
   selectExpiredPublishedListings
 } = await import("../lib/properties/expire-listings.ts");
 
@@ -204,6 +205,8 @@ assert.notEqual(propertyTimelineCreatePath("property-1"), "/admin/properties/pro
 const expiredListings = selectExpiredPublishedListings([
   { id: "published-expired", title: "已上架過期", status: "published", listing_end_date: "2026-06-29" },
   { id: "draft-expired", title: "草稿過期", status: "draft", listing_end_date: "2026-06-29" },
+  { id: "archived-expired", title: "已下架過期", status: "archived", listing_end_date: "2026-06-29" },
+  { id: "expired-expired", title: "已自動下架", status: "expired", listing_end_date: "2026-06-29" },
   { id: "published-active", title: "已上架未到期", status: "published", listing_end_date: "2026-07-01" },
   { id: "published-no-date", title: "已上架無日期", status: "published", listing_end_date: null }
 ], "2026-06-30");
@@ -212,6 +215,15 @@ assert.deepEqual(expiredListings.map((property) => property.id), ["published-exp
 assert.equal(isListingExpired("2026-06-29", "2026-06-30"), true);
 assert.equal(isListingExpired("2026-06-30", "2026-06-30"), false);
 assert.equal(expiredListingTimelineContent("2026-06-29"), "委託期限 2026/06/29 已到期，系統自動下架");
+assert.equal(nextDateString("2026-06-30"), "2026-07-01");
+
+const autoExpireMigrationSource = readFileSync(new URL("../supabase/migrations/202607010102_property_auto_expire_job.sql", import.meta.url), "utf8");
+assert.match(autoExpireMigrationSource, /where p\.status = 'published'/);
+assert.match(autoExpireMigrationSource, /and p\.deleted_at is null/);
+assert.match(autoExpireMigrationSource, /and p\.listing_end_date < today_taipei/);
+assert.match(autoExpireMigrationSource, /status = 'expired'/);
+assert.match(autoExpireMigrationSource, /property_auto_expired/);
+assert.match(autoExpireMigrationSource, /cron\.schedule/);
 
 const queriesSource = readFileSync(new URL("../lib/properties/queries.ts", import.meta.url), "utf8");
 const publicSelectSource = queriesSource.slice(queriesSource.indexOf("const publicPropertySelect"), queriesSource.indexOf("const featuredPropertySelect"));

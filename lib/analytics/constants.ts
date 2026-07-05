@@ -8,13 +8,15 @@ export const analyticsEventNames = [
   "featured_property_click",
   "share_click",
   "media_view",
-  "admin_login"
+  "admin_login",
+  "person_created"
 ] as const;
 
 export const analyticsEntityTypes = [
   "property",
   "knowledge",
   "media",
+  "person",
   "inquiry",
   "admin",
   "company",

@@ -7,6 +7,7 @@ type AuditAction =
   | "property_create" | "property_update" | "property_delete" | "property_publish" | "property_unpublish"
   | "property_featured_change" | "property_image_upload" | "property_image_delete" | "property_cover_set"
   | "delete_property" | "restore_property" | "permanent_delete_property" | "unpublish_property" | "republish_property"
+  | "property_auto_expired"
   | "timeline_event_update"
   | "inquiry_view" | "inquiry_status_update" | "inquiry_note_create" | "inquiry_mark_spam" | "inquiry_delete"
   | "admin_login_success" | "admin_login_failure" | "admin_logout" | "login_success" | "login_denied"
@@ -14,11 +15,12 @@ type AuditAction =
   | "password_changed" | "password_change_failed" | "password_reset_email_sent"
   | "content_create" | "content_update" | "content_publish" | "content_unpublish" | "content_delete" | "content_restore"
   | "media_upload" | "media_update" | "media_delete" | "media_restore" | "media_attach" | "media_detach"
-  | "media_cover_set" | "media_alt_update" | "media_caption_update" | "media_replace";
+  | "media_cover_set" | "media_alt_update" | "media_caption_update" | "media_replace"
+  | "people_created" | "people_updated" | "people_deleted" | "people_role_added" | "people_role_removed";
 
 type AuditResult = "success" | "denied" | "failed";
 
-const sensitiveKey = /password|passcode|secret|token|key|api[_-]?key|authorization|cookie|session|service[_-]?role|bank|id[_-]?number|tax|owner[_-]?phone|private[_-]?phone/i;
+const sensitiveKey = /^(phone|normalized_phone|email|normalized_email|line_id|normalized_line_id|name|display_name|legal_name|notes)$|password|passcode|secret|token|key|api[_-]?key|authorization|cookie|session|service[_-]?role|bank|id[_-]?number|tax|owner[_-]?phone|private[_-]?phone/i;
 
 export function maskAuditData(value: unknown): unknown {
   if (!value || typeof value !== "object") return value;

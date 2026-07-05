@@ -644,6 +644,13 @@ td {
   flex-wrap: wrap;
 }
 
+.people-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 18px;
+  margin-bottom: 18px;
+}
+
 .company-info-panel {
   margin-top: 18px;
   padding-top: 16px;
@@ -1634,6 +1641,7 @@ td {
   }
 
   .grid,
+  .people-summary-grid,
   .form-grid,
   .knowledge-listing-tools,
   .detail-layout,

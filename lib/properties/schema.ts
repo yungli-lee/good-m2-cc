@@ -58,7 +58,7 @@ export const propertySchema = z.object({
   property_type: z.enum(["townhouse", "apartment", "building", "land", "farmland", "building_land", "industrial_land", "storefront", "factory", "other"]),
   highlights: z.string().trim().max(500).optional().or(z.literal("")),
   description: z.string().trim().max(8000).optional().or(z.literal("")),
-  status: z.enum(["draft", "published", "archived"]),
+  status: z.enum(["draft", "published", "archived", "expired"]),
   is_featured: z.coerce.boolean().default(false),
   sort_order: z.coerce.number().int().default(1000),
   seo_title: z.string().trim().max(180).optional().or(z.literal("")),

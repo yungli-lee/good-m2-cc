@@ -171,7 +171,7 @@ export async function searchPublishedProperties(input = "", limit = 24) {
   return searchQuery;
 }
 
-export type AdminPropertyLifecycleFilter = "all" | "published" | "archived" | "draft" | "deleted";
+export type AdminPropertyLifecycleFilter = "all" | "published" | "archived" | "expired" | "draft" | "deleted";
 
 export async function listAdminProperties(search = "", filter: AdminPropertyLifecycleFilter = "all") {
   const supabase = await createSupabaseServerClient();
@@ -208,6 +208,7 @@ export async function listAdminProperties(search = "", filter: AdminPropertyLife
       og_image_url,
       canonical_url,
       published_at,
+      expired_at,
       updated_at,
       deleted_at,
       deleted_by,
