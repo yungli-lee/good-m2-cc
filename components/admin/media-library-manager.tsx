@@ -87,9 +87,12 @@ export function MediaLibraryManager({ assets, filters }: Props) {
   const router = useRouter();
   const uploadDialogRef = useRef<HTMLDialogElement>(null);
   const editDialogRef = useRef<HTMLDialogElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [selected, setSelected] = useState<MediaLibraryAsset | null>(assets[0] || null);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [uploadFile, setUploadFile] = useState<File | null>(null);
+  const [isDraggingUpload, setIsDraggingUpload] = useState(false);
   const [pending, startTransition] = useTransition();
 
   const selectedAsset = useMemo(() => {
@@ -106,6 +109,7 @@ export function MediaLibraryManager({ assets, filters }: Props) {
   function handleUpload(formData: FormData) {
     setError(null);
     setMessage(null);
+    if (uploadFile) formData.set("file", uploadFile);
     startTransition(async () => {
       const response = await fetch("/api/admin/media", { method: "POST", body: formData });
       const payload = await response.json().catch(() => null);
@@ -114,8 +118,22 @@ export function MediaLibraryManager({ assets, filters }: Props) {
         return;
       }
       uploadDialogRef.current?.close();
+      setUploadFile(null);
+      if (fileInputRef.current) fileInputRef.current.value = "";
       refreshWithMessage("媒體已上傳。");
     });
+  }
+
+  function handleUploadDrop(event: React.DragEvent<HTMLLabelElement>) {
+    event.preventDefault();
+    setIsDraggingUpload(false);
+    const file = Array.from(event.dataTransfer.files).find((item) => item.type.startsWith("image/"));
+    if (!file) {
+      setError("請拖放圖片檔案。");
+      return;
+    }
+    setUploadFile(file);
+    setError(null);
   }
 
   function handleEdit(formData: FormData) {
@@ -276,7 +294,27 @@ export function MediaLibraryManager({ assets, filters }: Props) {
           </div>
           <label className="field full">
             <span>圖片</span>
-            <input className="input" name="file" type="file" accept="image/jpeg,image/png,image/webp,image/gif" required />
+            <span
+              className={`media-upload-dropzone${isDraggingUpload ? " is-dragging" : ""}`}
+              onDragOver={(event) => {
+                event.preventDefault();
+                setIsDraggingUpload(true);
+              }}
+              onDragLeave={() => setIsDraggingUpload(false)}
+              onDrop={handleUploadDrop}
+            >
+              <strong>{uploadFile ? uploadFile.name : "拖放圖片到這裡"}</strong>
+              <small className="muted">或點選下方欄位選擇圖片</small>
+            </span>
+            <input
+              ref={fileInputRef}
+              className="input"
+              name="file"
+              type="file"
+              accept="image/jpeg,image/png,image/webp,image/gif"
+              required={!uploadFile}
+              onChange={(event) => setUploadFile(event.target.files?.[0] || null)}
+            />
           </label>
           <label className="field">
             <span>Usage Type</span>

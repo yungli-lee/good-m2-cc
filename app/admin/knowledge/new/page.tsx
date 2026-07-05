@@ -2,6 +2,8 @@ import Link from "next/link";
 import { KnowledgeForm } from "@/components/admin/knowledge-form";
 import { requireRole } from "@/lib/auth";
 import { listKnowledgeCategories } from "@/lib/content/queries";
+import { listAdminMediaAssets } from "@/lib/media";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createKnowledgeAction } from "../actions";
 
 export const runtime = "edge";
@@ -13,7 +15,11 @@ type Props = {
 export default async function NewKnowledgePage({ searchParams }: Props) {
   const params = await searchParams;
   const current = await requireRole(["editor", "admin", "owner"]);
-  const categories = await listKnowledgeCategories();
+  const supabase = await createSupabaseServerClient();
+  const [categories, mediaResult] = await Promise.all([
+    listKnowledgeCategories(),
+    listAdminMediaAssets({ supabase, category: "knowledge", status: "active", sort: "newest" })
+  ]);
 
   return (
     <main className="section">
@@ -27,9 +33,13 @@ export default async function NewKnowledgePage({ searchParams }: Props) {
         </div>
 
         {params.error ? <div className="notice">新增失敗：{params.error}</div> : null}
-        <KnowledgeForm action={createKnowledgeAction} categories={categories} role={current.profile.role} />
+        <KnowledgeForm
+          action={createKnowledgeAction}
+          categories={categories}
+          mediaAssets={mediaResult.data}
+          role={current.profile.role}
+        />
       </div>
     </main>
   );
 }
-

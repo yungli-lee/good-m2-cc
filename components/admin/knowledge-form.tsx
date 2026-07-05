@@ -1,16 +1,18 @@
 "use client";
 
-import { useEffect, useRef, useState, useTransition } from "react";
+import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import type { AdminRole } from "@/lib/auth";
 import { itemTagText, legalStatusValues } from "@/lib/content/schema";
 import type { KnowledgeActionResult } from "@/app/admin/knowledge/actions";
 import type { ContentCategory, ContentItem } from "@/lib/content/types";
 import { legalStatusLabels } from "@/lib/content/types";
+import type { MediaLibraryAsset } from "@/lib/media";
 
 type Props = {
   action: (formData: FormData) => Promise<KnowledgeActionResult>;
   categories: ContentCategory[];
+  mediaAssets?: MediaLibraryAsset[];
   item?: ContentItem | null;
   role: AdminRole;
   disabled?: boolean;
@@ -23,8 +25,9 @@ function dateInputValue(value?: string | null) {
   return date.toISOString().slice(0, 10);
 }
 
-export function KnowledgeForm({ action, categories, item, role, disabled = false }: Props) {
+export function KnowledgeForm({ action, categories, mediaAssets = [], item, role, disabled = false }: Props) {
   const formRef = useRef<HTMLFormElement>(null);
+  const bodyRef = useRef<HTMLTextAreaElement>(null);
   const router = useRouter();
   const searchParams = useSearchParams();
   const [pending, startTransition] = useTransition();
@@ -32,10 +35,22 @@ export function KnowledgeForm({ action, categories, item, role, disabled = false
   const [error, setError] = useState<string | null>(null);
   const [isDirty, setIsDirty] = useState(!item);
   const [saved, setSaved] = useState(Boolean(item));
+  const initialCoverAsset = mediaAssets.find((asset) => asset.public_url === item?.cover_image_url) || null;
+  const [coverMediaId, setCoverMediaId] = useState(initialCoverAsset?.id || "");
+  const [coverImageUrl, setCoverImageUrl] = useState(item?.cover_image_url || "");
+  const [inlineMediaId, setInlineMediaId] = useState(mediaAssets[0]?.id || "");
+  const [inlineMediaIds, setInlineMediaIds] = useState<string[]>([]);
   const itemId = item?.id || null;
   const selectedLegalStatus = item?.legal_status || "";
   const legalOptions = legalStatusValues.filter((status) => role !== "editor" || status !== "current");
   const slugPreview = item?.slug ? `/knowledge/${item.slug}` : "儲存後由系統產生";
+  const mediaById = useMemo(() => new Map(mediaAssets.map((asset) => [asset.id, asset])), [mediaAssets]);
+
+  function markDirty() {
+    setIsDirty(true);
+    setSaved(false);
+    setError(null);
+  }
 
   useEffect(() => {
     const savedToast = sessionStorage.getItem("knowledge-toast");
@@ -57,7 +72,9 @@ export function KnowledgeForm({ action, categories, item, role, disabled = false
     setSaved(Boolean(itemId));
     setIsDirty(!itemId);
     setError(null);
-  }, [itemId]);
+    setCoverMediaId(initialCoverAsset?.id || "");
+    setCoverImageUrl(item?.cover_image_url || "");
+  }, [initialCoverAsset?.id, item?.cover_image_url, itemId]);
 
   useEffect(() => {
     if (!toast) return;
@@ -91,16 +108,34 @@ export function KnowledgeForm({ action, categories, item, role, disabled = false
         router.refresh();
       } catch (submitError) {
         const message = submitError instanceof Error ? submitError.message : "";
-        if (message.toLowerCase().includes("unexpected response")) {
-          setSaved(true);
-          setIsDirty(false);
-          setToast("知識內容已儲存。");
-          router.refresh();
-          return;
-        }
         setError(message || "儲存失敗，請稍後再試。");
       }
     });
+  }
+
+  function handleCoverChange(event: React.ChangeEvent<HTMLSelectElement>) {
+    const nextId = event.target.value;
+    const asset = mediaById.get(nextId) || null;
+    setCoverMediaId(nextId);
+    setCoverImageUrl(asset?.public_url || "");
+    markDirty();
+  }
+
+  function insertInlineImage() {
+    const asset = mediaById.get(inlineMediaId);
+    const textarea = bodyRef.current;
+    if (!asset || !textarea) return;
+
+    const alt = asset.alt_text || asset.original_filename || "圖片";
+    const markdown = `\n\n![${alt}](${asset.public_url})\n\n`;
+    const start = textarea.selectionStart ?? textarea.value.length;
+    const end = textarea.selectionEnd ?? textarea.value.length;
+    textarea.value = `${textarea.value.slice(0, start)}${markdown}${textarea.value.slice(end)}`;
+    const nextPosition = start + markdown.length;
+    textarea.focus();
+    textarea.setSelectionRange(nextPosition, nextPosition);
+    setInlineMediaIds((current) => Array.from(new Set([...current, asset.id])));
+    markDirty();
   }
 
   const buttonText = pending
@@ -115,11 +150,7 @@ export function KnowledgeForm({ action, categories, item, role, disabled = false
   const submitDisabled = disabled || pending || (saved && !isDirty);
 
   return (
-    <form ref={formRef} className="form-grid" onSubmit={handleSubmit} onChange={() => {
-      setIsDirty(true);
-      setSaved(false);
-      setError(null);
-    }}>
+    <form ref={formRef} className="form-grid" onSubmit={handleSubmit} onChange={markDirty}>
       {toast ? <div className="success field full" role="status">{toast}</div> : null}
       {error ? <div className="notice field full" role="alert">{error}</div> : null}
       <div className="field">
@@ -159,8 +190,41 @@ export function KnowledgeForm({ action, categories, item, role, disabled = false
 
       <div className="field full">
         <span>內文</span>
-        <textarea className="textarea" name="body" rows={14} defaultValue={item?.body || ""} disabled={disabled || pending} />
+        <textarea ref={bodyRef} className="textarea" name="body" rows={14} defaultValue={item?.body || ""} disabled={disabled || pending} />
       </div>
+
+      <details className="field full" open>
+        <summary>Media Library 圖片</summary>
+        <div className="form-grid" style={{ marginTop: 12 }}>
+          <input type="hidden" name="cover_image_url" value={coverImageUrl} />
+          <input type="hidden" name="inline_media_ids" value={inlineMediaIds.join(",")} />
+          <label className="field full">
+            <span>封面圖片</span>
+            <select className="select" name="cover_media_id" value={coverMediaId} onChange={handleCoverChange} disabled={disabled || pending}>
+              <option value="">不設定封面</option>
+              {mediaAssets.map((asset) => (
+                <option key={asset.id} value={asset.id}>{asset.original_filename || asset.alt_text || asset.id}</option>
+              ))}
+            </select>
+          </label>
+          {coverImageUrl ? (
+            <div className="field full">
+              <img className="knowledge-card-image" src={coverImageUrl} alt={item?.title || "知識封面預覽"} />
+            </div>
+          ) : null}
+          <label className="field">
+            <span>插入內文圖片</span>
+            <select className="select" value={inlineMediaId} onChange={(event) => setInlineMediaId(event.target.value)} disabled={disabled || pending || !mediaAssets.length}>
+              {mediaAssets.map((asset) => (
+                <option key={asset.id} value={asset.id}>{asset.original_filename || asset.alt_text || asset.id}</option>
+              ))}
+            </select>
+          </label>
+          <div className="field" style={{ alignSelf: "end" }}>
+            <button className="button ghost" type="button" onClick={insertInlineImage} disabled={disabled || pending || !inlineMediaId}>插入圖片</button>
+          </div>
+        </div>
+      </details>
 
       <details className="field full" open>
         <summary>進階 SEO 設定</summary>

@@ -3,8 +3,8 @@ import { notFound } from "next/navigation";
 import type { ReactNode } from "react";
 import { requireRole } from "@/lib/auth";
 import { formatDateTime } from "@/lib/format";
+import { personRoleLabels } from "@/lib/people/labels";
 import { getAdminPerson } from "@/lib/people/queries";
-import type { PersonRoleName } from "@/lib/people/types";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { archivePersonAction } from "../actions";
 
@@ -13,14 +13,6 @@ export const runtime = "edge";
 type Props = {
   params: Promise<{ id: string }>;
   searchParams: Promise<{ error?: string; saved?: string }>;
-};
-
-const roleLabel: Record<PersonRoleName, string> = {
-  buyer: "Buyer",
-  seller: "Seller",
-  landlord: "Landlord",
-  investor: "Investor",
-  broker: "Broker"
 };
 
 const sourceLabel: Record<string, string> = {
@@ -108,7 +100,7 @@ export default async function PersonDetailPage({ params, searchParams }: Props) 
               <h2 style={{ marginTop: 0 }}>角色</h2>
               <div className="actions">
                 {person.roles.length ? person.roles.map((role) => (
-                  <span key={role} className="admin-users-badge is-active">{roleLabel[role]}</span>
+                  <span key={role} className="admin-users-badge is-active">{personRoleLabels[role]}</span>
                 )) : <span className="muted">未設定角色</span>}
               </div>
               <h2>備註</h2>

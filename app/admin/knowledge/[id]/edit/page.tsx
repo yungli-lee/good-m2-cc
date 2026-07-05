@@ -4,6 +4,8 @@ import { KnowledgeForm } from "@/components/admin/knowledge-form";
 import { requireRole } from "@/lib/auth";
 import { canEditKnowledge } from "@/lib/content/permissions";
 import { getKnowledgeItem, listKnowledgeCategories } from "@/lib/content/queries";
+import { listAdminMediaAssets } from "@/lib/media";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { updateKnowledgeAction } from "../../actions";
 
 export const runtime = "edge";
@@ -17,9 +19,11 @@ export default async function EditKnowledgePage({ params, searchParams }: Props)
   const { id } = await params;
   const query = await searchParams;
   const current = await requireRole(["editor", "admin", "owner"]);
-  const [{ data: item }, categories] = await Promise.all([
+  const supabase = await createSupabaseServerClient();
+  const [{ data: item }, categories, mediaResult] = await Promise.all([
     getKnowledgeItem(id),
-    listKnowledgeCategories()
+    listKnowledgeCategories(),
+    listAdminMediaAssets({ supabase, category: "knowledge", status: "active", sort: "newest" })
   ]);
 
   if (!item) notFound();
@@ -43,9 +47,15 @@ export default async function EditKnowledgePage({ params, searchParams }: Props)
         {query.error ? <div className="notice">儲存失敗：{query.error}</div> : null}
         {!canEdit ? <div className="notice">目前角色只能編輯草稿內容。</div> : null}
 
-        <KnowledgeForm action={action} categories={categories} item={item} role={current.profile.role} disabled={!canEdit} />
+        <KnowledgeForm
+          action={action}
+          categories={categories}
+          mediaAssets={mediaResult.data}
+          item={item}
+          role={current.profile.role}
+          disabled={!canEdit}
+        />
       </div>
     </main>
   );
 }
-
