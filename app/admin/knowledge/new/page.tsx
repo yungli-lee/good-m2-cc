@@ -4,7 +4,6 @@ import { requireRole } from "@/lib/auth";
 import { listKnowledgeCategories } from "@/lib/content/queries";
 import { listAdminMediaAssets } from "@/lib/media";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { createKnowledgeAction } from "../actions";
 
 export const runtime = "edge";
 
@@ -34,7 +33,6 @@ export default async function NewKnowledgePage({ searchParams }: Props) {
 
         {params.error ? <div className="notice">新增失敗：{params.error}</div> : null}
         <KnowledgeForm
-          action={createKnowledgeAction}
           categories={categories}
           mediaAssets={mediaResult.data}
           role={current.profile.role}

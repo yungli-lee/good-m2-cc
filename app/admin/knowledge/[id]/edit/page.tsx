@@ -6,7 +6,6 @@ import { canEditKnowledge } from "@/lib/content/permissions";
 import { getKnowledgeItem, listKnowledgeCategories } from "@/lib/content/queries";
 import { listAdminMediaAssets } from "@/lib/media";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { updateKnowledgeAction } from "../../actions";
 
 export const runtime = "edge";
 
@@ -29,7 +28,6 @@ export default async function EditKnowledgePage({ params, searchParams }: Props)
   if (!item) notFound();
 
   const canEdit = canEditKnowledge(current.profile.role, item);
-  const action = updateKnowledgeAction.bind(null, item.id);
 
   return (
     <main className="section">
@@ -48,7 +46,6 @@ export default async function EditKnowledgePage({ params, searchParams }: Props)
         {!canEdit ? <div className="notice">目前角色只能編輯草稿內容；已發布或封存內容請由 admin / owner 編輯。</div> : null}
 
         <KnowledgeForm
-          action={action}
           categories={categories}
           mediaAssets={mediaResult.data}
           item={item}

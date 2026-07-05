@@ -1,17 +1,15 @@
 "use client";
 
-import { useActionState, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import type { AdminRole } from "@/lib/auth";
 import { itemTagText, legalStatusValues } from "@/lib/content/schema";
-import type { KnowledgeActionResult } from "@/app/admin/knowledge/actions";
 import type { ContentCategory, ContentItem } from "@/lib/content/types";
 import { legalStatusLabels } from "@/lib/content/types";
 import { mediaUsageTypeLabels } from "@/lib/media";
 import type { MediaLibraryAsset, MediaUsageType } from "@/lib/media";
 
 type Props = {
-  action: (formData: FormData) => Promise<KnowledgeActionResult>;
   categories: ContentCategory[];
   mediaAssets?: MediaLibraryAsset[];
   item?: ContentItem | null;
@@ -47,15 +45,19 @@ function mediaLabel(asset: MediaLibraryAsset, preferred: Set<MediaUsageType>) {
   return `${prefix}｜${mediaUsageTypeLabels[asset.usage_type]}｜${name}`;
 }
 
-export function KnowledgeForm({ action, categories, mediaAssets = [], item, role, disabled = false }: Props) {
+type KnowledgeSaveResponse = {
+  ok?: boolean;
+  message?: string;
+  redirectTo?: string;
+  error?: string;
+};
+
+export function KnowledgeForm({ categories, mediaAssets = [], item, role, disabled = false }: Props) {
   const formRef = useRef<HTMLFormElement>(null);
   const bodyRef = useRef<HTMLTextAreaElement>(null);
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [actionState, formAction, pending] = useActionState(
-    async (_previousState: KnowledgeActionResult, formData: FormData) => action(formData),
-    { ok: false } as KnowledgeActionResult
-  );
+  const [pending, startTransition] = useTransition();
   const [toast, setToast] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isDirty, setIsDirty] = useState(!item);
@@ -115,25 +117,39 @@ export function KnowledgeForm({ action, categories, mediaAssets = [], item, role
     return () => window.clearTimeout(timer);
   }, [toast]);
 
-  useEffect(() => {
-    if (!actionState.message) return;
-    if (!actionState.ok) {
-      setError(actionState.message || "儲存失敗，請稍後再試。");
-      return;
-    }
-
-    const message = actionState.message || "知識內容已儲存。";
-    setSaved(true);
-    setIsDirty(false);
+  function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
     setError(null);
-    if (actionState.redirectTo) {
-      sessionStorage.setItem("knowledge-toast", message);
-      router.replace(actionState.redirectTo);
-      return;
-    }
-    setToast(message);
-    router.refresh();
-  }, [actionState, router]);
+    const formData = new FormData(event.currentTarget);
+    const endpoint = itemId ? `/api/admin/knowledge/${itemId}` : "/api/admin/knowledge";
+    const method = itemId ? "PATCH" : "POST";
+
+    startTransition(async () => {
+      try {
+        const response = await fetch(endpoint, { method, body: formData });
+        const result = (await response.json().catch(() => null)) as KnowledgeSaveResponse | null;
+        if (!response.ok || !result?.ok) {
+          setError(result?.message || result?.error || "儲存失敗，請稍後再試。");
+          return;
+        }
+
+        const message = result.message || "知識內容已儲存。";
+        setSaved(true);
+        setIsDirty(false);
+        setError(null);
+        if (result.redirectTo) {
+          sessionStorage.setItem("knowledge-toast", message);
+          router.replace(result.redirectTo);
+          return;
+        }
+        setToast(message);
+        router.refresh();
+      } catch (submitError) {
+        const message = submitError instanceof Error ? submitError.message : "";
+        setError(message || "儲存失敗，請稍後再試。");
+      }
+    });
+  }
 
   function handleCoverChange(event: React.ChangeEvent<HTMLSelectElement>) {
     const nextId = event.target.value;
@@ -172,7 +188,7 @@ export function KnowledgeForm({ action, categories, mediaAssets = [], item, role
   const submitDisabled = disabled || pending || (saved && !isDirty);
 
   return (
-    <form ref={formRef} className="form-grid" action={formAction} onChange={markDirty}>
+    <form ref={formRef} className="form-grid" onSubmit={handleSubmit} onChange={markDirty}>
       {toast ? <div className="success field full" role="status">{toast}</div> : null}
       {error ? <div className="notice field full" role="alert">{error}</div> : null}
       <div className="field">
