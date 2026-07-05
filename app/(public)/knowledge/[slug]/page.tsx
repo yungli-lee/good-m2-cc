@@ -103,7 +103,7 @@ function parseArticleBody(body?: string | null) {
       return;
     }
 
-    const image = block.match(/^!\[([^\]]*)\]\((https?:\/\/[^)\s]+)\)$/);
+    const image = block.match(/^!\[([^\]]*)\]\(([^)\n]+)\)$/);
     if (image) {
       parsed.push({ type: "image", alt: image[1].trim() || "文章圖片", url: image[2].trim() });
       return;
