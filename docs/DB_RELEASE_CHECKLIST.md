@@ -1,11 +1,13 @@
 # DB Release Checklist
 
-目的：release 前固定比對 staging / production DB schema、migration history、RLS、Storage policy 與 Cloudflare env，避免 production 漏套 migration 或 schema cache 未更新。
+目的：release 前固定比對 staging / production DB schema、migration history、seed data、RLS、Storage policy 與 Cloudflare env，避免 production 漏套 migration、seed 漏套或 schema cache 未更新。
 
 ## A. Release 前必查項目
 
 - staging migration history：確認 remote 已套到本次 release 最新 migration。
 - production migration history：確認 production remote 與 staging/repo 版本一致。
+- staging seed data：確認 content categories、lookup table、設定資料已套用。
+- production seed data：確認 production seed 與 staging 一致，不可只驗證 migration。
 - staging schema：確認本次功能需要的 table / column / enum / trigger 已存在。
 - production schema：確認 production table / column / enum / trigger 與 staging 一致。
 - PostgREST schema cache reload：migration 後執行 schema reload，避免 PGRST204 / schema cache stale。
@@ -142,6 +144,50 @@ where table_schema = 'public'
 order by ordinal_position;
 ```
 
+### 查 content categories seed
+
+Release 前必須分別在 staging / production 執行並比對筆數與 slug。Preview 正常但 production 異常時，優先檢查 seed drift。
+
+```sql
+select content_type, slug, name, sort_order, deleted_at
+from public.content_categories
+where content_type = 'knowledge'
+order by sort_order, slug;
+```
+
+Knowledge 第一版預期至少包含：
+
+- `buying-guide`：買屋指南
+- `selling-guide`：賣屋指南
+- `tax`：稅務
+- `loan`：貸款
+- `farmland`：農地
+- `farmhouse`：農舍
+- `inheritance-gift`：繼承贈與
+- `legal`：法規
+- `changhua-market`：彰化市場
+- `faq`：常見問題
+
+### 查 company settings seed / config
+
+```sql
+select company_name, franchise_name, license_number, broker_license_number, updated_at
+from public.company_settings
+order by updated_at desc
+limit 5;
+```
+
+### 查 lookup / enum-like data
+
+若 release 新增 enum-like check constraint 或 lookup seed，必須在 staging / production 各跑一次查詢確認一致。
+
+```sql
+select constraint_name, check_clause
+from information_schema.check_constraints
+where constraint_schema = 'public'
+order by constraint_name;
+```
+
 ### PostgREST schema cache reload
 
 Migration 後必跑：
@@ -193,6 +239,7 @@ npx wrangler pages deployment list --project-name good-m2-cc --environment previ
 Go：
 
 - staging / production migration history 已比對。
+- staging / production seed data 已比對，包含 `content_categories`、`company_settings`、enum / lookup table。
 - staging / production schema 欄位與 policy 已比對。
 - PostgREST schema cache 已 reload。
 - Cloudflare env / secrets 已確認指向正確 Supabase。
@@ -201,6 +248,7 @@ Go：
 No-Go：
 
 - production migration history 缺本次 release migration。
+- production seed data 缺漏，例如 `content_categories` 筆數與 staging 不一致。
 - production table column 缺漏。
 - RLS / storage policy 不一致。
 - `profiles` role 缺 owner/admin。
