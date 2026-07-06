@@ -1,6 +1,7 @@
 export type ContentType = "knowledge" | "blog" | "faq" | "market_report" | "case_study" | "news" | "ai_source";
 export type ContentStatus = "draft" | "published" | "archived";
 export type LegalStatus = "current" | "outdated" | "pending_review" | "draft" | "archived";
+export type ImageFit = "cover" | "contain";
 
 export type ContentCategory = {
   id: string;
@@ -36,6 +37,7 @@ export type ContentItem = {
   body_format: "markdown" | "html" | "plain_text";
   category_id: string | null;
   cover_image_url: string | null;
+  image_fit?: ImageFit | null;
   seo_title: string | null;
   meta_description: string | null;
   og_image_url: string | null;
@@ -83,3 +85,7 @@ export const legalStatusLabels: Record<LegalStatus, string> = {
   archived: "法規封存"
 };
 
+export const imageFitLabels: Record<ImageFit, string> = {
+  cover: "裁切填滿",
+  contain: "完整顯示"
+};

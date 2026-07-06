@@ -42,6 +42,14 @@ function auditMetadata(item: Pick<ContentItem, "id" | "content_type" | "title" |
   };
 }
 
+function revalidateKnowledgePaths(id: string, oldSlug?: string | null, newSlug?: string | null) {
+  revalidatePath("/admin/knowledge");
+  revalidatePath(`/admin/knowledge/${id}/edit`);
+  revalidatePath("/knowledge");
+  if (oldSlug) revalidatePath(`/knowledge/${oldSlug}`);
+  if (newSlug && newSlug !== oldSlug) revalidatePath(`/knowledge/${newSlug}`);
+}
+
 async function tryRecordAuditLog(input: Parameters<typeof recordAuditLog>[0]) {
   try {
     await recordAuditLog(input);
@@ -152,7 +160,9 @@ export async function createKnowledgeAction(formData: FormData): Promise<Knowled
   const current = await requireRole(["editor", "admin", "owner"]);
   const values = valuesFromFormData(formData);
   const parsed = knowledgeFormSchema.safeParse(values);
-  if (!parsed.success) redirect("/admin/knowledge/new?error=invalid_form");
+  if (!parsed.success) {
+    return { ok: false, message: "欄位格式不正確，請確認必填欄位與 URL / 日期格式。" };
+  }
 
   const supabase = await createSupabaseServerClient();
   const basePayload = toKnowledgePayload(parsed.data, current.profile.role, current.user.id);
@@ -173,7 +183,7 @@ export async function createKnowledgeAction(formData: FormData): Promise<Knowled
 
   if (error) {
     console.error("knowledge_create_failed", { code: error.code, message: error.message });
-    redirect(`/admin/knowledge/new?error=${encodeURIComponent(error.code || "create_failed")}`);
+    return { ok: false, message: `新增失敗：${error.code || "create_failed"}` };
   }
 
   await syncTags(data.id, parsed.data.tags, current.profile.role, current.user.id);
@@ -188,7 +198,7 @@ export async function createKnowledgeAction(formData: FormData): Promise<Knowled
     metadata: auditMetadata(data as ContentItem)
   });
 
-  revalidatePath("/admin/knowledge");
+  revalidateKnowledgePaths(data.id, null, data.slug);
   return {
     ok: true,
     message: "儲存成功",
@@ -199,29 +209,39 @@ export async function createKnowledgeAction(formData: FormData): Promise<Knowled
 export async function updateKnowledgeAction(id: string, formData: FormData): Promise<KnowledgeActionResult> {
   const current = await requireRole(["editor", "admin", "owner"]);
   const { data: item } = await getKnowledgeItem(id);
-  if (!item) redirect("/admin/knowledge?error=not_found");
-  if (!canEditKnowledge(current.profile.role, item)) redirect(`/admin/knowledge/${id}/edit?error=forbidden`);
+  if (!item) return { ok: false, message: "找不到指定知識內容。" };
+  if (!canEditKnowledge(current.profile.role, item)) return { ok: false, message: "目前帳號沒有編輯此內容的權限。" };
 
   const values = valuesFromFormData(formData);
   const parsed = knowledgeFormSchema.safeParse(values);
-  if (!parsed.success) redirect(`/admin/knowledge/${id}/edit?error=invalid_form`);
+  if (!parsed.success) {
+    return { ok: false, message: "欄位格式不正確，請確認必填欄位與 URL / 日期格式。" };
+  }
 
   const supabase = await createSupabaseServerClient();
   const basePayload = toKnowledgePayload(parsed.data, current.profile.role, current.user.id, item);
   const slug = await resolveUniqueContentSlug(basePayload.slug, id);
   const payload = { ...basePayload, slug, canonical_url: `/knowledge/${slug}` };
 
-  const { data, error } = await supabase
+  const { data, error, count } = await supabase
     .from("content_items")
-    .update(payload)
+    .update(payload, { count: "exact" })
     .eq("id", id)
     .eq("content_type", "knowledge")
     .select("*")
-    .single();
+    .maybeSingle();
 
   if (error) {
     console.error("knowledge_update_failed", { code: error.code, message: error.message });
-    redirect(`/admin/knowledge/${id}/edit?error=${encodeURIComponent(error.code || "update_failed")}`);
+    return { ok: false, message: `儲存失敗：${error.code || "update_failed"}` };
+  }
+
+  if (!data || count === 0) {
+    console.error("knowledge_update_no_rows", { id, count });
+    return {
+      ok: false,
+      message: "儲存失敗：沒有更新到資料，請確認權限、狀態或 RLS 設定。"
+    };
   }
 
   await syncTags(id, parsed.data.tags, current.profile.role, current.user.id);
@@ -237,11 +257,11 @@ export async function updateKnowledgeAction(id: string, formData: FormData): Pro
     metadata: auditMetadata(data as ContentItem)
   });
 
-  revalidatePath("/admin/knowledge");
-  revalidatePath(`/admin/knowledge/${id}/edit`);
+  revalidateKnowledgePaths(id, item.slug, data.slug);
   return {
     ok: true,
-    message: "儲存成功"
+    message: "儲存成功",
+    redirectTo: `/admin/knowledge/${id}/edit?saved=1`
   };
 }
 

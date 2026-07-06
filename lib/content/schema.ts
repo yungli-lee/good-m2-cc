@@ -1,11 +1,12 @@
 import { z } from "zod";
 import type { AdminRole } from "@/lib/auth";
-import type { ContentItem, LegalStatus } from "@/lib/content/types";
+import type { ContentItem, ImageFit, LegalStatus } from "@/lib/content/types";
 
 const optionalText = (max = 1000) => z.string().trim().max(max).optional().or(z.literal(""));
 const optionalDateTime = z.string().trim().max(40).optional().or(z.literal(""));
 
 export const legalStatusValues = ["current", "outdated", "pending_review", "draft", "archived"] as const;
+export const imageFitValues = ["cover", "contain"] as const;
 
 export const knowledgeFormSchema = z.object({
   title: z.string().trim().min(1, "請輸入標題。").max(180, "標題太長。"),
@@ -14,6 +15,10 @@ export const knowledgeFormSchema = z.object({
   tags: optionalText(1000),
   summary: optionalText(800),
   body: optionalText(50000),
+  cover_image_url: optionalText(800),
+  image_fit: z.enum(imageFitValues).default("cover"),
+  cover_media_id: z.string().trim().uuid().optional().or(z.literal("")),
+  inline_media_ids: optionalText(2000),
   seo_title: optionalText(180),
   meta_description: optionalText(300),
   legal_status: z.enum(legalStatusValues).optional().or(z.literal("")),
@@ -37,6 +42,10 @@ export function valuesFromFormData(formData: FormData) {
     tags: String(formData.get("tags") || ""),
     summary: String(formData.get("summary") || ""),
     body: String(formData.get("body") || ""),
+    cover_image_url: String(formData.get("cover_image_url") || ""),
+    image_fit: String(formData.get("image_fit") || "cover"),
+    cover_media_id: String(formData.get("cover_media_id") || ""),
+    inline_media_ids: String(formData.get("inline_media_ids") || ""),
     seo_title: String(formData.get("seo_title") || ""),
     meta_description: String(formData.get("meta_description") || ""),
     legal_status: String(formData.get("legal_status") || ""),
@@ -88,6 +97,7 @@ export function itemTagText(item?: ContentItem | null) {
 export function toKnowledgePayload(input: KnowledgeFormInput, role: AdminRole, userId: string, existing?: ContentItem | null) {
   const generatedSlug = toSafeSlug(input.slug || input.title);
   const legalStatus = nullable(input.legal_status) as LegalStatus | null;
+  const imageFit = (input.image_fit || "cover") as ImageFit;
 
   return {
     content_type: "knowledge",
@@ -97,6 +107,9 @@ export function toKnowledgePayload(input: KnowledgeFormInput, role: AdminRole, u
     summary: nullable(input.summary),
     body: nullable(input.body),
     body_format: "markdown",
+    cover_image_url: nullable(input.cover_image_url),
+    image_fit: imageFit,
+    og_image_url: nullable(input.cover_image_url),
     seo_title: nullable(input.seo_title),
     meta_description: nullable(input.meta_description),
     canonical_url: `/knowledge/${generatedSlug}`,

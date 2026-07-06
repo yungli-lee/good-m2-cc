@@ -78,6 +78,7 @@ export async function POST(request: Request) {
     upsert: false
   });
   if (uploadStorageError) return apiError("圖片上傳失敗。", 500);
+  const { data: publicUrl } = supabase.storage.from(mediaBucketName).getPublicUrl(storagePath);
 
   const { data, error } = await supabase
     .from("media_assets")
@@ -113,5 +114,13 @@ export async function POST(request: Request) {
     actorRole: auth.current!.profile.role
   });
 
-  return NextResponse.json({ data }, { status: 201 });
+  return NextResponse.json({
+    data: {
+      ...data,
+      public_url: publicUrl.publicUrl,
+      created_by_label: auth.current!.profile.display_name || auth.current!.profile.email || auth.current!.user.email || null,
+      references: [],
+      usages: []
+    }
+  }, { status: 201 });
 }

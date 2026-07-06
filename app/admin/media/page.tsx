@@ -34,8 +34,8 @@ export default async function AdminMediaPage({ searchParams }: Props) {
       <div className="container">
         <div className="admin-page-header">
           <div>
-            <p className="eyebrow">Media Library</p>
-            <h1>媒體庫</h1>
+            <p className="eyebrow">Media Center</p>
+            <h1>媒體中心</h1>
           </div>
           <div className="admin-actions">
             <Link className="button ghost" href="/admin">返回後台</Link>

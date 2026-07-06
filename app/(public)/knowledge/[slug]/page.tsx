@@ -16,6 +16,7 @@ const lineUrl = "https://line.me/ti/p/abQv5LYzzE";
 
 type ArticleBlock =
   | { type: "heading"; level: 1 | 2 | 3; text: string; id: string }
+  | { type: "image"; alt: string; url: string }
   | { type: "paragraph"; text: string }
   | { type: "list"; ordered: boolean; items: string[] }
   | { type: "quote"; text: string }
@@ -78,7 +79,7 @@ function parseTable(block: string) {
 
 function parseArticleBody(body?: string | null) {
   const blocks = String(body || "")
-    .split(/\n{2,}/)
+    .split(/\r?\n[\t ]*\r?\n/)
     .map((block) => block.trim())
     .filter(Boolean);
 
@@ -99,6 +100,12 @@ function parseArticleBody(body?: string | null) {
       const count = usedIds.get(baseId) || 0;
       usedIds.set(baseId, count + 1);
       parsed.push({ type: "heading", level, text, id: count ? `${baseId}-${count + 1}` : baseId });
+      return;
+    }
+
+    const image = block.match(/^!\[([^\]]*)\]\(([^)\n]+)\)$/);
+    if (image) {
+      parsed.push({ type: "image", alt: image[1].trim() || "文章圖片", url: image[2].trim() });
       return;
     }
 
@@ -149,6 +156,7 @@ function renderArticleBlocks(blocks: ArticleBlock[]) {
       const Heading = `h${block.level}` as "h1" | "h2" | "h3";
       return <Heading key={index} id={block.id}>{block.text}</Heading>;
     }
+    if (block.type === "image") return <img key={index} className="knowledge-inline-image" src={block.url} alt={block.alt} loading="lazy" />;
     if (block.type === "list") {
       const List = block.ordered ? "ol" : "ul";
       return <List key={index}>{block.items.map((item, itemIndex) => <li key={itemIndex}>{item}</li>)}</List>;
@@ -216,6 +224,7 @@ export default async function KnowledgeDetailPage({ params }: Props) {
   const reviewedDate = formatDate(item.last_reviewed_at);
   const articleUrl = canonicalFor(item);
   const articleBlocks = parseArticleBody(item.body);
+  const imageFit = item.image_fit === "contain" ? "contain" : "cover";
   const tocItems: TocItem[] = articleBlocks
     .filter((block): block is TocHeadingBlock => block.type === "heading" && (block.level === 2 || block.level === 3))
     .map((block) => ({ id: block.id, text: block.text, level: block.level }));
@@ -238,7 +247,7 @@ export default async function KnowledgeDetailPage({ params }: Props) {
                   <a className="button ghost" href={`https://social-plugins.line.me/lineit/share?url=${shareUrl}`} target="_blank" rel="noreferrer">LINE 分享</a>
                   <a className="button ghost" href={`https://www.facebook.com/sharer/sharer.php?u=${shareUrl}&quote=${shareText}`} target="_blank" rel="noreferrer">Facebook 分享</a>
                 </div>
-                {item.cover_image_url ? <img className="knowledge-hero-image" src={item.cover_image_url} alt={item.title} /> : null}
+                {item.cover_image_url ? <img className={`knowledge-hero-image is-${imageFit}`} src={item.cover_image_url} alt={item.title} /> : null}
               </header>
               <div className="knowledge-body">
                 {renderArticleBlocks(articleBlocks)}

@@ -4,7 +4,8 @@ import { KnowledgeForm } from "@/components/admin/knowledge-form";
 import { requireRole } from "@/lib/auth";
 import { canEditKnowledge } from "@/lib/content/permissions";
 import { getKnowledgeItem, listKnowledgeCategories } from "@/lib/content/queries";
-import { updateKnowledgeAction } from "../../actions";
+import { listAdminMediaAssets } from "@/lib/media";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export const runtime = "edge";
 
@@ -17,15 +18,16 @@ export default async function EditKnowledgePage({ params, searchParams }: Props)
   const { id } = await params;
   const query = await searchParams;
   const current = await requireRole(["editor", "admin", "owner"]);
-  const [{ data: item }, categories] = await Promise.all([
+  const supabase = await createSupabaseServerClient();
+  const [{ data: item }, categories, mediaResult] = await Promise.all([
     getKnowledgeItem(id),
-    listKnowledgeCategories()
+    listKnowledgeCategories(),
+    listAdminMediaAssets({ supabase, category: "all", status: "active", sort: "newest" })
   ]);
 
   if (!item) notFound();
 
   const canEdit = canEditKnowledge(current.profile.role, item);
-  const action = updateKnowledgeAction.bind(null, item.id);
 
   return (
     <main className="section">
@@ -41,11 +43,16 @@ export default async function EditKnowledgePage({ params, searchParams }: Props)
 
         {query.saved ? <div className="success">知識內容已儲存。</div> : null}
         {query.error ? <div className="notice">儲存失敗：{query.error}</div> : null}
-        {!canEdit ? <div className="notice">目前角色只能編輯草稿內容。</div> : null}
+        {!canEdit ? <div className="notice">目前角色只能編輯草稿內容；已發布或封存內容請由 admin / owner 編輯。</div> : null}
 
-        <KnowledgeForm action={action} categories={categories} item={item} role={current.profile.role} disabled={!canEdit} />
+        <KnowledgeForm
+          categories={categories}
+          mediaAssets={mediaResult.data}
+          item={item}
+          role={current.profile.role}
+          disabled={!canEdit}
+        />
       </div>
     </main>
   );
 }
-
