@@ -3,7 +3,6 @@ import { HomeCampaignForm } from "@/components/admin/home-campaign-form";
 import { requireRole } from "@/lib/auth";
 import { listAdminMediaAssets } from "@/lib/media";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { createHomeCampaignAction } from "../actions";
 
 export const runtime = "edge";
 
@@ -28,7 +27,7 @@ export default async function NewHomeCampaignPage({ searchParams }: Props) {
           <Link className="button ghost" href="/admin/home-campaigns">返回列表</Link>
         </div>
         {params.error ? <div className="notice">新增失敗：{params.error}</div> : null}
-        <HomeCampaignForm action={createHomeCampaignAction} mediaAssets={mediaResult.data} />
+        <HomeCampaignForm mediaAssets={mediaResult.data} />
       </div>
     </main>
   );

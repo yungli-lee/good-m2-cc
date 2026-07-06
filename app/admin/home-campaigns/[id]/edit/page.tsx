@@ -5,7 +5,6 @@ import { requireRole } from "@/lib/auth";
 import { getHomeCampaign } from "@/lib/home-cms/queries";
 import { listAdminMediaAssets } from "@/lib/media";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { updateHomeCampaignAction } from "../../actions";
 
 export const runtime = "edge";
 
@@ -38,7 +37,7 @@ export default async function EditHomeCampaignPage({ params, searchParams }: Pro
         </div>
         {query.saved ? <div className="success">Campaign 已儲存。</div> : null}
         {query.error ? <div className="notice">儲存失敗：{query.error}</div> : null}
-        <HomeCampaignForm action={updateHomeCampaignAction.bind(null, id)} campaign={campaign} mediaAssets={mediaResult.data} />
+        <HomeCampaignForm campaign={campaign} mediaAssets={mediaResult.data} />
       </div>
     </main>
   );

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { requireRole } from "@/lib/auth";
-import { cmsStatusLabels, sitePageLabels } from "@/lib/home-cms/types";
+import { cmsStatusLabels, sitePageLabel } from "@/lib/home-cms/types";
 import { listAdminSitePages } from "@/lib/home-cms/queries";
 
 export const runtime = "edge";
@@ -54,7 +54,7 @@ export default async function AdminSitePagesPage({ searchParams }: Props) {
             <tbody>
               {pages.map((page) => (
                 <tr key={page.id}>
-                  <td>{sitePageLabels[page.page_key]}</td>
+                  <td>{sitePageLabel(page.page_key)}</td>
                   <td><strong>{page.title}</strong><br /><span className="muted">{page.subtitle || "-"}</span></td>
                   <td>{cmsStatusLabels[page.status]}</td>
                   <td>{page.sort_order}</td>

@@ -1,7 +1,8 @@
 import type { MediaLibraryAsset } from "@/lib/media";
 
 export type CmsStatus = "draft" | "published" | "archived";
-export type SitePageKey = "philosophy" | "services" | "process" | "reminders" | "team";
+export type KnownSitePageKey = "philosophy" | "services" | "process" | "reminders" | "team";
+export type SitePageKey = KnownSitePageKey | (string & {});
 
 export type HomeCampaign = {
   id: string;
@@ -54,7 +55,7 @@ export const cmsStatusLabels: Record<CmsStatus, string> = {
   archived: "封存"
 };
 
-export const sitePageLabels: Record<SitePageKey, string> = {
+export const sitePageLabels: Record<KnownSitePageKey, string> = {
   philosophy: "服務理念",
   services: "服務項目",
   process: "買屋流程",
@@ -63,3 +64,7 @@ export const sitePageLabels: Record<SitePageKey, string> = {
 };
 
 export const sitePageKeys = ["philosophy", "services", "process", "reminders", "team"] as const;
+
+export function sitePageLabel(pageKey: SitePageKey) {
+  return sitePageLabels[pageKey as KnownSitePageKey] || pageKey;
+}

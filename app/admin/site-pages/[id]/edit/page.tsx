@@ -5,7 +5,6 @@ import { requireRole } from "@/lib/auth";
 import { getSitePage } from "@/lib/home-cms/queries";
 import { listAdminMediaAssets } from "@/lib/media";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { updateSitePageAction } from "../../actions";
 
 export const runtime = "edge";
 
@@ -38,7 +37,7 @@ export default async function EditSitePagePage({ params, searchParams }: Props) 
         </div>
         {query.saved ? <div className="success">頁面內容已儲存。</div> : null}
         {query.error ? <div className="notice">儲存失敗：{query.error}</div> : null}
-        <SitePageForm action={updateSitePageAction.bind(null, id)} page={page} mediaAssets={mediaResult.data} />
+        <SitePageForm page={page} mediaAssets={mediaResult.data} />
       </div>
     </main>
   );

@@ -1,4 +1,4 @@
-import type { HomeCampaign, SitePage, SitePageKey } from "@/lib/home-cms/types";
+import type { HomeCampaign, KnownSitePageKey, SitePage, SitePageKey } from "@/lib/home-cms/types";
 
 type CampaignForRender = HomeCampaign & { media_public_url?: string | null };
 type PageForRender = SitePage & { media_public_url?: string | null };
@@ -128,13 +128,17 @@ function renderGenericCmsSection(page: PageForRender, id: SitePageKey, eyebrow: 
       </section>`;
 }
 
-const pageEyebrows: Record<SitePageKey, string> = {
+const pageEyebrows: Record<KnownSitePageKey, string> = {
   philosophy: "Service Philosophy",
   services: "Services",
   process: "Buying Process",
   reminders: "Life Notes",
   team: "Contact"
 };
+
+function isKnownSitePageKey(key: SitePageKey): key is KnownSitePageKey {
+  return ["philosophy", "services", "process", "reminders", "team"].includes(key);
+}
 
 export function renderHomeCmsHtml(
   staticHtml: string,
@@ -148,6 +152,7 @@ export function renderHomeCmsHtml(
   }
 
   for (const [key, page] of pages) {
+    if (!isKnownSitePageKey(key)) continue;
     const regex = sectionRegex(key);
     if (!regex.test(html)) continue;
     html = html.replace(regex, renderGenericCmsSection(page, key, pageEyebrows[key]));

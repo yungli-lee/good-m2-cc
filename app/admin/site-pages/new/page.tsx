@@ -3,7 +3,6 @@ import { SitePageForm } from "@/components/admin/site-page-form";
 import { requireRole } from "@/lib/auth";
 import { listAdminMediaAssets } from "@/lib/media";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { createSitePageAction } from "../actions";
 
 export const runtime = "edge";
 
@@ -28,7 +27,7 @@ export default async function NewSitePagePage({ searchParams }: Props) {
           <Link className="button ghost" href="/admin/site-pages">返回列表</Link>
         </div>
         {params.error ? <div className="notice">新增失敗：{params.error}</div> : null}
-        <SitePageForm action={createSitePageAction} mediaAssets={mediaResult.data} />
+        <SitePageForm mediaAssets={mediaResult.data} />
       </div>
     </main>
   );
