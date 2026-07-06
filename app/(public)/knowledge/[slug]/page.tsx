@@ -79,7 +79,7 @@ function parseTable(block: string) {
 
 function parseArticleBody(body?: string | null) {
   const blocks = String(body || "")
-    .split(/\n{2,}/)
+    .split(/\r?\n[\t ]*\r?\n/)
     .map((block) => block.trim())
     .filter(Boolean);
 
