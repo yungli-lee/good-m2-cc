@@ -224,6 +224,7 @@ export default async function KnowledgeDetailPage({ params }: Props) {
   const reviewedDate = formatDate(item.last_reviewed_at);
   const articleUrl = canonicalFor(item);
   const articleBlocks = parseArticleBody(item.body);
+  const imageFit = item.image_fit === "contain" ? "contain" : "cover";
   const tocItems: TocItem[] = articleBlocks
     .filter((block): block is TocHeadingBlock => block.type === "heading" && (block.level === 2 || block.level === 3))
     .map((block) => ({ id: block.id, text: block.text, level: block.level }));
@@ -246,7 +247,7 @@ export default async function KnowledgeDetailPage({ params }: Props) {
                   <a className="button ghost" href={`https://social-plugins.line.me/lineit/share?url=${shareUrl}`} target="_blank" rel="noreferrer">LINE 分享</a>
                   <a className="button ghost" href={`https://www.facebook.com/sharer/sharer.php?u=${shareUrl}&quote=${shareText}`} target="_blank" rel="noreferrer">Facebook 分享</a>
                 </div>
-                {item.cover_image_url ? <img className="knowledge-hero-image" src={item.cover_image_url} alt={item.title} /> : null}
+                {item.cover_image_url ? <img className={`knowledge-hero-image is-${imageFit}`} src={item.cover_image_url} alt={item.title} /> : null}
               </header>
               <div className="knowledge-body">
                 {renderArticleBlocks(articleBlocks)}

@@ -38,6 +38,16 @@ function revalidateKnowledgePaths(id: string, oldSlug?: string | null, newSlug?:
   if (newSlug && newSlug !== oldSlug) revalidatePath(`/knowledge/${newSlug}`);
 }
 
+function isMissingImageFitColumn(error: { code?: string; message?: string } | null) {
+  return Boolean(error && error.code === "PGRST204" && String(error.message || "").includes("image_fit"));
+}
+
+function withoutImageFit<T extends Record<string, unknown>>(payload: T) {
+  const next = { ...payload };
+  delete next.image_fit;
+  return next;
+}
+
 async function resolveUniqueContentSlug(baseSlug: string, excludeId?: string) {
   const supabase = await createSupabaseServerClient();
   let query = supabase
@@ -155,11 +165,21 @@ export async function POST(request: Request) {
     created_by: auth.current!.user.id
   };
 
-  const { data, error } = await supabase
+  let { data, error } = await supabase
     .from("content_items")
     .insert(payload)
     .select("*")
     .single();
+
+  if (isMissingImageFitColumn(error)) {
+    const retry = await supabase
+      .from("content_items")
+      .insert(withoutImageFit(payload))
+      .select("*")
+      .single();
+    data = retry.data;
+    error = retry.error;
+  }
 
   if (error) {
     console.error("knowledge_create_failed", { code: error.code, message: error.message });

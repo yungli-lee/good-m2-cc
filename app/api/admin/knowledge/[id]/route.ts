@@ -45,6 +45,16 @@ function revalidateKnowledgePaths(id: string, oldSlug?: string | null, newSlug?:
   if (newSlug && newSlug !== oldSlug) revalidatePath(`/knowledge/${newSlug}`);
 }
 
+function isMissingImageFitColumn(error: { code?: string; message?: string } | null) {
+  return Boolean(error && error.code === "PGRST204" && String(error.message || "").includes("image_fit"));
+}
+
+function withoutImageFit<T extends Record<string, unknown>>(payload: T) {
+  const next = { ...payload };
+  delete next.image_fit;
+  return next;
+}
+
 async function resolveUniqueContentSlug(baseSlug: string, excludeId?: string) {
   const supabase = await createSupabaseServerClient();
   let query = supabase
@@ -164,13 +174,26 @@ export async function PATCH(request: Request, { params }: Props) {
   const slug = await resolveUniqueContentSlug(basePayload.slug, id);
   const payload = { ...basePayload, slug, canonical_url: `/knowledge/${slug}` };
 
-  const { data, error, count } = await supabase
+  let { data, error, count } = await supabase
     .from("content_items")
     .update(payload, { count: "exact" })
     .eq("id", id)
     .eq("content_type", "knowledge")
     .select("*")
     .maybeSingle();
+
+  if (isMissingImageFitColumn(error)) {
+    const retry = await supabase
+      .from("content_items")
+      .update(withoutImageFit(payload), { count: "exact" })
+      .eq("id", id)
+      .eq("content_type", "knowledge")
+      .select("*")
+      .maybeSingle();
+    data = retry.data;
+    error = retry.error;
+    count = retry.count;
+  }
 
   if (error) {
     console.error("knowledge_update_failed", { code: error.code, message: error.message });

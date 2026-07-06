@@ -3,9 +3,9 @@
 import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import type { AdminRole } from "@/lib/auth";
-import { itemTagText, legalStatusValues } from "@/lib/content/schema";
+import { imageFitValues, itemTagText, legalStatusValues } from "@/lib/content/schema";
 import type { ContentCategory, ContentItem } from "@/lib/content/types";
-import { legalStatusLabels } from "@/lib/content/types";
+import { imageFitLabels, legalStatusLabels } from "@/lib/content/types";
 import { MediaPicker } from "@/components/admin/media-picker";
 import type { MediaLibraryAsset, MediaUsageType } from "@/lib/media";
 
@@ -57,8 +57,10 @@ export function KnowledgeForm({ categories, mediaAssets = [], item, role, disabl
   const [isDirty, setIsDirty] = useState(!item);
   const [saved, setSaved] = useState(Boolean(item));
   const initialCoverAsset = mediaAssets.find((asset) => asset.public_url === item?.cover_image_url) || null;
+  const selectedImageFit = item?.image_fit === "contain" ? "contain" : "cover";
   const [coverMediaId, setCoverMediaId] = useState(initialCoverAsset?.id || "");
   const [coverImageUrl, setCoverImageUrl] = useState(item?.cover_image_url || "");
+  const [coverImageFit, setCoverImageFit] = useState(selectedImageFit);
   const [inlineMediaIds, setInlineMediaIds] = useState<string[]>([]);
   const itemId = item?.id || null;
   const selectedLegalStatus = item?.legal_status || "";
@@ -93,7 +95,8 @@ export function KnowledgeForm({ categories, mediaAssets = [], item, role, disabl
     setError(null);
     setCoverMediaId(initialCoverAsset?.id || "");
     setCoverImageUrl(item?.cover_image_url || "");
-  }, [initialCoverAsset?.id, item?.cover_image_url, itemId]);
+    setCoverImageFit(selectedImageFit);
+  }, [initialCoverAsset?.id, item?.cover_image_url, itemId, selectedImageFit]);
 
   useEffect(() => {
     if (!toast) return;
@@ -218,6 +221,27 @@ export function KnowledgeForm({ categories, mediaAssets = [], item, role, disabl
           <input type="hidden" name="cover_image_url" value={coverImageUrl} />
           <input type="hidden" name="inline_media_ids" value={inlineMediaIds.join(",")} />
           <input type="hidden" name="cover_media_id" value={coverMediaId} />
+          <label className="field">
+            <span>封面顯示方式</span>
+            <select
+              className="select"
+              name="image_fit"
+              value={coverImageFit}
+              disabled={disabled || pending}
+              onChange={(event) => {
+                setCoverImageFit(event.target.value === "contain" ? "contain" : "cover");
+                markDirty();
+              }}
+            >
+              {imageFitValues.map((fit) => (
+                <option key={fit} value={fit}>{imageFitLabels[fit]}</option>
+              ))}
+            </select>
+          </label>
+          <div className="field">
+            <span>顯示提示</span>
+            <small className="muted">裁切填滿適合情境照片；完整顯示適合 Logo、截圖、QRCode 或不想裁切的圖片。</small>
+          </div>
           <div className="field full">
             <MediaPicker
               assets={mediaAssets}
@@ -231,7 +255,7 @@ export function KnowledgeForm({ categories, mediaAssets = [], item, role, disabl
           </div>
           {coverImageUrl ? (
             <div className="field full">
-              <img className="knowledge-card-image" src={coverImageUrl} alt={item?.title || "知識封面預覽"} />
+              <img className={`knowledge-card-image is-${coverImageFit}`} src={coverImageUrl} alt={item?.title || "知識封面預覽"} />
             </div>
           ) : null}
           <div className="field full">

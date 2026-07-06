@@ -11,11 +11,12 @@ function formatKnowledgeDate(value?: string | null) {
 export function KnowledgeCard({ item }: { item: ContentItem }) {
   const category = item.content_categories?.name || "不動產知識";
   const date = formatKnowledgeDate(item.published_at || item.updated_at);
+  const imageFit = item.image_fit === "contain" ? "contain" : "cover";
 
   return (
     <article className="card knowledge-card">
       {item.cover_image_url ? (
-        <img className="knowledge-card-image" src={item.cover_image_url} alt={item.title} loading="lazy" />
+        <img className={`knowledge-card-image is-${imageFit}`} src={item.cover_image_url} alt={item.title} loading="lazy" />
       ) : null}
       <div className="card-body">
         <p className="knowledge-meta">{category}{date ? ` · ${date}` : ""}</p>
