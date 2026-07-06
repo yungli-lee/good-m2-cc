@@ -337,6 +337,7 @@ select {
 
 .knowledge-inline-image {
   width: 100%;
+  max-width: 100%;
   max-height: 520px;
   object-fit: contain;
   border-radius: 8px;
