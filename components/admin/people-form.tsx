@@ -2,7 +2,8 @@
 
 import { useActionState } from "react";
 import { personRoleNames, personSources, personStatuses } from "@/lib/people/constants";
-import type { PersonAssignee, PersonRoleName } from "@/lib/people/types";
+import { personRoleLabels } from "@/lib/people/labels";
+import type { PersonAssignee } from "@/lib/people/types";
 import type { PersonFormState } from "@/lib/people/schema";
 
 type PersonAction = (
@@ -24,14 +25,6 @@ const statusLabel: Record<string, string> = {
   active: "Active",
   inactive: "Inactive",
   archived: "Archived"
-};
-
-const roleLabel: Record<PersonRoleName, string> = {
-  buyer: "Buyer",
-  seller: "Seller",
-  landlord: "Landlord",
-  investor: "Investor",
-  broker: "Broker"
 };
 
 function FieldError({ message }: { message?: string }) {
@@ -131,7 +124,7 @@ export function PeopleForm({
           {personRoleNames.map((role) => (
             <label key={role} className="admin-users-checkbox">
               <input name="roles" type="checkbox" value={role} defaultChecked={selectedRoles.has(role)} />
-              <span>{roleLabel[role]}</span>
+              <span>{personRoleLabels[role]}</span>
             </label>
           ))}
         </div>

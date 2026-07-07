@@ -4,6 +4,7 @@ import { canDeleteKnowledge, canEditKnowledge, canPublishKnowledge } from "@/lib
 import { listKnowledgeItems } from "@/lib/content/queries";
 import type { KnowledgeListFilter } from "@/lib/content/queries";
 import { contentStatusLabels, legalStatusLabels } from "@/lib/content/types";
+import { formatTaipeiDate } from "@/lib/format";
 import {
   archiveKnowledgeAction,
   publishKnowledgeAction,
@@ -43,13 +44,6 @@ function filterHref(filter: KnowledgeListFilter, q: string) {
   if (q) params.set("q", q);
   if (filter !== "all") params.set("filter", filter);
   return `/admin/knowledge${params.toString() ? `?${params.toString()}` : ""}`;
-}
-
-function formatDate(value?: string | null) {
-  if (!value) return "-";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "-";
-  return new Intl.DateTimeFormat("zh-TW", { dateStyle: "medium" }).format(date);
 }
 
 export default async function AdminKnowledgePage({ searchParams }: Props) {
@@ -119,8 +113,8 @@ export default async function AdminKnowledgePage({ searchParams }: Props) {
                   <td>{contentStatusLabels[item.status]}</td>
                   <td>{item.content_categories?.name || "未分類"}</td>
                   <td>{item.legal_status ? legalStatusLabels[item.legal_status] : "一般內容"}</td>
-                  <td>{formatDate(item.next_review_at)}</td>
-                  <td>{formatDate(item.updated_at)}</td>
+                  <td>{formatTaipeiDate(item.next_review_at)}</td>
+                  <td>{formatTaipeiDate(item.updated_at)}</td>
                   <td>
                     <div className="admin-actions">
                       {canEditKnowledge(current.profile.role, item) ? <Link className="button ghost" href={`/admin/knowledge/${item.id}/edit`}>編輯</Link> : null}
@@ -162,4 +156,3 @@ export default async function AdminKnowledgePage({ searchParams }: Props) {
     </main>
   );
 }
-

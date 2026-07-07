@@ -2,6 +2,7 @@ import Link from "next/link";
 import { requireRole } from "@/lib/auth";
 import { formatDateTime } from "@/lib/format";
 import { personRoleNames, personSources, personStatuses } from "@/lib/people/constants";
+import { personRoleLabels } from "@/lib/people/labels";
 import {
   getPeopleSummary,
   listAdminPeople,
@@ -25,14 +26,6 @@ type Props = {
     error?: string;
     saved?: string;
   }>;
-};
-
-const roleLabel: Record<PersonRoleName, string> = {
-  buyer: "Buyer",
-  seller: "Seller",
-  landlord: "Landlord",
-  investor: "Investor",
-  broker: "Broker"
 };
 
 const sourceLabel: Record<string, string> = {
@@ -92,7 +85,7 @@ function roleBadges(roles: PersonRoleName[]) {
   return (
     <div className="actions">
       {roles.map((role) => (
-        <span key={role} className="admin-users-badge is-active">{roleLabel[role]}</span>
+        <span key={role} className="admin-users-badge is-active">{personRoleLabels[role]}</span>
       ))}
     </div>
   );
@@ -165,7 +158,7 @@ export default async function AdminPeoplePage({ searchParams }: Props) {
             <span>角色</span>
             <select className="select" name="role" defaultValue={role || "all"}>
               <option value="all">全部</option>
-              {personRoleNames.map((item) => <option key={item} value={item}>{roleLabel[item]}</option>)}
+              {personRoleNames.map((item) => <option key={item} value={item}>{personRoleLabels[item]}</option>)}
             </select>
           </label>
           <label className="field">
