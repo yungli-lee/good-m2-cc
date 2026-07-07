@@ -1,4 +1,6 @@
 import { NextResponse } from "next/server";
+import { recordAuditLog } from "@/lib/audit/audit-log";
+import { sendInquiryNotification } from "@/lib/email/inquiry";
 import { inquirySchema } from "@/lib/inquiries/schema";
 import { getRequestMeta } from "@/lib/security/request";
 import { createSupabaseAdminClient } from "@/lib/supabase/server";
@@ -137,7 +139,7 @@ export async function POST(request: Request) {
       return jsonError("blocklist_rejected", 400);
     }
 
-    const { error } = await supabase.from("inquiries").insert({
+    const { data: inquiry, error } = await supabase.from("inquiries").insert({
       form_type: input.form_type,
       name: input.name,
       phone: input.phone,
@@ -149,10 +151,53 @@ export async function POST(request: Request) {
       turnstile_verified: turnstile.ok,
       ip_hash: ipHash,
       user_agent: userAgent.slice(0, 500)
-    });
+    }).select("id").single();
     if (error) return jsonError("supabase_insert_error", 500);
 
-    return NextResponse.json({ ok: true });
+    await recordAuditLog({
+      action: "inquiry_create",
+      resourceType: "inquiry",
+      resourceId: inquiry.id,
+      afterData: {
+        form_type: input.form_type,
+        name: input.name,
+        phone: input.phone,
+        email: input.email || null,
+        property_id: input.property_id || null,
+        source_page: input.source_page || null,
+        status: "new"
+      },
+      result: "success"
+    });
+
+    const emailResult = await sendInquiryNotification({
+      id: inquiry.id,
+      formType: input.form_type,
+      name: input.name,
+      phone: input.phone,
+      email: input.email || null,
+      message: input.message,
+      propertyId: input.property_id || null,
+      sourcePage: input.source_page || null
+    });
+
+    await recordAuditLog({
+      action: emailResult.ok ? "inquiry_email_sent" : "inquiry_email_failed",
+      resourceType: "inquiry",
+      resourceId: inquiry.id,
+      afterData: {
+        provider: "Resend",
+        delivery_id: emailResult.id || null
+      },
+      result: emailResult.ok ? "success" : "failed",
+      reason: emailResult.ok ? null : emailResult.safeMessage || emailResult.errorCode || "email_send_failed",
+      metadata: {
+        status: emailResult.status || null,
+        error_code: emailResult.errorCode || null
+      }
+    });
+
+    return NextResponse.json({ ok: true, email_sent: emailResult.ok });
   } catch {
     return jsonError("server_error", 500, "服務暫時無法使用");
   }

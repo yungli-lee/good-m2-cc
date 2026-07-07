@@ -54,11 +54,12 @@ Production 啟用表單前必須確認：
 | `IP_HASH_SECRET` | Required for stable local hash | Required | Required | IP hash for inquiries / anti-abuse | 不可 commit；未設定時程式會用 development fallback，不適合 production |
 | `TURNSTILE_SECRET_KEY` | Do not set for Phase 1 unless widget exists | Do not set for Phase 1 unless widget exists | Required only after widget is live | Turnstile server verification | 設定後若首頁沒有 widget token，所有送出會失敗 |
 | `NEXT_PUBLIC_TURNSTILE_SITE_KEY` | Planned | Planned | Required with widget | Turnstile frontend widget | Phase 1 尚未加入 widget |
-| `RESEND_API_KEY` | Optional in Phase 1 | Optional in Phase 1 | Required after notification integration | Resend notification email | 新 API 尚未整合 Resend |
-| `RESEND_FROM_EMAIL` | Planned alias | Planned alias | Planned alias | Future Resend sender | 目前 `.env.example` 使用 `CONTACT_FROM_EMAIL` |
-| `RESEND_TO_EMAIL` | Planned alias | Planned alias | Planned alias | Future Resend recipient | 目前 `.env.example` 使用 `CONTACT_NOTIFY_TO` |
-| `CONTACT_FROM_EMAIL` | Optional in Phase 1 | Optional in Phase 1 | Required after notification integration | Current documented sender env | `.env.example` currently uses this name |
-| `CONTACT_NOTIFY_TO` | Optional in Phase 1 | Optional in Phase 1 | Required after notification integration | Current documented recipient env | `.env.example` currently uses this name |
+| `RESEND_API_KEY` | Required for email notification | Required for email notification | Required | Resend notification email | Server-side only；不可公開 |
+| `RESEND_FROM_EMAIL` | Preferred sender | Preferred sender | Preferred sender | Resend sender | 優先讀取；需使用 Resend 已驗證網域 |
+| `INQUIRY_NOTIFY_EMAIL` | Preferred recipient | Preferred recipient | Preferred recipient | Inquiry notification recipient | 優先讀取；Preview/Staging 建議使用測試收件人 |
+| `CONTACT_FROM_EMAIL` | Fallback sender | Fallback sender | Fallback sender | Backward compatibility | 僅作舊環境變數 fallback |
+| `CONTACT_NOTIFY_TO` | Fallback recipient | Fallback recipient | Fallback recipient | Backward compatibility | 僅作舊環境變數 fallback |
+| `NEXT_PUBLIC_SITE_URL` | Required for admin links in email | Required | Required | Email admin link / canonical base URL | 例：`https://good.m2.cc` |
 
 ## Turnstile Env Strategy
 
@@ -83,15 +84,23 @@ Supabase env 分三層：
 
 ## Resend Env Strategy
 
-Phase 1 不整合 Resend。
+`/api/public/inquiries` 會在 inquiry 寫入成功後寄送 Resend 通知信。寄信失敗不會回滾 inquiry，但會寫入 `audit_logs`：
 
-目前狀態：
+- `inquiry_create`
+- `inquiry_email_sent`
+- `inquiry_email_failed`
 
-- 舊 Cloudflare Function `/api/service-request` 使用 `RESEND_API_KEY`、`NOTIFY_EMAIL_FROM`、`NOTIFY_EMAIL_TO`。
-- `.env.example` 文件目前列出 `RESEND_API_KEY`、`CONTACT_FROM_EMAIL`、`CONTACT_FROM_NAME`、`CONTACT_NOTIFY_TO`。
-- 新 `/api/public/inquiries` 尚未寄通知信。
+後台 `/admin/system/email` 可檢查目前 Email provider、From email、Notify email、`RESEND_API_KEY` 是否已設定，並可寄送測試信。測試信成功 / 失敗會寫入：
 
-後續正式整合前，需先決定標準命名。建議新 API 使用文件化名稱，並避免同時維護多組語意相同的 env。
+- `email_test_sent`
+- `email_test_failed`
+
+環境變數讀取順序：
+
+1. Sender：`RESEND_FROM_EMAIL`，fallback `CONTACT_FROM_EMAIL`
+2. Recipient：`INQUIRY_NOTIFY_EMAIL`，fallback `CONTACT_NOTIFY_TO`
+
+Production 的 From email 必須使用 Resend 已驗證網域，例如 `service@m2.cc`。Preview/Staging 建議使用測試收件人，避免測試詢問單寄到正式業務收件箱。
 
 ## Do Not Commit `.env.local`
 
@@ -132,5 +141,4 @@ Phase 1 不整合 Resend。
 - Preview 需要補 `SUPABASE_SERVICE_ROLE_KEY` 與 `IP_HASH_SECRET`。
 - Turnstile production 強制驗證尚未完成。
 - Rate limit 尚未實作。
-- Resend 尚未整合新 API。
-
+- Resend 已整合 `/api/public/inquiries`，但各環境仍需確認 Cloudflare Pages env 與 Resend domain verification。
