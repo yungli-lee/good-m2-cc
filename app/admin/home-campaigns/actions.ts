@@ -14,7 +14,7 @@ function actorEmail(current: Awaited<ReturnType<typeof requireRole>>) {
 }
 
 function actionForStatus(status: string, fallback: "home_campaign_create" | "home_campaign_update", isReorder = false) {
-  if (isReorder) return "home_campaign_reorder";
+  if (isReorder) return "home_campaign_update";
   if (status === "published") return "home_campaign_publish";
   if (status === "archived") return "home_campaign_archive";
   return fallback;

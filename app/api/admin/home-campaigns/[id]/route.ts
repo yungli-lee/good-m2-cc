@@ -18,7 +18,7 @@ function actorEmail(current: Awaited<ReturnType<typeof requireRole>>) {
 }
 
 function actionForStatus(status: string, isReorder = false) {
-  if (isReorder) return "home_campaign_reorder";
+  if (isReorder) return "home_campaign_update";
   if (status === "published") return "home_campaign_publish";
   if (status === "archived") return "home_campaign_archive";
   return "home_campaign_update";

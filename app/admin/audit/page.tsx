@@ -112,6 +112,17 @@ function textValue(value: unknown) {
   return typeof value === "string" && value.trim() ? value.trim() : null;
 }
 
+function isHomeCampaignReorder(log: AuditLogRow) {
+  if (log.resource_type !== "home_campaign" || log.action !== "home_campaign_update") return false;
+  const before = metadataObject(log.before_data);
+  const after = metadataObject(log.after_data);
+  return before.sort_order !== undefined && after.sort_order !== undefined && before.sort_order !== after.sort_order;
+}
+
+function displayAction(log: AuditLogRow) {
+  return isHomeCampaignReorder(log) ? "home_campaign_reorder" : log.action;
+}
+
 function resourceLabel(log: AuditLogRow) {
   if (log.resource_type !== "content_item") {
     return {
@@ -149,14 +160,20 @@ export default async function AdminAuditPage({ searchParams }: Props) {
   if (from) query = query.gte("created_at", `${from}T00:00:00+08:00`);
   if (to) query = query.lte("created_at", `${to}T23:59:59+08:00`);
   if (actor) query = query.ilike("user_email", `%${actor}%`);
-  if (action) query = query.eq("action", action);
+  if (action === "home_campaign_reorder") {
+    query = query.eq("action", "home_campaign_update").eq("resource_type", "home_campaign");
+  } else if (action) {
+    query = query.eq("action", action);
+  }
   if (resourceType) query = query.eq("resource_type", resourceType);
   if (result && resultOptions.includes(result)) query = query.eq("result", result);
 
   const fromRow = (currentPage - 1) * pageSize;
   const toRow = fromRow + pageSize - 1;
   const { data, error, count } = await query.range(fromRow, toRow);
-  const logs = (data || []) as AuditLogRow[];
+  const logs = ((data || []) as AuditLogRow[]).filter((log) => (
+    action === "home_campaign_reorder" ? isHomeCampaignReorder(log) : true
+  ));
   const total = count || 0;
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
 
@@ -234,7 +251,7 @@ export default async function AdminAuditPage({ searchParams }: Props) {
                       <strong>{log.user_email || "-"}</strong>
                       <div className="muted">{log.actor_role || "-"}</div>
                     </td>
-                    <td>{log.action}</td>
+                    <td>{displayAction(log)}</td>
                     <td>
                       <strong>{resource.title}</strong>
                       <div className="muted">{resource.detail}</div>
@@ -266,7 +283,7 @@ export default async function AdminAuditPage({ searchParams }: Props) {
         <div className="audit-details">
           {logs.map((log) => (
             <details className="card" key={`${log.id}-details`}>
-              <summary>{formatTaipeiDateTime(log.created_at)} / {log.action} / {log.resource_type}</summary>
+              <summary>{formatTaipeiDateTime(log.created_at)} / {displayAction(log)} / {log.resource_type}</summary>
               <div className="card-body audit-detail-grid">
                 <JsonBlock label="Before" value={log.before_data} />
                 <JsonBlock label="After" value={log.after_data} />
