@@ -20,6 +20,17 @@ function jsonError(code: string, status: number, error = "送出失敗，請稍�
   return NextResponse.json({ error, code, ...details }, { status });
 }
 
+function safeErrorSummary(error: unknown) {
+  if (!error || typeof error !== "object") return { message: String(error || "unknown") };
+  const record = error as Record<string, unknown>;
+  return {
+    name: typeof record.name === "string" ? record.name : undefined,
+    message: typeof record.message === "string" ? record.message.slice(0, 240) : undefined,
+    code: typeof record.code === "string" ? record.code : undefined,
+    status: typeof record.status === "number" ? record.status : undefined
+  };
+}
+
 function validationFieldErrors(issues: Array<{ path: Array<string | number>; message: string }>) {
   return issues.reduce<Partial<Record<FieldErrorKey, string>>>((errors, issue) => {
     const field = issue.path[0];
@@ -50,18 +61,21 @@ export async function POST(request: Request) {
     const parsed = inquirySchema.safeParse(body);
 
     if (!parsed.success) {
+      console.info("[public_inquiries_validate_failed]", { issue_count: parsed.error.issues.length });
       return jsonError("validation_error", 422, "送出資料格式不正確", {
         field_errors: validationFieldErrors(parsed.error.issues)
       });
     }
 
     const input = parsed.data;
+    console.info("[public_inquiries_validate_ok]", { form_type: input.form_type, has_property_id: Boolean(input.property_id) });
     const { ipHash, userAgent } = await getRequestMeta();
 
     let supabase: ReturnType<typeof createSupabaseAdminClient>;
     try {
       supabase = createSupabaseAdminClient();
-    } catch {
+    } catch (error) {
+      console.error("[public_inquiries_supabase_client_failed]", safeErrorSummary(error));
       return jsonError("missing_env", 500, "服務暫時無法使用");
     }
 
@@ -73,16 +87,20 @@ export async function POST(request: Request) {
         ip_hash: ipHash,
         user_agent: userAgent.slice(0, 500)
       });
+      if (error) console.error("[public_inquiries_honeypot_insert_failed]", safeErrorSummary(error));
       if (error) return jsonError("spam_insert_error", 500);
+      console.info("[public_inquiries_honeypot_rejected]", { form_type: input.form_type });
       return jsonError("honeypot_rejected", 400);
     }
 
     let turnstile: Awaited<ReturnType<typeof verifyTurnstile>>;
     try {
       turnstile = await verifyTurnstile(input.turnstile_token);
-    } catch {
+    } catch (error) {
+      console.error("[public_inquiries_turnstile_failed]", safeErrorSummary(error));
       return jsonError("turnstile_error", 502);
     }
+    console.info("[public_inquiries_turnstile_checked]", { ok: turnstile.ok, skipped: turnstile.skipped });
 
     if (!turnstile.ok) {
       const { error } = await supabase.from("inquiries").insert({
@@ -99,7 +117,9 @@ export async function POST(request: Request) {
         ip_hash: ipHash,
         user_agent: userAgent.slice(0, 500)
       });
+      if (error) console.error("[public_inquiries_turnstile_insert_failed]", safeErrorSummary(error));
       if (error) return jsonError("spam_insert_error", 500);
+      console.info("[public_inquiries_turnstile_rejected]", { form_type: input.form_type });
       return jsonError("turnstile_failed", 400);
     }
 
@@ -108,7 +128,11 @@ export async function POST(request: Request) {
       .select("type,value")
       .eq("is_active", true)
       .is("deleted_at", null);
-    if (blocklistError) return jsonError("blocklist_error", 500);
+    if (blocklistError) {
+      console.error("[public_inquiries_blocklist_failed]", safeErrorSummary(blocklistError));
+      return jsonError("blocklist_error", 500);
+    }
+    console.info("[public_inquiries_blocklist_checked]", { rule_count: blocklist?.length || 0 });
 
     const email = (input.email || "").toLowerCase();
     const message = input.message.toLowerCase();
@@ -135,10 +159,13 @@ export async function POST(request: Request) {
         ip_hash: ipHash,
         user_agent: userAgent.slice(0, 500)
       });
+      if (error) console.error("[public_inquiries_blocked_insert_failed]", safeErrorSummary(error));
       if (error) return jsonError("spam_insert_error", 500);
+      console.info("[public_inquiries_blocklist_rejected]", { form_type: input.form_type });
       return jsonError("blocklist_rejected", 400);
     }
 
+    console.info("[public_inquiries_insert_start]", { form_type: input.form_type, has_property_id: Boolean(input.property_id) });
     const { data: inquiry, error } = await supabase.from("inquiries").insert({
       form_type: input.form_type,
       name: input.name,
@@ -152,53 +179,104 @@ export async function POST(request: Request) {
       ip_hash: ipHash,
       user_agent: userAgent.slice(0, 500)
     }).select("id").single();
-    if (error) return jsonError("supabase_insert_error", 500);
+    if (error) {
+      console.error("[inquiry_insert_failed]", safeErrorSummary(error));
+      return NextResponse.json({ ok: false, error: "送出失敗，請稍後再試。", code: "inquiry_failed" }, { status: 500 });
+    }
+    console.info("[public_inquiries_insert_ok]", { inquiry_id: inquiry.id });
 
-    await recordAuditLog({
-      action: "inquiry_create",
-      resourceType: "inquiry",
-      resourceId: inquiry.id,
-      afterData: {
-        form_type: input.form_type,
+    try {
+      console.info("[public_inquiries_audit_start]", { action: "inquiry_create", inquiry_id: inquiry.id });
+      await recordAuditLog({
+        action: "inquiry_create",
+        resourceType: "inquiry",
+        resourceId: inquiry.id,
+        afterData: {
+          form_type: input.form_type,
+          name: input.name,
+          phone: input.phone,
+          email: input.email || null,
+          property_id: input.property_id || null,
+          source_page: input.source_page || null,
+          status: "new"
+        },
+        result: "success"
+      });
+      console.info("[public_inquiries_audit_ok]", { action: "inquiry_create", inquiry_id: inquiry.id });
+    } catch (auditError) {
+      console.error("[public_inquiries_audit_failed]", {
+        action: "inquiry_create",
+        inquiry_id: inquiry.id,
+        error: safeErrorSummary(auditError)
+      });
+    }
+
+    let emailResult: Awaited<ReturnType<typeof sendInquiryNotification>>;
+    try {
+      console.info("[public_inquiries_email_start]", { inquiry_id: inquiry.id });
+      emailResult = await sendInquiryNotification({
+        id: inquiry.id,
+        formType: input.form_type,
         name: input.name,
         phone: input.phone,
         email: input.email || null,
-        property_id: input.property_id || null,
-        source_page: input.source_page || null,
-        status: "new"
-      },
-      result: "success"
-    });
+        message: input.message,
+        propertyId: input.property_id || null,
+        sourcePage: input.source_page || null
+      });
+    } catch (emailError) {
+      emailResult = {
+        ok: false,
+        errorCode: "email_send_unhandled",
+        safeMessage: "Unhandled email send failure"
+      };
+      console.error("[inquiry_email_failed]", {
+        inquiry_id: inquiry.id,
+        error: safeErrorSummary(emailError)
+      });
+    }
 
-    const emailResult = await sendInquiryNotification({
-      id: inquiry.id,
-      formType: input.form_type,
-      name: input.name,
-      phone: input.phone,
-      email: input.email || null,
-      message: input.message,
-      propertyId: input.property_id || null,
-      sourcePage: input.source_page || null
-    });
-
-    await recordAuditLog({
-      action: emailResult.ok ? "inquiry_email_sent" : "inquiry_email_failed",
-      resourceType: "inquiry",
-      resourceId: inquiry.id,
-      afterData: {
-        provider: "Resend",
-        delivery_id: emailResult.id || null
-      },
-      result: emailResult.ok ? "success" : "failed",
-      reason: emailResult.ok ? null : emailResult.safeMessage || emailResult.errorCode || "email_send_failed",
-      metadata: {
+    if (emailResult.ok) {
+      console.info("[public_inquiries_email_ok]", { inquiry_id: inquiry.id, delivery_id: emailResult.id || null });
+    } else {
+      console.error("[inquiry_email_failed]", {
+        inquiry_id: inquiry.id,
+        code: emailResult.errorCode || null,
         status: emailResult.status || null,
-        error_code: emailResult.errorCode || null
-      }
-    });
+        message: emailResult.safeMessage || "email_send_failed"
+      });
+    }
+
+    try {
+      const action = emailResult.ok ? "inquiry_email_sent" : "inquiry_email_failed";
+      console.info("[public_inquiries_audit_start]", { action, inquiry_id: inquiry.id });
+      await recordAuditLog({
+        action,
+        resourceType: "inquiry",
+        resourceId: inquiry.id,
+        afterData: {
+          provider: "Resend",
+          delivery_id: emailResult.id || null
+        },
+        result: emailResult.ok ? "success" : "failed",
+        reason: emailResult.ok ? null : emailResult.safeMessage || emailResult.errorCode || "email_send_failed",
+        metadata: {
+          status: emailResult.status || null,
+          error_code: emailResult.errorCode || null
+        }
+      });
+      console.info("[public_inquiries_audit_ok]", { action, inquiry_id: inquiry.id });
+    } catch (auditError) {
+      console.error("[public_inquiries_audit_failed]", {
+        action: emailResult.ok ? "inquiry_email_sent" : "inquiry_email_failed",
+        inquiry_id: inquiry.id,
+        error: safeErrorSummary(auditError)
+      });
+    }
 
     return NextResponse.json({ ok: true, email_sent: emailResult.ok });
-  } catch {
-    return jsonError("server_error", 500, "服務暫時無法使用");
+  } catch (error) {
+    console.error("[public_inquiries_failed]", safeErrorSummary(error));
+    return NextResponse.json({ ok: false, error: "送出失敗，請稍後再試。", code: "inquiry_failed" }, { status: 500 });
   }
 }
