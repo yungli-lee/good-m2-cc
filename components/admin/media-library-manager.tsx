@@ -12,6 +12,7 @@ import {
   mediaUsageTypeLabels,
   mediaUsageTypes
 } from "@/lib/media";
+import { formatTaipeiDateTime } from "@/lib/format";
 import type { MediaCategoryFilter, MediaLibraryAsset, MediaSort, MediaStatus, MediaUsageType } from "@/lib/media";
 
 type Props = {
@@ -23,13 +24,6 @@ type Props = {
     sort: MediaSort;
   };
 };
-
-function formatDate(value?: string | null) {
-  if (!value) return "-";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "-";
-  return new Intl.DateTimeFormat("zh-TW", { dateStyle: "medium", timeStyle: "short" }).format(date);
-}
 
 function formatBytes(value?: number | null) {
   if (!value && value !== 0) return "-";
@@ -336,7 +330,7 @@ export function MediaLibraryManager({ assets, filters }: Props) {
                 <strong>{mediaName(asset)}</strong>
                 <span>{usageText(asset)} · {statusBadge(asset.status)}</span>
                 <span>{dimensions(asset)} · {formatBytes(asset.file_size)}</span>
-                <span>{formatDate(asset.created_at)}</span>
+                <span>{formatTaipeiDateTime(asset.created_at)}</span>
               </span>
             </button>
           ))}
@@ -367,7 +361,7 @@ export function MediaLibraryManager({ assets, filters }: Props) {
                 <div><dt>尺寸</dt><dd>{dimensions(selectedAsset)}</dd></div>
                 <div><dt>檔案大小</dt><dd>{formatBytes(selectedAsset.file_size)}</dd></div>
                 <div><dt>建立者</dt><dd>{createdByLabel(selectedAsset)}</dd></div>
-                <div><dt>建立時間</dt><dd>{formatDate(selectedAsset.created_at)}</dd></div>
+                <div><dt>建立時間</dt><dd>{formatTaipeiDateTime(selectedAsset.created_at)}</dd></div>
                 <div><dt>是否被引用</dt><dd>{selectedAsset.references.length ? "是" : "否"}</dd></div>
               </dl>
               {selectedAsset.references.length ? (

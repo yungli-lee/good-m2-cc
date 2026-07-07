@@ -4,21 +4,17 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireRole } from "@/lib/auth";
 import { recordAuditLog } from "@/lib/audit/audit-log";
+import { taipeiDateTimeLocalToUtcIso } from "@/lib/format";
 import { homeCampaignSchema, nullable, valuesFromFormData } from "@/lib/home-cms/schema";
 import { getHomeCampaign } from "@/lib/home-cms/queries";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-
-function normalizeDate(value: unknown) {
-  if (!value) return null;
-  const date = new Date(String(value));
-  return Number.isNaN(date.getTime()) ? null : date.toISOString();
-}
 
 function actorEmail(current: Awaited<ReturnType<typeof requireRole>>) {
   return current.user.email || current.profile.email || null;
 }
 
-function actionForStatus(status: string, fallback: "home_campaign_create" | "home_campaign_update") {
+function actionForStatus(status: string, fallback: "home_campaign_create" | "home_campaign_update", isReorder = false) {
+  if (isReorder) return "home_campaign_reorder";
   if (status === "published") return "home_campaign_publish";
   if (status === "archived") return "home_campaign_archive";
   return fallback;
@@ -42,8 +38,8 @@ export async function createHomeCampaignAction(formData: FormData) {
     cta_href: nullable(parsed.data.cta_href),
     secondary_cta_label: nullable(parsed.data.secondary_cta_label),
     secondary_cta_href: nullable(parsed.data.secondary_cta_href),
-    starts_at: normalizeDate(parsed.data.starts_at),
-    ends_at: normalizeDate(parsed.data.ends_at),
+    starts_at: taipeiDateTimeLocalToUtcIso(parsed.data.starts_at),
+    ends_at: taipeiDateTimeLocalToUtcIso(parsed.data.ends_at),
     archived_at: parsed.data.status === "archived" ? new Date().toISOString() : null,
     created_by: current.user.id,
     updated_by: current.user.id
@@ -87,8 +83,8 @@ export async function updateHomeCampaignAction(id: string, formData: FormData) {
     cta_href: nullable(parsed.data.cta_href),
     secondary_cta_label: nullable(parsed.data.secondary_cta_label),
     secondary_cta_href: nullable(parsed.data.secondary_cta_href),
-    starts_at: normalizeDate(parsed.data.starts_at),
-    ends_at: normalizeDate(parsed.data.ends_at),
+    starts_at: taipeiDateTimeLocalToUtcIso(parsed.data.starts_at),
+    ends_at: taipeiDateTimeLocalToUtcIso(parsed.data.ends_at),
     archived_at: parsed.data.status === "archived" ? before.archived_at || new Date().toISOString() : null,
     updated_by: current.user.id
   };
@@ -98,7 +94,7 @@ export async function updateHomeCampaignAction(id: string, formData: FormData) {
   if (error) redirect(`/admin/home-campaigns/${id}/edit?error=${error.code || "update_failed"}`);
 
   await recordAuditLog({
-    action: actionForStatus(data.status, "home_campaign_update"),
+    action: actionForStatus(data.status, "home_campaign_update", before.sort_order !== data.sort_order),
     resourceType: "home_campaign",
     resourceId: id,
     beforeData: before,

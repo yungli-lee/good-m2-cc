@@ -2,19 +2,13 @@ import Link from "next/link";
 import { requireRole } from "@/lib/auth";
 import { cmsStatusLabels } from "@/lib/home-cms/types";
 import { listAdminHomeCampaigns } from "@/lib/home-cms/queries";
+import { formatTaipeiDateTime } from "@/lib/format";
 
 export const runtime = "edge";
 
 type Props = {
   searchParams: Promise<{ error?: string; saved?: string }>;
 };
-
-function formatDate(value?: string | null) {
-  if (!value) return "-";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "-";
-  return new Intl.DateTimeFormat("zh-TW", { dateStyle: "medium", timeStyle: "short" }).format(date);
-}
 
 export default async function AdminHomeCampaignsPage({ searchParams }: Props) {
   const params = await searchParams;
@@ -58,9 +52,9 @@ export default async function AdminHomeCampaignsPage({ searchParams }: Props) {
                   <td><strong>{campaign.title}</strong><br /><span className="muted">{campaign.subtitle || "-"}</span></td>
                   <td>{cmsStatusLabels[campaign.status]}</td>
                   <td>{campaign.sort_order}</td>
-                  <td>{formatDate(campaign.starts_at)}</td>
-                  <td>{formatDate(campaign.ends_at)}</td>
-                  <td>{formatDate(campaign.updated_at)}</td>
+                  <td>{formatTaipeiDateTime(campaign.starts_at)}</td>
+                  <td>{formatTaipeiDateTime(campaign.ends_at)}</td>
+                  <td>{formatTaipeiDateTime(campaign.updated_at)}</td>
                   <td><Link className="button ghost" href={`/admin/home-campaigns/${campaign.id}/edit`}>編輯</Link></td>
                 </tr>
               ))}

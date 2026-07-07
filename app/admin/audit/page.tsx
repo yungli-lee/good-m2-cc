@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { requireRole } from "@/lib/auth";
 import { maskAuditData } from "@/lib/audit/audit-log";
+import { formatTaipeiDateTime } from "@/lib/format";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export const runtime = "edge";
@@ -74,16 +75,17 @@ const actionOptions = [
   "property_cover_set",
   "inquiry_status_update",
   "inquiry_note_create",
-  "inquiry_mark_spam"
+  "inquiry_mark_spam",
+  "home_campaign_create",
+  "home_campaign_update",
+  "home_campaign_publish",
+  "home_campaign_archive",
+  "home_campaign_reorder",
+  "site_page_create",
+  "site_page_update",
+  "site_page_publish",
+  "site_page_archive"
 ];
-
-function formatDateTime(value: string) {
-  return new Intl.DateTimeFormat("zh-TW", {
-    dateStyle: "medium",
-    timeStyle: "short",
-    timeZone: "Asia/Taipei"
-  }).format(new Date(value));
-}
 
 function pageHref(filters: Awaited<Props["searchParams"]>, page: number) {
   const params = new URLSearchParams();
@@ -227,7 +229,7 @@ export default async function AdminAuditPage({ searchParams }: Props) {
                 const resource = resourceLabel(log);
                 return (
                   <tr key={log.id}>
-                    <td>{formatDateTime(log.created_at)}</td>
+                    <td>{formatTaipeiDateTime(log.created_at)}</td>
                     <td>
                       <strong>{log.user_email || "-"}</strong>
                       <div className="muted">{log.actor_role || "-"}</div>
@@ -264,7 +266,7 @@ export default async function AdminAuditPage({ searchParams }: Props) {
         <div className="audit-details">
           {logs.map((log) => (
             <details className="card" key={`${log.id}-details`}>
-              <summary>{formatDateTime(log.created_at)} / {log.action} / {log.resource_type}</summary>
+              <summary>{formatTaipeiDateTime(log.created_at)} / {log.action} / {log.resource_type}</summary>
               <div className="card-body audit-detail-grid">
                 <JsonBlock label="Before" value={log.before_data} />
                 <JsonBlock label="After" value={log.after_data} />

@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { MediaPicker } from "@/components/admin/media-picker";
+import { toTaipeiDateTimeLocal } from "@/lib/format";
 import type { HomeCampaign } from "@/lib/home-cms/types";
 import { cmsStatusLabels } from "@/lib/home-cms/types";
 import type { MediaLibraryAsset, MediaUsageType } from "@/lib/media";
@@ -19,13 +20,6 @@ type SaveResponse = {
 };
 
 const preferredUsageTypes: MediaUsageType[] = ["hero_banner", "general", "knowledge_hero"];
-
-function datetimeValue(value?: string | null) {
-  if (!value) return "";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "";
-  return date.toISOString().slice(0, 16);
-}
 
 export function HomeCampaignForm({ campaign, mediaAssets }: Props) {
   const router = useRouter();
@@ -82,11 +76,11 @@ export function HomeCampaignForm({ campaign, mediaAssets }: Props) {
       </label>
       <label className="field">
         <span>上架開始</span>
-        <input className="input" type="datetime-local" name="starts_at" defaultValue={datetimeValue(campaign?.starts_at)} disabled={pending} />
+        <input className="input" type="datetime-local" name="starts_at" defaultValue={toTaipeiDateTimeLocal(campaign?.starts_at)} disabled={pending} />
       </label>
       <label className="field">
         <span>上架結束</span>
-        <input className="input" type="datetime-local" name="ends_at" defaultValue={datetimeValue(campaign?.ends_at)} disabled={pending} />
+        <input className="input" type="datetime-local" name="ends_at" defaultValue={toTaipeiDateTimeLocal(campaign?.ends_at)} disabled={pending} />
       </label>
       <label className="field">
         <span>Eyebrow</span>

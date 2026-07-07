@@ -2,16 +2,11 @@ import { NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import { requireRole } from "@/lib/auth";
 import { recordAuditLog } from "@/lib/audit/audit-log";
+import { taipeiDateTimeLocalToUtcIso } from "@/lib/format";
 import { homeCampaignSchema, nullable, valuesFromFormData } from "@/lib/home-cms/schema";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export const runtime = "edge";
-
-function normalizeDate(value: unknown) {
-  if (!value) return null;
-  const date = new Date(String(value));
-  return Number.isNaN(date.getTime()) ? null : date.toISOString();
-}
 
 function actorEmail(current: Awaited<ReturnType<typeof requireRole>>) {
   return current.user.email || current.profile.email || null;
@@ -42,8 +37,8 @@ export async function POST(request: Request) {
     cta_href: nullable(parsed.data.cta_href),
     secondary_cta_label: nullable(parsed.data.secondary_cta_label),
     secondary_cta_href: nullable(parsed.data.secondary_cta_href),
-    starts_at: normalizeDate(parsed.data.starts_at),
-    ends_at: normalizeDate(parsed.data.ends_at),
+    starts_at: taipeiDateTimeLocalToUtcIso(parsed.data.starts_at),
+    ends_at: taipeiDateTimeLocalToUtcIso(parsed.data.ends_at),
     archived_at: parsed.data.status === "archived" ? new Date().toISOString() : null,
     created_by: current.user.id,
     updated_by: current.user.id

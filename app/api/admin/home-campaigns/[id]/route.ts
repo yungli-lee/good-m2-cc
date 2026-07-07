@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import { requireRole } from "@/lib/auth";
 import { recordAuditLog } from "@/lib/audit/audit-log";
+import { taipeiDateTimeLocalToUtcIso } from "@/lib/format";
 import { getHomeCampaign } from "@/lib/home-cms/queries";
 import { homeCampaignSchema, nullable, valuesFromFormData } from "@/lib/home-cms/schema";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -12,17 +13,12 @@ type Props = {
   params: Promise<{ id: string }>;
 };
 
-function normalizeDate(value: unknown) {
-  if (!value) return null;
-  const date = new Date(String(value));
-  return Number.isNaN(date.getTime()) ? null : date.toISOString();
-}
-
 function actorEmail(current: Awaited<ReturnType<typeof requireRole>>) {
   return current.user.email || current.profile.email || null;
 }
 
-function actionForStatus(status: string) {
+function actionForStatus(status: string, isReorder = false) {
+  if (isReorder) return "home_campaign_reorder";
   if (status === "published") return "home_campaign_publish";
   if (status === "archived") return "home_campaign_archive";
   return "home_campaign_update";
@@ -53,8 +49,8 @@ export async function PATCH(request: Request, { params }: Props) {
     cta_href: nullable(parsed.data.cta_href),
     secondary_cta_label: nullable(parsed.data.secondary_cta_label),
     secondary_cta_href: nullable(parsed.data.secondary_cta_href),
-    starts_at: normalizeDate(parsed.data.starts_at),
-    ends_at: normalizeDate(parsed.data.ends_at),
+    starts_at: taipeiDateTimeLocalToUtcIso(parsed.data.starts_at),
+    ends_at: taipeiDateTimeLocalToUtcIso(parsed.data.ends_at),
     archived_at: parsed.data.status === "archived" ? before.archived_at || new Date().toISOString() : null,
     updated_by: current.user.id
   };
@@ -75,7 +71,7 @@ export async function PATCH(request: Request, { params }: Props) {
   }
 
   await recordAuditLog({
-    action: actionForStatus(data.status),
+    action: actionForStatus(data.status, before.sort_order !== data.sort_order),
     resourceType: "home_campaign",
     resourceId: id,
     beforeData: before,

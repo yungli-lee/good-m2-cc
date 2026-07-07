@@ -2,19 +2,13 @@ import Link from "next/link";
 import { requireRole } from "@/lib/auth";
 import { cmsStatusLabels, sitePageLabel } from "@/lib/home-cms/types";
 import { listAdminSitePages } from "@/lib/home-cms/queries";
+import { formatTaipeiDateTime } from "@/lib/format";
 
 export const runtime = "edge";
 
 type Props = {
   searchParams: Promise<{ error?: string; saved?: string }>;
 };
-
-function formatDate(value?: string | null) {
-  if (!value) return "-";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "-";
-  return new Intl.DateTimeFormat("zh-TW", { dateStyle: "medium", timeStyle: "short" }).format(date);
-}
 
 export default async function AdminSitePagesPage({ searchParams }: Props) {
   const params = await searchParams;
@@ -58,7 +52,7 @@ export default async function AdminSitePagesPage({ searchParams }: Props) {
                   <td><strong>{page.title}</strong><br /><span className="muted">{page.subtitle || "-"}</span></td>
                   <td>{cmsStatusLabels[page.status]}</td>
                   <td>{page.sort_order}</td>
-                  <td>{formatDate(page.updated_at)}</td>
+                  <td>{formatTaipeiDateTime(page.updated_at)}</td>
                   <td><Link className="button ghost" href={`/admin/site-pages/${page.id}/edit`}>編輯</Link></td>
                 </tr>
               ))}
