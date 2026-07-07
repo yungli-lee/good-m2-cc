@@ -130,7 +130,7 @@ export async function POST(request: Request) {
       .is("deleted_at", null);
     if (blocklistError) {
       console.error("[public_inquiries_blocklist_failed]", safeErrorSummary(blocklistError));
-      return jsonError("blocklist_error", 500);
+      console.info("[public_inquiries_blocklist_fail_open]", { reason: "blocklist_query_failed" });
     }
     console.info("[public_inquiries_blocklist_checked]", { rule_count: blocklist?.length || 0 });
 
