@@ -4,6 +4,7 @@ import { sendInquiryNotification } from "@/lib/email/inquiry";
 import { inquirySchema } from "@/lib/inquiries/schema";
 import { getRequestMeta } from "@/lib/security/request";
 import { createSupabaseAdminClient } from "@/lib/supabase/server";
+import { getSupabaseEnv } from "@/lib/supabase/env";
 
 export const runtime = "edge";
 
@@ -73,6 +74,11 @@ export async function POST(request: Request) {
 
     let supabase: ReturnType<typeof createSupabaseAdminClient>;
     try {
+      const supabaseEnv = getSupabaseEnv();
+      console.info("[public_inquiries_admin_client_config]", {
+        has_url: Boolean(supabaseEnv.url),
+        has_service_role: Boolean(supabaseEnv.serviceRoleKey)
+      });
       supabase = createSupabaseAdminClient();
     } catch (error) {
       console.error("[public_inquiries_supabase_client_failed]", safeErrorSummary(error));

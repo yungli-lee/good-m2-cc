@@ -1,6 +1,7 @@
 type CloudflareRuntimeEnv = Partial<{
   NEXT_PUBLIC_SUPABASE_URL: string;
   NEXT_PUBLIC_SUPABASE_ANON_KEY: string;
+  SUPABASE_URL: string;
   SUPABASE_SERVICE_ROLE_KEY: string;
   CF_PAGES_BRANCH: string;
 }>;
@@ -30,9 +31,9 @@ function getSource(processUrl?: string, processAnon?: string, runtimeUrl?: strin
 
 export function getSupabaseEnv() {
   const { env: runtimeEnv } = getRequestContext() || {};
-  const processUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const processUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
   const processAnon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  const runtimeUrl = runtimeEnv?.NEXT_PUBLIC_SUPABASE_URL;
+  const runtimeUrl = runtimeEnv?.SUPABASE_URL || runtimeEnv?.NEXT_PUBLIC_SUPABASE_URL;
   const runtimeAnon = runtimeEnv?.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   const url = processUrl || runtimeUrl;
   const anonKey = processAnon || runtimeAnon;
@@ -47,10 +48,12 @@ export function getSupabaseEnv() {
 export function getSupabaseEnvDiagnostics() {
   const requestContext = getRequestContext();
   const { env: runtimeEnv } = requestContext || {};
-  const processUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const processUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
   const processAnon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  const runtimeUrl = runtimeEnv?.NEXT_PUBLIC_SUPABASE_URL;
+  const processServiceRole = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const runtimeUrl = runtimeEnv?.SUPABASE_URL || runtimeEnv?.NEXT_PUBLIC_SUPABASE_URL;
   const runtimeAnon = runtimeEnv?.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  const runtimeServiceRole = runtimeEnv?.SUPABASE_SERVICE_ROLE_KEY;
   const env = getSupabaseEnv();
   const source = getSource(processUrl, processAnon, runtimeUrl, runtimeAnon);
 
@@ -63,10 +66,16 @@ export function getSupabaseEnvDiagnostics() {
     source,
     hasUrl: !!env.url,
     hasAnon: !!env.anonKey,
+    hasServiceRole: !!env.serviceRoleKey,
     createSupabaseServerClient: {
       source,
       hasUrl: !!env.url,
       hasAnon: !!env.anonKey
+    },
+    createSupabaseAdminClient: {
+      source: processUrl && processServiceRole ? "process" : runtimeUrl && runtimeServiceRole ? "cloudflare" : "missing",
+      hasUrl: !!env.url,
+      hasServiceRole: !!env.serviceRoleKey
     }
   };
 }
