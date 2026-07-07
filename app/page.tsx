@@ -1,15 +1,27 @@
 import Script from "next/script";
+import { headers } from "next/headers";
 import { listActiveHomeCampaigns, listPublishedSitePages } from "@/lib/home-cms/queries";
 import { renderHomeCmsHtml } from "@/lib/home-cms/render";
-import { staticHomeBody } from "@/lib/home-cms/static-home";
 
 export const dynamic = "force-dynamic";
 export const runtime = "edge";
 
+async function readStaticHomeBody() {
+  const headerStore = await headers();
+  const host = headerStore.get("host");
+  if (!host) return "";
+  const protocol = headerStore.get("x-forwarded-proto") || "https";
+  const response = await fetch(`${protocol}://${host}/legacy-static/home-body.html`, {
+    cache: "force-cache"
+  });
+  return response.ok ? response.text() : "";
+}
+
 export default async function HomePage() {
-  const [campaigns, pages] = await Promise.all([
+  const [campaigns, pages, staticHomeBody] = await Promise.all([
     listActiveHomeCampaigns(),
-    listPublishedSitePages()
+    listPublishedSitePages(),
+    readStaticHomeBody()
   ]);
   const body = renderHomeCmsHtml(staticHomeBody, campaigns, pages);
 
