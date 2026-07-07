@@ -10,11 +10,17 @@ async function readStaticHomeBody() {
   const headerStore = await headers();
   const host = headerStore.get("host");
   if (!host) return "";
-  const protocol = headerStore.get("x-forwarded-proto") || "https";
-  const response = await fetch(`${protocol}://${host}/legacy-static/home-body.html`, {
-    cache: "force-cache"
-  });
-  return response.ok ? response.text() : "";
+  try {
+    const response = await fetch(`https://${host}/legacy-static/home-body.html`, {
+      cache: "force-cache"
+    });
+    return response.ok ? response.text() : "";
+  } catch (error) {
+    console.error("home_static_body_fetch_failed", {
+      message: error instanceof Error ? error.message : "unknown"
+    });
+    return "";
+  }
 }
 
 export default async function HomePage() {
