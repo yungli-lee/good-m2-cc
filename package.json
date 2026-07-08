@@ -5,7 +5,7 @@
     "dev": "next dev",
     "build": "next build",
     "db:check": "bash scripts/db-check.sh",
-    "pages:build": "npx @cloudflare/next-on-pages@1",
+    "pages:build": "pnpm exec next-on-pages",
     "lint": "eslint .",
     "test:export": "node --experimental-strip-types --experimental-specifier-resolution=node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/test-property-export.ts",
     "test:health": "node --experimental-strip-types --experimental-specifier-resolution=node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/test-property-health.ts",
@@ -23,6 +23,7 @@
     "zod": "^3.24.1"
   },
   "devDependencies": {
+    "@cloudflare/next-on-pages": "1.13.16",
     "@eslint/eslintrc": "^3.3.1",
     "@next/swc-wasm-nodejs": "15.5.19",
     "@tailwindcss/postcss": "^4.0.0",
