@@ -23,6 +23,10 @@ function getCloudflareRuntimeEnv() {
   return env;
 }
 
+function cleanEnv(value?: string) {
+  return value && value.trim() ? value.trim() : undefined;
+}
+
 function getSource(processUrl?: string, processAnon?: string, runtimeUrl?: string, runtimeAnon?: string) {
   if (processUrl && processAnon) return "process";
   if (runtimeUrl && runtimeAnon) return "cloudflare";
@@ -31,29 +35,29 @@ function getSource(processUrl?: string, processAnon?: string, runtimeUrl?: strin
 
 export function getSupabaseEnv() {
   const { env: runtimeEnv } = getRequestContext() || {};
-  const processUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const processAnon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  const runtimeUrl = runtimeEnv?.SUPABASE_URL || runtimeEnv?.NEXT_PUBLIC_SUPABASE_URL;
-  const runtimeAnon = runtimeEnv?.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  const processUrl = cleanEnv(process.env.SUPABASE_URL) || cleanEnv(process.env.NEXT_PUBLIC_SUPABASE_URL);
+  const processAnon = cleanEnv(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
+  const runtimeUrl = cleanEnv(runtimeEnv?.SUPABASE_URL) || cleanEnv(runtimeEnv?.NEXT_PUBLIC_SUPABASE_URL);
+  const runtimeAnon = cleanEnv(runtimeEnv?.NEXT_PUBLIC_SUPABASE_ANON_KEY);
   const url = processUrl || runtimeUrl;
   const anonKey = processAnon || runtimeAnon;
 
   return {
     url,
     anonKey,
-    serviceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY || runtimeEnv?.SUPABASE_SERVICE_ROLE_KEY
+    serviceRoleKey: cleanEnv(process.env.SUPABASE_SERVICE_ROLE_KEY) || cleanEnv(runtimeEnv?.SUPABASE_SERVICE_ROLE_KEY)
   };
 }
 
 export function getSupabaseEnvDiagnostics() {
   const requestContext = getRequestContext();
   const { env: runtimeEnv } = requestContext || {};
-  const processUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const processAnon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  const processServiceRole = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  const runtimeUrl = runtimeEnv?.SUPABASE_URL || runtimeEnv?.NEXT_PUBLIC_SUPABASE_URL;
-  const runtimeAnon = runtimeEnv?.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  const runtimeServiceRole = runtimeEnv?.SUPABASE_SERVICE_ROLE_KEY;
+  const processUrl = cleanEnv(process.env.SUPABASE_URL) || cleanEnv(process.env.NEXT_PUBLIC_SUPABASE_URL);
+  const processAnon = cleanEnv(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
+  const processServiceRole = cleanEnv(process.env.SUPABASE_SERVICE_ROLE_KEY);
+  const runtimeUrl = cleanEnv(runtimeEnv?.SUPABASE_URL) || cleanEnv(runtimeEnv?.NEXT_PUBLIC_SUPABASE_URL);
+  const runtimeAnon = cleanEnv(runtimeEnv?.NEXT_PUBLIC_SUPABASE_ANON_KEY);
+  const runtimeServiceRole = cleanEnv(runtimeEnv?.SUPABASE_SERVICE_ROLE_KEY);
   const env = getSupabaseEnv();
   const source = getSource(processUrl, processAnon, runtimeUrl, runtimeAnon);
 

@@ -46,9 +46,23 @@ export function createSupabaseAdminClient() {
     throw new Error("Supabase URL and service role key must be configured before using Supabase admin APIs.");
   }
 
+  console.info("[supabase_admin_client_config]", {
+    hasUrl: Boolean(url),
+    hasServiceRole: Boolean(serviceRoleKey),
+    keySource: "service_role"
+  });
+
   return createClient(
     url,
     serviceRoleKey,
-    { auth: { persistSession: false, autoRefreshToken: false } }
+    {
+      auth: { persistSession: false, autoRefreshToken: false },
+      global: {
+        headers: {
+          apikey: serviceRoleKey,
+          Authorization: `Bearer ${serviceRoleKey}`
+        }
+      }
+    }
   );
 }

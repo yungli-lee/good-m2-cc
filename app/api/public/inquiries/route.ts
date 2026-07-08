@@ -77,7 +77,8 @@ export async function POST(request: Request) {
       const supabaseEnv = getSupabaseEnv();
       console.info("[public_inquiries_admin_client_config]", {
         has_url: Boolean(supabaseEnv.url),
-        has_service_role: Boolean(supabaseEnv.serviceRoleKey)
+        has_service_role: Boolean(supabaseEnv.serviceRoleKey),
+        key_source: supabaseEnv.serviceRoleKey ? "service_role" : "missing"
       });
       supabase = createSupabaseAdminClient();
     } catch (error) {
