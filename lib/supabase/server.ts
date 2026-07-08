@@ -88,24 +88,34 @@ export function createSupabaseAdminClient() {
   if (!url || !serviceRoleKey) {
     throw new Error("Supabase URL and service role key must be configured before using Supabase admin APIs.");
   }
+  const authOptions = {
+    persistSession: false,
+    autoRefreshToken: false,
+    detectSessionInUrl: false
+  };
+  const globalHeaders = {
+    apikey: serviceRoleKey,
+    Authorization: `Bearer ${serviceRoleKey}`
+  };
 
   console.info("[supabase_admin_client_config]", {
     hasUrl: Boolean(url),
     hasServiceRole: Boolean(serviceRoleKey),
     keySource: "service_role",
-    serviceKey: describeSupabaseServiceKey(serviceRoleKey)
+    serviceKey: describeSupabaseServiceKey(serviceRoleKey),
+    auth: authOptions,
+    globalHeaderKeys: Object.keys(globalHeaders),
+    apikeyHeaderSource: "service_role",
+    authorizationHeaderSource: "service_role"
   });
 
   return createClient(
     url,
     serviceRoleKey,
     {
-      auth: { persistSession: false, autoRefreshToken: false },
+      auth: authOptions,
       global: {
-        headers: {
-          apikey: serviceRoleKey,
-          Authorization: `Bearer ${serviceRoleKey}`
-        }
+        headers: globalHeaders
       }
     }
   );
