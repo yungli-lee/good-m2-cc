@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, useTransition } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import type { AdminRole } from "@/lib/auth";
 import { imageFitValues, itemTagText, legalStatusValues } from "@/lib/content/schema";
 import type { ContentCategory, ContentItem } from "@/lib/content/types";
 import { imageFitLabels, legalStatusLabels } from "@/lib/content/types";
 import { MediaPicker } from "@/components/admin/media-picker";
+import { RichKnowledgeEditor } from "@/components/admin/rich-knowledge-editor";
 import type { MediaLibraryAsset, MediaUsageType } from "@/lib/media";
 
 type Props = {
@@ -55,16 +56,6 @@ type InlineImageEntry = {
   start: number;
   url: string;
 };
-
-type PreviewBlock =
-  | { type: "heading"; level: 1 | 2 | 3; text: string }
-  | { type: "image"; alt: string; caption: string; url: string }
-  | { type: "list"; ordered: boolean; items: string[] }
-  | { type: "quote"; text: string }
-  | { type: "paragraph"; text: string }
-  | { type: "divider" };
-
-type EditorMode = "edit" | "preview";
 
 function mediaAssetName(asset?: MediaLibraryAsset | null) {
   return asset?.original_filename || asset?.alt_text || asset?.caption || asset?.id || "";
@@ -159,60 +150,7 @@ function moveInlineImage(body: string, image: InlineImageEntry, sibling: InlineI
   return moved.replace(/\n{3,}/g, "\n\n");
 }
 
-function parsePreviewBody(body: string): PreviewBlock[] {
-  return String(body || "")
-    .split(/\r?\n[\t ]*\r?\n/)
-    .map((block) => block.trim())
-    .filter(Boolean)
-    .map((block): PreviewBlock => {
-      if (/^---+$/.test(block)) return { type: "divider" };
-      const heading = block.match(/^(#{1,3})\s+(.+)$/);
-      if (heading) return { type: "heading", level: heading[1].length as 1 | 2 | 3, text: heading[2].trim() };
-      const image = block.match(/^!\[([^\]]*)\]\((\S+?)(?:\s+["']([^"']*)["'])?\)$/);
-      if (image) return { type: "image", alt: image[1].trim() || "文章圖片", caption: (image[3] || "").trim(), url: normalizeImageUrl(image[2]) };
-      if (isLikelyImageUrl(block)) return { type: "image", alt: "文章圖片", caption: "", url: normalizeImageUrl(block) };
-      if (block.startsWith(">")) return { type: "quote", text: block.replace(/^>\s?/gm, "").trim() };
-
-      const lines = block.split("\n").map((line) => line.trim()).filter(Boolean);
-      if (lines.length > 1 && lines.every((line) => /^[-*]\s+/.test(line))) {
-        return { type: "list", ordered: false, items: lines.map((line) => line.replace(/^[-*]\s+/, "")) };
-      }
-      if (lines.length > 1 && lines.every((line) => /^\d+\.\s+/.test(line))) {
-        return { type: "list", ordered: true, items: lines.map((line) => line.replace(/^\d+\.\s+/, "")) };
-      }
-      return { type: "paragraph", text: block };
-    });
-}
-
-function renderPreviewBlocks(blocks: PreviewBlock[]) {
-  if (!blocks.length) return <p className="muted">內容整理中。</p>;
-
-  return blocks.map((block, index) => {
-    if (block.type === "heading") {
-      const Heading = `h${block.level}` as "h1" | "h2" | "h3";
-      return <Heading key={index}>{block.text}</Heading>;
-    }
-    if (block.type === "image") {
-      return (
-        <figure className="knowledge-preview-figure" key={index}>
-          <img className="knowledge-inline-image" src={block.url} alt={block.alt} loading="lazy" />
-          {block.caption ? <figcaption>{block.caption}</figcaption> : null}
-        </figure>
-      );
-    }
-    if (block.type === "list") {
-      const List = block.ordered ? "ol" : "ul";
-      return <List key={index}>{block.items.map((item, itemIndex) => <li key={itemIndex}>{item}</li>)}</List>;
-    }
-    if (block.type === "quote") return <blockquote key={index}>{block.text}</blockquote>;
-    if (block.type === "divider") return <hr key={index} />;
-    return <p key={index}>{block.text}</p>;
-  });
-}
-
 export function KnowledgeForm({ categories, mediaAssets = [], item, role, disabled = false }: Props) {
-  const formRef = useRef<HTMLFormElement>(null);
-  const bodyRef = useRef<HTMLTextAreaElement>(null);
   const router = useRouter();
   const searchParams = useSearchParams();
   const [pending, startTransition] = useTransition();
@@ -226,7 +164,8 @@ export function KnowledgeForm({ categories, mediaAssets = [], item, role, disabl
   const [coverImageUrl, setCoverImageUrl] = useState(item?.cover_image_url || "");
   const [coverImageFit, setCoverImageFit] = useState(selectedImageFit);
   const [bodyContent, setBodyContent] = useState(item?.body || "");
-  const [editorMode, setEditorMode] = useState<EditorMode>("edit");
+  const [insertImageRequest, setInsertImageRequest] = useState<{ asset: MediaLibraryAsset; id: number } | null>(null);
+  const [focusImageUrl, setFocusImageUrl] = useState<string | null>(null);
   const [replaceImageStart, setReplaceImageStart] = useState<number | null>(null);
   const [saving, setSaving] = useState(false);
   const itemId = item?.id || null;
@@ -237,7 +176,6 @@ export function KnowledgeForm({ categories, mediaAssets = [], item, role, disabl
     ? mediaAssets.find((asset) => asset.id === coverMediaId) || null
     : mediaAssets.find((asset) => asset.public_url === coverImageUrl) || null;
   const inlineImages = useMemo(() => extractInlineImages(bodyContent, mediaAssets), [bodyContent, mediaAssets]);
-  const previewBlocks = useMemo(() => parsePreviewBody(bodyContent), [bodyContent]);
   const inlineMediaIds = useMemo(
     () => Array.from(new Set(inlineImages.map((image) => image.asset?.id).filter((id): id is string => Boolean(id)))),
     [inlineImages]
@@ -360,30 +298,13 @@ export function KnowledgeForm({ categories, mediaAssets = [], item, role, disabl
   }
 
   function insertInlineImage(asset: MediaLibraryAsset) {
-    const textarea = bodyRef.current;
-
-    const markdown = `\n\n${markdownImageForAsset(asset)}\n\n`;
-    const start = textarea?.selectionStart ?? bodyContent.length;
-    const end = textarea?.selectionEnd ?? bodyContent.length;
-    const nextBody = `${bodyContent.slice(0, start)}${markdown}${bodyContent.slice(end)}`;
-    const nextPosition = start + markdown.length;
-    setBodyContent(nextBody);
+    setInsertImageRequest({ asset, id: Date.now() });
     markDirty();
-    window.requestAnimationFrame(() => {
-      textarea?.focus();
-      textarea?.setSelectionRange(nextPosition, nextPosition);
-    });
   }
 
   function locateInlineImage(image: InlineImageEntry) {
-    const textarea = bodyRef.current;
-    if (!textarea) return;
-    setEditorMode("edit");
-    window.requestAnimationFrame(() => {
-      textarea.focus();
-      textarea.setSelectionRange(image.start, image.end);
-      textarea.scrollIntoView({ behavior: "smooth", block: "center" });
-    });
+    setFocusImageUrl(null);
+    window.requestAnimationFrame(() => setFocusImageUrl(image.url));
   }
 
   function removeInlineImage(image: InlineImageEntry) {
@@ -421,7 +342,7 @@ export function KnowledgeForm({ categories, mediaAssets = [], item, role, disabl
   const submitDisabled = disabled || pending || saving || (saved && !isDirty);
 
   return (
-    <form ref={formRef} className="form-grid" onSubmit={handleSubmit} onChange={markDirty}>
+    <form className="form-grid" onSubmit={handleSubmit} onChange={markDirty}>
       {toast ? <div className="success field full" role="status">{toast}</div> : null}
       {error ? <div className="notice field full" role="alert">{error}</div> : null}
       <div className="field">
@@ -462,34 +383,17 @@ export function KnowledgeForm({ categories, mediaAssets = [], item, role, disabl
       <div className="field full knowledge-editor-section">
         <div className="knowledge-editor-header">
           <span>內文</span>
-          <div className="knowledge-editor-tabs" aria-label="編輯與預覽切換">
-            <button className={editorMode === "edit" ? "is-active" : ""} type="button" onClick={() => setEditorMode("edit")}>編輯</button>
-            <button className={editorMode === "preview" ? "is-active" : ""} type="button" onClick={() => setEditorMode("preview")}>預覽</button>
-          </div>
+          <small className="muted">WYSIWYG 編輯器；儲存時仍寫入 Markdown。</small>
         </div>
-        <div className={`knowledge-editor-shell is-${editorMode}`}>
-          <textarea
-            ref={bodyRef}
-            className="textarea knowledge-editor-textarea"
-            name="body"
-            rows={18}
-            value={bodyContent}
-            disabled={disabled || pending || saving}
-            onChange={(event) => {
-              setBodyContent(event.target.value);
-              markDirty();
-            }}
-          />
-          <aside className="knowledge-live-preview" aria-label="Markdown 即時預覽">
-            <div className="knowledge-live-preview-header">
-              <strong>即時預覽</strong>
-              <small className="muted">Markdown 圖片會以實際圖片呈現。</small>
-            </div>
-            <div className="knowledge-body">
-              {renderPreviewBlocks(previewBlocks)}
-            </div>
-          </aside>
-        </div>
+        <input type="hidden" name="body" value={bodyContent} />
+        <RichKnowledgeEditor
+          disabled={disabled || pending || saving}
+          focusImageUrl={focusImageUrl}
+          insertImageRequest={insertImageRequest}
+          value={bodyContent}
+          onChange={setBodyContent}
+          onDirty={markDirty}
+        />
       </div>
 
       <details className="field full" open>

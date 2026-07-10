@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import type React from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getPublicKnowledgeBySlug } from "@/lib/content/queries";
@@ -91,6 +92,42 @@ function parseMarkdownImageTarget(value: string) {
   };
 }
 
+function externalLinkAttrs(href: string, nofollow = false) {
+  if (href.startsWith("/")) return {};
+  try {
+    const url = new URL(href, siteOrigin);
+    if (url.origin === siteOrigin) return {};
+    return {
+      target: "_blank",
+      rel: `noopener noreferrer${nofollow ? " nofollow" : ""}`
+    };
+  } catch {
+    return {};
+  }
+}
+
+function renderInlineMarkdown(value: string) {
+  const parts: React.ReactNode[] = [];
+  const linkPattern = /\[([^\]]+)\]\((\S+?)(?:\s+["']([^"']*)["'])?\)/g;
+  let cursor = 0;
+  let match: RegExpExecArray | null;
+
+  while ((match = linkPattern.exec(value)) !== null) {
+    if (match.index > cursor) parts.push(value.slice(cursor, match.index));
+    const href = match[2] || "#";
+    const nofollow = /nofollow/i.test(match[3] || "");
+    parts.push(
+      <a href={href} key={`${href}-${match.index}`} {...externalLinkAttrs(href, nofollow)}>
+        {match[1]}
+      </a>
+    );
+    cursor = match.index + match[0].length;
+  }
+
+  if (cursor < value.length) parts.push(value.slice(cursor));
+  return parts.length ? parts : value;
+}
+
 function parseArticleBody(body?: string | null) {
   const blocks = String(body || "")
     .split(/\r?\n[\t ]*\r?\n/)
@@ -174,7 +211,7 @@ function renderArticleBlocks(blocks: ArticleBlock[]) {
   return blocks.map((block, index) => {
     if (block.type === "heading") {
       const Heading = `h${block.level}` as "h1" | "h2" | "h3";
-      return <Heading key={index} id={block.id}>{block.text}</Heading>;
+      return <Heading key={index} id={block.id}>{renderInlineMarkdown(block.text)}</Heading>;
     }
     if (block.type === "image") {
       return (
@@ -186,15 +223,15 @@ function renderArticleBlocks(blocks: ArticleBlock[]) {
     }
     if (block.type === "list") {
       const List = block.ordered ? "ol" : "ul";
-      return <List key={index}>{block.items.map((item, itemIndex) => <li key={itemIndex}>{item}</li>)}</List>;
+      return <List key={index}>{block.items.map((item, itemIndex) => <li key={itemIndex}>{renderInlineMarkdown(item)}</li>)}</List>;
     }
-    if (block.type === "quote") return <blockquote key={index}>{block.text}</blockquote>;
+    if (block.type === "quote") return <blockquote key={index}>{renderInlineMarkdown(block.text)}</blockquote>;
     if (block.type === "divider") return <hr key={index} />;
     if (block.type === "callout") {
       return (
         <aside key={index} className={`knowledge-callout is-${block.tone}`}>
           <strong>{block.title}</strong>
-          {block.text ? <p>{block.text}</p> : null}
+          {block.text ? <p>{renderInlineMarkdown(block.text)}</p> : null}
         </aside>
       );
     }
@@ -213,7 +250,7 @@ function renderArticleBlocks(blocks: ArticleBlock[]) {
         </div>
       );
     }
-    return <p key={index}>{block.text}</p>;
+    return <p key={index}>{renderInlineMarkdown(block.text)}</p>;
   });
 }
 
