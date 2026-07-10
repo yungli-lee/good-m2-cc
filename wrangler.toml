@@ -10,6 +10,7 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOi
 [env.production.vars]
 NEXT_PUBLIC_SUPABASE_URL = "https://rlbuadkmylulieoryzal.supabase.co"
 NEXT_PUBLIC_SUPABASE_ANON_KEY = "sb_publishable_P8tZ_FS1IFfQX55W0E-x4w_TnYA_5iT"
+NEXT_PUBLIC_SITE_URL = "https://good.m2.cc"
 
 [[d1_databases]]
 binding = "DB"

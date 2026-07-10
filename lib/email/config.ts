@@ -19,7 +19,7 @@ export function getEmailConfig(): EmailConfig {
   const fromEmail = envValue("RESEND_FROM_EMAIL") || envValue("CONTACT_FROM_EMAIL");
   const notifyEmail = envValue("INQUIRY_NOTIFY_EMAIL") || envValue("CONTACT_NOTIFY_TO");
   const fromName = envValue("CONTACT_FROM_NAME") || "阿勇不動產顧問";
-  const siteUrl = envValue("NEXT_PUBLIC_SITE_URL");
+  const siteUrl = envValue("NEXT_PUBLIC_SITE_URL") || envValue("SITE_URL");
   const missing: string[] = [];
 
   if (!apiKey) missing.push("RESEND_API_KEY");
