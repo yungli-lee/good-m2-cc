@@ -1438,6 +1438,108 @@ td {
   text-align: center;
 }
 
+.rich-knowledge-editor {
+  display: grid;
+  gap: 12px;
+}
+
+.rich-editor-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 10px;
+  border: 1px solid rgba(16, 35, 67, 0.12);
+  border-radius: 8px;
+  background: #f8fafc;
+}
+
+.rich-editor-toolbar button,
+.rich-link-suggestions button {
+  border: 1px solid rgba(16, 35, 67, 0.14);
+  border-radius: 8px;
+  background: #fff;
+  color: #102343;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.rich-editor-toolbar button {
+  padding: 8px 11px;
+}
+
+.rich-editor-toolbar button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.rich-link-panel {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid rgba(201, 154, 67, 0.25);
+  border-radius: 8px;
+  background: #fffaf0;
+}
+
+.checkbox-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  color: #102343;
+  font-weight: 700;
+}
+
+.rich-link-suggestions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.rich-link-suggestions button {
+  display: grid;
+  gap: 2px;
+  padding: 9px 10px;
+  text-align: left;
+}
+
+.rich-link-suggestions small {
+  color: #64708a;
+  font-weight: 600;
+}
+
+.rich-editor-surface {
+  min-height: 560px;
+  padding: 18px;
+  border: 1px solid rgba(16, 35, 67, 0.14);
+  border-radius: 8px;
+  background: #fff;
+}
+
+.rich-editor-surface .ProseMirror {
+  min-height: 520px;
+  outline: none;
+}
+
+.rich-editor-surface .ProseMirror p.is-editor-empty:first-child::before {
+  float: left;
+  height: 0;
+  color: #98a2b8;
+  content: attr(data-placeholder);
+  pointer-events: none;
+}
+
+.rich-editor-surface img {
+  display: block;
+  max-width: 100%;
+  margin: 20px auto;
+  border-radius: 8px;
+}
+
+.rich-editor-surface img.ProseMirror-selectednode,
+.rich-editor-surface img.is-located {
+  outline: 4px solid rgba(201, 154, 67, 0.35);
+}
+
 .knowledge-inline-manager {
   display: grid;
   gap: 12px;
