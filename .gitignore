@@ -11,3 +11,4 @@ tsconfig.tsbuildinfo
 supabase/.temp/
 .DS_Store
 **/.DS_Store
+.pnpm-store/
