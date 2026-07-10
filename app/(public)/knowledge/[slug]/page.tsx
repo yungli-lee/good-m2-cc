@@ -16,7 +16,7 @@ const lineUrl = "https://line.me/ti/p/abQv5LYzzE";
 
 type ArticleBlock =
   | { type: "heading"; level: 1 | 2 | 3; text: string; id: string }
-  | { type: "image"; alt: string; url: string }
+  | { type: "image"; alt: string; caption: string; url: string }
   | { type: "paragraph"; text: string }
   | { type: "list"; ordered: boolean; items: string[] }
   | { type: "quote"; text: string }
@@ -77,6 +77,20 @@ function parseTable(block: string) {
   return parsed.filter((row) => !row.every((cell) => /^:?-{3,}:?$/.test(cell)));
 }
 
+function isLikelyImageUrl(value: string) {
+  const url = value.trim().replace(/\s+["'][\s\S]*["']$/, "");
+  if (!/^https?:\/\//i.test(url)) return false;
+  return /\.(avif|gif|jpe?g|png|webp)([?#].*)?$/i.test(url) || /\/storage\/v1\/object\/public\/|\/media\//i.test(url);
+}
+
+function parseMarkdownImageTarget(value: string) {
+  const match = value.trim().match(/^(\S+?)(?:\s+["']([^"']*)["'])?$/);
+  return {
+    url: match?.[1] || value.trim(),
+    caption: match?.[2]?.trim() || ""
+  };
+}
+
 function parseArticleBody(body?: string | null) {
   const blocks = String(body || "")
     .split(/\r?\n[\t ]*\r?\n/)
@@ -103,9 +117,15 @@ function parseArticleBody(body?: string | null) {
       return;
     }
 
-    const image = block.match(/^!\[([^\]]*)\]\(([^)\n]+)\)$/);
+    const image = block.match(/^!\[([^\]]*)\]\((\S+?)(?:\s+["']([^"']*)["'])?\)$/);
     if (image) {
-      parsed.push({ type: "image", alt: image[1].trim() || "文章圖片", url: image[2].trim() });
+      const target = parseMarkdownImageTarget(`${image[2]}${image[3] ? ` "${image[3]}"` : ""}`);
+      parsed.push({ type: "image", alt: image[1].trim() || "文章圖片", caption: target.caption, url: target.url });
+      return;
+    }
+
+    if (isLikelyImageUrl(block)) {
+      parsed.push({ type: "image", alt: "文章圖片", caption: "", url: block.trim() });
       return;
     }
 
@@ -156,7 +176,14 @@ function renderArticleBlocks(blocks: ArticleBlock[]) {
       const Heading = `h${block.level}` as "h1" | "h2" | "h3";
       return <Heading key={index} id={block.id}>{block.text}</Heading>;
     }
-    if (block.type === "image") return <img key={index} className="knowledge-inline-image" src={block.url} alt={block.alt} loading="lazy" />;
+    if (block.type === "image") {
+      return (
+        <figure className="knowledge-preview-figure" key={index}>
+          <img className="knowledge-inline-image" src={block.url} alt={block.alt} loading="lazy" />
+          {block.caption ? <figcaption>{block.caption}</figcaption> : null}
+        </figure>
+      );
+    }
     if (block.type === "list") {
       const List = block.ordered ? "ol" : "ul";
       return <List key={index}>{block.items.map((item, itemIndex) => <li key={itemIndex}>{item}</li>)}</List>;
