@@ -17,7 +17,7 @@ const lineUrl = "https://line.me/ti/p/abQv5LYzzE";
 
 type ArticleBlock =
   | { type: "heading"; level: 1 | 2 | 3; text: string; id: string }
-  | { type: "image"; alt: string; caption: string; url: string }
+  | { type: "image"; align: "left" | "center" | "right"; alt: string; caption: string; url: string; width: "25%" | "50%" | "75%" | "100%" }
   | { type: "paragraph"; text: string }
   | { type: "list"; ordered: boolean; items: string[] }
   | { type: "quote"; text: string }
@@ -86,9 +86,14 @@ function isLikelyImageUrl(value: string) {
 
 function parseMarkdownImageTarget(value: string) {
   const match = value.trim().match(/^(\S+?)(?:\s+["']([^"']*)["'])?$/);
+  const title = match?.[2]?.trim() || "";
+  const widthMatch = title.match(/\bwidth=(25%|50%|75%|100%)\b/i);
+  const alignMatch = title.match(/\balign=(left|center|right)\b/i);
   return {
     url: match?.[1] || value.trim(),
-    caption: match?.[2]?.trim() || ""
+    caption: title.replace(/\s*\bwidth=(25%|50%|75%|100%)\b/gi, "").replace(/\s*\balign=(left|center|right)\b/gi, "").trim(),
+    width: (widthMatch?.[1] || "100%") as "25%" | "50%" | "75%" | "100%",
+    align: (alignMatch?.[1] || "center") as "left" | "center" | "right"
   };
 }
 
@@ -157,12 +162,12 @@ function parseArticleBody(body?: string | null) {
     const image = block.match(/^!\[([^\]]*)\]\((\S+?)(?:\s+["']([^"']*)["'])?\)$/);
     if (image) {
       const target = parseMarkdownImageTarget(`${image[2]}${image[3] ? ` "${image[3]}"` : ""}`);
-      parsed.push({ type: "image", alt: image[1].trim() || "文章圖片", caption: target.caption, url: target.url });
+      parsed.push({ type: "image", align: target.align, alt: image[1].trim() || "文章圖片", caption: target.caption, url: target.url, width: target.width });
       return;
     }
 
     if (isLikelyImageUrl(block)) {
-      parsed.push({ type: "image", alt: "文章圖片", caption: "", url: block.trim() });
+      parsed.push({ type: "image", align: "center", alt: "文章圖片", caption: "", url: block.trim(), width: "100%" });
       return;
     }
 
@@ -216,7 +221,13 @@ function renderArticleBlocks(blocks: ArticleBlock[]) {
     if (block.type === "image") {
       return (
         <figure className="knowledge-preview-figure" key={index}>
-          <img className="knowledge-inline-image" src={block.url} alt={block.alt} loading="lazy" />
+          <img
+            className={`knowledge-inline-image is-align-${block.align}`}
+            src={block.url}
+            alt={block.alt}
+            loading="lazy"
+            style={{ width: block.width, maxWidth: "100%" }}
+          />
           {block.caption ? <figcaption>{block.caption}</figcaption> : null}
         </figure>
       );

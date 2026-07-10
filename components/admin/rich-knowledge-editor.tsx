@@ -14,6 +14,9 @@ type LinkDraft = {
   nofollow: boolean;
 };
 
+type ImageWidth = "25%" | "50%" | "75%" | "100%";
+type ImageAlign = "left" | "center" | "right";
+
 type DropView = {
   posAtCoords: (coords: { left: number; top: number }) => { pos: number } | null;
 };
@@ -32,6 +35,12 @@ type Props = {
 };
 
 const goodOrigin = "https://good.m2.cc";
+const imageWidths: ImageWidth[] = ["25%", "50%", "75%", "100%"];
+const imageAlignments: Array<{ value: ImageAlign; label: string }> = [
+  { value: "left", label: "靠左" },
+  { value: "center", label: "置中" },
+  { value: "right", label: "靠右" }
+];
 
 const internalRouteSuggestions = [
   { label: "知識中心", href: "/knowledge" },
@@ -58,6 +67,21 @@ function escapeMarkdown(value?: string | null) {
     .replace(/\]/g, "\\]")
     .replace(/\n/g, " ")
     .trim();
+}
+
+function parseImageTitle(value?: string | null) {
+  const raw = String(value || "").trim();
+  const widthMatch = raw.match(/\bwidth=(25%|50%|75%|100%)\b/i);
+  const alignMatch = raw.match(/\balign=(left|center|right)\b/i);
+  return {
+    caption: raw.replace(/\s*\bwidth=(25%|50%|75%|100%)\b/gi, "").replace(/\s*\balign=(left|center|right)\b/gi, "").trim(),
+    width: (widthMatch?.[1] || "100%") as ImageWidth,
+    align: (alignMatch?.[1] || "center") as ImageAlign
+  };
+}
+
+function imageTitle(caption?: string | null, width: ImageWidth = "100%", align: ImageAlign = "center") {
+  return [escapeMarkdown(caption), `width=${width}`, `align=${align}`].filter(Boolean).join(" ");
 }
 
 function isExternalUrl(href: string) {
@@ -117,8 +141,9 @@ function markdownToHtml(markdown: string) {
 
     const image = block.match(/^!\[([^\]]*)\]\((\S+?)(?:\s+["']([^"']*)["'])?\)$/);
     if (image) {
-      const title = image[3] ? ` title="${escapeHtml(image[3])}"` : "";
-      return `<img src="${escapeHtml(image[2])}" alt="${escapeHtml(image[1])}"${title}>`;
+      const meta = parseImageTitle(image[3]);
+      const title = imageTitle(meta.caption, meta.width, meta.align);
+      return `<img src="${escapeHtml(image[2])}" alt="${escapeHtml(image[1])}" title="${escapeHtml(title)}" data-width="${meta.width}" data-align="${meta.align}">`;
     }
 
     if (/^https?:\/\/\S+$/i.test(block) && /\.(avif|gif|jpe?g|png|webp)([?#].*)?$/i.test(block)) {
@@ -175,7 +200,10 @@ function htmlToMarkdown(html: string) {
       const src = node.getAttribute("src") || "";
       const alt = node.getAttribute("alt") || "";
       const title = node.getAttribute("title") || "";
-      if (src) blocks.push(title ? `![${escapeMarkdown(alt)}](${src} "${escapeMarkdown(title)}")` : `![${escapeMarkdown(alt)}](${src})`);
+      const width = (node.getAttribute("data-width") || parseImageTitle(title).width) as ImageWidth;
+      const align = (node.getAttribute("data-align") || parseImageTitle(title).align) as ImageAlign;
+      const caption = parseImageTitle(title).caption;
+      if (src) blocks.push(`![${escapeMarkdown(alt)}](${src} "${imageTitle(caption, width, align)}")`);
       return;
     }
     if (tag === "UL" || tag === "OL") {
@@ -203,15 +231,46 @@ function assetMarkdownAttrs(asset: MediaLibraryAsset) {
   return {
     src: asset.public_url,
     alt: asset.alt_text || "",
-    title: asset.caption ?? undefined
+    title: imageTitle(asset.caption),
+    width: "100%",
+    align: "center"
   };
 }
+
+const RichImage = Image.extend({
+  addAttributes() {
+    return {
+      ...this.parent?.(),
+      width: {
+        default: "100%",
+        parseHTML: (element) => element.getAttribute("data-width") || parseImageTitle(element.getAttribute("title")).width,
+        renderHTML: (attributes) => ({ "data-width": attributes.width || "100%" })
+      },
+      align: {
+        default: "center",
+        parseHTML: (element) => element.getAttribute("data-align") || parseImageTitle(element.getAttribute("title")).align,
+        renderHTML: (attributes) => ({ "data-align": attributes.align || "center" })
+      }
+    };
+  },
+  renderHTML({ HTMLAttributes }) {
+    const width = HTMLAttributes.width || HTMLAttributes["data-width"] || "100%";
+    const align = HTMLAttributes.align || HTMLAttributes["data-align"] || "center";
+    return ["img", {
+      ...HTMLAttributes,
+      "data-width": width,
+      "data-align": align,
+      style: `width:${width};max-width:100%;${align === "left" ? "margin-left:0;margin-right:auto;" : align === "right" ? "margin-left:auto;margin-right:0;" : "margin-left:auto;margin-right:auto;"}`
+    }];
+  }
+});
 
 export function RichKnowledgeEditor({ disabled = false, focusImageUrl, insertImageRequest, onChange, onDirty, value }: Props) {
   const surfaceRef = useRef<HTMLDivElement>(null);
   const [linkDraft, setLinkDraft] = useState<LinkDraft>({ href: "", nofollow: false });
   const [linkPanelOpen, setLinkPanelOpen] = useState(false);
   const [dropNotice, setDropNotice] = useState<string | null>(null);
+  const [imageMenu, setImageMenu] = useState<{ selected: boolean; width: ImageWidth; align: ImageAlign }>({ selected: false, width: "100%", align: "center" });
   const html = useMemo(() => markdownToHtml(value), [value]);
   const filteredRoutes = internalRouteSuggestions.filter((item) => {
     const q = linkDraft.href.trim().toLowerCase();
@@ -225,7 +284,7 @@ export function RichKnowledgeEditor({ disabled = false, focusImageUrl, insertIma
     extensions: [
       StarterKit,
       Underline,
-      Image.configure({ inline: false, allowBase64: false }),
+      RichImage.configure({ inline: false, allowBase64: false }),
       Link.configure({
         autolink: true,
         openOnClick: false,
@@ -240,8 +299,8 @@ export function RichKnowledgeEditor({ disabled = false, focusImageUrl, insertIma
         const url = event.dataTransfer?.getData("text/uri-list") || event.dataTransfer?.getData("text/plain") || "";
         if (url && /^https?:\/\//i.test(url) && /\.(avif|gif|jpe?g|png|webp)([?#].*)?$/i.test(url)) {
           const coordinates = view.posAtCoords({ left: event.clientX, top: event.clientY });
-          if (coordinates) editor?.chain().focus().insertContentAt(coordinates.pos, { type: "image", attrs: { src: url, alt: "" } }).run();
-          else editor?.chain().focus().setImage({ src: url, alt: "" }).run();
+          if (coordinates) editor?.chain().focus().insertContentAt(coordinates.pos, { type: "image", attrs: { src: url, alt: "", width: "100%", align: "center" } }).run();
+          else editor?.chain().focus().insertContent({ type: "image", attrs: { src: url, alt: "", width: "100%", align: "center" } }).run();
           event.preventDefault();
           return true;
         }
@@ -256,6 +315,15 @@ export function RichKnowledgeEditor({ disabled = false, focusImageUrl, insertIma
     onUpdate({ editor: activeEditor }: { editor: HtmlEditor }) {
       onChange(htmlToMarkdown(activeEditor.getHTML()));
       onDirty();
+    },
+    onSelectionUpdate({ editor: activeEditor }: { editor: { isActive: (name: string) => boolean; getAttributes: (name: string) => Record<string, unknown> } }) {
+      const selected = activeEditor.isActive("image");
+      const attrs = activeEditor.getAttributes("image");
+      setImageMenu({
+        selected,
+        width: (attrs.width as ImageWidth) || "100%",
+        align: (attrs.align as ImageAlign) || "center"
+      });
     }
   });
 
@@ -267,7 +335,7 @@ export function RichKnowledgeEditor({ disabled = false, focusImageUrl, insertIma
 
   useEffect(() => {
     if (!editor || !insertImageRequest) return;
-    editor.chain().focus().setImage(assetMarkdownAttrs(insertImageRequest.asset)).run();
+    editor.chain().focus().insertContent({ type: "image", attrs: assetMarkdownAttrs(insertImageRequest.asset) }).run();
     onChange(htmlToMarkdown(editor.getHTML()));
     onDirty();
   }, [editor, insertImageRequest, onChange, onDirty]);
@@ -299,6 +367,21 @@ export function RichKnowledgeEditor({ disabled = false, focusImageUrl, insertIma
       nofollow: /\bnofollow\b/i.test(String(attrs.rel || ""))
     });
     setLinkPanelOpen(true);
+  }
+
+  function updateSelectedImage(attrs: Partial<{ width: ImageWidth; align: ImageAlign }>) {
+    if (!editor) return;
+    editor.chain().focus().updateAttributes("image", attrs).run();
+    onChange(htmlToMarkdown(editor.getHTML()));
+    onDirty();
+  }
+
+  function removeSelectedImage() {
+    if (!editor) return;
+    editor.chain().focus().deleteSelection().run();
+    onChange(htmlToMarkdown(editor.getHTML()));
+    onDirty();
+    setImageMenu({ selected: false, width: "100%", align: "center" });
   }
 
   return (
@@ -335,6 +418,25 @@ export function RichKnowledgeEditor({ disabled = false, focusImageUrl, insertIma
             <button className="button" type="button" onClick={() => applyLink()}>套用連結</button>
             <button className="button ghost" type="button" onClick={() => setLinkPanelOpen(false)}>取消</button>
           </div>
+        </div>
+      ) : null}
+
+      {imageMenu.selected ? (
+        <div className="rich-image-controls" aria-label="圖片控制">
+          <strong>圖片設定</strong>
+          <div>
+            <span>寬度</span>
+            {imageWidths.map((width) => (
+              <button className={imageMenu.width === width ? "is-active" : ""} key={width} type="button" disabled={disabled} onClick={() => updateSelectedImage({ width })}>{width}</button>
+            ))}
+          </div>
+          <div>
+            <span>對齊</span>
+            {imageAlignments.map((item) => (
+              <button className={imageMenu.align === item.value ? "is-active" : ""} key={item.value} type="button" disabled={disabled} onClick={() => updateSelectedImage({ align: item.value })}>{item.label}</button>
+            ))}
+          </div>
+          <button className="button ghost" type="button" disabled={disabled} onClick={removeSelectedImage}>移除圖片</button>
         </div>
       ) : null}
 
