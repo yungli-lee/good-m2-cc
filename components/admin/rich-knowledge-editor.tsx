@@ -267,6 +267,7 @@ const RichImage = Image.extend({
 
 export function RichKnowledgeEditor({ disabled = false, focusImageUrl, insertImageRequest, onChange, onDirty, value }: Props) {
   const surfaceRef = useRef<HTMLDivElement>(null);
+  const insertedImageRequestIdRef = useRef<number | null>(null);
   const [linkDraft, setLinkDraft] = useState<LinkDraft>({ href: "", nofollow: false });
   const [linkPanelOpen, setLinkPanelOpen] = useState(false);
   const [dropNotice, setDropNotice] = useState<string | null>(null);
@@ -335,10 +336,10 @@ export function RichKnowledgeEditor({ disabled = false, focusImageUrl, insertIma
 
   useEffect(() => {
     if (!editor || !insertImageRequest) return;
+    if (insertedImageRequestIdRef.current === insertImageRequest.id) return;
+    insertedImageRequestIdRef.current = insertImageRequest.id;
     editor.chain().focus().insertContent({ type: "image", attrs: assetMarkdownAttrs(insertImageRequest.asset) }).run();
-    onChange(htmlToMarkdown(editor.getHTML()));
-    onDirty();
-  }, [editor, insertImageRequest, onChange, onDirty]);
+  }, [editor, insertImageRequest]);
 
   useEffect(() => {
     if (!focusImageUrl) return;
