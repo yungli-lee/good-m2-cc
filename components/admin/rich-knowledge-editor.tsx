@@ -71,17 +71,17 @@ function escapeMarkdown(value?: string | null) {
 
 function parseImageTitle(value?: string | null) {
   const raw = String(value || "").trim();
-  const widthMatch = raw.match(/\bwidth=(25%|50%|75%|100%)\b/i);
-  const alignMatch = raw.match(/\balign=(left|center|right)\b/i);
+  const widthMatches = Array.from(raw.matchAll(/\bwidth=(25%|50%|75%|100%)(?=\s|$)/gi));
+  const alignMatches = Array.from(raw.matchAll(/\balign=(left|center|right)\b/gi));
   return {
-    caption: raw.replace(/\s*\bwidth=(25%|50%|75%|100%)\b/gi, "").replace(/\s*\balign=(left|center|right)\b/gi, "").trim(),
-    width: (widthMatch?.[1] || "100%") as ImageWidth,
-    align: (alignMatch?.[1] || "center") as ImageAlign
+    caption: raw.replace(/\s*\bwidth=(25%|50%|75%|100%)(?=\s|$)/gi, "").replace(/\s*\balign=(left|center|right)\b/gi, "").trim(),
+    width: (widthMatches[widthMatches.length - 1]?.[1] || "100%") as ImageWidth,
+    align: (alignMatches[alignMatches.length - 1]?.[1] || "center") as ImageAlign
   };
 }
 
 function imageTitle(caption?: string | null, width: ImageWidth = "100%", align: ImageAlign = "center") {
-  return [escapeMarkdown(caption), `width=${width}`, `align=${align}`].filter(Boolean).join(" ");
+  return [escapeMarkdown(parseImageTitle(caption).caption), `width=${width}`, `align=${align}`].filter(Boolean).join(" ");
 }
 
 function isExternalUrl(href: string) {
@@ -330,9 +330,9 @@ export function RichKnowledgeEditor({ disabled = false, focusImageUrl, insertIma
 
   useEffect(() => {
     if (!editor) return;
-    if (editor.getHTML() === html) return;
+    if (htmlToMarkdown(editor.getHTML()) === value) return;
     editor.commands.setContent(html, false);
-  }, [editor, html]);
+  }, [editor, html, value]);
 
   useEffect(() => {
     if (!editor || !insertImageRequest) return;
@@ -371,10 +371,16 @@ export function RichKnowledgeEditor({ disabled = false, focusImageUrl, insertIma
   }
 
   function updateSelectedImage(attrs: Partial<{ width: ImageWidth; align: ImageAlign }>) {
-    if (!editor) return;
-    editor.chain().focus().updateAttributes("image", attrs).run();
-    onChange(htmlToMarkdown(editor.getHTML()));
-    onDirty();
+    if (!editor || !editor.isActive("image")) return;
+    const current = editor.getAttributes("image");
+    const width = attrs.width || (current.width as ImageWidth) || "100%";
+    const align = attrs.align || (current.align as ImageAlign) || "center";
+    const caption = parseImageTitle(String(current.title || "")).caption;
+    const updated = editor.chain().focus().updateAttributes("image", {
+      ...attrs,
+      title: imageTitle(caption, width, align)
+    }).run();
+    if (updated) setImageMenu({ selected: true, width, align });
   }
 
   function removeSelectedImage() {
