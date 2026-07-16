@@ -87,13 +87,13 @@ function isLikelyImageUrl(value: string) {
 function parseMarkdownImageTarget(value: string) {
   const match = value.trim().match(/^(\S+?)(?:\s+["']([^"']*)["'])?$/);
   const title = match?.[2]?.trim() || "";
-  const widthMatch = title.match(/\bwidth=(25%|50%|75%|100%)\b/i);
-  const alignMatch = title.match(/\balign=(left|center|right)\b/i);
+  const widthMatches = Array.from(title.matchAll(/\bwidth=(25%|50%|75%|100%)(?=\s|$)/gi));
+  const alignMatches = Array.from(title.matchAll(/\balign=(left|center|right)\b/gi));
   return {
     url: match?.[1] || value.trim(),
-    caption: title.replace(/\s*\bwidth=(25%|50%|75%|100%)\b/gi, "").replace(/\s*\balign=(left|center|right)\b/gi, "").trim(),
-    width: (widthMatch?.[1] || "100%") as "25%" | "50%" | "75%" | "100%",
-    align: (alignMatch?.[1] || "center") as "left" | "center" | "right"
+    caption: title.replace(/\s*\bwidth=(25%|50%|75%|100%)(?=\s|$)/gi, "").replace(/\s*\balign=(left|center|right)\b/gi, "").trim(),
+    width: (widthMatches[widthMatches.length - 1]?.[1] || "100%") as "25%" | "50%" | "75%" | "100%",
+    align: (alignMatches[alignMatches.length - 1]?.[1] || "center") as "left" | "center" | "right"
   };
 }
 

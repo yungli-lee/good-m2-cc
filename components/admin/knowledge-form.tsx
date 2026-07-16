@@ -75,6 +75,13 @@ function markdownImageForAsset(asset: MediaLibraryAsset) {
   return caption ? `![${alt}](${asset.public_url} "${caption}")` : `![${alt}](${asset.public_url})`;
 }
 
+function imageCaptionFromTitle(value?: string | null) {
+  return String(value || "")
+    .replace(/\s*\bwidth=(25%|50%|75%|100%)(?=\s|$)/gi, "")
+    .replace(/\s*\balign=(left|center|right)\b/gi, "")
+    .trim();
+}
+
 function isLikelyImageUrl(value: string) {
   const url = normalizeImageUrl(value);
   if (!/^https?:\/\//i.test(url)) return false;
@@ -93,7 +100,7 @@ function extractInlineImages(body: string, assets: MediaLibraryAsset[]): InlineI
     if (!isLikelyImageUrl(url)) continue;
     const asset = assetByUrl.get(url) || null;
     const alt = (match[1] || "").trim();
-    const caption = (match[3] || "").trim() || asset?.caption || "";
+    const caption = imageCaptionFromTitle(match[3]) || asset?.caption || "";
     images.push({
       alt,
       asset,
