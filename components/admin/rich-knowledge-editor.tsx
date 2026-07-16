@@ -380,7 +380,10 @@ export function RichKnowledgeEditor({ disabled = false, focusImageUrl, insertIma
       ...attrs,
       title: imageTitle(caption, width, align)
     }).run();
-    if (updated) setImageMenu({ selected: true, width, align });
+    if (!updated) return;
+    onChange(htmlToMarkdown(editor.getHTML()));
+    onDirty();
+    setImageMenu({ selected: true, width, align });
   }
 
   function removeSelectedImage() {
