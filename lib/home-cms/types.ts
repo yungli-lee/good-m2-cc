@@ -60,7 +60,7 @@ export const sitePageLabels: Record<KnownSitePageKey, string> = {
   philosophy: "服務理念",
   services: "服務項目",
   process: "買屋流程",
-  reminders: "生活提醒",
+  reminders: "阿勇生活小提醒",
   team: "聯絡我們"
 };
 

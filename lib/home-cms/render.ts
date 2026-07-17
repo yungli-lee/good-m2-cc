@@ -175,10 +175,17 @@ export function renderHomeCmsHtml(
   }
 
   for (const [key, page] of pages) {
-    if (!isKnownSitePageKey(key)) continue;
+    if (!isKnownSitePageKey(key)) {
+      const section = renderGenericCmsSection(page, key, page.eyebrow || "Site Page");
+      html = /<\/main>/i.test(html)
+        ? html.replace(/<\/main>/i, `${section}\n    </main>`)
+        : `${html}${section}`;
+      continue;
+    }
     const regex = sectionRegex(key);
-    if (!regex.test(html)) continue;
-    html = html.replace(regex, renderGenericCmsSection(page, key, pageEyebrows[key]));
+    if (regex.test(html)) {
+      html = html.replace(regex, renderGenericCmsSection(page, key, pageEyebrows[key]));
+    }
   }
 
   return html;

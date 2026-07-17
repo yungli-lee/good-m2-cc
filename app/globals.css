@@ -2107,6 +2107,7 @@ td {
 
 .site-app-nav a {
   text-decoration: none;
+  white-space: nowrap;
 }
 
 .site-app-nav a:hover {

@@ -22,7 +22,8 @@ export const homeCampaignSchema = z.object({
 });
 
 export const sitePageSchema = z.object({
-  page_key: z.string().trim().min(1).max(80).regex(/^[a-z0-9][a-z0-9_-]*$/),
+  page_key: z.string().trim().min(1).max(80)
+    .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "Slug 僅能使用小寫英文字母、數字與連字號，且連字號不可位於開頭、結尾或連續使用。"),
   title: z.string().trim().min(1).max(180),
   eyebrow: optionalText(120),
   subtitle: optionalText(260),
