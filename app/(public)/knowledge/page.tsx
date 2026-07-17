@@ -49,13 +49,13 @@ export default async function KnowledgeIndexPage({ searchParams }: Props) {
 
   return (
     <main>
-      <section className="hero-lite">
+      <section className="hero-lite knowledge-index-hero">
         <div className="container">
           <h1>不動產知識庫</h1>
           <p>把買屋、賣屋、貸款、稅務與法規重點整理成可長期查閱的知識內容。</p>
         </div>
       </section>
-      <section className="section">
+      <section className="section knowledge-index-section">
         <div className="container">
           <form className="knowledge-listing-tools" action="/knowledge">
             <label className="field knowledge-search-field">
