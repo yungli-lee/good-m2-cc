@@ -3,6 +3,7 @@ import type React from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getPublicKnowledgeBySlug } from "@/lib/content/queries";
+import { formatKnowledgeReadingTime } from "@/lib/content/reading-time";
 import type { ContentItem } from "@/lib/content/types";
 
 export const runtime = "edge";
@@ -62,12 +63,6 @@ function slugifyHeading(value: string, index: number) {
     .replace(/^-+|-+$/g, "")
     .slice(0, 48);
   return slug || `section-${index + 1}`;
-}
-
-function readingTime(body?: string | null) {
-  const text = String(body || "").replace(/\s+/g, "");
-  if (!text) return "1 分鐘";
-  return `${Math.max(1, Math.ceil(text.length / 500))} 分鐘`;
 }
 
 function parseTable(block: string) {
@@ -314,7 +309,7 @@ export default async function KnowledgeDetailPage({ params }: Props) {
             <div className="knowledge-main-column">
               <Link className="button ghost" href="/knowledge">返回知識庫</Link>
               <header className="knowledge-detail-header">
-                <p className="knowledge-meta">{category}{publishedDate ? ` · ${publishedDate}` : ""} · 閱讀時間 {readingTime(item.body)}</p>
+                <p className="knowledge-meta">{category}{publishedDate ? ` · ${publishedDate}` : ""} · 閱讀時間 {formatKnowledgeReadingTime(item.body)}</p>
                 <h1>{item.title}</h1>
                 {item.summary ? <p className="knowledge-lead">{item.summary}</p> : null}
                 <div className="knowledge-share-actions" aria-label="分享文章">

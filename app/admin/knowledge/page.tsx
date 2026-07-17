@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { requireRole } from "@/lib/auth";
 import { canDeleteKnowledge, canEditKnowledge, canPublishKnowledge } from "@/lib/content/permissions";
-import { listKnowledgeItems } from "@/lib/content/queries";
+import { listKnowledgeCategories, listKnowledgeItems } from "@/lib/content/queries";
 import type { KnowledgeListFilter } from "@/lib/content/queries";
 import { contentStatusLabels, legalStatusLabels } from "@/lib/content/types";
 import { formatTaipeiDate } from "@/lib/format";
@@ -15,7 +15,7 @@ import {
 export const runtime = "edge";
 
 type Props = {
-  searchParams: Promise<{ q?: string; filter?: string; error?: string; saved?: string }>;
+  searchParams: Promise<{ q?: string; status?: string; filter?: string; category?: string; page?: string; error?: string; saved?: string }>;
 };
 
 const filters: Array<{ value: KnowledgeListFilter; label: string }> = [
@@ -39,19 +39,44 @@ const errorMessage: Record<string, string> = {
   restore_failed: "還原失敗，請稍後再試。"
 };
 
-function filterHref(filter: KnowledgeListFilter, q: string) {
+type KnowledgeListParams = {
+  q: string;
+  status: KnowledgeListFilter;
+  category: string;
+  page?: number;
+};
+
+function knowledgeListHref(input: KnowledgeListParams) {
   const params = new URLSearchParams();
-  if (q) params.set("q", q);
-  if (filter !== "all") params.set("filter", filter);
+  if (input.q) params.set("q", input.q);
+  if (input.status !== "all") params.set("status", input.status);
+  if (input.category) params.set("category", input.category);
+  if (input.page && input.page > 1) params.set("page", String(input.page));
   return `/admin/knowledge${params.toString() ? `?${params.toString()}` : ""}`;
+}
+
+function normalizePage(value?: string) {
+  const page = Number(value || "1");
+  return Number.isFinite(page) && page > 0 ? Math.floor(page) : 1;
 }
 
 export default async function AdminKnowledgePage({ searchParams }: Props) {
   const params = await searchParams;
   const current = await requireRole(["editor", "admin", "owner"]);
-  const filter = filters.some((item) => item.value === params.filter) ? params.filter as KnowledgeListFilter : "all";
+  const requestedStatus = params.status || params.filter;
+  const status = filters.some((item) => item.value === requestedStatus) ? requestedStatus as KnowledgeListFilter : "all";
   const q = params.q?.trim() || "";
-  const { data: items, error } = await listKnowledgeItems({ q, filter });
+  const category = String(params.category || "").trim().toLowerCase();
+  const requestedPage = normalizePage(params.page);
+  const [
+    { data: items, error, count, page, totalPages },
+    categories
+  ] = await Promise.all([
+    listKnowledgeItems({ q, filter: status, category, page: requestedPage }),
+    listKnowledgeCategories()
+  ]);
+  const safeTotalPages = Math.max(totalPages || 0, 1);
+  const hasFilters = Boolean(q || category || status !== "all");
   const canPublish = canPublishKnowledge(current.profile.role);
   const canDelete = canDeleteKnowledge(current.profile.role);
 
@@ -74,15 +99,34 @@ export default async function AdminKnowledgePage({ searchParams }: Props) {
         {params.saved ? <div className="success">操作已完成。</div> : null}
         {error ? <div className="notice">知識內容讀取失敗。</div> : null}
 
-        <form className="searchbar" action="/admin/knowledge">
-          <input className="input" name="q" defaultValue={q} placeholder="搜尋標題或 slug" />
-          <button className="button ghost" type="submit">搜尋</button>
-          {q ? <Link className="button ghost" href="/admin/knowledge">清除</Link> : null}
+        <form className="knowledge-admin-toolbar" action="/admin/knowledge">
+          {status !== "all" ? <input type="hidden" name="status" value={status} /> : null}
+          <label className="field">
+            <span>關鍵字</span>
+            <input className="input" type="search" name="q" defaultValue={q} placeholder="搜尋標題、摘要、slug 或標籤" />
+          </label>
+          <label className="field">
+            <span>分類</span>
+            <select className="select" name="category" defaultValue={category}>
+              <option value="">全部分類</option>
+              {categories.map((item) => (
+                <option key={item.id} value={item.slug}>{item.name}</option>
+              ))}
+            </select>
+          </label>
+          <div className="knowledge-admin-toolbar-actions">
+            <button className="button ghost" type="submit">套用篩選</button>
+            {hasFilters ? <Link className="button ghost" href="/admin/knowledge">清除全部</Link> : null}
+          </div>
         </form>
 
         <div className="admin-filter-tabs" aria-label="知識狀態篩選">
           {filters.map((item) => (
-            <Link key={item.value} className={filter === item.value ? "button" : "button ghost"} href={filterHref(item.value, q)}>
+            <Link
+              key={item.value}
+              className={status === item.value ? "button" : "button ghost"}
+              href={knowledgeListHref({ q, category, status: item.value })}
+            >
               {item.label}
             </Link>
           ))}
@@ -152,6 +196,19 @@ export default async function AdminKnowledgePage({ searchParams }: Props) {
             </tbody>
           </table>
         </div>
+        {!error && items.length > 0 ? (
+          <nav className="knowledge-admin-pagination" aria-label="知識管理分頁">
+            {page > 1 ? (
+              <Link className="button ghost" href={knowledgeListHref({ q, category, status, page: page - 1 })}>上一頁</Link>
+            ) : <span className="button ghost is-disabled">上一頁</span>}
+            <span className="knowledge-page-count">
+              第 {page.toLocaleString("zh-TW")} / {safeTotalPages.toLocaleString("zh-TW")} 頁，共 {(count || 0).toLocaleString("zh-TW")} 篇
+            </span>
+            {page < safeTotalPages ? (
+              <Link className="button ghost" href={knowledgeListHref({ q, category, status, page: page + 1 })}>下一頁</Link>
+            ) : <span className="button ghost is-disabled">下一頁</span>}
+          </nav>
+        ) : null}
       </div>
     </main>
   );

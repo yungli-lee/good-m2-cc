@@ -238,6 +238,10 @@ select {
   color: #64708a;
 }
 
+.knowledge-empty-state .button {
+  margin-top: 16px;
+}
+
 .knowledge-pagination {
   justify-content: center;
   margin-top: 24px;
@@ -263,6 +267,7 @@ select {
   display: grid;
   gap: 10px;
   align-content: start;
+  height: 100%;
 }
 
 .knowledge-card h2 {
@@ -288,10 +293,62 @@ select {
 }
 
 .knowledge-meta {
+  display: flex;
+  gap: 6px 14px;
+  flex-wrap: wrap;
   margin: 0;
   color: #9a6a1f;
   font-size: 0.9rem;
   font-weight: 800;
+}
+
+.knowledge-meta span + span {
+  position: relative;
+}
+
+.knowledge-meta span + span::before {
+  position: absolute;
+  left: -9px;
+  content: "·";
+}
+
+.knowledge-card-summary {
+  display: -webkit-box;
+  margin: 0;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+}
+
+.knowledge-card .card-body > .button {
+  align-self: end;
+  justify-self: start;
+  margin-top: auto;
+}
+
+.knowledge-admin-toolbar {
+  display: grid;
+  grid-template-columns: minmax(260px, 1fr) minmax(180px, 280px) auto;
+  gap: 12px;
+  align-items: end;
+  margin-bottom: 16px;
+  padding: 16px;
+  border: 1px solid rgba(16, 35, 67, 0.1);
+  border-radius: 8px;
+  background: #fff;
+}
+
+.knowledge-admin-toolbar-actions,
+.knowledge-admin-pagination {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.knowledge-admin-pagination {
+  justify-content: flex-end;
+  margin-top: 18px;
 }
 
 .knowledge-detail-shell {
@@ -2197,6 +2254,7 @@ td {
   .people-summary-grid,
   .form-grid,
   .knowledge-listing-tools,
+  .knowledge-admin-toolbar,
   .detail-layout,
   .media-grid,
   .media-library-toolbar,
@@ -2313,14 +2371,20 @@ td {
 
   .knowledge-listing-actions,
   .knowledge-listing-actions .button,
+  .knowledge-admin-toolbar-actions,
+  .knowledge-admin-toolbar-actions .button,
   .knowledge-category-tabs .button,
   .knowledge-pagination .button,
-  .knowledge-pagination .knowledge-page-count {
+  .knowledge-pagination .knowledge-page-count,
+  .knowledge-admin-pagination .button,
+  .knowledge-admin-pagination .knowledge-page-count {
     width: 100%;
   }
 
-  .knowledge-pagination {
+  .knowledge-pagination,
+  .knowledge-admin-pagination {
     align-items: stretch;
+    justify-content: stretch;
     text-align: center;
   }
 
@@ -2339,6 +2403,20 @@ td {
 }
 
 @media (min-width: 761px) and (max-width: 1040px) {
+  .knowledge-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .knowledge-listing-tools,
+  .knowledge-admin-toolbar {
+    grid-template-columns: minmax(0, 1fr) minmax(180px, 240px);
+  }
+
+  .knowledge-listing-actions,
+  .knowledge-admin-toolbar-actions {
+    grid-column: 1 / -1;
+  }
+
   .media-library-toolbar {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
