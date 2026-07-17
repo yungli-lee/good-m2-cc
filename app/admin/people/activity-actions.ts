@@ -55,29 +55,21 @@ export async function createPersonActivityAction(personId: string, formData: For
 }
 
 export async function updatePersonActivityAction(personId: string, activityId: string, formData: FormData) {
-  const current = await requireRole(["editor", "admin", "owner"]);
+  await requireRole(["editor", "admin", "owner"]);
   const parsed = personActivityEditSchema.safeParse(activityValues(formData));
   if (!parsed.success) activityRedirect(personId, "activity_invalid", "error");
 
   const input = parsed.data;
-  const now = new Date().toISOString();
   const supabase = await createSupabaseServerClient();
-  const { error } = await supabase
-    .from("person_activities")
-    .update({
-      activity_type: input.activity_type,
-      channel: input.channel || null,
-      summary: input.summary,
-      details: input.details || null,
-      occurred_at: taipeiDateTimeToIso(input.occurred_at),
-      updated_by: current.user.id,
-      updated_at: now
-    })
-    .eq("id", activityId)
-    .eq("person_id", personId)
-    .is("deleted_at", null)
-    .select("id")
-    .single();
+  const { error } = await supabase.rpc("update_person_activity", {
+    p_person_id: personId,
+    p_activity_id: activityId,
+    p_activity_type: input.activity_type,
+    p_channel: input.channel || null,
+    p_summary: input.summary,
+    p_details: input.details || null,
+    p_occurred_at: taipeiDateTimeToIso(input.occurred_at)
+  });
 
   if (error) activityRedirect(personId, error.code === "42501" ? "forbidden" : "activity_update_failed", "error");
 
@@ -86,17 +78,12 @@ export async function updatePersonActivityAction(personId: string, activityId: s
 }
 
 export async function softDeletePersonActivityAction(personId: string, activityId: string) {
-  const current = await requireRole(["editor", "admin", "owner"]);
-  const now = new Date().toISOString();
+  await requireRole(["editor", "admin", "owner"]);
   const supabase = await createSupabaseServerClient();
-  const { error } = await supabase
-    .from("person_activities")
-    .update({ deleted_at: now, updated_by: current.user.id, updated_at: now })
-    .eq("id", activityId)
-    .eq("person_id", personId)
-    .is("deleted_at", null)
-    .select("id")
-    .single();
+  const { error } = await supabase.rpc("soft_delete_person_activity", {
+    p_person_id: personId,
+    p_activity_id: activityId
+  });
 
   if (error) activityRedirect(personId, error.code === "42501" ? "forbidden" : "activity_delete_failed", "error");
 
