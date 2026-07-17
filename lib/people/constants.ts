@@ -21,3 +21,21 @@ export const personRoleNames = [
   "investor",
   "broker"
 ] as const;
+
+export const personActivityTypes = [
+  "call",
+  "message",
+  "email",
+  "meeting",
+  "note",
+  "other"
+] as const;
+
+export const personActivityChannels = [
+  "phone",
+  "line",
+  "email",
+  "in_person",
+  "facebook",
+  "other"
+] as const;

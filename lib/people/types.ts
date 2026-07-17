@@ -1,4 +1,6 @@
 import type {
+  personActivityChannels,
+  personActivityTypes,
   personRoleNames,
   personSources,
   personStatuses
@@ -7,6 +9,8 @@ import type {
 export type PersonSource = (typeof personSources)[number];
 export type PersonStatus = (typeof personStatuses)[number];
 export type PersonRoleName = (typeof personRoleNames)[number];
+export type PersonActivityType = (typeof personActivityTypes)[number];
+export type PersonActivityChannel = (typeof personActivityChannels)[number];
 
 export type Person = {
   id: string;
@@ -23,6 +27,7 @@ export type Person = {
   status: PersonStatus;
   assigned_to: string | null;
   last_contacted_at: string | null;
+  next_follow_up_at: string | null;
   notes: string | null;
   created_by: string | null;
   updated_by: string | null;
@@ -47,4 +52,19 @@ export type PersonAssignee = {
   id: string;
   email: string | null;
   display_name: string | null;
+};
+
+export type PersonActivity = {
+  id: string;
+  person_id: string;
+  activity_type: PersonActivityType;
+  channel: PersonActivityChannel | null;
+  summary: string;
+  details: string | null;
+  occurred_at: string;
+  created_by: string | null;
+  updated_by: string | null;
+  created_at: string;
+  updated_at: string;
+  deleted_at: string | null;
 };

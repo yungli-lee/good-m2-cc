@@ -23,6 +23,7 @@ type Props = {
     source?: string;
     assigned_to?: string;
     sort?: string;
+    page?: string;
     error?: string;
     saved?: string;
   }>;
@@ -80,6 +81,33 @@ function assigneeLabel(assignee: { id: string; email: string | null; display_nam
   return assignee.display_name || assignee.email || assignee.id;
 }
 
+function normalizePage(value?: string) {
+  const page = Number(value || "1");
+  return Number.isFinite(page) && page > 0 ? Math.floor(page) : 1;
+}
+
+type PeopleListHrefInput = {
+  q: string;
+  role: string;
+  status: string;
+  source: string;
+  assignedTo: string;
+  sort: string;
+  page?: number;
+};
+
+function peopleListHref(input: PeopleListHrefInput) {
+  const params = new URLSearchParams();
+  if (input.q) params.set("q", input.q);
+  if (input.role !== "all") params.set("role", input.role);
+  if (input.status !== "all") params.set("status", input.status);
+  if (input.source !== "all") params.set("source", input.source);
+  if (input.assignedTo) params.set("assigned_to", input.assignedTo);
+  if (input.sort !== "newest") params.set("sort", input.sort);
+  if (input.page && input.page > 1) params.set("page", String(input.page));
+  return `/admin/people${params.toString() ? `?${params.toString()}` : ""}`;
+}
+
 function roleBadges(roles: PersonRoleName[]) {
   if (!roles.length) return <span className="muted">未設定</span>;
   return (
@@ -115,14 +143,19 @@ export default async function AdminPeoplePage({ searchParams }: Props) {
   const source = query.source === "all" || isSource(query.source) ? query.source : "all";
   const sort = isSort(query.sort) ? query.sort : "newest";
   const assignedTo = query.assigned_to || "";
-  const { data: people, error } = await listAdminPeople(supabase, {
-    q: query.q || "",
+  const q = query.q || "";
+  const requestedPage = normalizePage(query.page);
+  const { data: people, error, count, page, totalPages } = await listAdminPeople(supabase, {
+    q,
     role,
     status,
     source,
     assigned_to: assignedTo,
-    sort
+    sort,
+    page: requestedPage
   });
+  const safeTotalPages = Math.max(totalPages || 0, 1);
+  const listHrefBase = { q, role, status, source, assignedTo, sort };
 
   return (
     <main className="section">
@@ -152,7 +185,7 @@ export default async function AdminPeoplePage({ searchParams }: Props) {
         <form className="form-grid" style={{ marginBottom: 16 }} action="/admin/people">
           <label className="field">
             <span>搜尋</span>
-            <input className="input" name="q" type="search" placeholder="姓名、電話、Line、Email" defaultValue={query.q || ""} />
+            <input className="input" name="q" type="search" placeholder="姓名、電話、Line、Email" defaultValue={q} />
           </label>
           <label className="field">
             <span>角色</span>
@@ -259,6 +292,19 @@ export default async function AdminPeoplePage({ searchParams }: Props) {
             </tbody>
           </table>
         </div>
+        {!error && people.length ? (
+          <nav className="people-pagination" aria-label="客戶列表分頁">
+            {page > 1 ? (
+              <Link className="button ghost" href={peopleListHref({ ...listHrefBase, page: page - 1 })}>上一頁</Link>
+            ) : <span className="button ghost is-disabled">上一頁</span>}
+            <span className="muted">
+              第 {page.toLocaleString("zh-TW")} / {safeTotalPages.toLocaleString("zh-TW")} 頁，共 {(count || 0).toLocaleString("zh-TW")} 筆
+            </span>
+            {page < safeTotalPages ? (
+              <Link className="button ghost" href={peopleListHref({ ...listHrefBase, page: page + 1 })}>下一頁</Link>
+            ) : <span className="button ghost is-disabled">下一頁</span>}
+          </nav>
+        ) : null}
       </div>
     </main>
   );

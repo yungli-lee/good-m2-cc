@@ -1,7 +1,14 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { normalizeEmail, normalizeLineId, normalizePhone } from "@/lib/people/normalize";
 import type { PeopleSort } from "@/lib/people/schema";
-import type { Person, PersonAssignee, PersonRoleName, PersonSource, PersonStatus } from "@/lib/people/types";
+import type {
+  Person,
+  PersonActivity,
+  PersonAssignee,
+  PersonRoleName,
+  PersonSource,
+  PersonStatus
+} from "@/lib/people/types";
 
 export type AdminPeopleListItem = Person & {
   roles: PersonRoleName[];
@@ -15,6 +22,8 @@ export type PeopleFilters = {
   source?: PersonSource | "all";
   assigned_to?: string;
   sort?: PeopleSort;
+  page?: number;
+  pageSize?: number;
 };
 
 export type PeopleSummary = {
@@ -92,10 +101,14 @@ export async function getPeopleSummary(supabase: SupabaseClient): Promise<People
 }
 
 export async function listAdminPeople(supabase: SupabaseClient, filters: PeopleFilters) {
+  const page = Number.isFinite(filters.page) && Number(filters.page) > 0 ? Math.floor(Number(filters.page)) : 1;
+  const pageSize = Number.isFinite(filters.pageSize) && Number(filters.pageSize) > 0 ? Math.min(Math.floor(Number(filters.pageSize)), 100) : 25;
+  const from = (page - 1) * pageSize;
+  const to = from + pageSize - 1;
   const roleFiltered = Boolean(filters.role && filters.role !== "all");
   let query = supabase
     .from("people")
-    .select(roleFiltered ? "*, person_roles!inner(role)" : "*, person_roles(role)");
+    .select(roleFiltered ? "*, person_roles!inner(role)" : "*, person_roles(role)", { count: "exact" });
 
   const q = filters.q?.trim();
   if (q) {
@@ -127,8 +140,8 @@ export async function listAdminPeople(supabase: SupabaseClient, filters: PeopleF
     query = query.order("created_at", { ascending: false });
   }
 
-  const { data, error } = await query.limit(150);
-  if (error) return { data: [] as AdminPeopleListItem[], error };
+  const { data, error, count } = await query.range(from, to);
+  if (error) return { data: [] as AdminPeopleListItem[], error, count: 0, page, pageSize, totalPages: 0 };
 
   const rows = (data || []) as Array<Person & { person_roles?: Array<{ role: PersonRoleName }> }>;
   const labels = await mapAssigneeLabels(supabase, rows);
@@ -139,7 +152,11 @@ export async function listAdminPeople(supabase: SupabaseClient, filters: PeopleF
       roles: (person.person_roles || []).map((role) => role.role),
       assigned_to_label: person.assigned_to ? labels.get(person.assigned_to) || person.assigned_to : null
     })),
-    error: null
+    error: null,
+    count: count || 0,
+    page,
+    pageSize,
+    totalPages: Math.ceil((count || 0) / pageSize)
   };
 }
 
@@ -195,4 +212,28 @@ export function buildPersonPayload(input: {
     assigned_to: input.assigned_to || null,
     notes: input.notes?.trim() || null
   };
+}
+
+export async function listPersonActivities(supabase: SupabaseClient, personId: string) {
+  const { data, error } = await supabase
+    .from("person_activities")
+    .select("*")
+    .eq("person_id", personId)
+    .is("deleted_at", null)
+    .order("occurred_at", { ascending: false })
+    .order("created_at", { ascending: false });
+
+  return { data: (data || []) as PersonActivity[], error };
+}
+
+export async function getPersonActivity(supabase: SupabaseClient, personId: string, activityId: string) {
+  const { data, error } = await supabase
+    .from("person_activities")
+    .select("*")
+    .eq("id", activityId)
+    .eq("person_id", personId)
+    .is("deleted_at", null)
+    .maybeSingle();
+
+  return { data: data as PersonActivity | null, error };
 }

@@ -780,6 +780,119 @@ td {
   margin-bottom: 18px;
 }
 
+.people-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 18px;
+  flex-wrap: wrap;
+}
+
+.person-follow-up-card,
+.person-activity-section {
+  margin-top: 18px;
+}
+
+.person-follow-up-card .card-body {
+  display: grid;
+  grid-template-columns: minmax(220px, 0.5fr) minmax(320px, 1fr);
+  gap: 18px;
+  align-items: end;
+}
+
+.person-follow-up-card h2,
+.person-follow-up-card p,
+.person-activity-section h2 {
+  margin-top: 0;
+}
+
+.person-follow-up-form {
+  display: grid;
+  grid-template-columns: minmax(240px, 1fr) auto;
+  gap: 10px;
+  align-items: end;
+}
+
+.person-activity-layout {
+  display: grid;
+  grid-template-columns: minmax(320px, 0.72fr) minmax(0, 1.28fr);
+  gap: 18px;
+  align-items: start;
+}
+
+.person-activity-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.person-activity-empty {
+  padding: 24px;
+  border: 1px dashed rgba(16, 35, 67, 0.2);
+  border-radius: 8px;
+  color: #64708a;
+  text-align: center;
+}
+
+.person-activity-empty p {
+  margin-bottom: 0;
+}
+
+.person-activity-timeline {
+  display: grid;
+}
+
+.person-activity-item {
+  position: relative;
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr);
+  gap: 12px;
+}
+
+.person-activity-item:not(:last-child)::before {
+  position: absolute;
+  top: 18px;
+  bottom: -2px;
+  left: 7px;
+  width: 2px;
+  background: rgba(154, 106, 31, 0.2);
+  content: "";
+}
+
+.person-activity-marker {
+  position: relative;
+  z-index: 1;
+  width: 16px;
+  height: 16px;
+  margin-top: 5px;
+  border: 3px solid #fff;
+  border-radius: 50%;
+  background: #9a6a1f;
+  box-shadow: 0 0 0 1px rgba(154, 106, 31, 0.35);
+}
+
+.person-activity-content {
+  padding: 0 0 22px;
+}
+
+.person-activity-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.person-activity-summary {
+  margin: 8px 0 0;
+  font-weight: 700;
+}
+
+.person-activity-details {
+  margin: 6px 0 0;
+  white-space: pre-wrap;
+}
+
 .company-info-panel {
   margin-top: 18px;
   padding-top: 16px;
@@ -2311,6 +2424,30 @@ td {
     grid-template-columns: 1fr;
   }
 
+  .person-follow-up-card .card-body,
+  .person-follow-up-form,
+  .person-activity-layout,
+  .person-activity-form {
+    grid-template-columns: 1fr;
+  }
+
+  .person-follow-up-form .button,
+  .people-pagination .button,
+  .people-pagination .muted {
+    width: 100%;
+    text-align: center;
+  }
+
+  .people-pagination {
+    align-items: stretch;
+    justify-content: stretch;
+  }
+
+  .person-activity-heading {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
   .media-library-detail {
     position: static;
   }
@@ -2448,6 +2585,10 @@ td {
 }
 
 @media (min-width: 761px) and (max-width: 1040px) {
+  .person-activity-layout {
+    grid-template-columns: 1fr;
+  }
+
   .knowledge-index-hero {
     padding-block: 56px 36px;
   }
