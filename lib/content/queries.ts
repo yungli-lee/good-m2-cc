@@ -29,6 +29,13 @@ function publicKnowledgeQuery(
 }
 
 export type KnowledgeListFilter = "all" | ContentStatus | "deleted" | "review";
+export type AdminKnowledgeListOptions = {
+  q?: string;
+  filter?: KnowledgeListFilter;
+  category?: string;
+  page?: number;
+  pageSize?: number;
+};
 export type PublicKnowledgeListOptions = {
   q?: string;
   category?: string;
@@ -93,11 +100,46 @@ async function publicKnowledgeSearchIds(
   };
 }
 
-export async function listKnowledgeItems(options: { q?: string; filter?: KnowledgeListFilter } = {}) {
+const adminKnowledgePageSize = 20;
+
+async function adminKnowledgeTagItemIds(
+  supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>,
+  term: string
+) {
+  if (!term) return [] as string[];
+  const { data, error } = await supabase
+    .from("content_tags")
+    .select("content_item_tags(content_id)")
+    .or(`name.ilike.%${term}%,slug.ilike.%${term}%`)
+    .is("deleted_at", null)
+    .limit(30);
+
+  if (error) {
+    console.error("admin_knowledge_tag_search_failed", { code: error.code, message: error.message });
+    return [] as string[];
+  }
+
+  return Array.from(new Set(
+    ((data || []) as Array<{ content_item_tags?: Array<{ content_id?: string | null }> | null }>)
+      .flatMap((tag) => tag.content_item_tags || [])
+      .map((relation) => relation.content_id)
+      .filter(Boolean) as string[]
+  ));
+}
+
+export async function listKnowledgeItems(options: AdminKnowledgeListOptions = {}) {
   const supabase = await createSupabaseServerClient();
+  const pageSize = positiveInteger(options.pageSize, adminKnowledgePageSize);
+  const page = positiveInteger(options.page, 1);
+  const from = (page - 1) * pageSize;
+  const to = from + pageSize - 1;
+  const categorySlug = normalizePublicSlug(options.category);
+  const term = normalizePublicSearchTerm(options.q);
+  const tagItemIds = await adminKnowledgeTagItemIds(supabase, term);
+
   let query = supabase
     .from("content_items")
-    .select(contentItemSelect)
+    .select(contentItemSelect, { count: "exact" })
     .eq("content_type", "knowledge")
     .order("updated_at", { ascending: false });
 
@@ -110,24 +152,43 @@ export async function listKnowledgeItems(options: { q?: string; filter?: Knowled
     }
   }
 
-  if (options.q) {
-    const term = options.q.replace(/[%_,]/g, " ").trim();
-    if (term) query = query.or(`title.ilike.%${term}%,slug.ilike.%${term}%`);
+  if (options.filter === "review") {
+    query = query.or(`legal_status.eq.pending_review,next_review_at.lte.${new Date().toISOString()}`);
   }
 
-  const { data, error } = await query;
+  if (categorySlug) {
+    const { data: category } = await supabase
+      .from("content_categories")
+      .select("id")
+      .eq("slug", categorySlug)
+      .or("content_type.is.null,content_type.eq.knowledge")
+      .is("deleted_at", null)
+      .maybeSingle();
+    if (!category) {
+      return { data: [] as ContentItem[], error: null, count: 0, page, pageSize, totalPages: 0 };
+    }
+    query = query.eq("category_id", category.id as string);
+  }
+
+  if (term) {
+    const filters = [`title.ilike.%${term}%`, `slug.ilike.%${term}%`, `summary.ilike.%${term}%`];
+    if (tagItemIds.length) filters.push(`id.in.(${tagItemIds.join(",")})`);
+    query = query.or(filters.join(","));
+  }
+
+  const { data, error, count } = await query.range(from, to);
   if (error) {
     console.error("knowledge_list_failed", { code: error.code, message: error.message });
-    return { data: [] as ContentItem[], error };
+    return { data: [] as ContentItem[], error, count: 0, page, pageSize, totalPages: 0 };
   }
 
-  const items = (data || []) as ContentItem[];
-  if (options.filter !== "review") return { data: items, error: null };
-
-  const now = Date.now();
   return {
-    data: items.filter((item) => item.legal_status === "pending_review" || (item.next_review_at && Date.parse(item.next_review_at) <= now)),
-    error: null
+    data: (data || []) as ContentItem[],
+    error: null,
+    count: count || 0,
+    page,
+    pageSize,
+    totalPages: Math.ceil((count || 0) / pageSize)
   };
 }
 
