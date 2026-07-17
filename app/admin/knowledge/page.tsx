@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { KnowledgeCategorySelect } from "@/components/admin/knowledge-category-select";
 import { requireRole } from "@/lib/auth";
 import { canDeleteKnowledge, canEditKnowledge, canPublishKnowledge } from "@/lib/content/permissions";
 import { listKnowledgeCategories, listKnowledgeItems } from "@/lib/content/queries";
@@ -107,12 +108,12 @@ export default async function AdminKnowledgePage({ searchParams }: Props) {
           </label>
           <label className="field">
             <span>分類</span>
-            <select className="select" name="category" defaultValue={category}>
+            <KnowledgeCategorySelect defaultValue={category}>
               <option value="">全部分類</option>
               {categories.map((item) => (
                 <option key={item.id} value={item.slug}>{item.name}</option>
               ))}
-            </select>
+            </KnowledgeCategorySelect>
           </label>
           <div className="knowledge-admin-toolbar-actions">
             <button className="button ghost" type="submit">套用篩選</button>
