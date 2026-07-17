@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useRef, useState, useTransition } from "react";
 import { MediaPicker } from "@/components/admin/media-picker";
 import { cmsStatusLabels, sitePageLabels, sitePageKeys, type SitePage } from "@/lib/home-cms/types";
 import type { MediaLibraryAsset, MediaUsageType } from "@/lib/media";
@@ -26,7 +26,29 @@ export function SitePageForm({ page, mediaAssets }: Props) {
   const [toast, setToast] = useState<string | null>(null);
   const initialAsset = mediaAssets.find((asset) => asset.id === page?.cover_media_id) || null;
   const [mediaId, setMediaId] = useState(initialAsset?.id || "");
-  const [coverUrl, setCoverUrl] = useState("");
+  const [coverUrl, setCoverUrl] = useState(page?.fallback_cover_url || "");
+  const [body, setBody] = useState(page?.markdown_content || "");
+  const [inlineAssetId, setInlineAssetId] = useState("");
+  const bodyRef = useRef<HTMLTextAreaElement>(null);
+
+  function insertInlineImage(asset: MediaLibraryAsset) {
+    const textarea = bodyRef.current;
+    const start = textarea?.selectionStart ?? body.length;
+    const end = textarea?.selectionEnd ?? start;
+    const alt = (asset.alt_text || asset.caption || asset.original_filename || "內文圖片")
+      .replace(/[[\]]/g, "");
+    const markdown = `![${alt}](${asset.public_url})`;
+    const before = body.slice(0, start).replace(/\s*$/, "");
+    const after = body.slice(end).replace(/^\s*/, "");
+    const nextBody = [before, markdown, after].filter(Boolean).join("\n\n");
+    setBody(nextBody);
+    setInlineAssetId(asset.id);
+    window.requestAnimationFrame(() => {
+      const cursor = before.length + (before ? 2 : 0) + markdown.length;
+      textarea?.focus();
+      textarea?.setSelectionRange(cursor, cursor);
+    });
+  }
 
   function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -63,11 +85,19 @@ export function SitePageForm({ page, mediaAssets }: Props) {
       {toast ? <div className="success field full" role="status">{toast}</div> : null}
       {error ? <div className="notice field full" role="alert">{error}</div> : null}
       <label className="field">
-        <span>頁面</span>
-        <select className="select" name="page_key" defaultValue={page?.page_key || "philosophy"} disabled={Boolean(page) || pending}>
+        <span>Slug</span>
+        <input
+          className="input"
+          name="page_key"
+          list="site-page-slugs"
+          pattern="[a-z0-9][a-z0-9_-]*"
+          defaultValue={page?.page_key || "philosophy"}
+          required
+          disabled={pending}
+        />
+        <datalist id="site-page-slugs">
           {sitePageKeys.map((key) => <option key={key} value={key}>{sitePageLabels[key]}</option>)}
-        </select>
-        {page ? <input type="hidden" name="page_key" value={page.page_key} /> : null}
+        </datalist>
       </label>
       <label className="field">
         <span>狀態</span>
@@ -84,13 +114,36 @@ export function SitePageForm({ page, mediaAssets }: Props) {
         <input className="input" name="title" defaultValue={page?.title || ""} required disabled={pending} />
       </label>
       <label className="field full">
-        <span>副標</span>
+        <span>Eyebrow / 分類標籤</span>
+        <input className="input" name="eyebrow" defaultValue={page?.eyebrow || ""} disabled={pending} />
+      </label>
+      <label className="field full">
+        <span>副標 / 摘要</span>
         <input className="input" name="subtitle" defaultValue={page?.subtitle || ""} disabled={pending} />
       </label>
       <label className="field full">
         <span>內容（Markdown）</span>
-        <textarea className="textarea" name="markdown_content" rows={12} defaultValue={page?.markdown_content || ""} disabled={pending} />
+        <textarea
+          className="textarea"
+          name="markdown_content"
+          rows={16}
+          ref={bodyRef}
+          value={body}
+          onChange={(event) => setBody(event.target.value)}
+          disabled={pending}
+        />
+        <small className="muted">將游標放在要插入的位置，再從下方選擇內文圖片。刪除內容中的圖片 Markdown 即可移除圖片。</small>
       </label>
+      <div className="field full">
+        <MediaPicker
+          assets={mediaAssets}
+          preferredUsageTypes={["knowledge_inline", "knowledge_gallery", "general"]}
+          selectedId={inlineAssetId}
+          title="新增或更換內文圖片"
+          disabled={pending}
+          onSelect={insertInlineImage}
+        />
+      </div>
       <input type="hidden" name="cover_media_id" value={mediaId} />
       <div className="field full">
         <MediaPicker
@@ -104,10 +157,23 @@ export function SitePageForm({ page, mediaAssets }: Props) {
             setCoverUrl(asset.public_url);
           }}
         />
+        {mediaId || coverUrl ? (
+          <button
+            className="button ghost"
+            type="button"
+            disabled={pending}
+            onClick={() => {
+              setMediaId("");
+              setCoverUrl("");
+            }}
+          >
+            移除目前主圖
+          </button>
+        ) : null}
       </div>
       <label className="field full">
         <span>Fallback 封面 URL</span>
-        <input className="input" name="fallback_cover_url" defaultValue={page?.fallback_cover_url || coverUrl} disabled={pending} />
+        <input className="input" name="fallback_cover_url" value={coverUrl} onChange={(event) => setCoverUrl(event.target.value)} disabled={pending} />
       </label>
       <label className="field full">
         <span>SEO Title</span>

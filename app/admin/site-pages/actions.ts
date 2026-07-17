@@ -25,6 +25,7 @@ export async function createSitePageAction(formData: FormData) {
 
   const payload = {
     ...parsed.data,
+    eyebrow: nullable(parsed.data.eyebrow),
     subtitle: nullable(parsed.data.subtitle),
     markdown_content: nullable(parsed.data.markdown_content),
     cover_media_id: nullable(parsed.data.cover_media_id),
@@ -65,6 +66,7 @@ export async function updateSitePageAction(id: string, formData: FormData) {
 
   const payload = {
     ...parsed.data,
+    eyebrow: nullable(parsed.data.eyebrow),
     subtitle: nullable(parsed.data.subtitle),
     markdown_content: nullable(parsed.data.markdown_content),
     cover_media_id: nullable(parsed.data.cover_media_id),

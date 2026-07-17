@@ -24,6 +24,7 @@ export const homeCampaignSchema = z.object({
 export const sitePageSchema = z.object({
   page_key: z.string().trim().min(1).max(80).regex(/^[a-z0-9][a-z0-9_-]*$/),
   title: z.string().trim().min(1).max(180),
+  eyebrow: optionalText(120),
   subtitle: optionalText(260),
   markdown_content: optionalText(20000),
   cover_media_id: z.string().trim().uuid().optional().or(z.literal("")),

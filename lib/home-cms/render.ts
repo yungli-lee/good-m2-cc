@@ -15,6 +15,17 @@ function escapeAttr(value?: string | null) {
   return escapeHtml(value).replace(/'/g, "&#39;");
 }
 
+function safeImageUrl(value: string) {
+  const url = value.trim();
+  if (url.startsWith("/") && !url.startsWith("//")) return url;
+  try {
+    const parsed = new URL(url);
+    return parsed.protocol === "https:" || parsed.protocol === "http:" ? parsed.toString() : "";
+  } catch {
+    return "";
+  }
+}
+
 function markdownToHtml(markdown?: string | null) {
   const lines = String(markdown || "").replace(/\r\n/g, "\n").split("\n");
   const blocks: string[] = [];
@@ -55,6 +66,18 @@ function markdownToHtml(markdown?: string | null) {
     if (line.startsWith("- ") || line.startsWith("* ")) {
       flushParagraph();
       list.push(line.slice(2));
+      continue;
+    }
+    const image = line.match(/^!\[([^\]]*)\]\(([^)\s]+)\)$/);
+    if (image) {
+      flushParagraph();
+      flushList();
+      const src = safeImageUrl(image[2]);
+      if (src) {
+        blocks.push(
+          `<figure class="cms-inline-image"><img src="${escapeAttr(src)}" alt="${escapeAttr(image[1])}" loading="lazy"></figure>`
+        );
+      }
       continue;
     }
     paragraph.push(line);
@@ -111,7 +134,7 @@ function renderCampaignHero(campaigns: CampaignForRender[]) {
   return `<section class="hero home-campaign-carousel" data-home-campaign-carousel>${slides}${controls}</section>`;
 }
 
-function renderGenericCmsSection(page: PageForRender, id: SitePageKey, eyebrow: string) {
+function renderGenericCmsSection(page: PageForRender, id: SitePageKey, defaultEyebrow: string) {
   const cover = imageUrl(page);
   const coverHtml = cover
     ? `<figure class="cms-section-cover"><img src="${escapeAttr(cover)}" alt="${escapeAttr(page.title)}" loading="lazy"></figure>`
@@ -119,7 +142,7 @@ function renderGenericCmsSection(page: PageForRender, id: SitePageKey, eyebrow: 
   return `
       <section class="intro-band cms-managed-section" id="${id}">
         <div class="section-heading">
-          <p class="eyebrow">${eyebrow}</p>
+          <p class="eyebrow">${escapeHtml(page.eyebrow || defaultEyebrow)}</p>
           <h2>${escapeHtml(page.title)}</h2>
           ${page.subtitle ? `<p>${escapeHtml(page.subtitle)}</p>` : ""}
         </div>

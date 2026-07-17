@@ -26,6 +26,7 @@ export async function POST(request: Request) {
 
   const payload = {
     ...parsed.data,
+    eyebrow: nullable(parsed.data.eyebrow),
     subtitle: nullable(parsed.data.subtitle),
     markdown_content: nullable(parsed.data.markdown_content),
     cover_media_id: nullable(parsed.data.cover_media_id),

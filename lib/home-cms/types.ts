@@ -33,6 +33,7 @@ export type SitePage = {
   id: string;
   page_key: SitePageKey;
   title: string;
+  eyebrow: string | null;
   subtitle: string | null;
   markdown_content: string | null;
   cover_media_id: string | null;
