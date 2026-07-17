@@ -10,6 +10,7 @@ import {
 } from "@/lib/people/schema";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
+// Keep CRM activity mutations behind registered Next.js Server Actions.
 function activityValues(formData: FormData) {
   return {
     activity_type: String(formData.get("activity_type") || ""),
