@@ -279,6 +279,7 @@ export function KnowledgeForm({ categories, mediaAssets = [], item, role, disabl
         if (result.redirectTo) {
           sessionStorage.setItem("knowledge-toast", message);
           router.replace(result.redirectTo);
+          router.refresh();
           return;
         }
         setToast(message);
