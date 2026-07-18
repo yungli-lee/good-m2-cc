@@ -103,6 +103,10 @@ a {
   color: var(--muted);
 }
 
+.site-nav a {
+  white-space: nowrap;
+}
+
 .site-nav a:hover {
   color: var(--navy);
 }

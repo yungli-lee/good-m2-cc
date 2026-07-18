@@ -13,7 +13,7 @@ const navItems: NavItem[] = [
   { hash: "services", label: "服務項目" },
   { hash: "calculators", label: "房產試算工具" },
   { hash: "process", label: "買屋流程" },
-  { hash: "reminders", label: "生活小提醒" },
+  { hash: "reminders", label: "阿勇生活小提醒" },
   { hash: "team", label: "聯絡我們" }
 ];
 

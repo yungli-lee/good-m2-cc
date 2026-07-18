@@ -9,6 +9,7 @@ import type { MediaLibraryAsset, MediaUsageType } from "@/lib/media";
 type Props = {
   page?: SitePage | null;
   mediaAssets: MediaLibraryAsset[];
+  existingPageKeys?: string[];
 };
 
 type SaveResponse = {
@@ -18,6 +19,15 @@ type SaveResponse = {
 };
 
 const preferredUsageTypes: MediaUsageType[] = ["hero_banner", "general", "knowledge_hero", "knowledge_inline"];
+const pageTypeOptions = [
+  { value: "philosophy", label: "服務理念", slug: "philosophy" },
+  { value: "services", label: "服務項目", slug: "services" },
+  { value: "reminders", label: "阿勇生活小提醒", slug: "reminders" },
+  { value: "contact", label: "聯絡我們", slug: "contact" },
+  { value: "custom", label: "自訂頁面", slug: "" }
+] as const;
+
+type PageType = (typeof pageTypeOptions)[number]["value"];
 
 function suggestedSlug(title: string) {
   const value = title
@@ -29,7 +39,7 @@ function suggestedSlug(title: string) {
   return value || (title.trim() ? "new-page" : "");
 }
 
-export function SitePageForm({ page, mediaAssets }: Props) {
+export function SitePageForm({ page, mediaAssets, existingPageKeys = [] }: Props) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -42,11 +52,16 @@ export function SitePageForm({ page, mediaAssets }: Props) {
   const [title, setTitle] = useState(page?.title || "");
   const [slug, setSlug] = useState(page?.page_key || "");
   const [slugEdited, setSlugEdited] = useState(Boolean(page?.page_key));
+  const initialPageType = pageTypeOptions.some((option) => option.value !== "custom" && option.slug === page?.page_key)
+    ? page?.page_key as PageType
+    : "custom";
+  const [pageType, setPageType] = useState<PageType>(initialPageType);
+  const isCustomPage = pageType === "custom";
   const bodyRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
-    if (!slugEdited) setSlug(suggestedSlug(title));
-  }, [slugEdited, title]);
+    if (isCustomPage && !slugEdited) setSlug(suggestedSlug(title));
+  }, [isCustomPage, slugEdited, title]);
 
   function insertInlineImage(asset: MediaLibraryAsset) {
     const textarea = bodyRef.current;
@@ -102,6 +117,37 @@ export function SitePageForm({ page, mediaAssets }: Props) {
       {toast ? <div className="success field full" role="status">{toast}</div> : null}
       {error ? <div className="notice field full" role="alert">{error}</div> : null}
       <label className="field">
+        <span>頁面類型</span>
+        <select
+          className="select"
+          value={pageType}
+          onChange={(event) => {
+            const nextType = event.target.value as PageType;
+            const option = pageTypeOptions.find((item) => item.value === nextType);
+            setPageType(nextType);
+            if (nextType === "custom") {
+              setSlugEdited(false);
+              setSlug(suggestedSlug(title));
+            } else {
+              setSlugEdited(true);
+              setSlug(option?.slug || "");
+            }
+          }}
+          disabled={pending}
+        >
+          {pageTypeOptions.map((option) => {
+            const alreadyExists = option.slug
+              ? existingPageKeys.includes(option.slug) && page?.page_key !== option.slug
+              : false;
+            return (
+              <option key={option.value} value={option.value} disabled={alreadyExists}>
+                {option.label}{alreadyExists ? "（已建立）" : ""}
+              </option>
+            );
+          })}
+        </select>
+      </label>
+      <label className="field">
         <span>Slug</span>
         <input
           className="input"
@@ -114,9 +160,14 @@ export function SitePageForm({ page, mediaAssets }: Props) {
           }}
           placeholder="例如：life-notes"
           required
+          readOnly={!isCustomPage}
           disabled={pending}
         />
-        <small className="muted">可自行修改；僅限小寫英文字母、數字與連字號。既有「阿勇生活小提醒」入口仍使用 reminders。</small>
+        <small className="muted">
+          {isCustomPage
+            ? "自訂頁面可修改；僅限小寫英文字母、數字與連字號。"
+            : "預設頁型的 Slug 已鎖定，以保護既有導覽與錨點。"}
+        </small>
       </label>
       <label className="field">
         <span>狀態</span>

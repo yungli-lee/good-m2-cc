@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { SitePageForm } from "@/components/admin/site-page-form";
 import { requireRole } from "@/lib/auth";
-import { getSitePage } from "@/lib/home-cms/queries";
+import { getSitePage, listAdminSitePages } from "@/lib/home-cms/queries";
 import { listAdminMediaAssets } from "@/lib/media";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
@@ -18,9 +18,10 @@ export default async function EditSitePagePage({ params, searchParams }: Props) 
   const query = await searchParams;
   await requireRole(["editor", "admin", "owner"]);
   const supabase = await createSupabaseServerClient();
-  const [{ data: page }, mediaResult] = await Promise.all([
+  const [{ data: page }, mediaResult, pagesResult] = await Promise.all([
     getSitePage(id),
-    listAdminMediaAssets({ supabase, category: "all", status: "active", sort: "newest" })
+    listAdminMediaAssets({ supabase, category: "all", status: "active", sort: "newest" }),
+    listAdminSitePages()
   ]);
   if (!page) notFound();
 
@@ -37,7 +38,11 @@ export default async function EditSitePagePage({ params, searchParams }: Props) 
         </div>
         {query.saved ? <div className="success">頁面內容已儲存。</div> : null}
         {query.error ? <div className="notice">儲存失敗：{query.error}</div> : null}
-        <SitePageForm page={page} mediaAssets={mediaResult.data} />
+        <SitePageForm
+          page={page}
+          mediaAssets={mediaResult.data}
+          existingPageKeys={pagesResult.data.map((item) => item.page_key)}
+        />
       </div>
     </main>
   );
