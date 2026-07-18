@@ -67,5 +67,6 @@ export const sitePageLabels: Record<KnownSitePageKey, string> = {
 export const sitePageKeys = ["philosophy", "services", "process", "reminders", "team"] as const;
 
 export function sitePageLabel(pageKey: SitePageKey) {
+  if (pageKey === "contact") return "聯絡我們";
   return sitePageLabels[pageKey as KnownSitePageKey] || pageKey;
 }
