@@ -22,7 +22,7 @@ export default async function AdminSitePagesPage({ searchParams }: Props) {
           <div>
             <p className="eyebrow">Home CMS</p>
             <h1>靜態頁面內容</h1>
-            <p className="muted">管理首頁內服務理念、服務項目、買屋流程、生活提醒、聯絡我們區塊。</p>
+            <p className="muted">管理服務理念、服務項目、買屋流程、阿勇生活小提醒、聯絡我們與自訂公開頁面。</p>
           </div>
           <div className="admin-actions">
             <Link className="button ghost" href="/admin">返回後台</Link>

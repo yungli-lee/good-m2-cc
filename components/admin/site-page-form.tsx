@@ -1,9 +1,9 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useRef, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { MediaPicker } from "@/components/admin/media-picker";
-import { cmsStatusLabels, sitePageLabels, sitePageKeys, type SitePage } from "@/lib/home-cms/types";
+import { cmsStatusLabels, type SitePage } from "@/lib/home-cms/types";
 import type { MediaLibraryAsset, MediaUsageType } from "@/lib/media";
 
 type Props = {
@@ -19,6 +19,16 @@ type SaveResponse = {
 
 const preferredUsageTypes: MediaUsageType[] = ["hero_banner", "general", "knowledge_hero", "knowledge_inline"];
 
+function suggestedSlug(title: string) {
+  const value = title
+    .trim()
+    .toLowerCase()
+    .normalize("NFKD")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+  return value || (title.trim() ? "new-page" : "");
+}
+
 export function SitePageForm({ page, mediaAssets }: Props) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
@@ -29,7 +39,14 @@ export function SitePageForm({ page, mediaAssets }: Props) {
   const [coverUrl, setCoverUrl] = useState(page?.fallback_cover_url || "");
   const [body, setBody] = useState(page?.markdown_content || "");
   const [inlineAssetId, setInlineAssetId] = useState("");
+  const [title, setTitle] = useState(page?.title || "");
+  const [slug, setSlug] = useState(page?.page_key || "");
+  const [slugEdited, setSlugEdited] = useState(Boolean(page?.page_key));
   const bodyRef = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    if (!slugEdited) setSlug(suggestedSlug(title));
+  }, [slugEdited, title]);
 
   function insertInlineImage(asset: MediaLibraryAsset) {
     const textarea = bodyRef.current;
@@ -89,15 +106,17 @@ export function SitePageForm({ page, mediaAssets }: Props) {
         <input
           className="input"
           name="page_key"
-          list="site-page-slugs"
-          pattern="[a-z0-9][a-z0-9_-]*"
-          defaultValue={page?.page_key || "philosophy"}
+          pattern="[a-z0-9]+(?:-[a-z0-9]+)*"
+          value={slug}
+          onChange={(event) => {
+            setSlugEdited(true);
+            setSlug(event.target.value);
+          }}
+          placeholder="例如：life-notes"
           required
           disabled={pending}
         />
-        <datalist id="site-page-slugs">
-          {sitePageKeys.map((key) => <option key={key} value={key}>{sitePageLabels[key]}</option>)}
-        </datalist>
+        <small className="muted">可自行修改；僅限小寫英文字母、數字與連字號。既有「阿勇生活小提醒」入口仍使用 reminders。</small>
       </label>
       <label className="field">
         <span>狀態</span>
@@ -111,7 +130,7 @@ export function SitePageForm({ page, mediaAssets }: Props) {
       </label>
       <label className="field full">
         <span>標題</span>
-        <input className="input" name="title" defaultValue={page?.title || ""} required disabled={pending} />
+        <input className="input" name="title" value={title} onChange={(event) => setTitle(event.target.value)} required disabled={pending} />
       </label>
       <label className="field full">
         <span>Eyebrow / 分類標籤</span>
