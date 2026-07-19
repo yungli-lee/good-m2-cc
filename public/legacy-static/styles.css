@@ -1322,6 +1322,24 @@ h3 {
   line-height: 1.85;
 }
 
+.cms-reminder-cover {
+  margin: 0 0 20px;
+  overflow: hidden;
+  border-radius: 16px;
+}
+
+.cms-reminder-cover img {
+  display: block;
+  width: 100%;
+  max-height: 520px;
+  object-fit: cover;
+}
+
+.cms-reminders-section .cms-markdown-body {
+  width: 100%;
+  font-size: inherit;
+}
+
 .cms-markdown-body > * {
   margin-top: 0;
 }

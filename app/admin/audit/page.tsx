@@ -89,7 +89,8 @@ const actionOptions = [
   "site_page_create",
   "site_page_update",
   "site_page_publish",
-  "site_page_archive"
+  "site_page_archive",
+  "site_page_delete"
 ];
 
 function pageHref(filters: Awaited<Props["searchParams"]>, page: number) {

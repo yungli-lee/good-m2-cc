@@ -37,7 +37,8 @@ export default async function AdminSitePagesPage({ searchParams }: Props) {
           <table>
             <thead>
               <tr>
-                <th>頁面</th>
+                <th>分類</th>
+                <th>Slug</th>
                 <th>標題</th>
                 <th>狀態</th>
                 <th>排序</th>
@@ -48,7 +49,8 @@ export default async function AdminSitePagesPage({ searchParams }: Props) {
             <tbody>
               {pages.map((page) => (
                 <tr key={page.id}>
-                  <td>{sitePageLabel(page.page_key)}</td>
+                  <td>{sitePageLabel(page.page_key, page.page_type)}</td>
+                  <td><code>{page.page_key}</code></td>
                   <td><strong>{page.title}</strong><br /><span className="muted">{page.subtitle || "-"}</span></td>
                   <td>{cmsStatusLabels[page.status]}</td>
                   <td>{page.sort_order}</td>
@@ -57,7 +59,7 @@ export default async function AdminSitePagesPage({ searchParams }: Props) {
                 </tr>
               ))}
               {!pages.length ? (
-                <tr><td colSpan={6}><div className="admin-users-empty">尚未建立頁面內容；前台會使用既有 fallback。</div></td></tr>
+                <tr><td colSpan={7}><div className="admin-users-empty">尚未建立頁面內容；前台會使用既有 fallback。</div></td></tr>
               ) : null}
             </tbody>
           </table>

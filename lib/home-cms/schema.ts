@@ -2,6 +2,7 @@ import { z } from "zod";
 const optionalText = (max = 4000) => z.string().trim().max(max).optional().or(z.literal(""));
 const optionalDate = z.string().trim().max(40).optional().or(z.literal(""));
 export const cmsStatusValues = ["draft", "published", "archived"] as const;
+export const sitePageTypeValues = ["philosophy", "services", "contact", "reminder", "custom"] as const;
 
 export const homeCampaignSchema = z.object({
   title: z.string().trim().min(1).max(180),
@@ -22,6 +23,7 @@ export const homeCampaignSchema = z.object({
 });
 
 export const sitePageSchema = z.object({
+  page_type: z.enum(sitePageTypeValues),
   page_key: z.string().trim().min(1).max(80)
     .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "Slug 僅能使用小寫英文字母、數字與連字號，且連字號不可位於開頭、結尾或連續使用。"),
   title: z.string().trim().min(1).max(180),

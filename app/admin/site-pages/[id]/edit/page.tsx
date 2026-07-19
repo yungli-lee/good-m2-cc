@@ -41,7 +41,7 @@ export default async function EditSitePagePage({ params, searchParams }: Props) 
         <SitePageForm
           page={page}
           mediaAssets={mediaResult.data}
-          existingPageKeys={pagesResult.data.map((item) => item.page_key)}
+          existingPageTypes={pagesResult.data.map((item) => item.page_type)}
         />
       </div>
     </main>

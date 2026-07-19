@@ -17,7 +17,7 @@ type AuditAction =
   | "email_test_sent" | "email_test_failed"
   | "content_create" | "content_update" | "content_publish" | "content_unpublish" | "content_delete" | "content_restore"
   | "home_campaign_create" | "home_campaign_update" | "home_campaign_publish" | "home_campaign_archive"
-  | "site_page_create" | "site_page_update" | "site_page_publish" | "site_page_archive"
+  | "site_page_create" | "site_page_update" | "site_page_publish" | "site_page_archive" | "site_page_delete"
   | "media_upload" | "media_update" | "media_delete" | "media_restore" | "media_attach" | "media_detach"
   | "media_cover_set" | "media_alt_update" | "media_caption_update" | "media_replace"
   | "people_created" | "people_updated" | "people_deleted" | "people_role_added" | "people_role_removed";

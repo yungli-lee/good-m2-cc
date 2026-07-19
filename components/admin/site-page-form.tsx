@@ -3,13 +3,13 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, useTransition } from "react";
 import { MediaPicker } from "@/components/admin/media-picker";
-import { cmsStatusLabels, type SitePage } from "@/lib/home-cms/types";
+import { cmsStatusLabels, type SitePage, type SitePageType } from "@/lib/home-cms/types";
 import type { MediaLibraryAsset, MediaUsageType } from "@/lib/media";
 
 type Props = {
   page?: SitePage | null;
   mediaAssets: MediaLibraryAsset[];
-  existingPageKeys?: string[];
+  existingPageTypes?: SitePageType[];
 };
 
 type SaveResponse = {
@@ -20,11 +20,11 @@ type SaveResponse = {
 
 const preferredUsageTypes: MediaUsageType[] = ["hero_banner", "general", "knowledge_hero", "knowledge_inline"];
 const pageTypeOptions = [
-  { value: "philosophy", label: "服務理念", slug: "philosophy" },
-  { value: "services", label: "服務項目", slug: "services" },
-  { value: "reminders", label: "阿勇生活小提醒", slug: "reminders" },
-  { value: "contact", label: "聯絡我們", slug: "contact" },
-  { value: "custom", label: "自訂頁面", slug: "" }
+  { value: "philosophy", label: "服務理念", slug: "philosophy", repeatable: false },
+  { value: "services", label: "服務項目", slug: "services", repeatable: false },
+  { value: "reminder", label: "阿勇生活小提醒", slug: "", repeatable: true },
+  { value: "contact", label: "聯絡我們", slug: "contact", repeatable: false },
+  { value: "custom", label: "自訂頁面", slug: "", repeatable: true }
 ] as const;
 
 type PageType = (typeof pageTypeOptions)[number]["value"];
@@ -39,7 +39,7 @@ function suggestedSlug(title: string) {
   return value || (title.trim() ? "new-page" : "");
 }
 
-export function SitePageForm({ page, mediaAssets, existingPageKeys = [] }: Props) {
+export function SitePageForm({ page, mediaAssets, existingPageTypes = [] }: Props) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -52,16 +52,14 @@ export function SitePageForm({ page, mediaAssets, existingPageKeys = [] }: Props
   const [title, setTitle] = useState(page?.title || "");
   const [slug, setSlug] = useState(page?.page_key || "");
   const [slugEdited, setSlugEdited] = useState(Boolean(page?.page_key));
-  const initialPageType = pageTypeOptions.some((option) => option.value !== "custom" && option.slug === page?.page_key)
-    ? page?.page_key as PageType
-    : "custom";
+  const initialPageType = page?.page_type || "custom";
   const [pageType, setPageType] = useState<PageType>(initialPageType);
-  const isCustomPage = pageType === "custom";
+  const isSlugEditable = pageType === "custom" || pageType === "reminder";
   const bodyRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
-    if (isCustomPage && !slugEdited) setSlug(suggestedSlug(title));
-  }, [isCustomPage, slugEdited, title]);
+    if (isSlugEditable && !slugEdited) setSlug(suggestedSlug(title));
+  }, [isSlugEditable, slugEdited, title]);
 
   function insertInlineImage(asset: MediaLibraryAsset) {
     const textarea = bodyRef.current;
@@ -112,6 +110,27 @@ export function SitePageForm({ page, mediaAssets, existingPageKeys = [] }: Props
     });
   }
 
+  function handleDelete() {
+    if (!page?.id || (page.page_type !== "reminder" && page.page_type !== "custom")) return;
+    if (!window.confirm(`確定刪除「${page.title}」？此動作無法復原。`)) return;
+    setError(null);
+    setToast(null);
+    startTransition(async () => {
+      try {
+        const response = await fetch(`/api/admin/site-pages/${page.id}`, { method: "DELETE" });
+        const result = (await response.json().catch(() => null)) as SaveResponse | null;
+        if (!response.ok || !result?.ok) {
+          setError(result?.message || "刪除失敗，請稍後再試。");
+          return;
+        }
+        router.replace(result.redirectTo || "/admin/site-pages?saved=1");
+        router.refresh();
+      } catch (deleteError) {
+        setError(deleteError instanceof Error ? deleteError.message : "刪除失敗，請稍後再試。");
+      }
+    });
+  }
+
   return (
     <form className="form-grid" onSubmit={handleSubmit}>
       {toast ? <div className="success field full" role="status">{toast}</div> : null}
@@ -120,12 +139,13 @@ export function SitePageForm({ page, mediaAssets, existingPageKeys = [] }: Props
         <span>頁面類型</span>
         <select
           className="select"
+          name="page_type"
           value={pageType}
           onChange={(event) => {
             const nextType = event.target.value as PageType;
             const option = pageTypeOptions.find((item) => item.value === nextType);
             setPageType(nextType);
-            if (nextType === "custom") {
+            if (nextType === "custom" || nextType === "reminder") {
               setSlugEdited(false);
               setSlug(suggestedSlug(title));
             } else {
@@ -136,9 +156,9 @@ export function SitePageForm({ page, mediaAssets, existingPageKeys = [] }: Props
           disabled={pending}
         >
           {pageTypeOptions.map((option) => {
-            const alreadyExists = option.slug
-              ? existingPageKeys.includes(option.slug) && page?.page_key !== option.slug
-              : false;
+            const alreadyExists = !option.repeatable
+              && existingPageTypes.includes(option.value)
+              && page?.page_type !== option.value;
             return (
               <option key={option.value} value={option.value} disabled={alreadyExists}>
                 {option.label}{alreadyExists ? "（已建立）" : ""}
@@ -160,12 +180,12 @@ export function SitePageForm({ page, mediaAssets, existingPageKeys = [] }: Props
           }}
           placeholder="例如：life-notes"
           required
-          readOnly={!isCustomPage}
+          readOnly={!isSlugEditable}
           disabled={pending}
         />
         <small className="muted">
-          {isCustomPage
-            ? "自訂頁面可修改；僅限小寫英文字母、數字與連字號。"
+          {isSlugEditable
+            ? "每篇內容使用獨立 Slug；僅限小寫英文字母、數字與連字號。"
             : "預設頁型的 Slug 已鎖定，以保護既有導覽與錨點。"}
         </small>
       </label>
@@ -255,6 +275,9 @@ export function SitePageForm({ page, mediaAssets, existingPageKeys = [] }: Props
       </label>
       <div className="actions full">
         <button className="button" type="submit" disabled={pending}>{pending ? "儲存中..." : "儲存頁面內容"}</button>
+        {page && (page.page_type === "reminder" || page.page_type === "custom") ? (
+          <button className="button danger" type="button" disabled={pending} onClick={handleDelete}>刪除內容</button>
+        ) : null}
       </div>
     </form>
   );

@@ -17,6 +17,8 @@ function actionForStatus(status: string) {
   return "site_page_create";
 }
 
+const singletonPageTypes = ["philosophy", "services", "contact"];
+
 export async function POST(request: Request) {
   const current = await requireRole(["editor", "admin", "owner"]);
   const parsed = sitePageSchema.safeParse(valuesFromFormData(await request.formData()));
@@ -33,7 +35,18 @@ export async function POST(request: Request) {
   if (existing) {
     return NextResponse.json({ ok: false, message: "此 Slug 已被使用，請改用其他 Slug；既有頁面不會被覆蓋。" }, { status: 409 });
   }
+  if (singletonPageTypes.includes(parsed.data.page_type)) {
+    const { data: existingType } = await supabase
+      .from("site_pages")
+      .select("id")
+      .eq("page_type", parsed.data.page_type)
+      .maybeSingle();
+    if (existingType) {
+      return NextResponse.json({ ok: false, message: "此頁面類型只能建立一筆；請編輯既有內容。" }, { status: 409 });
+    }
+  }
 
+  const now = new Date().toISOString();
   const payload = {
     ...parsed.data,
     eyebrow: nullable(parsed.data.eyebrow),
@@ -43,7 +56,8 @@ export async function POST(request: Request) {
     fallback_cover_url: nullable(parsed.data.fallback_cover_url),
     seo_title: nullable(parsed.data.seo_title),
     seo_description: nullable(parsed.data.seo_description),
-    archived_at: parsed.data.status === "archived" ? new Date().toISOString() : null,
+    archived_at: parsed.data.status === "archived" ? now : null,
+    published_at: parsed.data.status === "published" ? now : null,
     created_by: current.user.id,
     updated_by: current.user.id
   };

@@ -151,6 +151,42 @@ function renderGenericCmsSection(page: PageForRender, id: SitePageKey, defaultEy
       </section>`;
 }
 
+function renderReminderCard(page: PageForRender) {
+  const cover = imageUrl(page);
+  const coverHtml = cover
+    ? `<figure class="cms-reminder-cover"><img src="${escapeAttr(cover)}" alt="${escapeAttr(page.title)}" loading="lazy"></figure>`
+    : "";
+
+  return `
+          <article class="article-card" data-reminder-slug="${escapeAttr(page.page_key)}">
+            <button type="button" class="article-toggle">
+              <span>
+                <strong>${escapeHtml(page.title)}</strong>
+                ${page.subtitle ? `<small>${escapeHtml(page.subtitle)}</small>` : ""}
+              </span>
+              <b>展開</b>
+            </button>
+            <div class="article-body">
+              ${coverHtml}
+              <div class="cms-markdown-body">${markdownToHtml(page.markdown_content)}</div>
+            </div>
+          </article>`;
+}
+
+function renderRemindersSection(pages: PageForRender[]) {
+  return `
+      <section class="life cms-reminders-section" id="reminders">
+        <div class="section-heading">
+          <p class="eyebrow">Life Notes</p>
+          <h2>阿勇生活小提醒</h2>
+          <p>生活中，很多問題不是不懂，而是沒有人提醒。這裡整理一些日常生活智慧，逐漸增加中。</p>
+        </div>
+        <div class="article-grid">
+          ${pages.map(renderReminderCard).join("")}
+        </div>
+      </section>`;
+}
+
 const pageEyebrows: Record<KnownSitePageKey, string> = {
   philosophy: "Service Philosophy",
   services: "Services",
@@ -166,7 +202,7 @@ function isKnownSitePageKey(key: SitePageKey): key is KnownSitePageKey {
 export function renderHomeCmsHtml(
   staticHtml: string,
   campaigns: CampaignForRender[],
-  pages: Map<SitePageKey, PageForRender>
+  pages: PageForRender[]
 ) {
   let html = staticHtml;
 
@@ -174,7 +210,21 @@ export function renderHomeCmsHtml(
     html = html.replace(/<section\b[^>]*class=["']hero["'][^>]*>[\s\S]*?<\/section>/i, renderCampaignHero(campaigns));
   }
 
-  for (const [key, page] of pages) {
+  const reminders = pages.filter((page) => page.page_type === "reminder");
+  if (reminders.length) {
+    const remindersRegex = sectionRegex("reminders");
+    if (remindersRegex.test(html)) {
+      html = html.replace(remindersRegex, renderRemindersSection(reminders));
+    }
+  }
+
+  for (const page of pages) {
+    if (page.page_type === "reminder") continue;
+    const key: SitePageKey = page.page_type === "contact"
+      ? "team"
+      : page.page_type === "philosophy" || page.page_type === "services"
+        ? page.page_type
+        : page.page_key;
     if (!isKnownSitePageKey(key)) {
       const section = renderGenericCmsSection(page, key, page.eyebrow || "Site Page");
       html = /<\/main>/i.test(html)

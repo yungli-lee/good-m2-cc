@@ -4,13 +4,13 @@ import { listActiveHomeCampaigns, listPublishedSitePages } from "@/lib/home-cms/
 export const runtime = "edge";
 
 export async function GET() {
-  const [campaigns, pageMap] = await Promise.all([
+  const [campaigns, pages] = await Promise.all([
     listActiveHomeCampaigns(),
     listPublishedSitePages()
   ]);
 
   return NextResponse.json({
     campaigns,
-    pages: Array.from(pageMap.values())
+    pages
   });
 }

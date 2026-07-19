@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { renderHomeCmsHtml } from "@/lib/home-cms/render";
-import type { HomeCampaign, SitePage, SitePageKey } from "@/lib/home-cms/types";
+import type { HomeCampaign, SitePage } from "@/lib/home-cms/types";
 
 type HomeCmsPayload = {
   campaigns?: Array<HomeCampaign & { media_public_url?: string | null }>;
@@ -22,10 +22,7 @@ export function HomeCmsClient() {
       ]);
       const staticHtml = staticResponse.ok ? await staticResponse.text() : "";
       const cms = cmsResponse.ok ? ((await cmsResponse.json()) as HomeCmsPayload) : {};
-      const pageMap = new Map<SitePageKey, SitePage & { media_public_url?: string | null }>(
-        (cms.pages || []).map((page) => [page.page_key, page])
-      );
-      const nextHtml = renderHomeCmsHtml(staticHtml, cms.campaigns || [], pageMap);
+      const nextHtml = renderHomeCmsHtml(staticHtml, cms.campaigns || [], cms.pages || []);
       if (!cancelled) setHtml(nextHtml);
     }
 

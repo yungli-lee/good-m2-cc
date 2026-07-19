@@ -31,7 +31,7 @@ export default async function NewSitePagePage({ searchParams }: Props) {
           <Link className="button ghost" href="/admin/site-pages">返回列表</Link>
         </div>
         {params.error ? <div className="notice">新增失敗：{params.error}</div> : null}
-        <SitePageForm mediaAssets={mediaResult.data} existingPageKeys={pagesResult.data.map((page) => page.page_key)} />
+        <SitePageForm mediaAssets={mediaResult.data} existingPageTypes={pagesResult.data.map((page) => page.page_type)} />
       </div>
     </main>
   );

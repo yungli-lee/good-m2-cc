@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { mediaBucketName } from "@/lib/media";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import type { HomeCampaign, SitePage, SitePageKey } from "@/lib/home-cms/types";
+import type { HomeCampaign, SitePage } from "@/lib/home-cms/types";
 
 function withPublicUrl<T extends { media_assets?: { storage_path?: string | null } | null }>(supabase: SupabaseClient, item: T) {
   const path = item.media_assets?.storage_path;
@@ -62,16 +62,15 @@ export async function listPublishedSitePages() {
     .select(sitePageSelect)
     .eq("status", "published")
     .is("archived_at", null)
-    .order("sort_order", { ascending: true });
+    .order("sort_order", { ascending: true })
+    .order("published_at", { ascending: false, nullsFirst: false });
 
   if (error) {
     console.error("published_site_pages_failed", { code: error.code, message: error.message });
-    return new Map<SitePageKey, SitePage & { media_public_url: string | null }>();
+    return [] as Array<SitePage & { media_public_url: string | null }>;
   }
 
-  return new Map(
-    ((data || []) as SitePage[]).map((page) => [page.page_key, withPublicUrl(supabase, page)])
-  );
+  return ((data || []) as SitePage[]).map((page) => withPublicUrl(supabase, page));
 }
 
 export async function listAdminSitePages() {
@@ -80,6 +79,7 @@ export async function listAdminSitePages() {
     .from("site_pages")
     .select(sitePageSelect)
     .order("sort_order", { ascending: true })
+    .order("published_at", { ascending: false, nullsFirst: false })
     .order("page_key", { ascending: true });
   if (error) return { data: [] as SitePage[], error };
   return { data: (data || []) as SitePage[], error: null };

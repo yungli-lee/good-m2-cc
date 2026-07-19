@@ -1,6 +1,7 @@
 import type { MediaLibraryAsset } from "@/lib/media";
 
 export type CmsStatus = "draft" | "published" | "archived";
+export type SitePageType = "philosophy" | "services" | "contact" | "reminder" | "custom";
 export type KnownSitePageKey = "philosophy" | "services" | "process" | "reminders" | "team";
 export type SitePageKey = KnownSitePageKey | (string & {});
 
@@ -32,6 +33,7 @@ export type HomeCampaign = {
 export type SitePage = {
   id: string;
   page_key: SitePageKey;
+  page_type: SitePageType;
   title: string;
   eyebrow: string | null;
   subtitle: string | null;
@@ -46,6 +48,7 @@ export type SitePage = {
   updated_by: string | null;
   created_at: string;
   updated_at: string;
+  published_at: string | null;
   archived_at: string | null;
   media_assets?: Pick<MediaLibraryAsset, "id" | "storage_path" | "alt_text" | "caption" | "original_filename"> | null;
 };
@@ -66,7 +69,16 @@ export const sitePageLabels: Record<KnownSitePageKey, string> = {
 
 export const sitePageKeys = ["philosophy", "services", "process", "reminders", "team"] as const;
 
-export function sitePageLabel(pageKey: SitePageKey) {
+export const sitePageTypeLabels: Record<SitePageType, string> = {
+  philosophy: "服務理念",
+  services: "服務項目",
+  contact: "聯絡我們",
+  reminder: "阿勇生活小提醒",
+  custom: "自訂頁面"
+};
+
+export function sitePageLabel(pageKey: SitePageKey, pageType?: SitePageType) {
+  if (pageType) return sitePageTypeLabels[pageType];
   if (pageKey === "contact") return "聯絡我們";
   return sitePageLabels[pageKey as KnownSitePageKey] || pageKey;
 }

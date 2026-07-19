@@ -22,6 +22,8 @@ function actionForStatus(status: string) {
   return "site_page_update";
 }
 
+const singletonPageTypes = ["philosophy", "services", "contact"];
+
 export async function PATCH(request: Request, { params }: Props) {
   const { id } = await params;
   const current = await requireRole(["editor", "admin", "owner"]);
@@ -45,7 +47,19 @@ export async function PATCH(request: Request, { params }: Props) {
   if (existing) {
     return NextResponse.json({ ok: false, message: "此 Slug 已被使用，請改用其他 Slug；既有頁面不會被覆蓋。" }, { status: 409 });
   }
+  if (singletonPageTypes.includes(parsed.data.page_type)) {
+    const { data: existingType } = await supabase
+      .from("site_pages")
+      .select("id")
+      .eq("page_type", parsed.data.page_type)
+      .neq("id", id)
+      .maybeSingle();
+    if (existingType) {
+      return NextResponse.json({ ok: false, message: "此頁面類型只能建立一筆；請編輯既有內容。" }, { status: 409 });
+    }
+  }
 
+  const now = new Date().toISOString();
   const payload = {
     ...parsed.data,
     eyebrow: nullable(parsed.data.eyebrow),
@@ -55,7 +69,8 @@ export async function PATCH(request: Request, { params }: Props) {
     fallback_cover_url: nullable(parsed.data.fallback_cover_url),
     seo_title: nullable(parsed.data.seo_title),
     seo_description: nullable(parsed.data.seo_description),
-    archived_at: parsed.data.status === "archived" ? before.archived_at || new Date().toISOString() : null,
+    archived_at: parsed.data.status === "archived" ? before.archived_at || now : null,
+    published_at: parsed.data.status === "published" ? before.published_at || now : before.published_at,
     updated_by: current.user.id
   };
 
@@ -94,5 +109,48 @@ export async function PATCH(request: Request, { params }: Props) {
     ok: true,
     message: "頁面內容已儲存。",
     redirectTo: `/admin/site-pages/${id}/edit?saved=1`
+  });
+}
+
+export async function DELETE(_request: Request, { params }: Props) {
+  const { id } = await params;
+  const current = await requireRole(["editor", "admin", "owner"]);
+  const { data: before } = await getSitePage(id);
+  if (!before) {
+    return NextResponse.json({ ok: false, message: "找不到指定頁面內容。" }, { status: 404 });
+  }
+  if (before.page_type !== "reminder" && before.page_type !== "custom") {
+    return NextResponse.json({ ok: false, message: "單例頁面不可刪除，請改用封存狀態。" }, { status: 409 });
+  }
+
+  const supabase = await createSupabaseServerClient();
+  const { error, count } = await supabase
+    .from("site_pages")
+    .delete({ count: "exact" })
+    .eq("id", id);
+  if (error) {
+    return NextResponse.json({ ok: false, message: `刪除失敗：${error.code || "delete_failed"}` }, { status: 500 });
+  }
+  if (count === 0) {
+    return NextResponse.json({ ok: false, message: "沒有任何頁面內容被刪除。" }, { status: 409 });
+  }
+
+  await recordAuditLog({
+    action: "site_page_delete",
+    resourceType: "site_page",
+    resourceId: id,
+    beforeData: before,
+    afterData: { deleted: true },
+    userId: current.user.id,
+    userEmail: actorEmail(current),
+    actorRole: current.profile.role
+  });
+
+  revalidatePath("/");
+  revalidatePath("/admin/site-pages");
+  return NextResponse.json({
+    ok: true,
+    message: "頁面內容已刪除。",
+    redirectTo: "/admin/site-pages?saved=1"
   });
 }
