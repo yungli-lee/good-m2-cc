@@ -94,3 +94,47 @@ export async function getSitePage(id: string) {
     .maybeSingle();
   return { data: data as SitePage | null, error };
 }
+
+export async function getPublishedSitePageBySlug(slug: string) {
+  const supabase = await createSupabaseServerClient();
+  const { data, error } = await supabase
+    .from("site_pages")
+    .select(sitePageSelect)
+    .eq("page_key", slug)
+    .eq("status", "published")
+    .is("archived_at", null)
+    .maybeSingle();
+
+  if (error) {
+    console.error("published_site_page_failed", { code: error.code, message: error.message, slug });
+    return { data: null as (SitePage & { media_public_url: string | null }) | null, error };
+  }
+
+  return {
+    data: data ? withPublicUrl(supabase, data as SitePage) : null,
+    error: null
+  };
+}
+
+export async function getPublishedSitePageByType(pageType: SitePage["page_type"]) {
+  const supabase = await createSupabaseServerClient();
+  const { data, error } = await supabase
+    .from("site_pages")
+    .select(sitePageSelect)
+    .eq("page_type", pageType)
+    .eq("status", "published")
+    .is("archived_at", null)
+    .order("sort_order", { ascending: true })
+    .limit(1)
+    .maybeSingle();
+
+  if (error) {
+    console.error("published_site_page_type_failed", { code: error.code, message: error.message, pageType });
+    return { data: null as (SitePage & { media_public_url: string | null }) | null, error };
+  }
+
+  return {
+    data: data ? withPublicUrl(supabase, data as SitePage) : null,
+    error: null
+  };
+}

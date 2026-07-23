@@ -5,6 +5,7 @@ import { useEffect, useRef, useState, useTransition } from "react";
 import { MediaPicker } from "@/components/admin/media-picker";
 import { cmsStatusLabels, type SitePage, type SitePageType } from "@/lib/home-cms/types";
 import type { MediaLibraryAsset, MediaUsageType } from "@/lib/media";
+import { reservedSitePageSlugs } from "@/lib/home-cms/routing";
 
 type Props = {
   page?: SitePage | null;
@@ -185,7 +186,7 @@ export function SitePageForm({ page, mediaAssets, existingPageTypes = [] }: Prop
         />
         <small className="muted">
           {isSlugEditable
-            ? "每篇內容使用獨立 Slug；僅限小寫英文字母、數字與連字號。"
+            ? `每篇內容使用獨立 Slug；僅限小寫英文字母、數字與連字號。保留路徑：${reservedSitePageSlugs.join("、")}。`
             : "預設頁型的 Slug 已鎖定，以保護既有導覽與錨點。"}
         </small>
       </label>

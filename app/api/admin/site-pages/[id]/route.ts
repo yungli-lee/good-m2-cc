@@ -5,6 +5,7 @@ import { recordAuditLog } from "@/lib/audit/audit-log";
 import { getSitePage } from "@/lib/home-cms/queries";
 import { nullable, sitePageSchema, valuesFromFormData } from "@/lib/home-cms/schema";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { revalidateSitePageContent } from "@/lib/home-cms/revalidation";
 
 export const runtime = "edge";
 
@@ -102,7 +103,7 @@ export async function PATCH(request: Request, { params }: Props) {
     actorRole: current.profile.role
   });
 
-  revalidatePath("/");
+  revalidateSitePageContent(before.page_key, data.page_key);
   revalidatePath("/admin/site-pages");
   revalidatePath(`/admin/site-pages/${id}/edit`);
   return NextResponse.json({
@@ -146,7 +147,7 @@ export async function DELETE(_request: Request, { params }: Props) {
     actorRole: current.profile.role
   });
 
-  revalidatePath("/");
+  revalidateSitePageContent(before.page_key);
   revalidatePath("/admin/site-pages");
   return NextResponse.json({
     ok: true,

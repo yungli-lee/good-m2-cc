@@ -1,4 +1,5 @@
 import type { HomeCampaign, KnownSitePageKey, SitePage, SitePageKey } from "@/lib/home-cms/types";
+import type { CompanySettings } from "@/lib/company-settings";
 
 type CampaignForRender = HomeCampaign & { media_public_url?: string | null };
 type PageForRender = SitePage & { media_public_url?: string | null };
@@ -26,7 +27,7 @@ function safeImageUrl(value: string) {
   }
 }
 
-function markdownToHtml(markdown?: string | null) {
+export function markdownToHtml(markdown?: string | null) {
   const lines = String(markdown || "").replace(/\r\n/g, "\n").split("\n");
   const blocks: string[] = [];
   let list: string[] = [];
@@ -169,6 +170,7 @@ function renderReminderCard(page: PageForRender) {
             <div class="article-body">
               ${coverHtml}
               <div class="cms-markdown-body">${markdownToHtml(page.markdown_content)}</div>
+              <p><a href="/${escapeAttr(page.page_key)}">閱讀完整內容</a></p>
             </div>
           </article>`;
 }
@@ -202,9 +204,43 @@ function isKnownSitePageKey(key: SitePageKey): key is KnownSitePageKey {
 export function renderHomeCmsHtml(
   staticHtml: string,
   campaigns: CampaignForRender[],
-  pages: PageForRender[]
+  pages: PageForRender[],
+  company?: CompanySettings | null
 ) {
   let html = staticHtml;
+
+  if (company) {
+    const replacements = [
+      ["/assets/logo-yongmei.jpeg", company.logo_url],
+      ["https://line.me/ti/p/abQv5LYzzE", company.line_url],
+      ["tel:0938137177", company.company_phone ? `tel:${company.company_phone.replace(/[^\d+]/g, "")}` : ""],
+      ["mailto:best@m2.cc", company.company_email ? `mailto:${company.company_email}` : ""],
+      ["https://m.facebook.com/p0938137177/", company.facebook_url],
+      ["https://youtube.com/channel/UCkHgKlrQTko0FPyAtYC9KBA?si=Dyyb72tdYhEM1IIx", company.youtube_url],
+      ["https://www.tiktok.com/@buyhouse4", company.tiktok_url]
+    ] as const;
+    for (const [fallback, configured] of replacements) {
+      if (configured) html = html.split(fallback).join(configured);
+    }
+    if (company.company_email) html = html.split("best@m2.cc").join(company.company_email);
+    if (company.company_phone) html = html.split("0938-137-177").join(company.company_phone);
+    if (company.logo_url) {
+      html = html.replace('alt="勇美標誌"', `alt="${escapeAttr(company.company_name)}標誌"`);
+    }
+    const legal = [
+      company.company_name,
+      company.franchise_name,
+      company.brokerage_license_no,
+      company.realtor_certificate_no,
+      company.company_address
+    ].filter(Boolean).map((value) => `<small>${escapeHtml(value)}</small>`).join("");
+    if (legal) {
+      html = html.replace(
+        /(<div class="site-footer">[\s\S]*?)(<\/div>\s*<\/footer>)/i,
+        `$1<div class="cms-company-legal">${legal}</div>$2`
+      );
+    }
+  }
 
   if (campaigns.length) {
     html = html.replace(/<section\b[^>]*class=["']hero["'][^>]*>[\s\S]*?<\/section>/i, renderCampaignHero(campaigns));
@@ -226,10 +262,10 @@ export function renderHomeCmsHtml(
         ? page.page_type
         : page.page_key;
     if (!isKnownSitePageKey(key)) {
-      const section = renderGenericCmsSection(page, key, page.eyebrow || "Site Page");
-      html = /<\/main>/i.test(html)
-        ? html.replace(/<\/main>/i, `${section}\n    </main>`)
-        : `${html}${section}`;
+      console.warn("home_cms_unsupported_section", {
+        pageKey: page.page_key,
+        pageType: page.page_type
+      });
       continue;
     }
     const regex = sectionRegex(key);

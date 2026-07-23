@@ -137,6 +137,9 @@ export async function updateCompanySettingsAction(_previousState: { error?: stri
   }
 
   revalidatePath("/admin/settings/company");
+  revalidatePath("/");
+  revalidatePath("/contact");
   revalidatePath("/properties");
+  revalidatePath("/sitemap.xml");
   redirect("/admin/settings/company?saved=1");
 }

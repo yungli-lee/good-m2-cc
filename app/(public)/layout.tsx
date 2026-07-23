@@ -1,12 +1,16 @@
 import { SiteFooter } from "@/components/layout/site-footer";
 import { SiteHeader } from "@/components/layout/site-header";
+import { getPublicCompanySettings } from "@/lib/company-settings";
 
-export default function PublicLayout({ children }: { children: React.ReactNode }) {
+export const dynamic = "force-dynamic";
+
+export default async function PublicLayout({ children }: { children: React.ReactNode }) {
+  const settings = await getPublicCompanySettings();
   return (
     <>
-      <SiteHeader />
+      <SiteHeader settings={settings} />
       {children}
-      <SiteFooter />
+      <SiteFooter settings={settings} />
     </>
   );
 }

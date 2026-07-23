@@ -7,18 +7,18 @@ export const defaultCompanySettings = {
   brokerage_license_no: "府地籍字第1120453178號",
   realtor_certificate_no: "（112）彰縣字第00538號",
   salesperson_registration_no: "",
-  company_phone: "",
+  company_phone: "0938137177",
   company_address: "",
-  company_email: "",
+  company_email: "best@m2.cc",
   google_maps_url: "",
-  facebook_url: "",
+  facebook_url: "https://m.facebook.com/p0938137177/",
   instagram_url: "",
-  youtube_url: "",
-  tiktok_url: "",
-  line_url: "",
-  logo_url: "",
+  youtube_url: "https://youtube.com/channel/UCkHgKlrQTko0FPyAtYC9KBA",
+  tiktok_url: "https://www.tiktok.com/@buyhouse4",
+  line_url: "https://line.me/ti/p/abQv5LYzzE",
+  logo_url: "https://good.m2.cc/assets/logo-yongmei.jpeg",
   line_qr_code_url: "",
-  copyright_text: ""
+  copyright_text: "© 阿勇不動產顧問"
 };
 
 export type CompanySettings = typeof defaultCompanySettings;
