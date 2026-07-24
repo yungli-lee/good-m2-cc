@@ -32,8 +32,12 @@ Added `brand_tagline` with `202607240104_company_settings_brand_tagline.sql`; it
 
 - Linked project: `niorteztdbuyusemsgwa`
 - Production project: `rlbuadkmylulieoryzal` (not connected or modified)
-- Migration execution: completed against Staging only.
+- Migration execution: `202607240103` and `202607240104` completed against Staging only after fixing the CLI telemetry permission failure.
 - Both migrations include `notify pgrst, 'reload schema'`.
+- Read-only catalog evidence: `brand_name`, `brand_tagline`, `company_name`, and `franchise_name` are all `text not null` columns.
+- Read-only row evidence: default row values are `阿勇不動產顧問`, `彰化房地產資訊與服務`, `赫成開發有限公司`, and `太平洋房屋彰化縣府加盟店` respectively.
+- Staging migration ledger still has these two versions as local-only; no ledger repair was performed because the broader staging ledger drift remains an existing separate issue.
+- Preview public pages `/`, `/contact`, `/properties`, `/calculator`, and `/knowledge` returned HTTP 200 after deployment; `/contact` metadata site name is the brand value.
 - No migration repair, db push, migration up, Production SQL, or deployment to Production.
 
 ## Cases A–D
