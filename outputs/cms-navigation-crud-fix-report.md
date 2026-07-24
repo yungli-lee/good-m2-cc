@@ -53,9 +53,11 @@ Client 使用 `router.replace()`，不再 refresh 已刪除的 edit route。
 
 - Linked project ref：`niorteztdbuyusemsgwa`。
 - Production ref：`rlbuadkmylulieoryzal`，未連線或修改。
-- 修正前唯讀檢查：`life` navigation row 已不存在。
-- 修正前唯讀檢查：`new-life` site page row 目前也不存在。
-- 因兩筆皆不存在，本階段沒有修改或重建人工測試資料。
+- Preview Public CMS API：`life` navigation row 已不存在。
+- Preview `/new-life`：HTTP 200，title 為「運動保健康」。
+- Preview Public CMS API：`new-life` 仍為 published、未 archived 的 custom page，證明刪除 navigation 沒有刪除 linked site page。
+- Staging CLI 查詢沒有輸出 row payload，不能據此判定 page 不存在；公開 API 與實際 route 提供可重現的正向證據。
+- 本階段沒有修改或重建人工測試資料。
 
 ## Verification
 
