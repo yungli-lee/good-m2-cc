@@ -46,7 +46,8 @@ export function SiteFooter({ settings, navigation }: { settings: CompanySettings
           <span>安全交易</span>
           <span>售後服務</span>
           <strong>讓我們協助您安心成家・投資增值</strong>
-          <small>{settings.company_name}・{settings.franchise_name}</small>
+          <small>{settings.brand_name}・{settings.franchise_name}</small>
+          <small>{settings.company_name}</small>
           <small>{settings.brokerage_license_no}・{settings.realtor_certificate_no}</small>
           {settings.company_address ? <small>{settings.company_address}</small> : null}
           <small>{settings.copyright_text}</small>

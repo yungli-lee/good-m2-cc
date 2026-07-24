@@ -48,6 +48,7 @@ assert.equal(reminderHtml.indexOf("提醒一") < reminderHtml.indexOf("提醒二
 assert.equal(reminderHtml.includes('href="/reminder-one"'), true);
 
 const company: CompanySettings = {
+  brand_name: "測試品牌",
   company_name: "測試公司",
   franchise_name: "測試加盟店",
   brokerage_license_no: "測試字號",
@@ -67,7 +68,7 @@ const company: CompanySettings = {
   copyright_text: "測試版權"
 };
 const companyHtml = renderHomeCmsHtml(
-  '<main><a href="https://line.me/ti/p/abQv5LYzzE">LINE</a><a href="tel:0938137177">Phone</a><a href="mailto:best@m2.cc">Mail</a></main>',
+  '<header><a class="brand" href="/"><img alt="勇美標誌"><span><strong>舊品牌</strong><small>舊副標</small></span></a></header><main><a href="https://line.me/ti/p/abQv5LYzzE">LINE</a><a href="tel:0938137177">Phone</a><a href="mailto:best@m2.cc">Mail</a></main><footer><div class="site-footer"></div></footer>',
   [],
   [],
   company
@@ -75,6 +76,10 @@ const companyHtml = renderHomeCmsHtml(
 assert.equal(companyHtml.includes(company.line_url), true);
 assert.equal(companyHtml.includes("tel:0400000000"), true);
 assert.equal(companyHtml.includes("mailto:cms@example.com"), true);
+assert.equal(companyHtml.includes("<strong>測試品牌</strong>"), true);
+assert.equal(companyHtml.includes("<small>測試加盟店</small>"), true);
+assert.equal(companyHtml.includes("測試品牌・測試加盟店"), true);
+assert.equal(companyHtml.includes("<small>測試公司</small>"), true);
 
 assert.equal(markdownToHtml("<script>alert(1)</script>").includes("<script>"), false);
 

@@ -13,9 +13,9 @@ export function SiteHeader({ settings, navigation }: { settings: CompanySettings
   return (
     <header className="site-app-header">
       <Link className="site-app-brand" href="/" aria-label="回到首頁">
-        <img src={settings.logo_url} alt={`${settings.company_name}標誌`} />
+        <img src={settings.logo_url} alt={`${settings.brand_name}標誌`} />
         <span>
-          <strong>{settings.company_name}</strong>
+          <strong>{settings.brand_name}</strong>
           <small>{settings.franchise_name}</small>
         </span>
       </Link>

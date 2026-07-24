@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { markdownToHtml } from "@/lib/home-cms/render";
+import { getPublicCompanySettings } from "@/lib/company-settings";
 import { getPublishedSitePageBySlug } from "@/lib/home-cms/queries";
 import { isReservedSitePageSlug, siteOrigin } from "@/lib/home-cms/routing";
 
@@ -19,15 +20,18 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   if (isReservedSitePageSlug(slug)) return { robots: { index: false, follow: false } };
 
-  const { data: page } = await getPublishedSitePageBySlug(slug);
+  const [{ data: page }, company] = await Promise.all([
+    getPublishedSitePageBySlug(slug),
+    getPublicCompanySettings()
+  ]);
   if (!page) {
     return {
-      title: "頁面不存在｜阿勇不動產顧問",
+      title: `頁面不存在｜${company.brand_name}`,
       robots: { index: false, follow: false }
     };
   }
 
-  const title = page.seo_title?.trim() || `${page.title}｜阿勇不動產顧問`;
+  const title = page.seo_title?.trim() || `${page.title}｜${company.brand_name}`;
   const description = page.seo_description?.trim() || page.subtitle?.trim() || page.title;
   const image = pageImage(page);
   const canonical = `${siteOrigin()}/${page.page_key}`;
@@ -39,6 +43,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     openGraph: {
       type: "article",
       title,
+      siteName: company.brand_name,
       description,
       url: canonical,
       images: image ? [image] : undefined,

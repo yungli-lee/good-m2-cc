@@ -8,9 +8,12 @@ export const runtime = "edge";
 export const dynamic = "force-dynamic";
 
 export async function generateMetadata(): Promise<Metadata> {
-  const { data: page } = await getPublishedSitePageByType("contact");
-  const title = page?.seo_title?.trim() || "聯絡我們｜阿勇不動產顧問";
-  const description = page?.seo_description?.trim() || page?.subtitle?.trim() || "聯絡阿勇不動產顧問，討論買屋、賣屋與不動產服務需求。";
+  const [{ data: page }, company] = await Promise.all([
+    getPublishedSitePageByType("contact"),
+    getPublicCompanySettings()
+  ]);
+  const title = page?.seo_title?.trim() || `聯絡我們｜${company.brand_name}`;
+  const description = page?.seo_description?.trim() || page?.subtitle?.trim() || `聯絡${company.brand_name}，討論買屋、賣屋與不動產服務需求。`;
   const image = page?.media_public_url || page?.fallback_cover_url || null;
   return {
     title,
@@ -18,6 +21,7 @@ export async function generateMetadata(): Promise<Metadata> {
     alternates: { canonical: `${siteOrigin()}/contact` },
     openGraph: {
       title,
+      siteName: company.brand_name,
       description,
       url: `${siteOrigin()}/contact`,
       images: image ? [image] : undefined

@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import {
@@ -141,5 +141,6 @@ export async function updateCompanySettingsAction(_previousState: { error?: stri
   revalidatePath("/contact");
   revalidatePath("/properties");
   revalidatePath("/sitemap.xml");
+  revalidateTag("company-settings");
   redirect("/admin/settings/company?saved=1");
 }

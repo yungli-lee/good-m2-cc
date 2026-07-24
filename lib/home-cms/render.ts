@@ -252,11 +252,19 @@ export function renderHomeCmsHtml(
     if (company.company_email) html = html.split("best@m2.cc").join(company.company_email);
     if (company.company_phone) html = html.split("0938-137-177").join(company.company_phone);
     if (company.logo_url) {
-      html = html.replace('alt="勇美標誌"', `alt="${escapeAttr(company.company_name)}標誌"`);
+      html = html.replace('alt="勇美標誌"', `alt="${escapeAttr(company.brand_name)}標誌"`);
     }
+    html = html.replace(
+      /(<a class="brand"[\s\S]*?<span>\s*<strong>)[\s\S]*?(<\/strong>\s*<small>)[\s\S]*?(<\/small>)/i,
+      `$1${escapeHtml(company.brand_name)}$2${escapeHtml(company.franchise_name)}$3`
+    );
+    html = html.replace(
+      /(<section class="team-section"[\s\S]*?<div class="section-heading">[\s\S]*?<h2>)[\s\S]*?(<\/h2>)/i,
+      `$1${escapeHtml(company.brand_name)}$2`
+    );
     const legal = [
+      `${company.brand_name}・${company.franchise_name}`,
       company.company_name,
-      company.franchise_name,
       company.brokerage_license_no,
       company.realtor_certificate_no,
       company.company_address

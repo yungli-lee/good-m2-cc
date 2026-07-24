@@ -1,13 +1,19 @@
+import type { Metadata } from "next";
 import { PropertyCard } from "@/components/properties/property-card";
+import { getPublicCompanySettings } from "@/lib/company-settings";
 import { listPublishedProperties } from "@/lib/properties/queries";
 import type { Property } from "@/lib/properties/types";
 
 export const runtime = "edge";
 
-export const metadata = {
-  title: "主推物件｜阿勇不動產顧問",
-  description: "查看目前已上架的主推物件。"
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const company = await getPublicCompanySettings();
+  return {
+    title: `主推物件｜${company.brand_name}`,
+    description: "查看目前已上架的主推物件。",
+    openGraph: { siteName: company.brand_name }
+  };
+}
 
 export const dynamic = "force-dynamic";
 

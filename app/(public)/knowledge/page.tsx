@@ -1,16 +1,22 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { KnowledgeCard } from "@/components/content/knowledge-card";
 import { listKnowledgeCategories, listPublicKnowledgeItems } from "@/lib/content/queries";
 import type { ContentItem } from "@/lib/content/types";
+import { getPublicCompanySettings } from "@/lib/company-settings";
 
 export const runtime = "edge";
 export const dynamic = "force-dynamic";
 const pageSize = 12;
 
-export const metadata = {
-  title: "不動產知識庫｜阿勇不動產顧問",
-  description: "整理買屋、賣屋、稅務、貸款、農地農舍與法規等不動產知識。"
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const company = await getPublicCompanySettings();
+  return {
+    title: `不動產知識庫｜${company.brand_name}`,
+    description: "整理買屋、賣屋、稅務、貸款、農地農舍與法規等不動產知識。",
+    openGraph: { siteName: company.brand_name }
+  };
+}
 
 type Props = {
   searchParams: Promise<{ q?: string; category?: string; page?: string }>;
