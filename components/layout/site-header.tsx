@@ -16,7 +16,7 @@ export function SiteHeader({ settings, navigation }: { settings: CompanySettings
         <img src={settings.logo_url} alt={`${settings.brand_name}標誌`} />
         <span>
           <strong>{settings.brand_name}</strong>
-          <small>{settings.franchise_name}</small>
+          <small>{settings.brand_tagline}</small>
         </span>
       </Link>
       <button

@@ -49,6 +49,7 @@ assert.equal(reminderHtml.includes('href="/reminder-one"'), true);
 
 const company: CompanySettings = {
   brand_name: "測試品牌",
+  brand_tagline: "測試副標",
   company_name: "測試公司",
   franchise_name: "測試加盟店",
   brokerage_license_no: "測試字號",
@@ -77,7 +78,7 @@ assert.equal(companyHtml.includes(company.line_url), true);
 assert.equal(companyHtml.includes("tel:0400000000"), true);
 assert.equal(companyHtml.includes("mailto:cms@example.com"), true);
 assert.equal(companyHtml.includes("<strong>測試品牌</strong>"), true);
-assert.equal(companyHtml.includes("<small>測試加盟店</small>"), true);
+assert.equal(companyHtml.includes("<small>測試副標</small>"), true);
 assert.equal(companyHtml.includes("測試品牌・測試加盟店"), true);
 assert.equal(companyHtml.includes("<small>測試公司</small>"), true);
 

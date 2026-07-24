@@ -10,6 +10,7 @@
 |---|---|---|
 | Header / Mobile main title | `company_name` | `brand_name` |
 | Header / Mobile subtitle | `franchise_name` | `franchise_name` |
+| Header / Mobile brand tagline | not independently editable | `brand_tagline` |
 | Footer brand | `company_name` | `brand_name` |
 | Footer legal disclosure | mixed | `company_name` |
 | Contact company card | `company_name` | `company_name` |
@@ -25,16 +26,19 @@ Added `brand_name` with an additive idempotent migration:
 
 The existing `company_name` column remains the legal company name. Existing non-empty values are not overwritten; only a missing brand value is backfilled.
 
+Added `brand_tagline` with `202607240104_company_settings_brand_tagline.sql`; its Staging default is `彰化房地產資訊與服務` and it is independent from `franchise_name`.
+
 ## Staging
 
 - Linked project: `niorteztdbuyusemsgwa`
 - Production project: `rlbuadkmylulieoryzal` (not connected or modified)
 - Migration execution: completed against Staging only.
+- Both migrations include `notify pgrst, 'reload schema'`.
 - No migration repair, db push, migration up, Production SQL, or deployment to Production.
 
-## Cases A–C
+## Cases A–D
 
-The code and mapping tests cover all three independent fields and revalidation paths. Manual Preview mutation cases remain for the signed-in operator to run, because this environment does not have the operator's authenticated admin session. No test values were written by this run.
+The code and mapping tests cover all four independent fields and revalidation paths. Manual Preview mutation cases remain for the signed-in operator to run, because this environment does not have the operator's authenticated admin session. No test values were written by this run.
 
 ## Revalidation
 

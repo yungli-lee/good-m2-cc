@@ -257,7 +257,7 @@ export function renderHomeCmsHtml(
     }
     html = html.replace(
       /(<a class="brand"[\s\S]*?<span>\s*<strong>)[\s\S]*?(<\/strong>\s*<small>)[\s\S]*?(<\/small>)/i,
-      `$1${escapeHtml(company.brand_name)}$2${escapeHtml(company.franchise_name)}$3`
+      `$1${escapeHtml(company.brand_name)}$2${escapeHtml(company.brand_tagline)}$3`
     );
     html = html.replace(
       /(<section class="team-section"[\s\S]*?<div class="section-heading">[\s\S]*?<h2>)[\s\S]*?(<\/h2>)/i,

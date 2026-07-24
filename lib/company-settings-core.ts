@@ -2,6 +2,7 @@ import { z } from "zod";
 
 export const defaultCompanySettings = {
   brand_name: "阿勇不動產顧問",
+  brand_tagline: "彰化房地產資訊與服務",
   company_name: "赫成開發有限公司",
   franchise_name: "太平洋房屋彰化縣府加盟店",
   brokerage_license_no: "府地籍字第1120453178號",
@@ -25,6 +26,7 @@ export type CompanySettings = typeof defaultCompanySettings;
 
 export const companySettingsSchema = z.object({
   brand_name: z.string().trim().min(1, "請輸入品牌名稱").max(120),
+  brand_tagline: z.string().trim().min(1, "請輸入品牌副標").max(160),
   company_name: z.string().trim().min(1, "請輸入公司法定名稱").max(120),
   franchise_name: z.string().trim().min(1, "請輸入加盟店").max(120),
   brokerage_license_no: z.string().trim().min(1, "請輸入經紀業特許字號").max(120),
@@ -47,6 +49,7 @@ export const companySettingsSchema = z.object({
 export function companySettingsValuesFromFormData(formData: FormData) {
   return {
     brand_name: String(formData.get("brand_name") || ""),
+    brand_tagline: String(formData.get("brand_tagline") || ""),
     company_name: String(formData.get("company_name") || ""),
     franchise_name: String(formData.get("franchise_name") || ""),
     brokerage_license_no: String(formData.get("brokerage_license_no") || ""),

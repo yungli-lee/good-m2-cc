@@ -29,6 +29,12 @@ export function CompanySettingsForm({ settings }: { settings: CompanySettings })
         <FieldError message={state.fieldErrors?.brand_name} />
       </div>
       <div className="field">
+        <label htmlFor="brand_tagline">品牌副標</label>
+        <input className="input" id="brand_tagline" name="brand_tagline" defaultValue={settings.brand_tagline} required />
+        <span className="muted">顯示於 Header 與 Mobile Header 品牌名稱下方。</span>
+        <FieldError message={state.fieldErrors?.brand_tagline} />
+      </div>
+      <div className="field">
         <label htmlFor="company_name">公司法定名稱</label>
         <input className="input" id="company_name" name="company_name" defaultValue={settings.company_name} required />
         <span className="muted">顯示於聯絡我們、公司資訊卡與法定揭露。</span>
