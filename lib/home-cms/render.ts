@@ -237,6 +237,7 @@ export function renderHomeCmsHtml(
   );
 
   if (company) {
+    html = html.split("{{BRAND_NAME}}").join(escapeHtml(company.brand_name));
     const replacements = [
       ["/assets/logo-yongmei.jpeg", company.logo_url],
       ["https://line.me/ti/p/abQv5LYzzE", company.line_url],
