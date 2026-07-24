@@ -2162,6 +2162,18 @@ td {
   color: #102343;
 }
 
+.site-app-nav-mobile-item {
+  display: none;
+}
+
+.site-app-footer-nav {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px 20px;
+  width: 100%;
+}
+
 .site-app-menu-toggle {
   display: none;
   width: 42px;
@@ -2317,6 +2329,14 @@ td {
 
   .site-app-nav a {
     padding: 12px;
+  }
+
+  .site-app-nav-desktop-item {
+    display: none;
+  }
+
+  .site-app-nav-mobile-item {
+    display: block;
   }
 
   .site-app-menu-toggle {

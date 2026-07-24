@@ -1,5 +1,6 @@
 import type { HomeCampaign, KnownSitePageKey, SitePage, SitePageKey } from "@/lib/home-cms/types";
 import type { CompanySettings } from "@/lib/company-settings";
+import type { ResolvedNavigationItem } from "@/lib/navigation";
 
 type CampaignForRender = HomeCampaign & { media_public_url?: string | null };
 type PageForRender = SitePage & { media_public_url?: string | null };
@@ -205,9 +206,35 @@ export function renderHomeCmsHtml(
   staticHtml: string,
   campaigns: CampaignForRender[],
   pages: PageForRender[],
-  company?: CompanySettings | null
+  company?: CompanySettings | null,
+  navigation: ResolvedNavigationItem[] = []
 ) {
   let html = staticHtml;
+
+  const legacyNavigation = navigation
+    .filter((item) => item.location === "header" || item.location === "mobile")
+    .map((item) => {
+      const className = item.location === "header" ? "cms-nav-desktop-item" : "cms-nav-mobile-item";
+      const target = item.target === "_blank" ? ' target="_blank" rel="noopener noreferrer"' : "";
+      return `<a class="${className}" href="${escapeAttr(item.href)}"${target}>${escapeHtml(item.label)}</a>`;
+    })
+    .join("");
+  html = html.replace(
+    /<nav class="site-nav" aria-label="主選單">[\s\S]*?<\/nav>/i,
+    `<nav class="site-nav" aria-label="主選單">${legacyNavigation}</nav>`
+  );
+
+  const legacyFooterNavigation = navigation
+    .filter((item) => item.location === "footer")
+    .map((item) => {
+      const target = item.target === "_blank" ? ' target="_blank" rel="noopener noreferrer"' : "";
+      return `<a href="${escapeAttr(item.href)}"${target}>${escapeHtml(item.label)}</a>`;
+    })
+    .join("");
+  html = html.replace(
+    /<footer>/i,
+    `<footer><nav class="cms-footer-navigation" aria-label="頁尾導覽">${legacyFooterNavigation}</nav>`
+  );
 
   if (company) {
     const replacements = [

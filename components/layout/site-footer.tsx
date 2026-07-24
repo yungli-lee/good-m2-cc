@@ -1,7 +1,8 @@
 import Link from "next/link";
 import type { CompanySettings } from "@/lib/company-settings";
+import type { ResolvedNavigationItem } from "@/lib/navigation";
 
-export function SiteFooter({ settings }: { settings: CompanySettings }) {
+export function SiteFooter({ settings, navigation }: { settings: CompanySettings; navigation: ResolvedNavigationItem[] }) {
   const phoneHref = settings.company_phone ? `tel:${settings.company_phone.replace(/[^\d+]/g, "")}` : null;
   const socialLinks = [
     ["Facebook", settings.facebook_url],
@@ -33,6 +34,13 @@ export function SiteFooter({ settings }: { settings: CompanySettings }) {
       </section>
       <footer>
         <div className="site-app-footer">
+          <nav className="site-app-footer-nav" aria-label="頁尾導覽">
+            {navigation.filter((item) => item.location === "footer").map((item) => (
+              <Link href={item.href} key={item.id} target={item.target} rel={item.target === "_blank" ? "noopener noreferrer" : undefined}>
+                {item.label}
+              </Link>
+            ))}
+          </nav>
           <span>嚴選好物件</span>
           <span>價格透明</span>
           <span>安全交易</span>

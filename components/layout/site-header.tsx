@@ -1,27 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 import { useState } from "react";
 import type { CompanySettings } from "@/lib/company-settings";
+import type { ResolvedNavigationItem } from "@/lib/navigation";
 
-type NavItem = { hash: string; label: string } | { href: string; label: string };
-
-const navItems: NavItem[] = [
-  { hash: "philosophy", label: "服務理念" },
-  { hash: "featured-properties", label: "精選物件" },
-  { href: "/knowledge", label: "知識庫" },
-  { hash: "services", label: "服務項目" },
-  { hash: "calculators", label: "房產試算工具" },
-  { hash: "process", label: "買屋流程" },
-  { hash: "reminders", label: "阿勇生活小提醒" },
-  { hash: "team", label: "聯絡我們" }
-];
-
-export function SiteHeader({ settings }: { settings: CompanySettings }) {
+export function SiteHeader({ settings, navigation }: { settings: CompanySettings; navigation: ResolvedNavigationItem[] }) {
   const [isOpen, setIsOpen] = useState(false);
-  const pathname = usePathname();
-  const isHome = pathname === "/";
+  const headerItems = navigation.filter((item) => item.location === "header");
+  const mobileItems = navigation.filter((item) => item.location === "mobile");
 
   return (
     <header className="site-app-header">
@@ -44,16 +31,30 @@ export function SiteHeader({ settings }: { settings: CompanySettings }) {
         <span />
       </button>
       <nav className={`site-app-nav${isOpen ? " is-open" : ""}`} aria-label="主選單">
-        {navItems.map((item) => (
+        {headerItems.map((item) => (
           <Link
-            href={"href" in item ? item.href : (isHome ? `#${item.hash}` : `/?scrollTo=${item.hash}`)}
-            key={item.label}
+            className="site-app-nav-desktop-item"
+            href={item.href}
+            key={item.id}
+            target={item.target}
+            rel={item.target === "_blank" ? "noopener noreferrer" : undefined}
             onClick={() => setIsOpen(false)}
           >
             {item.label}
           </Link>
         ))}
-        <Link href="/contact" onClick={() => setIsOpen(false)}>聯絡頁</Link>
+        {mobileItems.map((item) => (
+          <Link
+            className="site-app-nav-mobile-item"
+            href={item.href}
+            key={item.id}
+            target={item.target}
+            rel={item.target === "_blank" ? "noopener noreferrer" : undefined}
+            onClick={() => setIsOpen(false)}
+          >
+            {item.label}
+          </Link>
+        ))}
       </nav>
     </header>
   );
