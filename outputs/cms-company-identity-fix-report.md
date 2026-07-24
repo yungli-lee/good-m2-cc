@@ -9,8 +9,8 @@
 | Concern | Before | After |
 |---|---|---|
 | Header / Mobile main title | `company_name` | `brand_name` |
-| Header / Mobile subtitle | `franchise_name` | `franchise_name` |
-| Header / Mobile brand tagline | not independently editable | `brand_tagline` |
+| Header / Mobile subtitle | `franchise_name` | `brand_tagline` |
+| Header / Mobile franchise disclosure | mixed or omitted | `franchise_name` |
 | Footer brand | `company_name` | `brand_name` |
 | Footer legal disclosure | mixed | `company_name` |
 | Contact company card | `company_name` | `company_name` |
@@ -46,7 +46,7 @@ The code and mapping tests cover all four independent fields and revalidation pa
 
 ## Revalidation
 
-Company settings save now revalidates `/`, `/contact`, `/properties`, `/sitemap.xml`, and the `company-settings` tag.
+Company settings save now revalidates `/`, `/contact`, `/properties`, `/calculator`, `/knowledge`, `/sitemap.xml`, and the `company-settings` tag.
 
 ## Verification
 
