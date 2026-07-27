@@ -58,6 +58,9 @@ assert.match(form, /舊版公司 Logo（相容欄位）/);
 assert.doesNotMatch(form, /name="logo_file"/);
 assert.match(css, /\.site-app-brand img[\s\S]*height: 44px[\s\S]*object-fit: contain/);
 assert.match(css, /\.site-app-brand-logo[\s\S]*max-width: 120px[\s\S]*max-height: 120px[\s\S]*object-fit: contain/);
+assert.match(css, /\.site-app-brand > span[\s\S]*min-width: 0/);
+assert.match(css, /\.site-app-menu-toggle[\s\S]*flex: 0 0 42px/);
+assert.match(css, /\.site-app-brand img[\s\S]*height: 36px[\s\S]*max-width: 60px/);
 
 assert.match(action, /revalidatePath\("\/"\)/);
 assert.match(action, /revalidatePath\("\/contact"\)/);

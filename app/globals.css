@@ -2118,8 +2118,13 @@ td {
   align-items: center;
   gap: 12px;
   min-width: 220px;
+  flex: 1 1 auto;
   color: #17233f;
   text-decoration: none;
+}
+
+.site-app-brand > span {
+  min-width: 0;
 }
 
 .site-app-brand img {
@@ -2180,6 +2185,7 @@ td {
   display: none;
   width: 42px;
   height: 42px;
+  flex: 0 0 42px;
   border: 1px solid rgba(16, 35, 67, 0.18);
   border-radius: 8px;
   background: #fff;
@@ -2314,6 +2320,8 @@ td {
 
   .site-app-brand {
     min-width: 0;
+    flex: 1 1 auto;
+    gap: 10px;
   }
 
   .site-app-brand img {
@@ -2358,6 +2366,7 @@ td {
 
   .site-app-menu-toggle {
     display: block;
+    flex: 0 0 42px;
   }
 
   .site-app-contact-card {
