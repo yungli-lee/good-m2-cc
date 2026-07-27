@@ -17,8 +17,8 @@ export const defaultCompanySettings = {
   youtube_url: "https://youtube.com/channel/UCkHgKlrQTko0FPyAtYC9KBA",
   tiktok_url: "https://www.tiktok.com/@buyhouse4",
   line_url: "https://line.me/ti/p/abQv5LYzzE",
-  logo_url: "https://good.m2.cc/assets/logo-yongmei.jpeg",
-  brand_logo_url: "https://good.m2.cc/assets/logo-yongmei.jpeg",
+  logo_url: "https://good.m2.cc/assets/logo-yongmei-transparent.png",
+  brand_logo_url: "https://good.m2.cc/assets/logo-yongmei-transparent.png",
   franchise_logo_url: "",
   line_qr_code_url: "",
   copyright_text: "© 阿勇不動產顧問"

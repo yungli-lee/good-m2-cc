@@ -1,11 +1,14 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
+import { existsSync } from "node:fs";
 import { companySettingsSchema, companySettingsValuesFromFormData, defaultCompanySettings } from "../lib/company-settings-core.ts";
 
 assert.equal(defaultCompanySettings.brand_name, "阿勇不動產顧問");
 assert.equal(defaultCompanySettings.brand_tagline, "彰化房地產資訊與服務");
 assert.equal(defaultCompanySettings.company_name, "赫成開發有限公司");
 assert.equal(defaultCompanySettings.franchise_name, "太平洋房屋彰化縣府加盟店");
+assert.match(defaultCompanySettings.brand_logo_url, /logo-yongmei-transparent\.png$/);
+assert.equal(existsSync("public/assets/logo-yongmei-transparent.png"), true);
 
 const values = companySettingsValuesFromFormData(new FormData());
 assert.equal(Object.hasOwn(values, "brand_name"), true);
