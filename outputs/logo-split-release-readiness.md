@@ -1,5 +1,5 @@
 # Logo Split Release Readiness
 
-Status: `READY_FOR_PREVIEW_RETEST`
+Status: `READY_FOR_MANUAL_PRODUCTION_MIGRATION`
 
-The transparent brand asset and presentation mapping are committed for Preview retest. Automated checks pass. Staging data cleanup and browser Cases A–F remain required before accepting the Preview; no Production database or deployment operation was performed.
+The migration is now additive, idempotent, and safe to paste into the Production SQL Editor during an approved change window. It uses `/assets/logo-yongmei-transparent.png` for an empty brand field and preserves the existing Production `logo_url` for the franchise fallback. No Production database or deployment operation has been performed.
