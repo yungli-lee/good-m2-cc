@@ -24,6 +24,7 @@ const footer = readFileSync("components/layout/site-footer.tsx", "utf8");
 const property = readFileSync("app/(public)/properties/[slug]/page.tsx", "utf8");
 const contact = readFileSync("app/(public)/contact/page.tsx", "utf8");
 const form = readFileSync("components/admin/company-settings-form.tsx", "utf8");
+const css = readFileSync("app/globals.css", "utf8");
 const action = readFileSync("app/admin/settings/company/actions.ts", "utf8");
 const home = readFileSync("app/page.tsx", "utf8");
 const brandMigration = readFileSync("supabase/migrations/202607240103_company_settings_brand_name.sql", "utf8");
@@ -50,6 +51,10 @@ assert.match(form, /品牌名稱：顯示於網站 Header|顯示於網站 Header
 assert.match(form, /公司法定名稱/);
 assert.match(form, /加盟店名稱/);
 assert.match(form, /品牌副標/);
+assert.match(form, /舊版公司 Logo（相容欄位）/);
+assert.doesNotMatch(form, /name="logo_file"/);
+assert.match(css, /\.site-app-brand img[\s\S]*height: 44px[\s\S]*object-fit: contain/);
+assert.match(css, /\.site-app-brand-logo[\s\S]*max-width: 120px[\s\S]*max-height: 120px[\s\S]*object-fit: contain/);
 
 assert.match(action, /revalidatePath\("\/"\)/);
 assert.match(action, /revalidatePath\("\/contact"\)/);

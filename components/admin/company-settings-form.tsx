@@ -137,14 +137,10 @@ export function CompanySettingsForm({ settings }: { settings: CompanySettings })
         <span className="muted">保留太平洋房屋加盟店 Logo。</span>
       </div>
       <div className="field">
-        <label htmlFor="logo_url">公司 Logo URL</label>
-        <input className="input" id="logo_url" name="logo_url" type="url" defaultValue={settings.logo_url} />
+        <label htmlFor="logo_url">舊版公司 Logo（相容欄位）</label>
+        <input className="input" id="logo_url" name="logo_url" type="url" defaultValue={settings.logo_url} readOnly />
+        <span className="muted">僅供舊資料相容；目前 Header、Footer、聯絡我們與物件資訊卡不使用此欄位。</span>
         <FieldError message={state.fieldErrors?.logo_url} />
-      </div>
-      <div className="field">
-        <label htmlFor="logo_file">上傳公司 Logo</label>
-        <input className="input" id="logo_file" name="logo_file" type="file" accept="image/*" />
-        <span className="muted">可直接上傳圖片；上傳後會自動寫入 Logo URL。</span>
       </div>
       <div className="field">
         <label htmlFor="line_qr_code_url">LINE QR Code URL</label>
