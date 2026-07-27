@@ -54,7 +54,7 @@ async function uploadCompanyImage(input: {
   supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>;
   file: File;
   userId: string;
-  slot: "logo" | "line-qr";
+  slot: "logo" | "brand-logo" | "franchise-logo" | "line-qr";
 }) {
   const validationError = validateImageFile(input.file);
   if (validationError) return { url: null, error: validationError };
@@ -80,12 +80,26 @@ export async function updateCompanySettingsAction(_previousState: { error?: stri
   const supabase = await createSupabaseServerClient();
   const values = companySettingsValuesFromFormData(formData);
   const logoFile = formData.get("logo_file");
+  const brandLogoFile = formData.get("brand_logo_file");
+  const franchiseLogoFile = formData.get("franchise_logo_file");
   const lineQrFile = formData.get("line_qr_code_file");
 
   if (isUploadedImageFile(logoFile)) {
     const result = await uploadCompanyImage({ supabase, file: logoFile, userId: current.user.id, slot: "logo" });
     if (result.error) return { error: result.error };
     values.logo_url = result.url || values.logo_url;
+  }
+
+  if (isUploadedImageFile(brandLogoFile)) {
+    const result = await uploadCompanyImage({ supabase, file: brandLogoFile, userId: current.user.id, slot: "brand-logo" });
+    if (result.error) return { error: result.error };
+    values.brand_logo_url = result.url || values.brand_logo_url;
+  }
+
+  if (isUploadedImageFile(franchiseLogoFile)) {
+    const result = await uploadCompanyImage({ supabase, file: franchiseLogoFile, userId: current.user.id, slot: "franchise-logo" });
+    if (result.error) return { error: result.error };
+    values.franchise_logo_url = result.url || values.franchise_logo_url;
   }
 
   if (isUploadedImageFile(lineQrFile)) {

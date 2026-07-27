@@ -239,7 +239,7 @@ export function renderHomeCmsHtml(
   if (company) {
     html = html.split("{{BRAND_NAME}}").join(escapeHtml(company.brand_name));
     const replacements = [
-      ["/assets/logo-yongmei.jpeg", company.logo_url],
+      ["/assets/logo-yongmei.jpeg", company.brand_logo_url],
       ["https://line.me/ti/p/abQv5LYzzE", company.line_url],
       ["tel:0938137177", company.company_phone ? `tel:${company.company_phone.replace(/[^\d+]/g, "")}` : ""],
       ["mailto:best@m2.cc", company.company_email ? `mailto:${company.company_email}` : ""],
@@ -252,7 +252,7 @@ export function renderHomeCmsHtml(
     }
     if (company.company_email) html = html.split("best@m2.cc").join(company.company_email);
     if (company.company_phone) html = html.split("0938-137-177").join(company.company_phone);
-    if (company.logo_url) {
+    if (company.brand_logo_url) {
       html = html.replace('alt="勇美標誌"', `alt="${escapeAttr(company.brand_name)}標誌"`);
     }
     html = html.replace(
