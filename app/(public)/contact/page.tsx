@@ -75,7 +75,7 @@ export default async function ContactPage() {
           </article>
           <aside className="card">
             <div className="card-body">
-              {company.logo_url ? <img className="company-info-logo" src={company.logo_url} alt={`${company.company_name}標誌`} /> : null}
+              {company.franchise_logo_url ? <img className="company-info-logo" src={company.franchise_logo_url} alt={`${company.franchise_name}標誌`} /> : null}
               <h2>{company.company_name}</h2>
               <p>{company.franchise_name}</p>
               <p>{company.brokerage_license_no}</p>

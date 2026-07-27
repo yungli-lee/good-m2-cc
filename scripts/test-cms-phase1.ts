@@ -65,6 +65,8 @@ const company: CompanySettings = {
   tiktok_url: "https://example.com/tiktok",
   line_url: "https://example.com/line",
   logo_url: "https://example.com/logo.png",
+  brand_logo_url: "https://example.com/brand-logo.png",
+  franchise_logo_url: "https://example.com/franchise-logo.png",
   line_qr_code_url: "",
   copyright_text: "測試版權"
 };

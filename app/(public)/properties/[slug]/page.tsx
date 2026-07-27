@@ -92,7 +92,7 @@ export default async function PropertyDetailPage({ params }: Props) {
                 </Link>
               </div>
               <section className="company-info-panel" aria-label="公司資訊">
-                {companySettings.logo_url ? <img className="company-info-logo" src={companySettings.logo_url} alt={companySettings.company_name} loading="lazy" /> : null}
+                {companySettings.franchise_logo_url ? <img className="company-info-logo" src={companySettings.franchise_logo_url} alt={companySettings.franchise_name} loading="lazy" /> : null}
                 <h2>{companySettings.company_name}</h2>
                 <p>{companySettings.franchise_name}</p>
                 <dl>

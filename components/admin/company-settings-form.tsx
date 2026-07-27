@@ -115,6 +115,28 @@ export function CompanySettingsForm({ settings }: { settings: CompanySettings })
         <h2 style={{ margin: "10px 0 0" }}>圖片資料</h2>
       </div>
       <div className="field">
+        <label htmlFor="brand_logo_url">品牌 Logo URL</label>
+        <input className="input" id="brand_logo_url" name="brand_logo_url" type="url" defaultValue={settings.brand_logo_url} />
+        <span className="muted">顯示於 Header、Mobile Header 與 Footer 品牌區，不影響加盟店資訊卡。</span>
+        <FieldError message={state.fieldErrors?.brand_logo_url} />
+      </div>
+      <div className="field">
+        <label htmlFor="brand_logo_file">上傳品牌 Logo</label>
+        <input className="input" id="brand_logo_file" name="brand_logo_file" type="file" accept="image/*" />
+        <span className="muted">品牌金色圓章「勇美」；圖片以 contain 顯示。</span>
+      </div>
+      <div className="field">
+        <label htmlFor="franchise_logo_url">加盟店 Logo URL</label>
+        <input className="input" id="franchise_logo_url" name="franchise_logo_url" type="url" defaultValue={settings.franchise_logo_url} />
+        <span className="muted">顯示於聯絡我們與加盟店公司資訊卡，不影響 Header 品牌 Logo。</span>
+        <FieldError message={state.fieldErrors?.franchise_logo_url} />
+      </div>
+      <div className="field">
+        <label htmlFor="franchise_logo_file">上傳加盟店 Logo</label>
+        <input className="input" id="franchise_logo_file" name="franchise_logo_file" type="file" accept="image/*" />
+        <span className="muted">保留太平洋房屋加盟店 Logo。</span>
+      </div>
+      <div className="field">
         <label htmlFor="logo_url">公司 Logo URL</label>
         <input className="input" id="logo_url" name="logo_url" type="url" defaultValue={settings.logo_url} />
         <FieldError message={state.fieldErrors?.logo_url} />

@@ -21,6 +21,7 @@ assert.equal(companySettingsSchema.safeParse({
 
 const header = readFileSync("components/layout/site-header.tsx", "utf8");
 const footer = readFileSync("components/layout/site-footer.tsx", "utf8");
+const property = readFileSync("app/(public)/properties/[slug]/page.tsx", "utf8");
 const contact = readFileSync("app/(public)/contact/page.tsx", "utf8");
 const form = readFileSync("components/admin/company-settings-form.tsx", "utf8");
 const action = readFileSync("app/admin/settings/company/actions.ts", "utf8");
@@ -33,6 +34,10 @@ assert.match(header, /<small>\{settings\.brand_tagline\}<\/small>/);
 assert.doesNotMatch(header, /<strong>\{settings\.company_name\}<\/strong>/);
 
 assert.match(footer, /\{settings\.brand_name\}・\{settings\.franchise_name\}/);
+assert.match(header, /settings\.brand_logo_url/);
+assert.doesNotMatch(header, /settings\.logo_url/);
+assert.match(contact, /company\.franchise_logo_url/);
+assert.match(property, /companySettings\.franchise_logo_url/);
 assert.match(footer, /<small>\{settings\.company_name\}<\/small>/);
 
 assert.match(contact, /<h2>\{company\.company_name\}<\/h2>/);

@@ -41,6 +41,7 @@ export function SiteFooter({ settings, navigation }: { settings: CompanySettings
               </Link>
             ))}
           </nav>
+          <img className="site-app-brand-logo" src={settings.brand_logo_url} alt={`${settings.brand_name}標誌`} />
           <span>嚴選好物件</span>
           <span>價格透明</span>
           <span>安全交易</span>

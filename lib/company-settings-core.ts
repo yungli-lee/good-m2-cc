@@ -18,6 +18,8 @@ export const defaultCompanySettings = {
   tiktok_url: "https://www.tiktok.com/@buyhouse4",
   line_url: "https://line.me/ti/p/abQv5LYzzE",
   logo_url: "https://good.m2.cc/assets/logo-yongmei.jpeg",
+  brand_logo_url: "https://good.m2.cc/assets/logo-yongmei.jpeg",
+  franchise_logo_url: "",
   line_qr_code_url: "",
   copyright_text: "© 阿勇不動產顧問"
 };
@@ -42,6 +44,8 @@ export const companySettingsSchema = z.object({
   tiktok_url: z.string().trim().url("TikTok 連結格式不正確").max(500).optional().or(z.literal("")),
   line_url: z.string().trim().url("LINE 連結格式不正確").max(500).optional().or(z.literal("")),
   logo_url: z.string().trim().url("公司 Logo URL 格式不正確").max(500).optional().or(z.literal("")),
+  brand_logo_url: z.string().trim().url("品牌 Logo URL 格式不正確").max(500).optional().or(z.literal("")),
+  franchise_logo_url: z.string().trim().url("加盟店 Logo URL 格式不正確").max(500).optional().or(z.literal("")),
   line_qr_code_url: z.string().trim().url("LINE QR Code URL 格式不正確").max(500).optional().or(z.literal("")),
   copyright_text: z.string().trim().max(240).optional().or(z.literal(""))
 });
@@ -65,6 +69,8 @@ export function companySettingsValuesFromFormData(formData: FormData) {
     tiktok_url: String(formData.get("tiktok_url") || ""),
     line_url: String(formData.get("line_url") || ""),
     logo_url: String(formData.get("logo_url") || ""),
+    brand_logo_url: String(formData.get("brand_logo_url") || ""),
+    franchise_logo_url: String(formData.get("franchise_logo_url") || ""),
     line_qr_code_url: String(formData.get("line_qr_code_url") || ""),
     copyright_text: String(formData.get("copyright_text") || "")
   };
