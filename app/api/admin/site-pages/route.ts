@@ -4,6 +4,7 @@ import { requireRole } from "@/lib/auth";
 import { recordAuditLog } from "@/lib/audit/audit-log";
 import { nullable, sitePageSchema, valuesFromFormData } from "@/lib/home-cms/schema";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { revalidateSitePageContent } from "@/lib/home-cms/revalidation";
 
 export const runtime = "edge";
 
@@ -80,7 +81,7 @@ export async function POST(request: Request) {
     actorRole: current.profile.role
   });
 
-  revalidatePath("/");
+  revalidateSitePageContent(data.page_key);
   revalidatePath("/admin/site-pages");
   return NextResponse.json({
     ok: true,

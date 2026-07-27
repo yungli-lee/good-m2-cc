@@ -3,6 +3,7 @@ import type React from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getPublicKnowledgeBySlug } from "@/lib/content/queries";
+import { getPublicCompanySettings } from "@/lib/company-settings";
 import { formatKnowledgeReadingTime } from "@/lib/content/reading-time";
 import type { ContentItem } from "@/lib/content/types";
 
@@ -262,11 +263,14 @@ function renderArticleBlocks(blocks: ArticleBlock[]) {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
-  const { data } = await getPublicKnowledgeBySlug(slug);
+  const [{ data }, company] = await Promise.all([
+    getPublicKnowledgeBySlug(slug),
+    getPublicCompanySettings()
+  ]);
   const item = data as ContentItem | null;
-  if (!item) return { title: "知識內容不存在｜阿勇不動產顧問" };
+  if (!item) return { title: `知識內容不存在｜${company.brand_name}` };
 
-  const title = item.seo_title?.trim() || `${item.title}｜不動產知識庫｜阿勇不動產顧問`;
+  const title = item.seo_title?.trim() || `${item.title}｜不動產知識庫｜${company.brand_name}`;
   const description = knowledgeDescription(item);
   const canonical = canonicalFor(item);
 
@@ -275,6 +279,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     description,
     openGraph: {
       title,
+      siteName: company.brand_name,
       description,
       images: item.og_image_url || item.cover_image_url ? [item.og_image_url || item.cover_image_url || ""] : undefined,
       type: "article"

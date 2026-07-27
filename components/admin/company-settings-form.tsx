@@ -23,13 +23,27 @@ export function CompanySettingsForm({ settings }: { settings: CompanySettings })
         <h2 style={{ margin: 0 }}>基本資料</h2>
       </div>
       <div className="field">
-        <label htmlFor="company_name">公司名稱</label>
+        <label htmlFor="brand_name">品牌名稱</label>
+        <input className="input" id="brand_name" name="brand_name" defaultValue={settings.brand_name} required />
+        <span className="muted">顯示於網站 Header、Mobile Header、Footer 品牌區塊與 SEO site name。</span>
+        <FieldError message={state.fieldErrors?.brand_name} />
+      </div>
+      <div className="field">
+        <label htmlFor="brand_tagline">品牌副標</label>
+        <input className="input" id="brand_tagline" name="brand_tagline" defaultValue={settings.brand_tagline} required />
+        <span className="muted">顯示於 Header 與 Mobile Header 品牌名稱下方。</span>
+        <FieldError message={state.fieldErrors?.brand_tagline} />
+      </div>
+      <div className="field">
+        <label htmlFor="company_name">公司法定名稱</label>
         <input className="input" id="company_name" name="company_name" defaultValue={settings.company_name} required />
+        <span className="muted">顯示於聯絡我們、公司資訊卡與法定揭露。</span>
         <FieldError message={state.fieldErrors?.company_name} />
       </div>
       <div className="field">
-        <label htmlFor="franchise_name">加盟店</label>
+        <label htmlFor="franchise_name">加盟店名稱</label>
         <input className="input" id="franchise_name" name="franchise_name" defaultValue={settings.franchise_name} required />
+        <span className="muted">顯示於品牌副標、Footer 與公司資訊卡。</span>
         <FieldError message={state.fieldErrors?.franchise_name} />
       </div>
       <div className="field">

@@ -32,6 +32,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
             <Link href="/admin/media">媒體中心</Link>
             <Link href="/admin/home-campaigns">首頁 Campaign</Link>
             <Link href="/admin/site-pages">靜態頁面</Link>
+            <Link href="/admin/navigation">導覽選單</Link>
             <Link href="/admin/inquiries">詢問單</Link>
             <Link href="/admin/tools">後台工具</Link>
             <Link href="/admin/settings/company">公司資料</Link>

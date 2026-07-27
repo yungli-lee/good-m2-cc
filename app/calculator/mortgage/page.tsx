@@ -1,19 +1,24 @@
+import type { Metadata } from "next";
 import Link from "next/link";
+import { getPublicCompanySettings } from "@/lib/company-settings";
 import { MortgageCalculator } from "@/components/calculators/mortgage-calculator";
 
-export const metadata = {
-  title: "房貸月付金試算｜阿勇不動產顧問",
+export async function generateMetadata(): Promise<Metadata> {
+  const company = await getPublicCompanySettings();
+  return {
+  title: `房貸月付金試算｜${company.brand_name}`,
   description: "輸入貸款金額、年限、寬限期與三段式利率，估算月付金、總利息與利率跳升提醒。",
   alternates: {
     canonical: "/calculator/mortgage"
   },
   openGraph: {
-    title: "房貸月付金試算｜阿勇不動產顧問",
+    title: `房貸月付金試算｜${company.brand_name}`,
     description: "輸入貸款金額、年限、寬限期與三段式利率，估算月付金、總利息與利率跳升提醒。",
     url: "/calculator/mortgage",
-    siteName: "阿勇不動產顧問"
+    siteName: company.brand_name
   }
-};
+  };
+}
 
 export default function MortgageCalculatorPage() {
   return (

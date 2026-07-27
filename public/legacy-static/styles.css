@@ -111,6 +111,18 @@ a {
   color: var(--navy);
 }
 
+.cms-nav-mobile-item {
+  display: none;
+}
+
+.cms-footer-navigation {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px 20px;
+  margin-bottom: 24px;
+}
+
 .menu-toggle {
   display: none;
   width: 42px;
@@ -1377,6 +1389,14 @@ h3 {
 
   .site-nav a {
     padding: 12px;
+  }
+
+  .cms-nav-desktop-item {
+    display: none;
+  }
+
+  .cms-nav-mobile-item {
+    display: block;
   }
 
   .menu-toggle {

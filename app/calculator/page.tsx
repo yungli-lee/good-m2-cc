@@ -1,4 +1,6 @@
+import type { Metadata } from "next";
 import Link from "next/link";
+import { getPublicCompanySettings } from "@/lib/company-settings";
 
 type CalculatorTool =
   | {
@@ -32,19 +34,22 @@ const tools: CalculatorTool[] = [
   }
 ];
 
-export const metadata = {
-  title: "房產試算工具｜阿勇不動產顧問",
+export async function generateMetadata(): Promise<Metadata> {
+  const company = await getPublicCompanySettings();
+  return {
+  title: `房產試算工具｜${company.brand_name}`,
   description: "買屋、賣屋與房貸相關試算工具。",
   alternates: {
     canonical: "/calculator"
   },
   openGraph: {
-    title: "房產試算工具｜阿勇不動產顧問",
+    title: `房產試算工具｜${company.brand_name}`,
     description: "買屋、賣屋與房貸相關試算工具。",
     url: "/calculator",
-    siteName: "阿勇不動產顧問"
+    siteName: company.brand_name
   }
-};
+  };
+}
 
 export default function CalculatorCenterPage() {
   return (

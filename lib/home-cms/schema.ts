@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { isReservedSitePageSlug } from "@/lib/home-cms/routing";
 const optionalText = (max = 4000) => z.string().trim().max(max).optional().or(z.literal(""));
 const optionalDate = z.string().trim().max(40).optional().or(z.literal(""));
 export const cmsStatusValues = ["draft", "published", "archived"] as const;
@@ -36,6 +37,14 @@ export const sitePageSchema = z.object({
   seo_description: optionalText(300),
   status: z.enum(cmsStatusValues).default("draft"),
   sort_order: z.coerce.number().int().min(0).default(1000)
+}).superRefine((value, context) => {
+  if ((value.page_type === "custom" || value.page_type === "reminder") && isReservedSitePageSlug(value.page_key)) {
+    context.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["page_key"],
+      message: "此 Slug 為系統保留路徑，請改用其他 Slug。"
+    });
+  }
 });
 
 export type HomeCampaignInput = z.infer<typeof homeCampaignSchema>;

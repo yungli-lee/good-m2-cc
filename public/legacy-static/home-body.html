@@ -1,10 +1,10 @@
 
     <header class="site-header" id="top">
       <a class="brand" href="/" aria-label="回到首頁">
-        <img src="/assets/logo-yongmei.jpeg" alt="勇美標誌">
+        <img src="/assets/logo-yongmei.jpeg" alt="">
         <span>
-          <strong>阿勇不動產顧問</strong>
-          <small>彰化房地產資訊與服務</small>
+          <strong></strong>
+          <small></small>
         </span>
       </a>
       <button class="menu-toggle" type="button" aria-label="開啟選單" aria-expanded="false">
@@ -12,16 +12,7 @@
         <span></span>
         <span></span>
       </button>
-      <nav class="site-nav" aria-label="主選單">
-        <a href="#philosophy">服務理念</a>
-        <a href="#featured-properties">精選物件</a>
-        <a href="/knowledge">知識庫</a>
-        <a href="#services">服務項目</a>
-        <a href="#calculators">房產試算工具</a>
-        <a href="#process">買屋流程</a>
-        <a href="#reminders">阿勇生活小提醒</a>
-        <a href="#team">聯絡我們</a>
-      </nav>
+      <nav class="site-nav" aria-label="主選單"></nav>
     </header>
 
     <main>
@@ -523,7 +514,7 @@
       <section class="team-section" id="team">
         <div class="section-heading">
           <p class="eyebrow">Our Team</p>
-          <h2>阿勇不動產顧問</h2>
+          <h2>{{BRAND_NAME}}</h2>
           <p>在地經營、專業團隊、值得信賴。</p>
         </div>
         <div class="team-grid">
@@ -572,7 +563,7 @@
       <section class="service-form-section" id="service-form">
         <div class="section-heading">
           <p class="eyebrow">Service Form</p>
-          <h2>阿勇不動產顧問誠摯服務表單</h2>
+          <h2>{{BRAND_NAME}}誠摯服務表單</h2>
           <p>請留下您的需求，買房買地、賣房賣地或委託服務都可以先從這裡開始。</p>
         </div>
         <form class="service-form" id="consult-form">
@@ -634,7 +625,7 @@
           <input name="turnstile_token" type="hidden" value="">
           <label class="consent-check">
             <input name="consent" type="checkbox" required>
-            <span>我同意阿勇不動產顧問為聯絡與服務需求使用以上資料。</span>
+            <span>我同意{{BRAND_NAME}}為聯絡與服務需求使用以上資料。</span>
           </label>
           <p class="form-message" id="consult-form-message" role="status"></p>
           <button class="button primary" type="submit">送出服務需求</button>

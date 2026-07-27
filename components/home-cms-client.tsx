@@ -3,10 +3,14 @@
 import { useEffect, useState } from "react";
 import { renderHomeCmsHtml } from "@/lib/home-cms/render";
 import type { HomeCampaign, SitePage } from "@/lib/home-cms/types";
+import type { CompanySettings } from "@/lib/company-settings";
+import type { ResolvedNavigationItem } from "@/lib/navigation";
 
 type HomeCmsPayload = {
   campaigns?: Array<HomeCampaign & { media_public_url?: string | null }>;
   pages?: Array<SitePage & { media_public_url?: string | null }>;
+  company?: CompanySettings;
+  navigation?: ResolvedNavigationItem[];
 };
 
 export function HomeCmsClient() {
@@ -22,7 +26,7 @@ export function HomeCmsClient() {
       ]);
       const staticHtml = staticResponse.ok ? await staticResponse.text() : "";
       const cms = cmsResponse.ok ? ((await cmsResponse.json()) as HomeCmsPayload) : {};
-      const nextHtml = renderHomeCmsHtml(staticHtml, cms.campaigns || [], cms.pages || []);
+      const nextHtml = renderHomeCmsHtml(staticHtml, cms.campaigns || [], cms.pages || [], cms.company, cms.navigation || []);
       if (!cancelled) setHtml(nextHtml);
     }
 

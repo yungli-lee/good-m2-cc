@@ -18,15 +18,19 @@ export const dynamic = "force-dynamic";
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
-  const { data } = await getPublishedPropertyBySlug(slug);
+  const [{ data }, company] = await Promise.all([
+    getPublishedPropertyBySlug(slug),
+    getPublicCompanySettings()
+  ]);
   const property = data as Property | null;
-  if (!property) return { title: "物件不存在｜阿勇不動產顧問" };
+  if (!property) return { title: `物件不存在｜${company.brand_name}` };
   const seo = resolvePropertySeo(property);
   return {
     title: seo.title,
     description: seo.description,
     openGraph: {
       title: seo.ogTitle,
+      siteName: company.brand_name,
       description: seo.ogDescription,
       images: seo.ogImage ? [seo.ogImage] : undefined
     },

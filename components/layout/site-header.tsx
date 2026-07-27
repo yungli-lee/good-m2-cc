@@ -1,34 +1,22 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 import { useState } from "react";
+import type { CompanySettings } from "@/lib/company-settings";
+import type { ResolvedNavigationItem } from "@/lib/navigation";
 
-type NavItem = { hash: string; label: string } | { href: string; label: string };
-
-const navItems: NavItem[] = [
-  { hash: "philosophy", label: "服務理念" },
-  { hash: "featured-properties", label: "精選物件" },
-  { href: "/knowledge", label: "知識庫" },
-  { hash: "services", label: "服務項目" },
-  { hash: "calculators", label: "房產試算工具" },
-  { hash: "process", label: "買屋流程" },
-  { hash: "reminders", label: "阿勇生活小提醒" },
-  { hash: "team", label: "聯絡我們" }
-];
-
-export function SiteHeader() {
+export function SiteHeader({ settings, navigation }: { settings: CompanySettings; navigation: ResolvedNavigationItem[] }) {
   const [isOpen, setIsOpen] = useState(false);
-  const pathname = usePathname();
-  const isHome = pathname === "/";
+  const headerItems = navigation.filter((item) => item.location === "header");
+  const mobileItems = navigation.filter((item) => item.location === "mobile");
 
   return (
     <header className="site-app-header">
       <Link className="site-app-brand" href="/" aria-label="回到首頁">
-        <img src="/assets/logo-yongmei.jpeg" alt="阿勇不動產顧問標誌" />
+        <img src={settings.logo_url} alt={`${settings.brand_name}標誌`} />
         <span>
-          <strong>阿勇不動產顧問</strong>
-          <small>彰化房地產資訊與服務</small>
+          <strong>{settings.brand_name}</strong>
+          <small>{settings.brand_tagline}</small>
         </span>
       </Link>
       <button
@@ -43,10 +31,25 @@ export function SiteHeader() {
         <span />
       </button>
       <nav className={`site-app-nav${isOpen ? " is-open" : ""}`} aria-label="主選單">
-        {navItems.map((item) => (
+        {headerItems.map((item) => (
           <Link
-            href={"href" in item ? item.href : (isHome ? `#${item.hash}` : `/?scrollTo=${item.hash}`)}
-            key={item.label}
+            className="site-app-nav-desktop-item"
+            href={item.href}
+            key={item.id}
+            target={item.target}
+            rel={item.target === "_blank" ? "noopener noreferrer" : undefined}
+            onClick={() => setIsOpen(false)}
+          >
+            {item.label}
+          </Link>
+        ))}
+        {mobileItems.map((item) => (
+          <Link
+            className="site-app-nav-mobile-item"
+            href={item.href}
+            key={item.id}
+            target={item.target}
+            rel={item.target === "_blank" ? "noopener noreferrer" : undefined}
             onClick={() => setIsOpen(false)}
           >
             {item.label}

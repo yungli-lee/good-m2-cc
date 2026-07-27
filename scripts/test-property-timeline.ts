@@ -259,7 +259,7 @@ assert.match(adminGrantMigrationSource, /public\.is_admin_role\(array\['admin','
 const timelineCompanyMigrationSource = readFileSync(new URL("../supabase/migrations/202606300104_timeline_edit_and_company_settings.sql", import.meta.url), "utf8");
 const expandedCompanyMigrationSource = readFileSync(new URL("../supabase/migrations/202606300105_expand_company_settings.sql", import.meta.url), "utf8");
 const companyAssetsMigrationSource = readFileSync(new URL("../supabase/migrations/202606300106_company_settings_assets_storage.sql", import.meta.url), "utf8");
-const companySettingsSource = readFileSync(new URL("../lib/company-settings.ts", import.meta.url), "utf8");
+const companySettingsCoreSource = readFileSync(new URL("../lib/company-settings-core.ts", import.meta.url), "utf8");
 const companySettingsActionSource = readFileSync(new URL("../app/admin/settings/company/actions.ts", import.meta.url), "utf8");
 const companySettingsFormSource = readFileSync(new URL("../components/admin/company-settings-form.tsx", import.meta.url), "utf8");
 const propertyDetailSource = readFileSync(new URL("../app/(public)/properties/[slug]/page.tsx", import.meta.url), "utf8");
@@ -269,11 +269,11 @@ assert.match(timelineCompanyMigrationSource, /create table if not exists public\
 assert.match(timelineCompanyMigrationSource, /public read company settings/);
 for (const field of ["company_phone", "company_address", "company_email", "google_maps_url", "line_qr_code_url", "copyright_text"]) {
   assert.match(expandedCompanyMigrationSource, new RegExp(field));
-  assert.match(companySettingsSource, new RegExp(field));
+  assert.match(companySettingsCoreSource, new RegExp(field));
   assert.match(propertyDetailSource, new RegExp(field));
 }
-assert.match(companySettingsSource, /赫成開發有限公司/);
-assert.match(companySettingsSource, /太平洋房屋彰化縣府加盟店/);
+assert.match(companySettingsCoreSource, /赫成開發有限公司/);
+assert.match(companySettingsCoreSource, /太平洋房屋彰化縣府加盟店/);
 assert.match(companyAssetsMigrationSource, /company-assets/);
 assert.match(companyAssetsMigrationSource, /staff upload company assets bucket/);
 assert.match(companyAssetsMigrationSource, /image\/jpeg/);

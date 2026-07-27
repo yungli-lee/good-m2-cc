@@ -41,6 +41,7 @@ export default async function AdminIndexPage() {
           <Link className="button secondary" href="/admin/knowledge">知識管理</Link>
           <Link className="button secondary" href="/admin/home-campaigns">首頁 Campaign</Link>
           <Link className="button secondary" href="/admin/site-pages">靜態頁面</Link>
+          <Link className="button secondary" href="/admin/navigation">導覽選單</Link>
           <Link className="button secondary" href="/admin/inquiries">詢問單</Link>
           <Link className="button ghost" href="/admin/tools">成交試算中心</Link>
           <Link className="button ghost" href="/admin/settings/company">公司資料設定</Link>
