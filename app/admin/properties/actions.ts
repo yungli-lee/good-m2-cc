@@ -163,9 +163,10 @@ function propertyFieldErrors(error: { issues: Array<{ path: Array<string | numbe
   }, {});
 }
 
-function propertyCreateErrorMessage(error: { code?: string; message?: string }) {
+function propertyCreateErrorMessage(error: { code?: string; message?: string; details?: string | null }) {
   if (error.code === "23505") return "Slug 已重複，系統自動流水號處理失敗，請稍後再試。";
   if (error.code === "42501") return "資料庫權限不足，請確認 properties insert grant 與 RLS policy。";
+  if (error.code === "23514") return `物件建立失敗（資料庫檢核限制）：${(error.details || error.message || "constraint violation").slice(0, 240)}`;
   return `物件建立失敗${error.code ? `（${error.code}）` : ""}，請稍後再試。`;
 }
 

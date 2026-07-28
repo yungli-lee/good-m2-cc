@@ -78,6 +78,7 @@ const fieldAliases: Array<[keyof ParsedProperty | "lot_number" | "main_building"
   ["sale_motivation", /^(售屋動機)$/],
   ["sale_motivation_other", /^(售屋動機.?其他說明)$/],
   ["current_condition_type", /^(現況種類)$/],
+  ["current_condition_type", /^(現況)$/],
   ["current_condition_other", /^(現況種類.?其他說明)$/],
   ["current_usage", /^(現況用途)$/],
   ["current_usage_other", /^(現況用途.?其他說明)$/],
