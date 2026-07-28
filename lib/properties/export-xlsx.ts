@@ -253,7 +253,7 @@ function buildTemplateValues(property: Property) {
   const highlights = listHighlights(property.highlights);
   const listingPeriod = [property.listing_start_date, property.listing_end_date].filter(Boolean).join(" - ");
 
-  const listingLabel = property.listing_type === "一般委託" ? "一般簽" : property.listing_type === "專任" ? "專任" : property.listing_type === "口頭" ? "口頭約" : "";
+  const listingLabel = property.listing_type === "一般委託" ? "一般簽" : property.listing_type === "專任" ? "專任" : property.listing_type === "口頭" ? "口頭" : "";
   const motivation = property.sale_motivation === "其他" ? property.sale_motivation_other || "其他" : property.sale_motivation || "資金運用";
   const currentCondition = property.current_condition_type === "其他" ? property.current_condition_other || "其他" : property.current_condition_type || "";
   const currentUsage = property.current_usage === "其他" ? property.current_usage_other || "其他" : property.current_usage || "";
@@ -262,7 +262,7 @@ function buildTemplateValues(property: Property) {
   return {
     A6: listingLabel === "一般簽" ? "☑一般簽" : "□一般簽",
     A7: listingLabel === "專任" ? "☑專任" : "□專任",
-    A8: listingLabel === "口頭約" ? "☑口頭約" : "□口頭約",
+    A8: listingLabel === "口頭" ? "☑口頭" : "□口頭",
     A9: "廣告▪️刊登 □不刊登(原因:______)                             ",
     C11: property.listing_no || "",
     H11: listingPeriod,

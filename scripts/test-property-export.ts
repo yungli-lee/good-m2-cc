@@ -114,7 +114,7 @@ assert.equal(cells.get("C11"), "AK5384529");
 assert.equal(cells.get("H11"), "2026-01-22 - 2026-04-21");
 assert.equal(cells.get("A6"), "□一般簽");
 assert.equal(cells.get("A7"), "☑專任");
-assert.equal(cells.get("A8"), "□口頭約");
+assert.equal(cells.get("A8"), "□口頭");
 assert.equal(cells.get("L11"), "簽約日:");
 assert.equal(cells.get("C12"), property.title);
 assert.equal(cells.get("C13"), "798萬");
@@ -138,6 +138,44 @@ assert.equal(cells.get("B43"), undefined);
 for (const ref of ["G35", "H35", "I35", "J35", "K35", "L35"]) {
   assert.equal(cells.get(ref), undefined, `${ref} should stay blank for layout image`);
 }
+
+const businessOutputPath = join(outputDir, "property-export-business-fields-test.xlsx");
+writeFileSync(businessOutputPath, buildPropertyExportXlsx({
+  ...property,
+  listing_type: "一般委託",
+  contract_signed_date: "2026-07-28",
+  sale_motivation: "資金運用",
+  current_condition_type: "自用",
+  current_usage: "廠房",
+  building_style: "透天",
+  parking_type: "門前停車",
+  road_width: 16,
+  frontage: "4米",
+  depth: "19米",
+  completion_date: "1970-02-28",
+  has_addition: true,
+  addition_description: "後方及頂樓加建",
+  elementary_school_district: "大竹國小",
+  junior_high_school_district: "彰泰國中",
+  showing_meeting_location: "現場"
+}));
+const businessCells = cellMap(readZipEntry(businessOutputPath, "xl/worksheets/sheet1.xml").toString("utf8"));
+assert.equal(businessCells.get("A6"), "☑一般簽");
+assert.equal(businessCells.get("A7"), "□專任");
+assert.equal(businessCells.get("A8"), "□口頭");
+assert.equal(businessCells.get("L11"), "簽約日:115/07/28");
+assert.equal(businessCells.get("H16"), "自用");
+assert.equal(businessCells.get("C19"), "廠房");
+assert.equal(businessCells.get("C20"), "透天");
+assert.equal(businessCells.get("C21"), "門前停車");
+assert.equal(businessCells.get("B29"), "16米");
+assert.equal(businessCells.get("H21"), "4米");
+assert.equal(businessCells.get("H23"), "19米");
+assert.equal(businessCells.get("C27"), "59/02/28");
+assert.equal(businessCells.get("H27"), "有：後方及頂樓加建");
+assert.equal(businessCells.get("F29"), "大竹國小");
+assert.equal(businessCells.get("F30"), "彰泰國中");
+assert.equal(businessCells.get("B43"), "現場");
 
 const buildingOutputPath = join(outputDir, "property-export-building-test.xlsx");
 writeFileSync(buildingOutputPath, buildPropertyExportXlsx({ ...property, property_type: "building" }));
