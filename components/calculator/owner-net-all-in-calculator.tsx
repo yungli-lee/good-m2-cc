@@ -20,7 +20,13 @@ function ResultCard({ label, value }: { label: string; value: string }) {
   );
 }
 
-export function OwnerNetAllInCalculator() {
+type Props = { mode?: "public" | "admin"; className?: string };
+
+function formatHoldingPeriod(days: number) {
+  return `${Math.floor(days / 365)} 年 ${Math.floor((days % 365) / 30)} 個月（${days} 天）`;
+}
+
+export function OwnerNetAllInCalculator({ className, mode = "admin" }: Props = {}) {
   const [targetNetWan, setTargetNetWan] = useState("1000");
   const [purchaseDate, setPurchaseDate] = useState("2023-05-03");
   const [saleDate, setSaleDate] = useState("2026-06-22");
@@ -53,7 +59,7 @@ export function OwnerNetAllInCalculator() {
   const result = validationMessage ? null : calculateSellerCarryCosts(input, "allFeesAdded");
 
   return (
-    <div style={{ display: "grid", gap: 18 }}>
+    <div className={className} style={{ display: "grid", gap: 18 }}>
       <div className="card">
         <div className="card-body">
           <form className="form-grid" onSubmit={(event) => event.preventDefault()}>
@@ -77,17 +83,23 @@ export function OwnerNetAllInCalculator() {
 
       {result ? (
         <div className="grid" aria-live="polite">
-          <ResultCard label="建議成交價" value={formatWanDecimal(result.suggestedSalePriceWan)} />
-          <ResultCard label="出售仲介費" value={formatWanDecimal(result.saleBrokerFeeWan)} />
-          <ResultCard label="房地合一稅" value={formatWanDecimal(result.houseLandTaxWan)} />
+          <ResultCard label="建議成交總價" value={formatWanDecimal(result.suggestedSalePriceWan)} />
+          <ResultCard label="屋主目標實拿" value={formatWanDecimal(input.targetNetWan)} />
+          <ResultCard label="預估出售仲介服務費" value={formatWanDecimal(result.saleBrokerFeeWan)} />
+          <ResultCard label="預估房地合一稅" value={formatWanDecimal(result.houseLandTaxWan)} />
           <ResultCard label="土地增值稅" value={formatWanDecimal(result.landValueIncrementTaxWan)} />
-          <ResultCard label="各項費用合計" value={formatWanDecimal(result.totalFeesWan)} />
-          <ResultCard label="屋主實拿" value={formatWanDecimal(result.ownerNetWan)} />
-          <ResultCard label="驗算差額" value={formatWanDecimal(result.verificationDifferenceWan)} />
+          <ResultCard label="代書與雜支" value={formatWanDecimal(result.notaryAndMiscWan)} />
+          <ResultCard label="清償相關費用" value={formatWanDecimal(result.settlementFeeWan)} />
+          <ResultCard label="其他費用" value={formatWanDecimal(result.otherFeesWan)} />
+          <ResultCard label="預估總費用" value={formatWanDecimal(result.totalFeesWan)} />
+          <ResultCard label="預估實拿金額" value={formatWanDecimal(result.ownerNetWan)} />
+          <ResultCard label="實拿金額與目標差額" value={formatWanDecimal(result.verificationDifferenceWan)} />
+          <ResultCard label="持有期間" value={formatHoldingPeriod(result.holdingPeriodDays)} />
+          <ResultCard label="使用的房地合一稅率" value={`${result.houseLandTaxRatePercent}%`} />
         </div>
       ) : null}
 
-      <div className="notice">本工具為估算輔助，實際稅費仍應依地政、稅捐、代書及國稅局資料為準。</div>
+      <div className="notice">{mode === "public" ? "本試算結果僅供初步評估，實際稅額仍須依取得原因、可列舉成本、持有期間、土地漲價總數額及稅務機關認定為準。" : "本工具為估算輔助，實際稅費仍應依地政、稅捐、代書及國稅局資料為準。"}</div>
     </div>
   );
 }

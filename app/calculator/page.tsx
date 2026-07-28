@@ -31,6 +31,13 @@ const tools: CalculatorTool[] = [
     href: "/calculator/purchase-cost",
     status: "已開放",
     available: true
+  },
+  {
+    title: "屋主實拿試算",
+    description: "輸入屋主希望實拿金額及相關稅費，反推預估成交總價。",
+    href: "/calculators/owner-net-all-in",
+    status: "已開放",
+    available: true
   }
 ];
 

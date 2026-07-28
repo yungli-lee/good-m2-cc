@@ -1,5 +1,5 @@
-import { assertPercentRange, calculateBrokerageFeeWan } from "@/lib/calculators/brokerage";
-import { calculateManualTaxWan, totalWan } from "@/lib/calculators/tax";
+import { assertPercentRange, calculateBrokerageFeeWan } from "./brokerage.ts";
+import { calculateManualTaxWan, totalWan } from "./tax.ts";
 
 export type SellerCarryCostsInput = {
   targetNetWan: number;
@@ -27,6 +27,11 @@ export type SellerCarryCostsResult = {
   totalFeesWan: number;
   ownerNetWan: number;
   verificationDifferenceWan: number;
+  holdingPeriodDays: number;
+  houseLandTaxRatePercent: number;
+  notaryAndMiscWan: number;
+  settlementFeeWan: number;
+  otherFeesWan: number;
 };
 
 export type SellerFixedPriceBrokerageExtraInput = Omit<SellerCarryCostsInput, "targetNetWan"> & {
@@ -50,7 +55,10 @@ type SellerCostBasisInput = Pick<
 
 export function validateSellerCarryCostsInput(input: SellerCarryCostsInput) {
   if (!input.purchaseDate || !input.saleDate) return "請輸入取得日期與預計出售日期。";
-  if (new Date(`${input.saleDate}T00:00:00`) < new Date(`${input.purchaseDate}T00:00:00`)) return "預計出售日期不可早於取得日期。";
+  const purchase = new Date(`${input.purchaseDate}T00:00:00`);
+  const sale = new Date(`${input.saleDate}T00:00:00`);
+  if (!Number.isFinite(purchase.getTime()) || !Number.isFinite(sale.getTime())) return "日期格式不正確。";
+  if (sale < purchase) return "預計出售日期不可早於取得日期。";
   if (input.targetNetWan <= 0) return "屋主目標實拿金額需大於 0。";
   if (input.originalCostWan < 0) return "原始取得成本不可為負數。";
   if (input.purchaseBrokerFeeWan < 0) return "買入仲介費不可為負數。";
@@ -138,7 +146,12 @@ export function calculateSellerCarryCosts(input: SellerCarryCostsInput, mode: Se
     landValueIncrementTaxWan: input.landValueIncrementTaxWan,
     totalFeesWan: result.totalFeesWan,
     ownerNetWan: result.ownerNetWan,
-    verificationDifferenceWan: result.ownerNetWan - input.targetNetWan
+    verificationDifferenceWan: result.ownerNetWan - input.targetNetWan,
+    holdingPeriodDays: Math.round((new Date(`${input.saleDate}T00:00:00`).getTime() - new Date(`${input.purchaseDate}T00:00:00`).getTime()) / 86400000),
+    houseLandTaxRatePercent: input.houseLandTaxRatePercent,
+    notaryAndMiscWan: input.notaryAndMiscWan,
+    settlementFeeWan: input.settlementFeeWan,
+    otherFeesWan: input.otherFeesWan
   };
 }
 
