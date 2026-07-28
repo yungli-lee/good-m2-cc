@@ -1,7 +1,8 @@
 export {
   calculateSellerCarryCosts as calculateOwnerNetAllIn,
   validateSellerCarryCostsInput as validateOwnerNetAllInInput,
-  getStandardIndividualHouseLandTaxRate
+  getStandardIndividualHouseLandTaxRate,
+  determineHouseLandTaxRegime
 } from "@/lib/calculators/seller";
 export type {
   SellerCarryCostsInput as OwnerNetAllInInput,

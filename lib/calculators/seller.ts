@@ -14,10 +14,12 @@ export type SellerCarryCostsInput = {
   settlementFeeWan: number;
   otherFeesWan: number;
   houseLandTaxRatePercent: number;
+  propertyTransactionTaxWan?: number;
 };
 
 export type SellerCarryCostsMode = "allFeesAdded" | "brokerageExtra";
 export type StandardHouseLandTaxRate = { rate: 45 | 35 | 20 | 15; holdingDays: number; holdingCategory: "within_2_years" | "over_2_to_5_years" | "over_5_to_10_years" | "over_10_years" };
+export type HouseLandTaxRegime = { regime: "house_land_new_system" | "property_transaction_old_system"; houseLandTaxRate: number; holdingDays: number; holdingCategory: string | null; reason: string };
 
 export type SellerCarryCostsResult = {
   suggestedSalePriceWan: number;
@@ -33,6 +35,7 @@ export type SellerCarryCostsResult = {
   notaryAndMiscWan: number;
   settlementFeeWan: number;
   otherFeesWan: number;
+  propertyTransactionTaxWan: number;
 };
 
 export type SellerFixedPriceBrokerageExtraInput = Omit<SellerCarryCostsInput, "targetNetWan"> & {
@@ -51,7 +54,7 @@ export type SellerFixedPriceBrokerageExtraResult = {
 
 type SellerCostBasisInput = Pick<
   SellerCarryCostsInput,
-  "originalCostWan" | "purchaseBrokerFeeWan" | "improvementCostsWan" | "landValueIncrementTaxWan" | "notaryAndMiscWan" | "settlementFeeWan" | "otherFeesWan"
+  "originalCostWan" | "purchaseBrokerFeeWan" | "improvementCostsWan" | "landValueIncrementTaxWan" | "notaryAndMiscWan" | "settlementFeeWan" | "otherFeesWan" | "propertyTransactionTaxWan"
 >;
 
 function parseLocalDate(value: string) {
@@ -76,6 +79,24 @@ export function getStandardIndividualHouseLandTaxRate(acquisitionDate: string, s
   if (sale <= addCalendarYears(acquisition, 5)) return { rate: 35, holdingDays, holdingCategory: "over_2_to_5_years" };
   if (sale <= addCalendarYears(acquisition, 10)) return { rate: 20, holdingDays, holdingCategory: "over_5_to_10_years" };
   return { rate: 15, holdingDays, holdingCategory: "over_10_years" };
+}
+
+export function determineHouseLandTaxRegime(acquisitionDate: string, saleDate: string): HouseLandTaxRegime | { error: string } {
+  const acquisition = parseLocalDate(acquisitionDate);
+  const sale = parseLocalDate(saleDate);
+  if (!acquisition || !sale) return { error: "請輸入有效的取得日期與預計出售日期。" };
+  if (sale < acquisition) return { error: "預計出售日期不可早於取得日期。" };
+  const holdingDays = Math.round((sale.getTime() - acquisition.getTime()) / 86400000);
+  const cutoff = new Date(2016, 0, 1);
+  const daybreakStart = new Date(2014, 0, 2);
+  const daybreakEnd = new Date(2015, 11, 31);
+  const daybreakEligible = acquisition >= daybreakStart && acquisition <= daybreakEnd && sale >= cutoff && sale <= addCalendarYears(acquisition, 2);
+  if (acquisition >= cutoff || daybreakEligible) {
+    const rate = getStandardIndividualHouseLandTaxRate(acquisitionDate, saleDate);
+    if ("error" in rate) return rate;
+    return { regime: "house_land_new_system", houseLandTaxRate: daybreakEligible ? 20 : rate.rate, holdingDays, holdingCategory: rate.holdingCategory, reason: daybreakEligible ? "符合日出條款範圍" : "取得日為 2016/01/01 以後" };
+  }
+  return { regime: "property_transaction_old_system", houseLandTaxRate: 0, holdingDays, holdingCategory: null, reason: "取得日為 2015/12/31 以前，適用財產交易所得舊制" };
 }
 
 export function validateSellerCarryCostsInput(input: SellerCarryCostsInput) {
@@ -118,7 +139,8 @@ function fixedSellerFeesWan(input: SellerCostBasisInput) {
     input.landValueIncrementTaxWan,
     input.notaryAndMiscWan,
     input.settlementFeeWan,
-    input.otherFeesWan
+    input.otherFeesWan,
+    input.propertyTransactionTaxWan ?? 0
   ]);
 }
 
@@ -176,7 +198,8 @@ export function calculateSellerCarryCosts(input: SellerCarryCostsInput, mode: Se
     houseLandTaxRatePercent: input.houseLandTaxRatePercent,
     notaryAndMiscWan: input.notaryAndMiscWan,
     settlementFeeWan: input.settlementFeeWan,
-    otherFeesWan: input.otherFeesWan
+    otherFeesWan: input.otherFeesWan,
+    propertyTransactionTaxWan: input.propertyTransactionTaxWan ?? 0
   };
 }
 
