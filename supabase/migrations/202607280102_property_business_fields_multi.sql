@@ -7,6 +7,9 @@ alter table public.properties
   drop constraint if exists properties_parking_type_check;
 
 alter table public.properties
+  alter column sale_motivation drop default;
+
+alter table public.properties
   alter column sale_motivation type text[] using (
     case when nullif(trim(sale_motivation), '') is null then array['資金運用']::text[] else array[sale_motivation]::text[] end
   ),
