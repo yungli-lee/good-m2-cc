@@ -12,8 +12,8 @@ const parking = ["無","車庫","門前停車","騎樓停車","庭院停車","�
 function OtherField({ name, label, visible, value }: { name:string; label:string; visible:boolean; value?:string|null }) {
   return visible ? <div className="field"><label htmlFor={name}>{label}</label><input className="input" id={name} name={name} defaultValue={value || ""}/></div> : null;
 }
-function ChoiceGroup({ name,label,options,selected,onChange }:{name:string;label:string;options:string[];selected:string[];onChange:(v:string)=>void}) {
-  return <fieldset className="field"><legend>{label}</legend><div className="checkbox-group">{options.map((item)=><label key={item}><input type="checkbox" name={name} value={item} checked={selected.includes(item)} onChange={()=>onChange(item)}/> {item}</label>)}</div></fieldset>;
+function ChoiceGroup({ name,label,options,selected,onChange,otherName,otherValue,placeholder }:{name:string;label:string;options:string[];selected:string[];onChange:(v:string)=>void;otherName:string;otherValue?:string|null;placeholder:string}) {
+  return <fieldset className="field"><legend>{label}</legend><div className="checkbox-group">{options.map((item)=><label key={item}><input type="checkbox" name={name} value={item} checked={selected.includes(item)} onChange={()=>onChange(item)}/> {item}{item === "其他" && selected.includes("其他") ? <input className="input inline-other-input" id={otherName} name={otherName} defaultValue={otherValue || ""} placeholder={placeholder} /> : null}</label>)}</div></fieldset>;
 }
 function initialValues(value?:string[]|null, fallback:string[]=[]){ return Array.isArray(value) ? value : fallback; }
 
@@ -27,17 +27,12 @@ export function PropertyBusinessFields({ property }:{property?:Property|null}) {
   const toggle=(selected:string[], setSelected:(v:string[])=>void, value:string)=>setSelected(selected.includes(value)?selected.filter((item)=>item!==value):[...selected,value]);
   return <>
     <div className="field"><label htmlFor="contract_signed_date">簽約日期</label><input className="input" id="contract_signed_date" name="contract_signed_date" type="date" defaultValue={property?.contract_signed_date||""}/></div>
-    <ChoiceGroup name="sale_motivation" label="售屋動機（可複選）" options={motivations} selected={motivation} onChange={(v)=>toggle(motivation,setMotivation,v)}/>
-    <OtherField name="sale_motivation_other" label="售屋動機－其他說明" visible={motivation.includes("其他")} value={property?.sale_motivation_other}/>
+    <ChoiceGroup name="sale_motivation" label="售屋動機（可複選）" options={motivations} selected={motivation} onChange={(v)=>toggle(motivation,setMotivation,v)} otherName="sale_motivation_other" otherValue={property?.sale_motivation_other} placeholder="請輸入其他售屋動機"/>
     <div className="field"><label htmlFor="showing_meeting_location">約看地點</label><input className="input" id="showing_meeting_location" name="showing_meeting_location" defaultValue={property?.showing_meeting_location||""}/></div>
-    <ChoiceGroup name="current_condition_type" label="現況種類（可複選）" options={conditions} selected={condition} onChange={(v)=>toggle(condition,setCondition,v)}/>
-    <OtherField name="current_condition_other" label="現況種類－其他說明" visible={condition.includes("其他")} value={property?.current_condition_other}/>
-    <ChoiceGroup name="current_usage" label="現況用途（可複選）" options={usages} selected={usage} onChange={(v)=>toggle(usage,setUsage,v)}/>
-    <OtherField name="current_usage_other" label="現況用途－其他說明" visible={usage.includes("其他")} value={property?.current_usage_other}/>
-    <ChoiceGroup name="building_style" label="型態（可複選）" options={styles} selected={buildingStyle} onChange={(v)=>toggle(buildingStyle,setBuildingStyle,v)}/>
-    <OtherField name="building_style_other" label="型態－其他說明" visible={buildingStyle.includes("其他")} value={property?.building_style_other}/>
-    <ChoiceGroup name="parking_type" label="停車位（可複選）" options={parking} selected={parkingType} onChange={(v)=>toggle(parkingType,setParkingType,v)}/>
-    <OtherField name="parking_type_other" label="停車位－其他說明" visible={parkingType.includes("其他")} value={property?.parking_type_other}/>
+    <ChoiceGroup name="current_condition_type" label="現況種類（可複選）" options={conditions} selected={condition} onChange={(v)=>toggle(condition,setCondition,v)} otherName="current_condition_other" otherValue={property?.current_condition_other} placeholder="請輸入其他現況種類"/>
+    <ChoiceGroup name="current_usage" label="現況用途（可複選）" options={usages} selected={usage} onChange={(v)=>toggle(usage,setUsage,v)} otherName="current_usage_other" otherValue={property?.current_usage_other} placeholder="請輸入其他現況用途"/>
+    <ChoiceGroup name="building_style" label="型態（可複選）" options={styles} selected={buildingStyle} onChange={(v)=>toggle(buildingStyle,setBuildingStyle,v)} otherName="building_style_other" otherValue={property?.building_style_other} placeholder="請輸入其他型態"/>
+    <ChoiceGroup name="parking_type" label="停車位（可複選）" options={parking} selected={parkingType} onChange={(v)=>toggle(parkingType,setParkingType,v)} otherName="parking_type_other" otherValue={property?.parking_type_other} placeholder="請輸入其他停車方式"/>
     <div className="field"><label htmlFor="road_width">路寬（米）</label><input className="input" id="road_width" name="road_width" type="number" step="0.01" min="0" defaultValue={property?.road_width??""}/></div>
     <div className="field"><label htmlFor="completion_date">完工日期</label><input className="input" id="completion_date" name="completion_date" type="date" defaultValue={property?.completion_date||""}/></div>
     <div className="field"><label htmlFor="has_addition"><input id="has_addition" type="checkbox" name="has_addition" checked={hasAddition} onChange={(e)=>setHasAddition(e.target.checked)}/> 有加建</label></div>

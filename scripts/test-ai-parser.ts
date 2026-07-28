@@ -174,4 +174,9 @@ const serviceFeeAliases = parsePastedProperty(`
 
 assert.equal(serviceFeeAliases.service_fee_rate, "3%");
 
+const rocDate = parsePastedProperty("完工日：112/11/24");
+assert.equal(rocDate.completion_date, "2023-11-24");
+const leapRocDate = parsePastedProperty("完工日：69/02/29");
+assert.equal(leapRocDate.completion_date, "1980-02-29");
+
 console.log("ai-parser tests passed");

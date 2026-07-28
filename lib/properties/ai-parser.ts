@@ -241,10 +241,21 @@ function parseDateLike(value: string) {
   return null;
 }
 
+export function normalizeDateForInput(value: string) {
+  const match = value.trim().match(/^(?:民國)?(\d{2,4})[/-年.](\d{1,2})(?:[/-月.](\d{1,2}))?$/);
+  if (!match) return "";
+  const rawYear = Number(match[1]);
+  const year = rawYear < 1911 ? rawYear + 1911 : rawYear;
+  const month = Number(match[2]);
+  const day = Number(match[3] || 1);
+  const date = new Date(Date.UTC(year, month - 1, day));
+  if (date.getUTCFullYear() !== year || date.getUTCMonth() !== month - 1 || date.getUTCDate() !== day) return "";
+  return `${year.toString().padStart(4, "0")}-${month.toString().padStart(2, "0")}-${day.toString().padStart(2, "0")}`;
+}
+
 function normalizeDateText(value: string) {
-  const date = value.trim().match(/(20\d{2}|19\d{2})[/-年.](\d{1,2})(?:[/-月.](\d{1,2}))?/);
-  if (!date) return value.trim();
-  return `${date[1]}/${date[2].padStart(2, "0")}/${(date[3] || "1").padStart(2, "0")}`;
+  const normalized = normalizeDateForInput(value.replace(/-/g, "/"));
+  return normalized ? normalized.replace(/-/g, "/") : value.trim();
 }
 
 function calculateAgeFromDate(value: string) {
@@ -426,6 +437,7 @@ export function parsePastedProperty(rawText: string): ParsedProperty {
   parsed.layout = parsed.layout ? normalizeLayout(parsed.layout) : "";
   parsed.orientation = parsed.orientation ? normalizeOrientation(parsed.orientation) : "";
   parsed.age = parsed.age ? normalizeNumber(parsed.age) : "";
+  parsed.completion_date = parsed.completion_date ? normalizeDateForInput(parsed.completion_date) : "";
   parsed.floor ||= inferFloor(parsed.title || text);
   parsed.listing_type = parsed.listing_type === "一般" ? "一般委託" : parsed.listing_type;
   parsed.listing_type = parsed.listing_type === "口頭約" ? "口頭" : parsed.listing_type;
