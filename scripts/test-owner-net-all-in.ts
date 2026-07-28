@@ -1,5 +1,23 @@
 import assert from "node:assert/strict";
-import { calculateSellerCarryCosts, validateSellerCarryCostsInput } from "../lib/calculators/seller.ts";
+import { calculateSellerCarryCosts, getStandardIndividualHouseLandTaxRate, validateSellerCarryCostsInput } from "../lib/calculators/seller.ts";
+
+const rate = (a: string, s: string) => {
+  const result = getStandardIndividualHouseLandTaxRate(a, s);
+  assert.ok("rate" in result);
+  return result.rate;
+};
+assert.equal(rate("2024-06-22", "2026-06-21"), 45);
+assert.equal(rate("2024-06-22", "2026-06-22"), 45);
+assert.equal(rate("2024-06-22", "2026-06-23"), 35);
+assert.equal(rate("2021-06-22", "2026-06-22"), 35);
+assert.equal(rate("2021-06-22", "2026-06-23"), 20);
+assert.equal(rate("2016-06-22", "2026-06-22"), 20);
+assert.equal(rate("2016-06-22", "2026-06-23"), 15);
+assert.equal(rate("2024-02-29", "2026-02-28"), 45);
+assert.equal(rate("2024-02-29", "2026-03-01"), 35);
+assert.equal(rate("2020-02-29", "2025-02-28"), 35);
+assert.equal(rate("2020-02-29", "2025-03-01"), 20);
+assert.deepEqual(getStandardIndividualHouseLandTaxRate("2026-01-01", "2025-01-01"), { error: "預計出售日期不可早於取得日期。" });
 
 const sample = {
   targetNetWan: 1000, purchaseDate: "2023-05-03", saleDate: "2026-06-22",

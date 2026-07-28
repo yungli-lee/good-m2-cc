@@ -17,6 +17,7 @@ export type SellerCarryCostsInput = {
 };
 
 export type SellerCarryCostsMode = "allFeesAdded" | "brokerageExtra";
+export type StandardHouseLandTaxRate = { rate: 45 | 35 | 20 | 15; holdingDays: number; holdingCategory: "within_2_years" | "over_2_to_5_years" | "over_5_to_10_years" | "over_10_years" };
 
 export type SellerCarryCostsResult = {
   suggestedSalePriceWan: number;
@@ -52,6 +53,30 @@ type SellerCostBasisInput = Pick<
   SellerCarryCostsInput,
   "originalCostWan" | "purchaseBrokerFeeWan" | "improvementCostsWan" | "landValueIncrementTaxWan" | "notaryAndMiscWan" | "settlementFeeWan" | "otherFeesWan"
 >;
+
+function parseLocalDate(value: string) {
+  const [year, month, day] = value.split("-").map(Number);
+  if (!year || !month || !day) return null;
+  const date = new Date(year, month - 1, day);
+  return date.getFullYear() === year && date.getMonth() === month - 1 && date.getDate() === day ? date : null;
+}
+
+function addCalendarYears(date: Date, years: number) {
+  const result = new Date(date.getFullYear() + years, date.getMonth(), date.getDate());
+  return date.getMonth() === 1 && date.getDate() === 29 && result.getMonth() !== 1 ? new Date(date.getFullYear() + years, 1, 28) : result;
+}
+
+export function getStandardIndividualHouseLandTaxRate(acquisitionDate: string, saleDate: string): StandardHouseLandTaxRate | { error: string } {
+  const acquisition = parseLocalDate(acquisitionDate);
+  const sale = parseLocalDate(saleDate);
+  if (!acquisition || !sale) return { error: "請輸入有效的取得日期與預計出售日期。" };
+  if (sale < acquisition) return { error: "預計出售日期不可早於取得日期。" };
+  const holdingDays = Math.round((sale.getTime() - acquisition.getTime()) / 86400000);
+  if (sale <= addCalendarYears(acquisition, 2)) return { rate: 45, holdingDays, holdingCategory: "within_2_years" };
+  if (sale <= addCalendarYears(acquisition, 5)) return { rate: 35, holdingDays, holdingCategory: "over_2_to_5_years" };
+  if (sale <= addCalendarYears(acquisition, 10)) return { rate: 20, holdingDays, holdingCategory: "over_5_to_10_years" };
+  return { rate: 15, holdingDays, holdingCategory: "over_10_years" };
+}
 
 export function validateSellerCarryCostsInput(input: SellerCarryCostsInput) {
   if (!input.purchaseDate || !input.saleDate) return "請輸入取得日期與預計出售日期。";

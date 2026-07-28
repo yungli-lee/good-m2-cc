@@ -1,12 +1,17 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { calculateSellerCarryCosts, type SellerCarryCostsInput, validateSellerCarryCostsInput } from "@/lib/calculators/seller";
+import { useEffect, useMemo, useState } from "react";
+import { calculateSellerCarryCosts, getStandardIndividualHouseLandTaxRate, type SellerCarryCostsInput, validateSellerCarryCostsInput } from "@/lib/calculators/seller";
 import { formatWanTwoDecimals } from "@/lib/calculators/format";
 
 function toNumber(value: string) {
   const number = Number(value);
   return Number.isFinite(number) ? number : 0;
+}
+
+function getLocalDateInputValue(date: Date) {
+  const pad = (value: number) => String(value).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
 }
 
 function ResultCard({ label, value }: { label: string; value: string }) {
@@ -26,10 +31,17 @@ function formatHoldingPeriod(days: number) {
   return `${Math.floor(days / 365)} 年 ${Math.floor((days % 365) / 30)} 個月（${days} 天）`;
 }
 
+const holdingCategoryLabels = {
+  within_2_years: "持有 2 年以內",
+  over_2_to_5_years: "超過 2 年、未逾 5 年",
+  over_5_to_10_years: "超過 5 年、未逾 10 年",
+  over_10_years: "超過 10 年"
+} as const;
+
 export function OwnerNetAllInCalculator({ className, mode = "admin" }: Props = {}) {
   const [targetNetWan, setTargetNetWan] = useState("1000");
   const [purchaseDate, setPurchaseDate] = useState("2023-05-03");
-  const [saleDate, setSaleDate] = useState("2026-06-22");
+  const [saleDate, setSaleDate] = useState("");
   const [originalCostWan, setOriginalCostWan] = useState("800");
   const [purchaseBrokerFeeWan, setPurchaseBrokerFeeWan] = useState("16");
   const [improvementCostsWan, setImprovementCostsWan] = useState("20");
@@ -38,7 +50,12 @@ export function OwnerNetAllInCalculator({ className, mode = "admin" }: Props = {
   const [notaryAndMiscWan, setNotaryAndMiscWan] = useState("3");
   const [settlementFeeWan, setSettlementFeeWan] = useState("2");
   const [otherFeesWan, setOtherFeesWan] = useState("0");
-  const [houseLandTaxRatePercent, setHouseLandTaxRatePercent] = useState("35");
+  const [taxRateMode, setTaxRateMode] = useState<"auto" | "manual">("auto");
+  const [manualTaxRate, setManualTaxRate] = useState("35");
+  useEffect(() => setSaleDate(getLocalDateInputValue(new Date())), []);
+  const automaticTaxRate = useMemo(() => getStandardIndividualHouseLandTaxRate(purchaseDate, saleDate), [purchaseDate, saleDate]);
+  const automaticRate = "rate" in automaticTaxRate ? automaticTaxRate.rate : 35;
+  const houseLandTaxRatePercent = taxRateMode === "auto" ? String(automaticRate) : manualTaxRate;
 
   const input: SellerCarryCostsInput = useMemo(() => ({
     targetNetWan: toNumber(targetNetWan),
@@ -55,7 +72,7 @@ export function OwnerNetAllInCalculator({ className, mode = "admin" }: Props = {
     houseLandTaxRatePercent: toNumber(houseLandTaxRatePercent)
   }), [houseLandTaxRatePercent, improvementCostsWan, landValueIncrementTaxWan, notaryAndMiscWan, originalCostWan, otherFeesWan, purchaseBrokerFeeWan, purchaseDate, saleBrokerFeeRatePercent, saleDate, settlementFeeWan, targetNetWan]);
 
-  const validationMessage = validateSellerCarryCostsInput(input);
+  const validationMessage = validateSellerCarryCostsInput(input) || ("error" in automaticTaxRate ? automaticTaxRate.error : "");
   const result = validationMessage ? null : calculateSellerCarryCosts(input, "allFeesAdded");
 
   return (
@@ -74,8 +91,10 @@ export function OwnerNetAllInCalculator({ className, mode = "admin" }: Props = {
             <label className="field"><span>代書與雜支（萬元）</span><input className="input" type="number" min="0" step="0.1" value={notaryAndMiscWan} onChange={(event) => setNotaryAndMiscWan(event.target.value)} /></label>
             <label className="field"><span>清償相關費用（萬元）</span><input className="input" type="number" min="0" step="0.1" value={settlementFeeWan} onChange={(event) => setSettlementFeeWan(event.target.value)} /></label>
             <label className="field"><span>其他費用（萬元）</span><input className="input" type="number" min="0" step="0.1" value={otherFeesWan} onChange={(event) => setOtherFeesWan(event.target.value)} /></label>
-            <label className="field"><span>房地合一稅率（%）</span><input className="input" type="number" min="0" max="99" step="0.1" value={houseLandTaxRatePercent} onChange={(event) => setHouseLandTaxRatePercent(event.target.value)} /></label>
+            <label className="field"><span>房地合一稅率模式</span><select className="input" value={taxRateMode} onChange={(event) => setTaxRateMode(event.target.value as "auto" | "manual")}><option value="auto">自動依持有期間</option><option value="manual">手動指定</option></select></label>
+            <label className="field"><span>房地合一稅率（{taxRateMode === "auto" ? "自動" : "手動"}，%）</span><input className="input" type="number" min="0" max="99" step="0.1" value={houseLandTaxRatePercent} readOnly={taxRateMode === "auto"} onChange={(event) => setManualTaxRate(event.target.value)} /></label>
           </form>
+          <p className="muted" style={{ marginTop: 10 }}>自動稅率依境內居住個人一般持有期間判斷；自住、繼承、非自願出售、合建、都更危老、非居住者或法人案件，請切換手動指定並另行確認。</p>
         </div>
       </div>
 
@@ -96,6 +115,7 @@ export function OwnerNetAllInCalculator({ className, mode = "admin" }: Props = {
           <ResultCard label="實拿金額與目標差額" value={formatWanTwoDecimals(result.verificationDifferenceWan)} />
           <ResultCard label="持有期間" value={formatHoldingPeriod(result.holdingPeriodDays)} />
           <ResultCard label="使用的房地合一稅率" value={`${result.houseLandTaxRatePercent}%`} />
+          {"rate" in automaticTaxRate ? <ResultCard label="持有區間" value={holdingCategoryLabels[automaticTaxRate.holdingCategory]} /> : null}
         </div>
       ) : null}
 
