@@ -113,7 +113,6 @@ export function AiPropertyForm({
         setCheckboxValues(form, field, values.join("、"));
       } else if (field.endsWith("_other")) {
         setOtherValues((current) => ({ ...current, [field]: parsed[field] || "" }));
-        setFormValue(form, field, parsed[field]);
       }
       else setFormValue(form, field, parsed[field]);
     });

@@ -178,5 +178,12 @@ const rocDate = parsePastedProperty("完工日：112/11/24");
 assert.equal(rocDate.completion_date, "2023-11-24");
 const leapRocDate = parsePastedProperty("完工日：69/02/29");
 assert.equal(leapRocDate.completion_date, "1980-02-29");
+const businessOther = parsePastedProperty("現況用途：住宅、單身宿舍\n型態：透天廠住\n停車位：門前停車、路旁停車");
+assert.equal(businessOther.current_usage, "住宅、其他");
+assert.equal(businessOther.current_usage_other, "單身宿舍");
+assert.equal(businessOther.building_style, "透天、其他");
+assert.equal(businessOther.building_style_other, "廠住");
+assert.equal(businessOther.parking_type, "門前停車、其他");
+assert.equal(businessOther.parking_type_other, "路旁停車");
 
 console.log("ai-parser tests passed");

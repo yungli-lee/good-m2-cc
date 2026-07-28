@@ -347,6 +347,16 @@ function extractIncomingCategory(text: string) {
   return text.match(incomingCategoryPattern)?.[1] || "";
 }
 
+function normalizeBusinessChoices(value: string, options: readonly string[]) {
+  const selected = options.filter((option) => value.includes(option));
+  const rest = options.filter((option) => selected.includes(option)).reduce((text, option) => text.replaceAll(option, " "), value)
+    .replace(/[、,，兼及+＋]/g, " ")
+    .split(/\s+/)
+    .filter(Boolean)
+    .filter((part) => !selected.includes(part));
+  return { selected, other: rest.join("、") };
+}
+
 export function parsePastedProperty(rawText: string): ParsedProperty {
   const text = normalizeText(rawText);
   const labeled = extractLabeledLines(text);
@@ -438,6 +448,23 @@ export function parsePastedProperty(rawText: string): ParsedProperty {
   parsed.orientation = parsed.orientation ? normalizeOrientation(parsed.orientation) : "";
   parsed.age = parsed.age ? normalizeNumber(parsed.age) : "";
   parsed.completion_date = parsed.completion_date ? normalizeDateForInput(parsed.completion_date) : "";
+  const businessFields = [
+    ["sale_motivation", ["換屋","工作","就學","家庭組成改變","移民","資金運用","其他"], "sale_motivation_other"],
+    ["current_condition_type", ["空屋","自用","出租","結構體","其他"], "current_condition_other"],
+    ["current_usage", ["住宅","店面","辦公","住辦","住店","廠房","倉庫","土地","車位","其他"], "current_usage_other"],
+    ["building_style", ["透天","別墅","農舍","公寓","華廈","電梯大樓","套房","店面","廠房","倉庫","土地","其他"], "building_style_other"],
+    ["parking_type", ["無","車庫","門前停車","騎樓停車","庭院停車","平面車位","機械車位","露天停車","其他"], "parking_type_other"]
+  ] as const;
+  for (const [field, options, otherField] of businessFields) {
+    const raw = parsed[field] || "";
+    if (!raw) continue;
+    const normalized = normalizeBusinessChoices(raw, options);
+    parsed[field] = normalized.selected.join("、");
+    if (normalized.other && !parsed[otherField]) {
+      parsed[field] = [...normalized.selected, "其他"].join("、");
+      parsed[otherField] = normalized.other;
+    }
+  }
   parsed.floor ||= inferFloor(parsed.title || text);
   parsed.listing_type = parsed.listing_type === "一般" ? "一般委託" : parsed.listing_type;
   parsed.listing_type = parsed.listing_type === "口頭約" ? "口頭" : parsed.listing_type;
