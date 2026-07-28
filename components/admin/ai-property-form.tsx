@@ -37,6 +37,7 @@ function setCheckboxValues(form: HTMLFormElement, name: string, value?: string) 
     input.dispatchEvent(new Event("change", { bubbles: true }));
   });
 }
+function parseChoices(value?: string) { return (value || "").split(/[、,，兼及]/).map((item) => item.trim()).filter(Boolean); }
 
 function FieldError({ message }: { message?: string }) {
   return message ? <p style={{ color: "#b42318", fontWeight: 700, margin: 0 }}>{message}</p> : null;
@@ -55,6 +56,8 @@ export function AiPropertyForm({
   const formRef = useRef<HTMLFormElement>(null);
   const [quickPaste, setQuickPaste] = useState("");
   const [message, setMessage] = useState("");
+  const [multiValues, setMultiValues] = useState<Record<string, string[]>>({ sale_motivation: [], current_condition_type: [], current_usage: [], building_style: [], parking_type: [] });
+  const [otherValues, setOtherValues] = useState<Record<string, string>>({ sale_motivation_other: "", current_condition_other: "", current_usage_other: "", building_style_other: "", parking_type_other: "" });
   const [selectedFileNames, setSelectedFileNames] = useState<string[]>([]);
   const [isDraggingFile, setIsDraggingFile] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -104,7 +107,14 @@ export function AiPropertyForm({
       ,"contract_signed_date","sale_motivation","sale_motivation_other","current_condition_type","current_condition_other","current_usage","current_usage_other","building_style","building_style_other","parking_type","parking_type_other","road_width","completion_date","has_addition","addition_description","elementary_school_district","junior_high_school_district","showing_meeting_location"
     ];
     fields.forEach((field) => {
-      if (["sale_motivation","current_condition_type","current_usage","building_style","parking_type"].includes(field)) setCheckboxValues(form, field, parsed[field]);
+      if (["sale_motivation","current_condition_type","current_usage","building_style","parking_type"].includes(field)) {
+        const values = parseChoices(parsed[field]);
+        setMultiValues((current) => ({ ...current, [field]: values }));
+        setCheckboxValues(form, field, values.join("、"));
+      } else if (field.endsWith("_other")) {
+        setOtherValues((current) => ({ ...current, [field]: parsed[field] || "" }));
+        setFormValue(form, field, parsed[field]);
+      }
       else setFormValue(form, field, parsed[field]);
     });
     setMessage("已解析並填入表單，送出前請快速確認欄位。");
@@ -267,12 +277,7 @@ export function AiPropertyForm({
         </select>
       </div>
       <div className="field"><label htmlFor="contract_signed_date">簽約日期</label><input className="input" id="contract_signed_date" name="contract_signed_date" type="date" defaultValue={state.values.contract_signed_date} /></div>
-      {([ ["sale_motivation","售屋動機",["換屋","工作","就學","家庭組成改變","移民","資金運用","其他"]], ["current_condition_type","現況種類",["空屋","自用","出租","結構體","其他"]], ["current_usage","現況用途",["住宅","店面","辦公","住辦","住店","廠房","倉庫","土地","車位","其他"]], ["building_style","型態",["透天","別墅","農舍","公寓","華廈","電梯大樓","套房","店面","廠房","倉庫","土地","其他"]], ["parking_type","停車位",["無","車庫","門前停車","騎樓停車","庭院停車","平面車位","機械車位","露天停車","其他"]] ] as const).map(([name,label,options]) => <fieldset className="field" key={name}><legend>{label}（可複選）</legend>{options.map((option) => <label key={option}><input type="checkbox" name={name} value={option} /> {option}</label>)}</fieldset>)}
-      <div className="field"><label htmlFor="sale_motivation_other">售屋動機－其他說明</label><input className="input" id="sale_motivation_other" name="sale_motivation_other" defaultValue={state.values.sale_motivation_other} /></div>
-      <div className="field"><label htmlFor="current_condition_other">現況種類－其他說明</label><input className="input" id="current_condition_other" name="current_condition_other" defaultValue={state.values.current_condition_other} /></div>
-      <div className="field"><label htmlFor="current_usage_other">現況用途－其他說明</label><input className="input" id="current_usage_other" name="current_usage_other" defaultValue={state.values.current_usage_other} /></div>
-      <div className="field"><label htmlFor="building_style_other">型態－其他說明</label><input className="input" id="building_style_other" name="building_style_other" defaultValue={state.values.building_style_other} /></div>
-      <div className="field"><label htmlFor="parking_type_other">停車位－其他說明</label><input className="input" id="parking_type_other" name="parking_type_other" defaultValue={state.values.parking_type_other} /></div>
+      {([ ["sale_motivation","售屋動機",["換屋","工作","就學","家庭組成改變","移民","資金運用","其他"],"請輸入其他售屋動機"], ["current_condition_type","現況種類",["空屋","自用","出租","結構體","其他"],"請輸入其他現況種類"], ["current_usage","現況用途",["住宅","店面","辦公","住辦","住店","廠房","倉庫","土地","車位","其他"],"請輸入其他現況用途"], ["building_style","型態",["透天","別墅","農舍","公寓","華廈","電梯大樓","套房","店面","廠房","倉庫","土地","其他"],"請輸入其他型態"], ["parking_type","停車位",["無","車庫","門前停車","騎樓停車","庭院停車","平面車位","機械車位","露天停車","其他"],"請輸入其他停車方式"] ] as const).map(([name,label,options,placeholder]) => <fieldset className="field" key={name}><legend>{label}（可複選）</legend>{options.map((option) => <label key={option}><input type="checkbox" name={name} value={option} checked={multiValues[name]?.includes(option) || false} onChange={() => setMultiValues((current) => ({ ...current, [name]: current[name].includes(option) ? current[name].filter((item) => item !== option) : [...current[name], option] }))} /> {option}{option === "其他" && multiValues[name]?.includes("其他") ? <input className="input inline-other-input" name={`${name}_other`} value={otherValues[`${name}_other`] || ""} onChange={(event) => setOtherValues((current) => ({ ...current, [`${name}_other`]: event.target.value }))} placeholder={placeholder} /> : null}</label>)}</fieldset>)}
       <div className="field"><label htmlFor="road_width">路寬（米）</label><input className="input" id="road_width" name="road_width" defaultValue={state.values.road_width} /></div>
       <div className="field"><label htmlFor="completion_date">完工日期</label><input className="input" id="completion_date" name="completion_date" type="date" defaultValue={state.values.completion_date} onChange={() => undefined} /></div>
       <div className="field"><label><input type="checkbox" id="has_addition" name="has_addition" /> 有加建</label><input className="input" name="addition_description" defaultValue={state.values.addition_description} placeholder="加建說明" /></div>
