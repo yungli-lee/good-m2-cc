@@ -2,15 +2,21 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { OwnerNetAllInCalculator } from "@/components/calculator/owner-net-all-in-calculator";
 import { getPublicCompanySettings } from "@/lib/company-settings";
+import { siteOrigin } from "@/lib/home-cms/routing";
 
 export async function generateMetadata(): Promise<Metadata> {
   const company = await getPublicCompanySettings();
+  const origin = siteOrigin();
+  const url = `${origin}/calculators/owner-net-all-in`;
+  const title = `屋主實拿試算｜費稅外加｜${company.brand_name}`;
+  const description = "輸入屋主希望實拿金額、取得成本、仲介費及相關稅費，快速反推房屋建議成交總價。";
   return {
-    title: `屋主實拿試算｜費稅外加｜${company.brand_name}`,
-    description: "輸入屋主希望實拿金額、取得成本、仲介費及相關稅費，快速反推房屋建議成交總價。",
-    alternates: { canonical: "/calculators/owner-net-all-in" },
+    title,
+    description,
+    alternates: { canonical: url },
     robots: { index: true, follow: true },
-    openGraph: { title: `屋主實拿試算｜費稅外加｜${company.brand_name}`, description: "輸入屋主希望實拿金額、取得成本、仲介費及相關稅費，快速反推房屋建議成交總價。", url: "/calculators/owner-net-all-in", siteName: company.brand_name }
+    openGraph: { title, description, url, siteName: company.brand_name, type: "website" },
+    twitter: { card: "summary_large_image", title, description }
   };
 }
 
