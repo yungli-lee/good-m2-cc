@@ -27,9 +27,27 @@ export type ParsedProperty = {
   description?: string;
   seo_title?: string;
   meta_description?: string;
+  contract_signed_date?: string;
+  sale_motivation?: string;
+  sale_motivation_other?: string;
+  current_condition_type?: string;
+  current_condition_other?: string;
+  current_usage?: string;
+  current_usage_other?: string;
+  building_style?: string;
+  building_style_other?: string;
+  parking_type?: string;
+  parking_type_other?: string;
+  road_width?: string;
+  completion_date?: string;
+  has_addition?: string;
+  addition_description?: string;
+  elementary_school_district?: string;
+  junior_high_school_district?: string;
+  showing_meeting_location?: string;
 };
 
-const fieldAliases: Array<[keyof ParsedProperty | "lot_number" | "main_building" | "balcony" | "shared_area" | "completion_date" | "internal_notes", RegExp]> = [
+const fieldAliases: Array<[keyof ParsedProperty | "lot_number" | "main_building" | "balcony" | "shared_area" | "internal_notes", RegExp]> = [
   ["title", /^(案名|物件名稱|社區|標題)$/],
   ["address_public", /^(地址|公開地址|座落)$/],
   ["address_private", /^(完整地址|私有地址|後台地址)$/],
@@ -56,6 +74,24 @@ const fieldAliases: Array<[keyof ParsedProperty | "lot_number" | "main_building"
   ["service_fee_rate", /^(服務費|服務費%|仲介服務費)$/],
   ["floor", /^(樓層|樓高)$/],
   ["highlights", /^(推薦特色|特色|賣點|亮點)$/],
+  ["contract_signed_date", /^(簽約日|簽約日期)$/],
+  ["sale_motivation", /^(售屋動機)$/],
+  ["sale_motivation_other", /^(售屋動機.?其他說明)$/],
+  ["current_condition_type", /^(現況種類)$/],
+  ["current_condition_other", /^(現況種類.?其他說明)$/],
+  ["current_usage", /^(現況用途)$/],
+  ["current_usage_other", /^(現況用途.?其他說明)$/],
+  ["building_style", /^(型態|形態)$/],
+  ["building_style_other", /^(型態|形態).?其他說明$/],
+  ["parking_type", /^(停車位)$/],
+  ["parking_type_other", /^(停車位.?其他說明)$/],
+  ["road_width", /^(路寬)$/],
+  ["completion_date", /^(完工日|完工日期)$/],
+  ["has_addition", /^(加建)$/],
+  ["addition_description", /^(加建說明|加建位置)$/],
+  ["elementary_school_district", /^(小學學區)$/],
+  ["junior_high_school_district", /^(中學學區|國中學區)$/],
+  ["showing_meeting_location", /^(約看地點)$/],
   ["internal_notes", /^(內部備註|密碼|鑰匙|門牌|聯絡|管理室|租金)$/]
 ];
 
@@ -324,9 +360,8 @@ export function parsePastedProperty(rawText: string): ParsedProperty {
       }
       continue;
     }
-    if (field === "lot_number" || field === "main_building" || field === "balcony" || field === "shared_area" || field === "completion_date" || field === "internal_notes") {
+    if (field === "lot_number" || field === "main_building" || field === "balcony" || field === "shared_area" || field === "internal_notes") {
       internalNotes.push(`${label}：${value}`);
-      if (field === "completion_date" && !parsed.age) parsed.age = calculateAgeFromDate(value);
       continue;
     }
     parsed[field] ||= value;

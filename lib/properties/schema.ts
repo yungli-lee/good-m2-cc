@@ -40,15 +40,15 @@ export const propertySchema = z.object({
   listing_start_date: z.string().trim().max(10).optional().or(z.literal("")),
   listing_end_date: z.string().trim().max(10).optional().or(z.literal("")),
   contract_signed_date: z.string().trim().max(10).optional().or(z.literal("")),
-  sale_motivation: z.enum(["換屋", "工作", "就學", "家庭組成改變", "移民", "資金運用", "其他", ""]).default("資金運用"),
+  sale_motivation: z.array(z.enum(["換屋", "工作", "就學", "家庭組成改變", "移民", "資金運用", "其他"])).default(["資金運用"]),
   sale_motivation_other: z.string().trim().max(160).optional().or(z.literal("")),
-  current_condition_type: z.enum(["空屋", "自用", "出租", "結構體", "其他", ""]).optional(),
+  current_condition_type: z.array(z.enum(["空屋", "自用", "出租", "結構體", "其他"])).default([]),
   current_condition_other: z.string().trim().max(160).optional().or(z.literal("")),
-  current_usage: z.enum(["住宅", "店面", "辦公", "住辦", "住店", "廠房", "倉庫", "土地", "車位", "其他", ""]).optional(),
+  current_usage: z.array(z.enum(["住宅", "店面", "辦公", "住辦", "住店", "廠房", "倉庫", "土地", "車位", "其他"])).default([]),
   current_usage_other: z.string().trim().max(160).optional().or(z.literal("")),
-  building_style: z.enum(["透天", "別墅", "農舍", "公寓", "華廈", "電梯大樓", "套房", "店面", "廠房", "倉庫", "土地", "其他", ""]).optional(),
+  building_style: z.array(z.enum(["透天", "別墅", "農舍", "公寓", "華廈", "電梯大樓", "套房", "店面", "廠房", "倉庫", "土地", "其他"])).default([]),
   building_style_other: z.string().trim().max(160).optional().or(z.literal("")),
-  parking_type: z.enum(["無", "車庫", "門前停車", "騎樓停車", "庭院停車", "平面車位", "機械車位", "露天停車", "其他", ""]).optional(),
+  parking_type: z.array(z.enum(["無", "車庫", "門前停車", "騎樓停車", "庭院停車", "平面車位", "機械車位", "露天停車", "其他"])).default([]),
   parking_type_other: z.string().trim().max(160).optional().or(z.literal("")),
   road_width: optionalNumber,
   completion_date: z.string().trim().max(10).optional().or(z.literal("")),
@@ -119,15 +119,15 @@ export type PropertyFormValues = {
   listing_start_date: string;
   listing_end_date: string;
   contract_signed_date: string;
-  sale_motivation: string;
+  sale_motivation: string[];
   sale_motivation_other: string;
-  current_condition_type: string;
+  current_condition_type: string[];
   current_condition_other: string;
-  current_usage: string;
+  current_usage: string[];
   current_usage_other: string;
-  building_style: string;
+  building_style: string[];
   building_style_other: string;
-  parking_type: string;
+  parking_type: string[];
   parking_type_other: string;
   road_width: string;
   completion_date: string;
@@ -191,15 +191,15 @@ export function propertyValuesFromFormData(formData: FormData): PropertyFormValu
     listing_start_date: normalizeDateInput(String(formData.get("listing_start_date") || "")),
     listing_end_date: normalizeDateInput(String(formData.get("listing_end_date") || "")),
     contract_signed_date: normalizeDateInput(String(formData.get("contract_signed_date") || "")),
-    sale_motivation: String(formData.get("sale_motivation") || "資金運用"),
+    sale_motivation: formData.getAll("sale_motivation").map(String).filter(Boolean),
     sale_motivation_other: String(formData.get("sale_motivation_other") || ""),
-    current_condition_type: String(formData.get("current_condition_type") || ""),
+    current_condition_type: formData.getAll("current_condition_type").map(String).filter(Boolean),
     current_condition_other: String(formData.get("current_condition_other") || ""),
-    current_usage: String(formData.get("current_usage") || ""),
+    current_usage: formData.getAll("current_usage").map(String).filter(Boolean),
     current_usage_other: String(formData.get("current_usage_other") || ""),
-    building_style: String(formData.get("building_style") || ""),
+    building_style: formData.getAll("building_style").map(String).filter(Boolean),
     building_style_other: String(formData.get("building_style_other") || ""),
-    parking_type: String(formData.get("parking_type") || ""),
+    parking_type: formData.getAll("parking_type").map(String).filter(Boolean),
     parking_type_other: String(formData.get("parking_type_other") || ""),
     road_width: String(formData.get("road_width") || ""),
     completion_date: normalizeDateInput(String(formData.get("completion_date") || "")),
@@ -284,15 +284,15 @@ export function toPropertyPayload(input: PropertyFormInput) {
     listing_start_date: emptyToNull(input.listing_start_date || ""),
     listing_end_date: emptyToNull(input.listing_end_date || ""),
     contract_signed_date: emptyToNull(input.contract_signed_date || ""),
-    sale_motivation: input.sale_motivation || "資金運用",
+    sale_motivation: input.sale_motivation.length ? input.sale_motivation : ["資金運用"],
     sale_motivation_other: emptyToNull(input.sale_motivation_other || ""),
-    current_condition_type: emptyToNull(input.current_condition_type || ""),
+    current_condition_type: input.current_condition_type,
     current_condition_other: emptyToNull(input.current_condition_other || ""),
-    current_usage: emptyToNull(input.current_usage || ""),
+    current_usage: input.current_usage,
     current_usage_other: emptyToNull(input.current_usage_other || ""),
-    building_style: emptyToNull(input.building_style || ""),
+    building_style: input.building_style,
     building_style_other: emptyToNull(input.building_style_other || ""),
-    parking_type: emptyToNull(input.parking_type || ""),
+    parking_type: input.parking_type,
     parking_type_other: emptyToNull(input.parking_type_other || ""),
     road_width: input.road_width ?? null,
     completion_date: emptyToNull(input.completion_date || ""),

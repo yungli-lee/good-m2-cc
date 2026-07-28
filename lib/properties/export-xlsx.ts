@@ -254,11 +254,16 @@ function buildTemplateValues(property: Property) {
   const listingPeriod = [property.listing_start_date, property.listing_end_date].filter(Boolean).join(" - ");
 
   const listingLabel = property.listing_type === "一般委託" ? "一般簽" : property.listing_type === "專任" ? "專任" : property.listing_type === "口頭" ? "口頭" : "";
-  const motivation = property.sale_motivation === "其他" ? property.sale_motivation_other || "其他" : property.sale_motivation || "資金運用";
-  const currentCondition = property.current_condition_type === "其他" ? property.current_condition_other || "其他" : property.current_condition_type || "";
-  const currentUsage = property.current_usage === "其他" ? property.current_usage_other || "其他" : property.current_usage || "";
-  const buildingStyle = property.building_style === "其他" ? property.building_style_other || "其他" : property.building_style || "";
-  const parking = property.parking_type === "其他" ? property.parking_type_other || "其他" : property.parking_type || "";
+  const displayChoices = (values: string[] | null | undefined, other?: string | null, fallback = "") => {
+    const selected = values || [];
+    const labels = selected.map((value) => value === "其他" ? (other || "其他") : value).filter(Boolean);
+    return labels.join("、") || fallback;
+  };
+  const motivation = displayChoices(property.sale_motivation, property.sale_motivation_other, "資金運用");
+  const currentCondition = displayChoices(property.current_condition_type, property.current_condition_other);
+  const currentUsage = displayChoices(property.current_usage, property.current_usage_other);
+  const buildingStyle = displayChoices(property.building_style, property.building_style_other);
+  const parking = displayChoices(property.parking_type, property.parking_type_other);
   return {
     A6: listingLabel === "一般簽" ? "☑一般簽" : "□一般簽",
     A7: listingLabel === "專任" ? "☑專任" : "□專任",

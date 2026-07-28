@@ -19,11 +19,23 @@ const typeOptions = [
 function setFormValue(form: HTMLFormElement, name: keyof ParsedProperty, value?: string) {
   if (!value) return;
   const field = form.elements.namedItem(name);
+  if (field instanceof HTMLInputElement && field.type === "checkbox") {
+    field.checked = /^(true|1|yes|是|有|y)$/i.test(value);
+    field.dispatchEvent(new Event("change", { bubbles: true }));
+    return;
+  }
   if (field instanceof HTMLInputElement || field instanceof HTMLTextAreaElement || field instanceof HTMLSelectElement) {
     field.value = value;
     field.dispatchEvent(new Event("input", { bubbles: true }));
     field.dispatchEvent(new Event("change", { bubbles: true }));
   }
+}
+function setCheckboxValues(form: HTMLFormElement, name: string, value?: string) {
+  const values = (value || "").split(/[、,，]/).map((item) => item.trim()).filter(Boolean);
+  form.querySelectorAll<HTMLInputElement>(`input[name="${name}"]`).forEach((input) => {
+    input.checked = values.includes(input.value);
+    input.dispatchEvent(new Event("change", { bubbles: true }));
+  });
 }
 
 function FieldError({ message }: { message?: string }) {
@@ -89,8 +101,12 @@ export function AiPropertyForm({
       "description",
       "seo_title",
       "meta_description"
+      ,"contract_signed_date","sale_motivation","sale_motivation_other","current_condition_type","current_condition_other","current_usage","current_usage_other","building_style","building_style_other","parking_type","parking_type_other","road_width","completion_date","has_addition","addition_description","elementary_school_district","junior_high_school_district","showing_meeting_location"
     ];
-    fields.forEach((field) => setFormValue(form, field, parsed[field]));
+    fields.forEach((field) => {
+      if (["sale_motivation","current_condition_type","current_usage","building_style","parking_type"].includes(field)) setCheckboxValues(form, field, parsed[field]);
+      else setFormValue(form, field, parsed[field]);
+    });
     setMessage("已解析並填入表單，送出前請快速確認欄位。");
   }
 
@@ -250,6 +266,19 @@ export function AiPropertyForm({
           ))}
         </select>
       </div>
+      <div className="field"><label htmlFor="contract_signed_date">簽約日期</label><input className="input" id="contract_signed_date" name="contract_signed_date" type="date" defaultValue={state.values.contract_signed_date} /></div>
+      {([ ["sale_motivation","售屋動機",["換屋","工作","就學","家庭組成改變","移民","資金運用","其他"]], ["current_condition_type","現況種類",["空屋","自用","出租","結構體","其他"]], ["current_usage","現況用途",["住宅","店面","辦公","住辦","住店","廠房","倉庫","土地","車位","其他"]], ["building_style","型態",["透天","別墅","農舍","公寓","華廈","電梯大樓","套房","店面","廠房","倉庫","土地","其他"]], ["parking_type","停車位",["無","車庫","門前停車","騎樓停車","庭院停車","平面車位","機械車位","露天停車","其他"]] ] as const).map(([name,label,options]) => <fieldset className="field" key={name}><legend>{label}（可複選）</legend>{options.map((option) => <label key={option}><input type="checkbox" name={name} value={option} /> {option}</label>)}</fieldset>)}
+      <div className="field"><label htmlFor="sale_motivation_other">售屋動機－其他說明</label><input className="input" id="sale_motivation_other" name="sale_motivation_other" defaultValue={state.values.sale_motivation_other} /></div>
+      <div className="field"><label htmlFor="current_condition_other">現況種類－其他說明</label><input className="input" id="current_condition_other" name="current_condition_other" defaultValue={state.values.current_condition_other} /></div>
+      <div className="field"><label htmlFor="current_usage_other">現況用途－其他說明</label><input className="input" id="current_usage_other" name="current_usage_other" defaultValue={state.values.current_usage_other} /></div>
+      <div className="field"><label htmlFor="building_style_other">型態－其他說明</label><input className="input" id="building_style_other" name="building_style_other" defaultValue={state.values.building_style_other} /></div>
+      <div className="field"><label htmlFor="parking_type_other">停車位－其他說明</label><input className="input" id="parking_type_other" name="parking_type_other" defaultValue={state.values.parking_type_other} /></div>
+      <div className="field"><label htmlFor="road_width">路寬（米）</label><input className="input" id="road_width" name="road_width" defaultValue={state.values.road_width} /></div>
+      <div className="field"><label htmlFor="completion_date">完工日期</label><input className="input" id="completion_date" name="completion_date" defaultValue={state.values.completion_date} /></div>
+      <div className="field"><label><input type="checkbox" id="has_addition" name="has_addition" /> 有加建</label><input className="input" name="addition_description" defaultValue={state.values.addition_description} placeholder="加建說明" /></div>
+      <div className="field"><label htmlFor="elementary_school_district">小學學區</label><input className="input" id="elementary_school_district" name="elementary_school_district" defaultValue={state.values.elementary_school_district} /></div>
+      <div className="field"><label htmlFor="junior_high_school_district">中學學區</label><input className="input" id="junior_high_school_district" name="junior_high_school_district" defaultValue={state.values.junior_high_school_district} /></div>
+      <div className="field"><label htmlFor="showing_meeting_location">約看地點</label><input className="input" id="showing_meeting_location" name="showing_meeting_location" defaultValue={state.values.showing_meeting_location} /></div>
       <div className="field">
         <label htmlFor="sort_order">排序</label>
         <input className="input" id="sort_order" name="sort_order" type="number" defaultValue={state.values.sort_order || "1000"} />
