@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { calculateSellerCarryCosts, type SellerCarryCostsInput, validateSellerCarryCostsInput } from "@/lib/calculators/seller";
-import { formatWanDecimal } from "@/lib/calculators/format";
+import { formatWanTwoDecimals } from "@/lib/calculators/format";
 
 function toNumber(value: string) {
   const number = Number(value);
@@ -83,17 +83,17 @@ export function OwnerNetAllInCalculator({ className, mode = "admin" }: Props = {
 
       {result ? (
         <div className="grid" aria-live="polite">
-          <ResultCard label="建議成交總價" value={formatWanDecimal(result.suggestedSalePriceWan)} />
-          <ResultCard label="屋主目標實拿" value={formatWanDecimal(input.targetNetWan)} />
-          <ResultCard label="預估出售仲介服務費" value={formatWanDecimal(result.saleBrokerFeeWan)} />
-          <ResultCard label="預估房地合一稅" value={formatWanDecimal(result.houseLandTaxWan)} />
-          <ResultCard label="土地增值稅" value={formatWanDecimal(result.landValueIncrementTaxWan)} />
-          <ResultCard label="代書與雜支" value={formatWanDecimal(result.notaryAndMiscWan)} />
-          <ResultCard label="清償相關費用" value={formatWanDecimal(result.settlementFeeWan)} />
-          <ResultCard label="其他費用" value={formatWanDecimal(result.otherFeesWan)} />
-          <ResultCard label="預估總費用" value={formatWanDecimal(result.totalFeesWan)} />
-          <ResultCard label="預估實拿金額" value={formatWanDecimal(result.ownerNetWan)} />
-          <ResultCard label="實拿金額與目標差額" value={formatWanDecimal(result.verificationDifferenceWan)} />
+          <ResultCard label="建議成交總價" value={formatWanTwoDecimals(result.suggestedSalePriceWan)} />
+          <ResultCard label="屋主目標實拿" value={formatWanTwoDecimals(input.targetNetWan)} />
+          <ResultCard label="預估出售仲介服務費" value={formatWanTwoDecimals(result.saleBrokerFeeWan)} />
+          <ResultCard label="預估房地合一稅" value={formatWanTwoDecimals(result.houseLandTaxWan)} />
+          <ResultCard label="土地增值稅" value={formatWanTwoDecimals(result.landValueIncrementTaxWan)} />
+          <ResultCard label="代書與雜支" value={formatWanTwoDecimals(result.notaryAndMiscWan)} />
+          <ResultCard label="清償相關費用" value={formatWanTwoDecimals(result.settlementFeeWan)} />
+          <ResultCard label="其他費用" value={formatWanTwoDecimals(result.otherFeesWan)} />
+          <ResultCard label="預估總費用" value={formatWanTwoDecimals(result.totalFeesWan)} />
+          <ResultCard label="預估實拿金額" value={formatWanTwoDecimals(result.ownerNetWan)} />
+          <ResultCard label="實拿金額與目標差額" value={formatWanTwoDecimals(result.verificationDifferenceWan)} />
           <ResultCard label="持有期間" value={formatHoldingPeriod(result.holdingPeriodDays)} />
           <ResultCard label="使用的房地合一稅率" value={`${result.houseLandTaxRatePercent}%`} />
         </div>
