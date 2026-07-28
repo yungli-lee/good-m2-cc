@@ -112,6 +112,10 @@ assert.doesNotMatch(sheetXml, /\u0001/);
 const cells = cellMap(sheetXml);
 assert.equal(cells.get("C11"), "AK5384529");
 assert.equal(cells.get("H11"), "2026-01-22 - 2026-04-21");
+assert.equal(cells.get("A6"), "□一般簽");
+assert.equal(cells.get("A7"), "☑專任");
+assert.equal(cells.get("A8"), "□口頭約");
+assert.equal(cells.get("L11"), "簽約日:");
 assert.equal(cells.get("C12"), property.title);
 assert.equal(cells.get("C13"), "798萬");
 assert.equal(cells.get("C14"), "980萬");
@@ -128,7 +132,7 @@ assert.equal(cells.get("H24"), "坐西北朝東南");
 assert.equal(cells.get("C25"), "2樓");
 assert.equal(cells.get("C26"), "4房3廳2衛");
 assert.equal(cells.get("C27"), "70/6/26");
-assert.equal(cells.get("H27"), "55.1年");
+assert.equal(cells.get("H27"), "無");
 assert.match(cells.get("G29") || "", /近快官交流道 & 台鳳/);
 assert.equal(cells.get("B43"), undefined);
 for (const ref of ["G35", "H35", "I35", "J35", "K35", "L35"]) {
@@ -142,7 +146,7 @@ const buildingSheetXml = readZipEntry(buildingOutputPath, "xl/worksheets/sheet1.
 const buildingSheetPath = join(outputDir, "building-sheet1.xml");
 writeFileSync(buildingSheetPath, buildingSheetXml);
 execFileSync("python3", ["-c", "import sys, xml.etree.ElementTree as ET; ET.parse(sys.argv[1])", buildingSheetPath], { stdio: "pipe" });
-assert.match(buildingSheetXml, /大廈/);
+assert.doesNotMatch(buildingSheetXml, /大廈/);
 
 const landProperty: Property = {
   ...property,

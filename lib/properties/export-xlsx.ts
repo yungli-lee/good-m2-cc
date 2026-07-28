@@ -10,22 +10,6 @@ function formatPing(value?: number | null) {
   return `${Number(value).toLocaleString("zh-TW", { maximumFractionDigits: 3 })} 坪`;
 }
 
-function propertyTypeLabel(value: string) {
-  const labels: Record<string, string> = {
-    townhouse: "房屋",
-    apartment: "公寓",
-    building: "大廈",
-    land: "土地",
-    farmland: "農林漁牧地",
-    building_land: "建地",
-    industrial_land: "工業用地",
-    storefront: "店面",
-    factory: "廠房",
-    other: "其他"
-  };
-  return labels[value] || value;
-}
-
 const crcTable = new Uint32Array(256).map((_, index) => {
   let crc = index;
   for (let bit = 0; bit < 8; bit += 1) {
@@ -215,7 +199,14 @@ function filenameSafe(value: string) {
 }
 
 function checkedOption(label: string, options: string[]) {
-  return options.map((option) => `${option === label ? "▪️" : "□"}${option}`).join(" ");
+  return options.map((option) => `${option === label ? "☑" : "□"}${option}`).join(" ");
+}
+
+function rocDate(value?: string | null) {
+  if (!value) return "";
+  const date = new Date(`${value}T00:00:00`);
+  if (Number.isNaN(date.getTime())) return value;
+  return `${date.getFullYear() - 1911}/${String(date.getMonth() + 1).padStart(2, "0")}/${String(date.getDate()).padStart(2, "0")}`;
 }
 
 function propertyUseLine(property: Property) {
@@ -256,27 +247,39 @@ function buildTemplateValues(property: Property) {
   const bottomPrice = internalFieldOrFallback(property.floor_price, notes, "底價");
   const developer = property.developer_names || extractInternalValue(notes, "開發");
   const showing = property.showing_instructions || extractInternalValue(notes, "帶看") || extractInternalValue(notes, "帶看資訊");
-  const completionDate = extractInternalValue(notes, "完工日");
+  const completionDate = property.completion_date || extractInternalValue(notes, "完工日");
   const lotNumber = extractInternalValue(notes, "地號");
   const fullAddress = extractInternalValue(notes, "完整地址") || property.address_public || "";
   const highlights = listHighlights(property.highlights);
   const listingPeriod = [property.listing_start_date, property.listing_end_date].filter(Boolean).join(" - ");
 
+  const listingLabel = property.listing_type === "一般委託" ? "一般簽" : property.listing_type === "專任" ? "專任" : property.listing_type === "口頭" ? "口頭約" : "";
+  const motivation = property.sale_motivation === "其他" ? property.sale_motivation_other || "其他" : property.sale_motivation || "資金運用";
+  const currentCondition = property.current_condition_type === "其他" ? property.current_condition_other || "其他" : property.current_condition_type || "";
+  const currentUsage = property.current_usage === "其他" ? property.current_usage_other || "其他" : property.current_usage || "";
+  const buildingStyle = property.building_style === "其他" ? property.building_style_other || "其他" : property.building_style || "";
+  const parking = property.parking_type === "其他" ? property.parking_type_other || "其他" : property.parking_type || "";
   return {
-    A8: property.listing_type ? checkedOption(property.listing_type, ["專任", "一般委託", "口頭"]) : "□專任 □一般委託 □口頭",
+    A6: listingLabel === "一般簽" ? "☑一般簽" : "□一般簽",
+    A7: listingLabel === "專任" ? "☑專任" : "□專任",
+    A8: listingLabel === "口頭約" ? "☑口頭約" : "□口頭約",
     A9: "廣告▪️刊登 □不刊登(原因:______)                             ",
     C11: property.listing_no || "",
     H11: listingPeriod,
+    L11: `簽約日:${rocDate(property.contract_signed_date)}`,
     C12: property.title,
     C13: property.price == null ? "" : `${property.price}萬`,
     C14: bottomPrice,
     H14: developer,
     C15: fullAddress,
+    H12: motivation,
     H15: showing,
     C16: lotNumber,
     C17: "",
-    C19: propertyUseLine(property),
-    C20: propertyTypeLine(property),
+    H16: currentCondition,
+    C19: currentUsage || propertyUseLine(property),
+    C20: buildingStyle || propertyTypeLine(property),
+    C21: parking,
     H21: property.frontage || "",
     C23: formatPing(property.land_area_ping),
     H23: property.depth || "",
@@ -284,11 +287,13 @@ function buildTemplateValues(property: Property) {
     H24: property.orientation || "",
     C25: property.floor || "",
     C26: property.layout || "",
-    C27: completionDate,
-    H27: property.age == null ? "" : `${property.age}年`,
-    B29: propertyTypeLabel(property.property_type),
+    C27: rocDate(completionDate),
+    H27: property.has_addition ? `有：${property.addition_description || "加建"}` : "無",
+    B29: property.road_width == null ? "" : `${property.road_width}米`,
+    F29: property.elementary_school_district || "",
+    F30: property.junior_high_school_district || "",
     G29: highlights,
-    B43: ""
+    B43: property.showing_meeting_location || ""
   } satisfies Record<string, CellValue>;
 }
 

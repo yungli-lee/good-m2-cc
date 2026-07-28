@@ -46,7 +46,6 @@ type HealthScoreProperty = Partial<
     | "meta_description"
     | "og_image_url"
     | "canonical_url"
-    | "property_media"
   >
 > & {
   property_media?: Partial<PropertyMedia>[] | null;

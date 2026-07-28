@@ -39,6 +39,24 @@ export const propertySchema = z.object({
   listing_type: z.enum(["專任", "一般委託", "口頭", ""]).optional(),
   listing_start_date: z.string().trim().max(10).optional().or(z.literal("")),
   listing_end_date: z.string().trim().max(10).optional().or(z.literal("")),
+  contract_signed_date: z.string().trim().max(10).optional().or(z.literal("")),
+  sale_motivation: z.enum(["換屋", "工作", "就學", "家庭組成改變", "移民", "資金運用", "其他", ""]).default("資金運用"),
+  sale_motivation_other: z.string().trim().max(160).optional().or(z.literal("")),
+  current_condition_type: z.enum(["空屋", "自用", "出租", "結構體", "其他", ""]).optional(),
+  current_condition_other: z.string().trim().max(160).optional().or(z.literal("")),
+  current_usage: z.enum(["住宅", "店面", "辦公", "住辦", "住店", "廠房", "倉庫", "土地", "車位", "其他", ""]).optional(),
+  current_usage_other: z.string().trim().max(160).optional().or(z.literal("")),
+  building_style: z.enum(["透天", "別墅", "農舍", "公寓", "華廈", "電梯大樓", "套房", "店面", "廠房", "倉庫", "土地", "其他", ""]).optional(),
+  building_style_other: z.string().trim().max(160).optional().or(z.literal("")),
+  parking_type: z.enum(["無", "車庫", "門前停車", "騎樓停車", "庭院停車", "平面車位", "機械車位", "露天停車", "其他", ""]).optional(),
+  parking_type_other: z.string().trim().max(160).optional().or(z.literal("")),
+  road_width: optionalNumber,
+  completion_date: z.string().trim().max(10).optional().or(z.literal("")),
+  has_addition: z.coerce.boolean().default(false),
+  addition_description: z.string().trim().max(500).optional().or(z.literal("")),
+  elementary_school_district: z.string().trim().max(160).optional().or(z.literal("")),
+  junior_high_school_district: z.string().trim().max(160).optional().or(z.literal("")),
+  showing_meeting_location: z.string().trim().max(500).optional().or(z.literal("")),
   owner_name: z.string().trim().max(80).optional().or(z.literal("")),
   owner_phone: z.string().trim().max(80).optional().or(z.literal("")),
   developer_names: z.string().trim().max(160).optional().or(z.literal("")),
@@ -100,6 +118,24 @@ export type PropertyFormValues = {
   listing_type: string;
   listing_start_date: string;
   listing_end_date: string;
+  contract_signed_date: string;
+  sale_motivation: string;
+  sale_motivation_other: string;
+  current_condition_type: string;
+  current_condition_other: string;
+  current_usage: string;
+  current_usage_other: string;
+  building_style: string;
+  building_style_other: string;
+  parking_type: string;
+  parking_type_other: string;
+  road_width: string;
+  completion_date: string;
+  has_addition: boolean;
+  addition_description: string;
+  elementary_school_district: string;
+  junior_high_school_district: string;
+  showing_meeting_location: string;
   owner_name: string;
   owner_phone: string;
   developer_names: string;
@@ -154,6 +190,24 @@ export function propertyValuesFromFormData(formData: FormData): PropertyFormValu
     listing_type: String(formData.get("listing_type") || ""),
     listing_start_date: normalizeDateInput(String(formData.get("listing_start_date") || "")),
     listing_end_date: normalizeDateInput(String(formData.get("listing_end_date") || "")),
+    contract_signed_date: normalizeDateInput(String(formData.get("contract_signed_date") || "")),
+    sale_motivation: String(formData.get("sale_motivation") || "資金運用"),
+    sale_motivation_other: String(formData.get("sale_motivation_other") || ""),
+    current_condition_type: String(formData.get("current_condition_type") || ""),
+    current_condition_other: String(formData.get("current_condition_other") || ""),
+    current_usage: String(formData.get("current_usage") || ""),
+    current_usage_other: String(formData.get("current_usage_other") || ""),
+    building_style: String(formData.get("building_style") || ""),
+    building_style_other: String(formData.get("building_style_other") || ""),
+    parking_type: String(formData.get("parking_type") || ""),
+    parking_type_other: String(formData.get("parking_type_other") || ""),
+    road_width: String(formData.get("road_width") || ""),
+    completion_date: normalizeDateInput(String(formData.get("completion_date") || "")),
+    has_addition: formData.get("has_addition") === "on",
+    addition_description: String(formData.get("addition_description") || ""),
+    elementary_school_district: String(formData.get("elementary_school_district") || ""),
+    junior_high_school_district: String(formData.get("junior_high_school_district") || ""),
+    showing_meeting_location: String(formData.get("showing_meeting_location") || ""),
     owner_name: String(formData.get("owner_name") || ""),
     owner_phone: String(formData.get("owner_phone") || ""),
     developer_names: String(formData.get("developer_names") || ""),
@@ -229,6 +283,24 @@ export function toPropertyPayload(input: PropertyFormInput) {
     listing_type: emptyToNull(input.listing_type || ""),
     listing_start_date: emptyToNull(input.listing_start_date || ""),
     listing_end_date: emptyToNull(input.listing_end_date || ""),
+    contract_signed_date: emptyToNull(input.contract_signed_date || ""),
+    sale_motivation: input.sale_motivation || "資金運用",
+    sale_motivation_other: emptyToNull(input.sale_motivation_other || ""),
+    current_condition_type: emptyToNull(input.current_condition_type || ""),
+    current_condition_other: emptyToNull(input.current_condition_other || ""),
+    current_usage: emptyToNull(input.current_usage || ""),
+    current_usage_other: emptyToNull(input.current_usage_other || ""),
+    building_style: emptyToNull(input.building_style || ""),
+    building_style_other: emptyToNull(input.building_style_other || ""),
+    parking_type: emptyToNull(input.parking_type || ""),
+    parking_type_other: emptyToNull(input.parking_type_other || ""),
+    road_width: input.road_width ?? null,
+    completion_date: emptyToNull(input.completion_date || ""),
+    has_addition: input.has_addition ?? false,
+    addition_description: emptyToNull(input.addition_description || ""),
+    elementary_school_district: emptyToNull(input.elementary_school_district || ""),
+    junior_high_school_district: emptyToNull(input.junior_high_school_district || ""),
+    showing_meeting_location: emptyToNull(input.showing_meeting_location || ""),
     owner_name: emptyToNull(input.owner_name || ""),
     owner_phone: emptyToNull(input.owner_phone || ""),
     developer_names: emptyToNull(input.developer_names || ""),
