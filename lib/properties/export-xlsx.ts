@@ -199,7 +199,7 @@ function filenameSafe(value: string) {
 }
 
 function checkedOption(label: string, options: string[]) {
-  return options.map((option) => `${option === label ? "☑" : "□"}${option}`).join(" ");
+  return options.map((option) => `${option === label ? "■" : "□"}${option}`).join(" ");
 }
 
 function rocDate(value?: string | null) {
@@ -224,7 +224,7 @@ function propertyUseLine(property: Property) {
 
 function propertyTypeLine(property: Property) {
   const firstLine = [
-    property.property_type === "townhouse" ? "▪️透天" : "□透天",
+    property.property_type === "townhouse" ? "■透天" : "□透天",
     "□別墅",
     "□一般套房",
     "□商務套房",
@@ -232,11 +232,11 @@ function propertyTypeLine(property: Property) {
     "□農舍"
   ].join(" ");
   const usage = [
-    property.property_type === "storefront" ? "□住宅用 ▪️商業用" : "□住宅用 □商業用",
-    property.property_type === "factory" || property.property_type === "industrial_land" ? "▪️工業用" : "□工業用",
-    property.property_type === "farmland" ? "▪️農業用" : "□農業用",
+    property.property_type === "storefront" ? "□住宅用 ■商業用" : "□住宅用 □商業用",
+    property.property_type === "factory" || property.property_type === "industrial_land" ? "■工業用" : "□工業用",
+    property.property_type === "farmland" ? "■農業用" : "□農業用",
     "□特定用",
-    property.property_type === "building_land" ? "▪️法定用" : "□法定用",
+    property.property_type === "building_land" ? "■法定用" : "□法定用",
     "□其他用"
   ].join(" ");
   return `${firstLine}\n${usage}\n`;
@@ -259,16 +259,16 @@ function buildTemplateValues(property: Property) {
     const labels = selected.map((value) => value === "其他" ? (other || "其他") : value).filter(Boolean);
     return labels.join("、") || fallback;
   };
-  const lengthWithUnit = (value?: string | null) => value ? (/米\s*$/.test(value) ? value : `${value}米`) : "";
+  const lengthWithUnit = (value?: string | null) => value ? `${value.replace(/\s*(?:米|公尺)\s*$/g, "").trim()}米` : "";
   const motivation = displayChoices(property.sale_motivation, property.sale_motivation_other, "資金運用");
   const currentCondition = displayChoices(property.current_condition_type, property.current_condition_other);
   const currentUsage = displayChoices(property.current_usage, property.current_usage_other);
   const buildingStyle = displayChoices(property.building_style, property.building_style_other);
   const parking = displayChoices(property.parking_type, property.parking_type_other);
   return {
-    A6: listingLabel === "一般簽" ? "☑一般簽" : "□一般簽",
-    A7: listingLabel === "專任" ? "☑專任" : "□專任",
-    A8: listingLabel === "口頭" ? "☑口頭" : "□口頭",
+    A6: listingLabel === "一般簽" ? "■一般簽" : "□一般簽",
+    A7: listingLabel === "專任" ? "■專任" : "□專任",
+    A8: listingLabel === "口頭" ? "■口頭" : "□口頭",
     A9: "廣告▪️刊登 □不刊登(原因:______)                             ",
     C11: property.listing_no || "",
     H11: listingPeriod,

@@ -113,7 +113,7 @@ const cells = cellMap(sheetXml);
 assert.equal(cells.get("C11"), "AK5384529");
 assert.equal(cells.get("H11"), "2026-01-22 - 2026-04-21");
 assert.equal(cells.get("A6"), "□一般簽");
-assert.equal(cells.get("A7"), "☑專任");
+assert.equal(cells.get("A7"), "■專任");
 assert.equal(cells.get("A8"), "□口頭");
 assert.equal(cells.get("L11"), "簽約日:");
 assert.equal(cells.get("C12"), property.title);
@@ -160,7 +160,7 @@ writeFileSync(businessOutputPath, buildPropertyExportXlsx({
   showing_meeting_location: "現場"
 }));
 const businessCells = cellMap(readZipEntry(businessOutputPath, "xl/worksheets/sheet1.xml").toString("utf8"));
-assert.equal(businessCells.get("A6"), "☑一般簽");
+assert.equal(businessCells.get("A6"), "■一般簽");
 assert.equal(businessCells.get("A7"), "□專任");
 assert.equal(businessCells.get("A8"), "□口頭");
 assert.equal(businessCells.get("L11"), "簽約日:115/07/28");

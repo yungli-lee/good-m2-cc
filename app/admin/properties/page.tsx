@@ -266,7 +266,7 @@ export default async function AdminPropertiesPage({ searchParams }: Props) {
               className={filter.value === lifecycle ? "button" : "button ghost"}
               href={filterHref(filter.value, search)}
             >
-              {filter.value === lifecycle ? "☑" : "□"} {filter.label}
+              {filter.value === lifecycle ? "■" : "□"} {filter.label}
             </Link>
           ))}
         </div>
