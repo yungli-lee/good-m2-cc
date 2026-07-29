@@ -6,6 +6,8 @@ import { formatDateTime } from "@/lib/format";
 import { personRoleLabels } from "@/lib/people/labels";
 import { getAdminPerson } from "@/lib/people/queries";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { listPersonProperties } from "@/lib/people-properties";
+import { PeoplePropertiesPanel } from "@/components/admin/people-properties-panel";
 import { archivePersonAction } from "../actions";
 
 export const runtime = "edge";
@@ -56,6 +58,10 @@ export default async function PersonDetailPage({ params, searchParams }: Props) 
   const supabase = await createSupabaseServerClient();
   const { data: person } = await getAdminPerson(supabase, id);
   if (!person) notFound();
+  const [{ data: relations }, { data: properties }] = await Promise.all([
+    listPersonProperties(supabase, id),
+    supabase.from("properties").select("id,title,slug").is("deleted_at", null).order("updated_at", { ascending: false }).limit(100)
+  ]);
 
   return (
     <main className="section">
@@ -117,6 +123,7 @@ export default async function PersonDetailPage({ params, searchParams }: Props) 
             </div>
           </aside>
         </div>
+        <PeoplePropertiesPanel personId={id} relations={(relations || []) as never[]} properties={properties || []} />
       </div>
     </main>
   );

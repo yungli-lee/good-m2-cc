@@ -9,6 +9,8 @@ import { getAdminPropertyById } from "@/lib/properties/queries";
 import { listPropertyTimelineEvents } from "@/lib/properties/timeline-queries";
 import type { Property } from "@/lib/properties/types";
 import { permanentDeletePropertyAction, restorePropertyAction } from "../../actions";
+import { listPropertyPeople, relationshipLabels } from "@/lib/people-properties";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export const runtime = "edge";
 
@@ -39,6 +41,7 @@ export default async function EditPropertyPage({ params, searchParams }: Props) 
   const { data, error } = await getAdminPropertyById(id);
   if (error || !data) notFound();
   const { data: timelineEvents, error: timelineError } = await listPropertyTimelineEvents(id);
+  const { data: relatedPeople } = await listPropertyPeople(await createSupabaseServerClient(), id);
 
   const property = data as Property;
   const health = calculatePropertyHealthScore(property);
@@ -112,6 +115,7 @@ export default async function EditPropertyPage({ params, searchParams }: Props) 
           updated={query.timeline_updated === "1"}
           deleted={query.timeline_deleted === "1"}
         />
+        <section className="card" style={{ marginTop: 18 }}><div className="card-body"><h2 style={{ marginTop: 0 }}>關聯客戶</h2>{relatedPeople?.length ? <div className="table-wrap"><table><thead><tr><th>顯示名稱</th><th>正式姓名</th><th>關係</th><th>聯絡方式</th></tr></thead><tbody>{relatedPeople.map((relation) => <tr key={relation.id}><td><Link href={`/admin/people/${relation.person?.id}`}>{relation.person?.display_name || relation.person_id}</Link></td><td>{relation.person?.legal_name || "-"}</td><td>{relationshipLabels[relation.relationship_type as keyof typeof relationshipLabels]}</td><td>{relation.person?.phone || relation.person?.email || "-"}</td></tr>)}</tbody></table></div> : <p className="muted">尚未建立關聯客戶</p>}</div></section>
       </div>
     </main>
   );
