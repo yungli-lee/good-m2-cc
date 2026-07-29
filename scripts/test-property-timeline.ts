@@ -279,7 +279,7 @@ assert.match(companyAssetsMigrationSource, /staff upload company assets bucket/)
 assert.match(companyAssetsMigrationSource, /image\/jpeg/);
 assert.match(companySettingsActionSource, /company-assets/);
 assert.match(companySettingsActionSource, /imageTypes/);
-assert.match(companySettingsFormSource, /name="logo_file"/);
+assert.match(companySettingsFormSource, /name="brand_logo_file"/);
 assert.match(companySettingsFormSource, /name="line_qr_code_file"/);
 
 console.log("property timeline tests passed");
