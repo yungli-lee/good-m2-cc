@@ -173,3 +173,97 @@ Repository 盤點完成，但 Production 實機與資料庫證據不足，不能
 - People–Property relation：應在 Tasks 前補齊正式 schema、FK、RLS、API 與驗收測試。
 
 **Updated final status：BLOCKED_BY_DEPLOYMENT_EVIDENCE**
+
+## 17. Production 實測修正（People CRM 與 Property Timeline 分離）
+
+以下以 Production 人工實測結果為準，覆蓋前文可能將兩種 Timeline 合併的描述。
+
+### Property Timeline
+
+- Repository：存在
+- CRUD／排序：存在
+- `test:timeline`：PASS
+- 用途：物件活動紀錄（`property_timeline_events`）
+- 不等同於 People CRM 客戶活動軌跡
+
+### People CRM Timeline
+
+- People 詳情頁 Repository／Production UI：未呈現
+- Production：MISSING
+- 新增／編輯／刪除：無法從 People 詳情頁操作
+- 與客戶的完整 schema／API 關聯：未確認
+- 結論：`MISSING`，不得標為 COMPLETE
+
+### Production Route Evidence
+
+#### `/admin/people`
+
+- Status：PASS
+- 搜尋：存在
+- 角色、狀態、來源、負責人、排序：存在
+- Pagination：MISSING
+- Production people count：1
+- 150 筆限制：`CURRENTLY_NOT_TRIGGERED`
+- 技術債：P2
+
+#### `/admin/people/[id]`
+
+- 基本資料：PASS
+- 角色：PASS
+- 備註：PASS
+- 最近聯絡：欄位存在
+- People CRM Timeline：MISSING
+- Tasks：MISSING
+- 關聯物件：MISSING
+- 買方需求：MISSING
+- 媒合：MISSING
+
+#### `/admin/people/[id]/edit`
+
+- People 主檔：PASS
+- 角色多選：PASS
+- 負責人：PASS
+- 需求／追蹤／媒合：MISSING
+
+### 新增缺陷
+
+| ID | Severity | 現象 | 影響 |
+|---|---|---|---|
+| CRM-PEOPLE-TIMELINE-MISSING | P1 | People 詳情頁沒有客戶活動軌跡區塊 | 無法查看電話、LINE、拜訪、帶看、回報、斡旋等歷史紀錄 |
+| CRM-PEOPLE-PROPERTY-RELATION-MISSING | P1 | People 詳情頁沒有關聯物件 | 無法得知客戶是哪些物件的買方、屋主、帶看或議價對象 |
+| CRM-PEOPLE-TASKS-MISSING | P1 | People 詳情頁沒有任務與待辦 | 無法建立追蹤日期、未聯絡提醒與後續工作 |
+| CRM-PEOPLE-PAGINATION-MISSING | P2 | People list 無 pagination | 目前 count=1，影響為 `CURRENTLY_NOT_TRIGGERED` |
+
+### 正式 Production 可用範圍
+
+目前可正式使用：
+
+- People 基本資料 CRUD
+- 角色
+- 搜尋／篩選
+- 封存
+
+目前不能視為完整 CRM：
+
+- People CRM Timeline
+- Tasks／今日待辦
+- People–Property relation
+- Buyer Requirements
+- Matching
+
+### 下一階段建議順序
+
+1. People–Property 正式關聯
+2. People CRM Timeline
+3. Tasks／今日待辦
+4. Pagination
+5. Buyer Requirements／Matching
+
+### 修正後正式判定
+
+- Repository 完成度：People 基礎主檔與 Property Timeline 已有實作，但 CRM 全範圍仍不完整。
+- Database 完成度：People／Property Timeline schema 有 migration 定義；People CRM Timeline、Tasks、關聯與需求 schema 缺失。
+- Production 可用度：People 基礎功能已人工 PASS；完整 CRM 為 NOT READY。
+- 日常營運適用度：可用於 People 主檔維護，不適合完整客戶追蹤與業務流程。
+
+**Corrected final status：CRM_PRODUCTION_AUDIT_COMPLETE**
