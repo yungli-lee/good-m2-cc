@@ -259,6 +259,7 @@ function buildTemplateValues(property: Property) {
     const labels = selected.map((value) => value === "其他" ? (other || "其他") : value).filter(Boolean);
     return labels.join("、") || fallback;
   };
+  const lengthWithUnit = (value?: string | null) => value ? (/米\s*$/.test(value) ? value : `${value}米`) : "";
   const motivation = displayChoices(property.sale_motivation, property.sale_motivation_other, "資金運用");
   const currentCondition = displayChoices(property.current_condition_type, property.current_condition_other);
   const currentUsage = displayChoices(property.current_usage, property.current_usage_other);
@@ -285,9 +286,9 @@ function buildTemplateValues(property: Property) {
     C19: currentUsage || propertyUseLine(property),
     C20: buildingStyle || propertyTypeLine(property),
     C21: parking,
-    H21: property.frontage || "",
+    H21: lengthWithUnit(property.frontage),
     C23: formatPing(property.land_area_ping),
-    H23: property.depth || "",
+    H23: lengthWithUnit(property.depth),
     C24: formatPing(property.building_area_ping),
     H24: property.orientation || "",
     C25: property.floor || "",

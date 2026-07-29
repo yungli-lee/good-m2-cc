@@ -1,7 +1,11 @@
 import { z } from "zod";
 
 const optionalNumber = z.preprocess(
-  (value) => (value === "" || value == null ? undefined : value),
+  (value) => {
+    if (value === "" || value == null) return undefined;
+    if (typeof value === "string") return value.replace(/[,\s米公尺坪]+$/g, "").trim();
+    return value;
+  },
   z.coerce.number().nonnegative().optional()
 );
 
