@@ -111,7 +111,7 @@ assert.doesNotMatch(sheetXml, /\u0001/);
 
 const cells = cellMap(sheetXml);
 assert.equal(cells.get("C11"), "AK5384529");
-assert.equal(cells.get("H11"), "2026-01-22 - 2026-04-21");
+assert.equal(cells.get("H11"), "115/01/22～115/04/21");
 assert.equal(cells.get("A6"), "□一般簽");
 assert.equal(cells.get("A7"), "■專任");
 assert.equal(cells.get("A8"), "□口頭");
@@ -131,7 +131,7 @@ assert.equal(cells.get("C24"), "26.275 坪");
 assert.equal(cells.get("H24"), "坐西北朝東南");
 assert.equal(cells.get("C25"), "2樓");
 assert.equal(cells.get("C26"), "4房3廳2衛");
-assert.equal(cells.get("C27"), "70/6/26");
+assert.equal(cells.get("C27"), "70/06/26");
 assert.equal(cells.get("H27"), "無");
 assert.match(cells.get("G29") || "", /近快官交流道 & 台鳳/);
 assert.equal(cells.get("B43"), undefined);

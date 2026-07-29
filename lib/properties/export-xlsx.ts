@@ -204,9 +204,18 @@ function checkedOption(label: string, options: string[]) {
 
 function rocDate(value?: string | null) {
   if (!value) return "";
+  const roc = value.match(/^(\d{2,3})[/-](\d{1,2})[/-](\d{1,2})$/);
+  if (roc) return `${roc[1]}/${roc[2].padStart(2, "0")}/${roc[3].padStart(2, "0")}`;
   const date = new Date(`${value}T00:00:00`);
-  if (Number.isNaN(date.getTime())) return value;
+  if (Number.isNaN(date.getTime())) return "";
   return `${date.getFullYear() - 1911}/${String(date.getMonth() + 1).padStart(2, "0")}/${String(date.getDate()).padStart(2, "0")}`;
+}
+
+function rocDateRange(start?: string | null, end?: string | null) {
+  const startText = start ? rocDate(start) : "";
+  const endText = end ? rocDate(end) : "";
+  if (startText && endText) return `${startText}～${endText}`;
+  return startText || endText;
 }
 
 function propertyUseLine(property: Property) {
@@ -251,7 +260,7 @@ function buildTemplateValues(property: Property) {
   const lotNumber = extractInternalValue(notes, "地號");
   const fullAddress = extractInternalValue(notes, "完整地址") || property.address_public || "";
   const highlights = listHighlights(property.highlights);
-  const listingPeriod = [property.listing_start_date, property.listing_end_date].filter(Boolean).join(" - ");
+  const listingPeriod = rocDateRange(property.listing_start_date, property.listing_end_date);
 
   const listingLabel = property.listing_type === "一般委託" ? "一般簽" : property.listing_type === "專任" ? "專任" : property.listing_type === "口頭" ? "口頭" : "";
   const displayChoices = (values: string[] | null | undefined, other?: string | null, fallback = "") => {
