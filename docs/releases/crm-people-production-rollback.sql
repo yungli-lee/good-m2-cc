@@ -1,0 +1,10 @@
+-- 保守 rollback 說明：正式上線後優先回退應用程式，不 DROP table。
+-- DROP TABLE 會永久刪除 People–Property 關聯與 People activity 資料，不建議執行。
+-- 執行前應先備份：
+-- create table private.crm_people_properties_backup as table public.people_properties;
+-- create table private.crm_people_activities_backup as table public.people_activities;
+-- 最安全 rollback 是 redeploy 上一個 application commit，保留新增 table/schema。
+-- 若經明確核准確定必須移除，請先另行備份並人工審核以下不可逆操作：
+-- drop table public.people_activities;
+-- drop table public.people_properties;
+-- 以上 DROP 不得在未取得明確核准時執行。
