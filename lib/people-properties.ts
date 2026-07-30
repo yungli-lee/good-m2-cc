@@ -6,6 +6,9 @@ export const relationshipLabels: Record<(typeof relationshipTypes)[number], stri
 export const relationInputSchema = z.object({ person_id:z.string().uuid(), property_id:z.string().uuid(), relationship_type:z.enum(relationshipTypes), relationship_label:z.string().trim().max(120).optional().or(z.literal("")), note:z.string().trim().max(2000).optional().or(z.literal("")), started_at:z.string().optional().or(z.literal("")), ended_at:z.string().optional().or(z.literal("")) }).superRefine((value, ctx) => { if (value.relationship_type === "other" && !value.relationship_label?.trim()) ctx.addIssue({ code:"custom", path:["relationship_label"], message:"請輸入其他關係名稱" }); if (value.relationship_type !== "other" && value.relationship_label?.trim()) ctx.addIssue({ code:"custom", path:["relationship_label"], message:"非其他關係不得填寫自訂名稱" }); if (value.started_at && value.ended_at && value.ended_at < value.started_at) ctx.addIssue({ code:"custom", path:["ended_at"], message:"結束日期不得早於開始日期" }); });
 export type RelationInput = z.infer<typeof relationInputSchema>;
 export type PersonPropertyRelation = RelationInput & { id:string; status:"active"|"archived"; ended_at:string|null; archived_at:string|null; created_at:string; updated_at:string; property?: { id:string; title:string; slug:string; address_public:string|null; listing_no:string|null } | null; person?: { id:string; display_name:string; legal_name:string|null; phone:string|null; email:string|null } | null };
+export const activityTypes = ["visit", "phone", "line", "sms", "email", "initial_contact", "requirement_discussion", "other"] as const;
+export const activityLabels: Record<(typeof activityTypes)[number], string> = { visit: "拜訪", phone: "電話", line: "LINE", sms: "簡訊", email: "Email", initial_contact: "初次接觸", requirement_discussion: "需求了解", other: "其他" };
+export type PersonActivity = { id: string; person_id: string; activity_type: (typeof activityTypes)[number]; activity_date: string; note: string | null; created_by: string | null; created_at: string; };
 
 export async function listPersonProperties(supabase: SupabaseClient, personId: string, includeArchived = false) {
   let query = supabase.from("people_properties").select("*, property:properties(id,title,slug,address_public,listing_no)").eq("person_id", personId).order("created_at", { ascending:false });
@@ -16,4 +19,7 @@ export async function listPropertyPeople(supabase: SupabaseClient, propertyId: s
   let query = supabase.from("people_properties").select("*, person:people(id,display_name,legal_name,phone,email)").eq("property_id", propertyId).order("created_at", { ascending:false });
   if (!includeArchived) query = query.eq("status", "active");
   return query;
+}
+export async function listPersonActivities(supabase: SupabaseClient, personId: string) {
+  return supabase.from("people_activities").select("id,person_id,activity_type,activity_date,note,created_by,created_at").eq("person_id", personId).is("archived_at", null).order("activity_date", { ascending: false }).order("created_at", { ascending: false });
 }

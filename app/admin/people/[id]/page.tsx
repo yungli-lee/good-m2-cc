@@ -7,7 +7,9 @@ import { personRoleLabels } from "@/lib/people/labels";
 import { getAdminPerson } from "@/lib/people/queries";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { listPersonProperties } from "@/lib/people-properties";
+import { listPersonActivities } from "@/lib/people-properties";
 import { PeoplePropertiesPanel } from "@/components/admin/people-properties-panel";
+import { PeopleRelationshipCapture } from "@/components/admin/people-relationship-capture";
 import { archivePersonAction } from "../actions";
 
 export const runtime = "edge";
@@ -66,9 +68,10 @@ export default async function PersonDetailPage({ params, searchParams }: Props) 
   const supabase = await createSupabaseServerClient();
   const { data: person } = await getAdminPerson(supabase, id);
   if (!person) notFound();
-  const [{ data: relations }, { data: properties }] = await Promise.all([
+  const [{ data: relations }, { data: properties }, { data: activities }] = await Promise.all([
     listPersonProperties(supabase, id),
-    supabase.from("properties").select("id,title,slug").is("deleted_at", null).order("updated_at", { ascending: false }).limit(100)
+    supabase.from("properties").select("id,title,slug").is("deleted_at", null).order("updated_at", { ascending: false }).limit(100),
+    listPersonActivities(supabase, id)
   ]);
 
   return (
@@ -133,7 +136,8 @@ export default async function PersonDetailPage({ params, searchParams }: Props) 
             </div>
           </aside>
         </div>
-        <PeoplePropertiesPanel personId={id} relations={(relations || []) as never[]} properties={properties || []} />
+        <PeoplePropertiesPanel personId={id} relations={(relations || []) as never[]} properties={properties || []} showCreate={false} />
+        <PeopleRelationshipCapture personId={id} properties={properties || []} activities={(activities || []) as never[]} />
       </div>
     </main>
   );
