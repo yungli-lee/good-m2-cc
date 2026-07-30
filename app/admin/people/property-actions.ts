@@ -12,7 +12,8 @@ export async function createPeoplePropertyAction(formData: FormData) {
   if (!parsed.success) redirect(`/admin/people/${personId}?relation_error=invalid`);
   const supabase = await createSupabaseServerClient();
   const { error } = await supabase.from("people_properties").insert({ ...parsed.data, relationship_label: parsed.data.relationship_label || null, note: parsed.data.note || null, started_at: parsed.data.started_at || null, created_by: current.user.id });
-  if (error) redirect(`/admin/people/${personId}?relation_error=${error.code === "23505" ? "duplicate" : "save"}`);
+  const relationError = error?.code === "23505" ? "duplicate" : error?.code === "42501" ? "permission" : error?.code === "23503" ? "missing" : error?.code === "42P01" || error?.code === "PGRST205" ? "schema_missing" : "save";
+  if (error) redirect(`/admin/people/${personId}?relation_error=${relationError}`);
   revalidatePath(`/admin/people/${personId}`); revalidatePath(`/admin/properties/${parsed.data.property_id}/edit`); redirect(`/admin/people/${personId}?relation_saved=1`);
 }
 export async function archivePeoplePropertyAction(id: string, personId: string, propertyId: string) {

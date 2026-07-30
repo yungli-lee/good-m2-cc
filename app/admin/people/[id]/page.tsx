@@ -14,7 +14,7 @@ export const runtime = "edge";
 
 type Props = {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ error?: string; saved?: string }>;
+  searchParams: Promise<{ error?: string; saved?: string; relation_error?: string; relation_saved?: string }>;
 };
 
 const sourceLabel: Record<string, string> = {
@@ -40,7 +40,15 @@ const savedMessage: Record<string, string> = {
 };
 
 const errorMessage: Record<string, string> = {
-  archive_failed: "封存失敗，請稍後再試。"
+  archive_failed: "封存失敗，請稍後再試。",
+  invalid: "關聯欄位格式有誤，請檢查關係與日期。",
+  duplicate: "此客戶與物件已存在相同的有效關係。",
+  permission: "你沒有建立或修改關聯的權限。",
+  missing: "找不到指定的客戶或物件。",
+  schema_missing: "Preview 尚未完成 People–Property 資料表設定，請通知管理者。",
+  save: "關聯儲存失敗，請稍後再試。",
+  update: "關聯更新失敗，請稍後再試。",
+  archive: "關聯封存失敗，請稍後再試。"
 };
 
 function Field({ label, value }: { label: string; value?: ReactNode }) {
@@ -79,6 +87,8 @@ export default async function PersonDetailPage({ params, searchParams }: Props) 
 
         {query.saved ? <div className="notice">{savedMessage[query.saved] || "已儲存。"}</div> : null}
         {query.error ? <div className="notice">{errorMessage[query.error] || "操作失敗，請稍後再試。"}</div> : null}
+        {query.relation_saved ? <div className="notice">{query.relation_saved === "archived" ? "關聯已封存。" : query.relation_saved === "updated" ? "關聯已更新。" : "關聯已建立。"}</div> : null}
+        {query.relation_error ? <div className="notice">{errorMessage[query.relation_error] || "關聯操作失敗，請稍後再試。"}</div> : null}
 
         <div className="detail-layout">
           <section className="card">
