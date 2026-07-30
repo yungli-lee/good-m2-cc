@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { relationshipLabels, relationshipTypes, type RelationInput } from "@/lib/people-properties";
+import { dateInputToTaipeiIso, toTaipeiDateInput } from "@/lib/format";
 
 type Props = { mode: "create" | "update"; personId: string; propertyId: string; relationId?: string; propertyOptions?: Array<{ id: string; title: string }>; peopleOptions?: Array<{ id: string; display_name: string; phone?: string | null; email?: string | null }>; initial?: Partial<RelationInput>; };
 export function PeoplePropertyRelationForm({ mode, personId, propertyId, relationId, propertyOptions = [], peopleOptions = [], initial = {} }: Props) {
@@ -9,8 +10,8 @@ export function PeoplePropertyRelationForm({ mode, personId, propertyId, relatio
   const [relationshipType, setRelationshipType] = useState<(typeof relationshipTypes)[number]>((initial.relationship_type as (typeof relationshipTypes)[number]) || "contact");
   const [relationshipLabel, setRelationshipLabel] = useState(initial.relationship_label || "");
   const [note, setNote] = useState(initial.note || "");
-  const [startedAt, setStartedAt] = useState(initial.started_at?.slice(0, 10) || "");
-  const [endedAt, setEndedAt] = useState(initial.ended_at?.slice(0, 10) || "");
+  const [startedAt, setStartedAt] = useState(toTaipeiDateInput(initial.started_at));
+  const [endedAt, setEndedAt] = useState(toTaipeiDateInput(initial.ended_at));
   const [selectedProperty, setSelectedProperty] = useState(propertyId);
   const [selectedPerson, setSelectedPerson] = useState(personId);
   const [error, setError] = useState("");
@@ -18,7 +19,7 @@ export function PeoplePropertyRelationForm({ mode, personId, propertyId, relatio
   const [busy, setBusy] = useState(false);
   async function submit(event: React.FormEvent) {
     event.preventDefault(); setBusy(true); setError(""); setMessage("");
-    const payload = { person_id: selectedPerson, property_id: selectedProperty, relationship_type: relationshipType, relationship_label: relationshipType === "other" ? relationshipLabel : "", note, started_at: startedAt, ended_at: endedAt };
+    const payload = { person_id: selectedPerson, property_id: selectedProperty, relationship_type: relationshipType, relationship_label: relationshipType === "other" ? relationshipLabel : "", note, started_at: dateInputToTaipeiIso(startedAt) || "", ended_at: dateInputToTaipeiIso(endedAt) || "" };
     const response = await fetch(mode === "create" ? "/api/admin/people-properties" : `/api/admin/people-properties/${relationId}`, { method: mode === "create" ? "POST" : "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
     const body = await response.json().catch(() => null);
     setBusy(false);

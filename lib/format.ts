@@ -61,6 +61,30 @@ export function taipeiDateTimeLocalToUtcIso(value?: string | null) {
   return Number.isNaN(date.getTime()) ? null : date.toISOString();
 }
 
+export function dateInputToTaipeiIso(value?: string | null) {
+  if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return null;
+  const [year, month, day] = value.split("-").map(Number);
+  const check = new Date(Date.UTC(year, month - 1, day));
+  if (check.getUTCFullYear() !== year || check.getUTCMonth() !== month - 1 || check.getUTCDate() !== day) return null;
+  return `${value}T00:00:00+08:00`;
+}
+
+export function toTaipeiDateInput(value?: string | null) {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  const parts = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Taipei", year: "numeric", month: "2-digit", day: "2-digit" }).formatToParts(date);
+  const part = (type: string) => parts.find((item) => item.type === type)?.value || "";
+  return `${part("year")}-${part("month")}-${part("day")}`;
+}
+
+export function formatTaipeiRelationDate(value?: string | null) {
+  const input = toTaipeiDateInput(value);
+  if (!input) return "-";
+  const [year, month, day] = input.split("-").map(Number);
+  return `${String(year - 1911).padStart(3, "0")}/${String(month).padStart(2, "0")}/${String(day).padStart(2, "0")}`;
+}
+
 export function propertyTypeLabel(value: string) {
   const labels: Record<string, string> = {
     townhouse: "房屋",

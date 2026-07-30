@@ -12,6 +12,7 @@ import { permanentDeletePropertyAction, restorePropertyAction } from "../../acti
 import { listPropertyPeople, relationshipLabels } from "@/lib/people-properties";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { PeoplePropertyRelationForm, ArchiveRelationButton } from "@/components/admin/people-property-relation-form";
+import { formatTaipeiRelationDate } from "@/lib/format";
 
 export const runtime = "edge";
 
@@ -118,7 +119,7 @@ export default async function EditPropertyPage({ params, searchParams }: Props) 
           updated={query.timeline_updated === "1"}
           deleted={query.timeline_deleted === "1"}
         />
-        <section className="card" style={{ marginTop: 18 }}><div className="card-body"><h2 style={{ marginTop: 0 }}>關聯客戶</h2>{relatedPeople?.length ? <div className="table-wrap"><table><thead><tr><th>顯示名稱</th><th>正式姓名</th><th>關係</th><th>聯絡方式</th><th>操作</th></tr></thead><tbody>{relatedPeople.map((relation) => <tr key={relation.id}><td><Link href={`/admin/people/${relation.person?.id}`}>{relation.person?.display_name || relation.person_id}</Link></td><td>{relation.person?.legal_name || "-"}</td><td>{relationshipLabels[relation.relationship_type as keyof typeof relationshipLabels]}</td><td>{relation.person?.phone || relation.person?.email || "-"}</td><td><details><summary className="button ghost">編輯</summary><PeoplePropertyRelationForm mode="update" personId={relation.person_id} propertyId={id} relationId={relation.id} initial={relation} /></details><ArchiveRelationButton relationId={relation.id} /></td></tr>)}</tbody></table></div> : <p className="muted">尚未建立關聯客戶</p>}<h3>新增關聯客戶</h3><PeoplePropertyRelationForm mode="create" personId="" propertyId={id} peopleOptions={peopleOptions || []} /></div></section>
+        <section className="card" style={{ marginTop: 18 }}><div className="card-body"><h2 style={{ marginTop: 0 }}>關聯客戶</h2>{relatedPeople?.length ? <div className="table-wrap"><table><thead><tr><th>顯示名稱</th><th>正式姓名</th><th>關係</th><th>開始日期</th><th>聯絡方式</th><th>操作</th></tr></thead><tbody>{relatedPeople.map((relation) => <tr key={relation.id}><td><Link href={`/admin/people/${relation.person?.id}`}>{relation.person?.display_name || relation.person_id}</Link></td><td>{relation.person?.legal_name || "-"}</td><td>{relationshipLabels[relation.relationship_type as keyof typeof relationshipLabels]}</td><td>{formatTaipeiRelationDate(relation.started_at)}</td><td>{relation.person?.phone || relation.person?.email || "-"}</td><td><details><summary className="button ghost">編輯</summary><PeoplePropertyRelationForm mode="update" personId={relation.person_id} propertyId={id} relationId={relation.id} initial={relation} /></details><ArchiveRelationButton relationId={relation.id} /></td></tr>)}</tbody></table></div> : <p className="muted">尚未建立關聯客戶</p>}<h3>新增關聯客戶</h3><PeoplePropertyRelationForm mode="create" personId="" propertyId={id} peopleOptions={peopleOptions || []} /></div></section>
       </div>
     </main>
   );

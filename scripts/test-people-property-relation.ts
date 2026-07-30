@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { relationInputSchema, relationshipTypes } from "../lib/people-properties.ts";
+import { dateInputToTaipeiIso, formatTaipeiRelationDate, toTaipeiDateInput } from "../lib/format.ts";
 
 const ids = { person_id: "00000000-0000-0000-0000-000000000001", property_id: "00000000-0000-0000-0000-000000000002" };
 const valid = { ...ids, relationship_type: "buyer", relationship_label: "", note: "看屋", started_at: "2026-01-01", ended_at: "" };
@@ -19,4 +20,10 @@ assert.match(archiveRoute, /export async function POST/);
 assert.match(route, /RELATION_DUPLICATE/);
 assert.match(detailRoute, /RELATION_FORBIDDEN/);
 assert.match(archiveRoute, /status: "archived"/);
+assert.equal(dateInputToTaipeiIso("2026-07-30"), "2026-07-30T00:00:00+08:00");
+assert.equal(toTaipeiDateInput("2026-07-29T16:00:00.000Z"), "2026-07-30");
+assert.equal(toTaipeiDateInput("2026-07-30T00:00:00+08:00"), "2026-07-30");
+assert.equal(formatTaipeiRelationDate("2026-07-29T16:00:00.000Z"), "115/07/30");
+assert.equal(formatTaipeiRelationDate(null), "-");
+assert.equal(dateInputToTaipeiIso("2026-02-30"), null);
 console.log("people-property relation validation: PASS");
