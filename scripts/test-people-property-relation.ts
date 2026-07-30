@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { relationInputSchema, relationshipTypes } from "../lib/people-properties.ts";
 
 const ids = { person_id: "00000000-0000-0000-0000-000000000001", property_id: "00000000-0000-0000-0000-000000000002" };
@@ -9,4 +10,13 @@ assert.equal(relationInputSchema.safeParse({ ...valid, relationship_type: "other
 assert.equal(relationInputSchema.safeParse({ ...valid, started_at: "2026-02-01", ended_at: "2026-01-01" }).success, false);
 assert.equal(relationInputSchema.safeParse({ ...valid, person_id: "not-a-uuid" }).success, false);
 assert.deepEqual(relationshipTypes, ["owner", "buyer", "viewer", "negotiator", "tenant", "landlord", "referrer", "contact", "other"]);
+const route = readFileSync("app/api/admin/people-properties/route.ts", "utf8");
+const detailRoute = readFileSync("app/api/admin/people-properties/[id]/route.ts", "utf8");
+const archiveRoute = readFileSync("app/api/admin/people-properties/[id]/archive/route.ts", "utf8");
+assert.match(route, /export async function POST/);
+assert.match(detailRoute, /export async function PATCH/);
+assert.match(archiveRoute, /export async function POST/);
+assert.match(route, /RELATION_DUPLICATE/);
+assert.match(detailRoute, /RELATION_FORBIDDEN/);
+assert.match(archiveRoute, /status: "archived"/);
 console.log("people-property relation validation: PASS");
