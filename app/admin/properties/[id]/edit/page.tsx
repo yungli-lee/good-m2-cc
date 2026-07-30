@@ -9,14 +9,15 @@ import { getAdminPropertyById } from "@/lib/properties/queries";
 import { listPropertyTimelineEvents } from "@/lib/properties/timeline-queries";
 import type { Property } from "@/lib/properties/types";
 import { permanentDeletePropertyAction, restorePropertyAction } from "../../actions";
-import { listPropertyPeople, relationshipLabels } from "@/lib/people-properties";
+import { listPropertyPeople, relationshipLabels, relationshipTypes } from "@/lib/people-properties";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { createPropertyPeopleAction, archivePropertyPeopleAction } from "../../relation-actions";
 
 export const runtime = "edge";
 
 type Props = {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ error?: string; saved?: string; timeline_error?: string; timeline_saved?: string; timeline_updated?: string; timeline_deleted?: string }>;
+  searchParams: Promise<{ error?: string; saved?: string; relation_error?: string; relation_saved?: string; timeline_error?: string; timeline_saved?: string; timeline_updated?: string; timeline_deleted?: string }>;
 };
 
 const errorMessage: Record<string, string> = {
@@ -41,7 +42,9 @@ export default async function EditPropertyPage({ params, searchParams }: Props) 
   const { data, error } = await getAdminPropertyById(id);
   if (error || !data) notFound();
   const { data: timelineEvents, error: timelineError } = await listPropertyTimelineEvents(id);
-  const { data: relatedPeople } = await listPropertyPeople(await createSupabaseServerClient(), id);
+  const supabase = await createSupabaseServerClient();
+  const { data: relatedPeople } = await listPropertyPeople(supabase, id);
+  const { data: peopleOptions } = await supabase.from("people").select("id,display_name,phone,email").is("deleted_at", null).order("display_name").limit(100);
 
   const property = data as Property;
   const health = calculatePropertyHealthScore(property);
@@ -115,7 +118,7 @@ export default async function EditPropertyPage({ params, searchParams }: Props) 
           updated={query.timeline_updated === "1"}
           deleted={query.timeline_deleted === "1"}
         />
-        <section className="card" style={{ marginTop: 18 }}><div className="card-body"><h2 style={{ marginTop: 0 }}>關聯客戶</h2>{relatedPeople?.length ? <div className="table-wrap"><table><thead><tr><th>顯示名稱</th><th>正式姓名</th><th>關係</th><th>聯絡方式</th></tr></thead><tbody>{relatedPeople.map((relation) => <tr key={relation.id}><td><Link href={`/admin/people/${relation.person?.id}`}>{relation.person?.display_name || relation.person_id}</Link></td><td>{relation.person?.legal_name || "-"}</td><td>{relationshipLabels[relation.relationship_type as keyof typeof relationshipLabels]}</td><td>{relation.person?.phone || relation.person?.email || "-"}</td></tr>)}</tbody></table></div> : <p className="muted">尚未建立關聯客戶</p>}</div></section>
+        <section className="card" style={{ marginTop: 18 }}><div className="card-body"><h2 style={{ marginTop: 0 }}>關聯客戶</h2>{query.relation_error ? <div className="notice">{query.relation_error === "duplicate" ? "此關係已存在。" : "關聯操作失敗，請稍後再試。"}</div> : null}{relatedPeople?.length ? <div className="table-wrap"><table><thead><tr><th>顯示名稱</th><th>正式姓名</th><th>關係</th><th>聯絡方式</th><th>操作</th></tr></thead><tbody>{relatedPeople.map((relation) => <tr key={relation.id}><td><Link href={`/admin/people/${relation.person?.id}`}>{relation.person?.display_name || relation.person_id}</Link></td><td>{relation.person?.legal_name || "-"}</td><td>{relationshipLabels[relation.relationship_type as keyof typeof relationshipLabels]}</td><td>{relation.person?.phone || relation.person?.email || "-"}</td><td><form action={archivePropertyPeopleAction.bind(null,relation.id,id,relation.person_id)}><button className="button danger" type="submit">封存</button></form></td></tr>)}</tbody></table></div> : <p className="muted">尚未建立關聯客戶</p>}<h3>新增關聯客戶</h3><form className="form-grid" action={createPropertyPeopleAction}><input type="hidden" name="property_id" value={id}/><label className="field"><span>People</span><select className="select" name="person_id" required><option value="">請選擇</option>{peopleOptions?.map((p)=><option key={p.id} value={p.id}>{p.display_name} {p.phone || p.email ? `（${p.phone || p.email}）` : ""}</option>)}</select></label><label className="field"><span>關係</span><select className="select" name="relationship_type" defaultValue="contact">{relationshipTypes.map(t=><option key={t} value={t}>{relationshipLabels[t]}</option>)}</select></label><label className="field full"><span>備註</span><textarea className="textarea" name="note" maxLength={2000}/></label><button className="button" type="submit">建立關聯</button></form></div></section>
       </div>
     </main>
   );
