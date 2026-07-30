@@ -1,0 +1,4 @@
+-- Preview-only cleanup template；只刪除本次測試 relation，不刪除 People 或 Property。
+-- 執行前將 <TEST_RELATION_ID> 替換為本次 INSERT ... RETURNING 的明確 UUID。
+-- delete from public.people_properties where id = '<TEST_RELATION_ID>';
+-- 不得改成只依 person_id/property_id 的廣泛 DELETE；若需保留 archive evidence，請不執行刪除並記錄 relation id。
