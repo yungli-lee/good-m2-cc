@@ -42,6 +42,9 @@ Table 為 `public.people_properties`，包含 `person_id`／`property_id` FK、`
 
 ## Preview evidence
 
+- Candidate commit：`600c794bb55ce653b0fcb640e2e3bfe5fb94b7c6`
+- Branch push：已推送 `feature/crm-people-property-relation`；remote ref confirmed by `git ls-remote`
+- Local build evidence：`npm run build` exit 0；compiled successfully、type checking、page data 與 optimization 完成
 - Preview project：待取得（不得以 Production ref 代替）
 - Migration execution：PENDING
 - Schema/RLS/index/trigger evidence：PENDING
