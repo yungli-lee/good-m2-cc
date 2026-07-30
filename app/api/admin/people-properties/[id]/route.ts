@@ -3,6 +3,8 @@ import { getCurrentProfile } from "@/lib/auth";
 import { relationInputSchema } from "@/lib/people-properties";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
+export const runtime = "edge";
+
 const writeRoles = ["editor", "admin", "owner"];
 function fail(status: number, code: string, message: string) { return NextResponse.json({ ok: false, code, message }, { status }); }
 function dbError(error: { code?: string } | null): Response | null {

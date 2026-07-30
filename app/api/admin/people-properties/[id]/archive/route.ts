@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { getCurrentProfile } from "@/lib/auth";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+
+export const runtime = "edge";
 const fail = (status: number, code: string, message: string) => NextResponse.json({ ok: false, code, message }, { status });
 export async function POST(_request: Request, { params }: { params: Promise<{ id: string }> }) {
   const current = await getCurrentProfile();
