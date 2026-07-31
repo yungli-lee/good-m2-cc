@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
-import { HomeCmsClient } from "@/components/home-cms-client";
+import { HomepageRenderer } from "@/components/homepage-renderer";
 import { getPublicCompanySettings } from "@/lib/company-settings";
+import { loadHomepageViewModel } from "@/lib/homepage/loader";
 
 export const dynamic = "force-dynamic";
 export const runtime = "edge";
@@ -19,11 +20,12 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-export default function HomePage() {
+export default async function HomePage() {
+  const model = await loadHomepageViewModel();
   return (
     <>
       <link rel="stylesheet" href="/legacy-static/styles.css" />
-      <HomeCmsClient />
+      <HomepageRenderer model={model} />
     </>
   );
 }
