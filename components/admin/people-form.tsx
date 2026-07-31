@@ -1,6 +1,7 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
+import { useRouter } from "next/navigation";
 import { personRoleNames, personSources, personStatuses } from "@/lib/people/constants";
 import { personRoleLabels } from "@/lib/people/labels";
 import type { PersonAssignee } from "@/lib/people/types";
@@ -37,25 +38,76 @@ function assigneeLabel(assignee: PersonAssignee) {
 
 export function PeopleForm({
   action,
+  personId,
   initialState,
   assignees,
   submitLabel = "儲存",
   pendingLabel = "儲存中..."
 }: {
-  action: PersonAction;
+  action?: PersonAction;
+  personId?: string;
   initialState: PersonFormState;
   assignees: PersonAssignee[];
   submitLabel?: string;
   pendingLabel?: string;
 }) {
-  const [state, formAction, pending] = useActionState(action, initialState);
+  const createAction = action || (async () => initialState);
+  const [state, formAction, actionPending] = useActionState(createAction, initialState);
+  const [submitting, setSubmitting] = useState(false);
+  const [apiError, setApiError] = useState<string | null>(null);
+  const router = useRouter();
   const values = state?.values || initialState.values;
   const fieldErrors = state?.fieldErrors || {};
   const selectedRoles = new Set(values.roles);
+  const pending = actionPending || submitting;
+
+  async function submitEdit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!personId || submitting) return;
+    setSubmitting(true);
+    setApiError(null);
+    const formData = new FormData(event.currentTarget);
+    const body = {
+      display_name: String(formData.get("display_name") || ""),
+      legal_name: String(formData.get("legal_name") || ""),
+      phone: String(formData.get("phone") || ""),
+      line_id: String(formData.get("line_id") || ""),
+      email: String(formData.get("email") || ""),
+      address: String(formData.get("address") || ""),
+      source: String(formData.get("source") || ""),
+      status: String(formData.get("status") || ""),
+      owner_id: String(formData.get("assigned_to") || ""),
+      roles: formData.getAll("roles").map(String),
+      note: String(formData.get("notes") || "")
+    };
+
+    try {
+      const response = await fetch(`/api/admin/people/${personId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body)
+      });
+      const result = await response.json().catch(() => null) as { message?: string } | null;
+      if (!response.ok) {
+        setApiError(result?.message || "客戶資料儲存失敗，請稍後再試。");
+        return;
+      }
+      router.push(`/admin/people/${personId}`);
+      router.refresh();
+    } catch {
+      setApiError("無法連線到伺服器，請稍後再試。");
+    } finally {
+      setSubmitting(false);
+    }
+  }
 
   return (
-    <form action={formAction} className="form-grid">
-      {state?.formError ? <div className="notice field full">{state.formError}</div> : null}
+    <form
+      action={personId ? undefined : formAction}
+      onSubmit={personId ? submitEdit : undefined}
+      className="form-grid"
+    >
+      {apiError || state?.formError ? <div className="notice field full">{apiError || state?.formError}</div> : null}
 
       <label className="field">
         <span>顯示名稱 *</span>

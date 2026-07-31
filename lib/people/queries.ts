@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { normalizeEmail, normalizeLineId, normalizePhone } from "@/lib/people/normalize";
-import type { PeopleSort } from "@/lib/people/schema";
-import type { Person, PersonAssignee, PersonRoleName, PersonSource, PersonStatus } from "@/lib/people/types";
+import { normalizeEmail, normalizeLineId, normalizePhone } from "./normalize.ts";
+import type { PeopleSort } from "./schema.ts";
+import type { Person, PersonAssignee, PersonRoleName, PersonSource, PersonStatus } from "./types.ts";
 
 export type AdminPeopleListItem = Person & {
   roles: PersonRoleName[];

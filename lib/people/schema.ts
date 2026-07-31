@@ -1,6 +1,6 @@
 import { z } from "zod";
-import { personRoleNames, personSources, personStatuses } from "@/lib/people/constants";
-import type { PersonRoleName, PersonSource, PersonStatus } from "@/lib/people/types";
+import { personRoleNames, personSources, personStatuses } from "./constants.ts";
+import type { PersonRoleName, PersonSource, PersonStatus } from "./types.ts";
 
 export const peopleSortOptions = [
   "newest",
@@ -101,6 +101,7 @@ export function normalizePersonFormValues(values: PersonFormValues): PersonFormI
     phone: values.phone || "",
     line_id: values.line_id || "",
     email: values.email || "",
+    address: values.address || "",
     assigned_to: values.assigned_to || "",
     notes: values.notes || "",
     roles: values.roles

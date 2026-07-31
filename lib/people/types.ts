@@ -2,7 +2,7 @@ import type {
   personRoleNames,
   personSources,
   personStatuses
-} from "@/lib/people/constants";
+} from "./constants.ts";
 
 export type PersonSource = (typeof personSources)[number];
 export type PersonStatus = (typeof personStatuses)[number];
