@@ -30,6 +30,7 @@ export default async function EditPersonPage({ params }: Props) {
       phone: person.phone || "",
       line_id: person.line_id || "",
       email: person.email || "",
+      address: person.address || "",
       source: person.source,
       status: person.status,
       assigned_to: person.assigned_to || "",

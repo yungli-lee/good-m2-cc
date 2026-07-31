@@ -171,6 +171,7 @@ export function buildPersonPayload(input: {
   phone?: string | null;
   line_id?: string | null;
   email?: string | null;
+  address?: string | null;
   source: PersonSource;
   status: PersonStatus;
   assigned_to?: string | null;
@@ -189,6 +190,7 @@ export function buildPersonPayload(input: {
     line_id: lineId,
     normalized_line_id: normalizeLineId(lineId),
     email,
+    address: input.address?.trim() || null,
     normalized_email: normalizeEmail(email),
     source: input.source,
     status: input.status,

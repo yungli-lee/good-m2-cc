@@ -87,6 +87,12 @@ export function PeopleForm({
         <FieldError message={fieldErrors.email} />
       </label>
 
+      <label className="field full">
+        <span>地址</span>
+        <input className="input" name="address" defaultValue={values.address} maxLength={240} autoComplete="street-address" />
+        <FieldError message={fieldErrors.address} />
+      </label>
+
       <label className="field">
         <span>來源</span>
         <select className="select" name="source" defaultValue={values.source}>

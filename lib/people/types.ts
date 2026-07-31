@@ -18,6 +18,7 @@ export type Person = {
   line_id: string | null;
   normalized_line_id: string | null;
   email: string | null;
+  address: string | null;
   normalized_email: string | null;
   source: PersonSource;
   status: PersonStatus;

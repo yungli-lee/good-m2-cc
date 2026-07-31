@@ -17,6 +17,7 @@ export const personFormSchema = z.object({
   phone: z.string().trim().max(40, "電話過長").optional().or(z.literal("")),
   line_id: z.string().trim().max(120, "Line ID 過長").optional().or(z.literal("")),
   email: z.string().trim().email("Email 格式不正確").optional().or(z.literal("")),
+  address: z.string().trim().max(240, "地址過長").optional().or(z.literal("")),
   source: z.enum(personSources),
   status: z.enum(personStatuses),
   assigned_to: z.string().uuid("負責人格式不正確").optional().or(z.literal("")),
@@ -32,6 +33,7 @@ export type PersonFormValues = {
   phone: string;
   line_id: string;
   email: string;
+  address: string;
   source: PersonSource;
   status: PersonStatus;
   assigned_to: string;
@@ -52,6 +54,7 @@ export function defaultPersonFormValues(): PersonFormValues {
     phone: "",
     line_id: "",
     email: "",
+    address: "",
     source: "manual",
     status: "active",
     assigned_to: "",
@@ -72,6 +75,7 @@ export function personValuesFromFormData(formData: FormData): PersonFormValues {
     phone: String(formData.get("phone") || ""),
     line_id: String(formData.get("line_id") || ""),
     email: String(formData.get("email") || ""),
+    address: String(formData.get("address") || ""),
     source: (String(formData.get("source") || "manual") || "manual") as PersonSource,
     status: (String(formData.get("status") || "active") || "active") as PersonStatus,
     assigned_to: String(formData.get("assigned_to") || ""),
