@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { memo, useCallback, useEffect, useState } from "react";
 import { VideoLightbox } from "@/components/media/video-lightbox";
 import { activateHomeCarouselVideo, deactivateHomeCarouselVideo } from "@/lib/media/home-carousel-video";
 import { homeSlideDurationMs } from "@/lib/media/playback";
@@ -15,6 +15,10 @@ type HomeCmsPayload = {
   company?: CompanySettings;
   navigation?: ResolvedNavigationItem[];
 };
+
+const HomeCmsMarkup = memo(function HomeCmsMarkup({ html }: { html: string }) {
+  return <div dangerouslySetInnerHTML={{ __html: html }} />;
+});
 
 export function HomeCmsClient() {
   const [html, setHtml] = useState("");
@@ -170,7 +174,7 @@ export function HomeCmsClient() {
   }, [html]);
 
   return <>
-    <div dangerouslySetInnerHTML={{ __html: html }} />
+    <HomeCmsMarkup html={html} />
     <VideoLightbox open={Boolean(lightbox)} src={lightbox?.src || ""} title={lightbox?.title} onClose={closeLightbox} />
   </>;
 }

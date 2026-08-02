@@ -57,6 +57,7 @@ assert.match(homeRender, /data-video-src=.*preload="none"/);
 assert.doesNotMatch(homeRender, /video\/quicktime|\.mov/);
 assert.match(homeRender, /播放完整版/);
 assert.match(homeClient, /home-video-lightbox-close/);
+assert.match(homeClient, /const HomeCmsMarkup = memo/, "lightbox state changes must not remount the imperative carousel DOM");
 assert.match(homeClient, /visibilitychange/);
 assert.match(homeClient, /if \(backgroundVideo\) deactivateHomeCarouselVideo\(backgroundVideo\)/, "opening the lightbox fully deactivates its background video");
 assert.match(homeVideoLifecycle, /removeAttribute\("src"\)/);
