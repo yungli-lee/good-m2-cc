@@ -101,6 +101,8 @@ function imageUrl(item: { media_public_url?: string | null; fallback_image_url?:
 function renderCampaign(campaign: CampaignForRender, index: number) {
   const src = imageUrl(campaign) || "/assets/hero-ayong-wu-laptop.jpeg";
   const alt = campaign.image_alt || campaign.media_assets?.alt_text || campaign.title;
+  const isVideo = campaign.media_assets?.media_type === "video";
+  const poster = campaign.media_assets?.poster_url || "";
   const hidden = index === 0 ? "" : " hidden";
   const primaryLabel = campaign.cta_label || "Line 阿勇諮詢";
   const primaryHref = campaign.cta_href || "https://line.me/ti/p/abQv5LYzzE";
@@ -109,9 +111,13 @@ function renderCampaign(campaign: CampaignForRender, index: number) {
     : "";
 
   return `
-        <div class="home-campaign-slide"${hidden} data-home-campaign-slide>
+        <div class="home-campaign-slide"${hidden} data-home-campaign-slide data-slide-duration-seconds="${campaign.slide_duration_seconds || 5}">
           <div class="hero-media">
-            <img src="${escapeAttr(src)}" alt="${escapeAttr(alt)}">
+            ${isVideo
+              ? `<video ${index === 0 ? `src="${escapeAttr(src)}" autoplay preload="metadata"` : `data-video-src="${escapeAttr(src)}" preload="none"`} poster="${escapeAttr(poster)}" aria-label="${escapeAttr(alt)}" muted playsinline data-home-campaign-video></video>
+                 <div class="home-video-fallback" data-home-video-fallback hidden><img src="${escapeAttr(poster)}" alt="${escapeAttr(alt)}"><span>影片暫時無法播放</span></div>
+                 <button class="home-video-full-button" type="button" data-video-lightbox-src="${escapeAttr(src)}" data-video-lightbox-title="${escapeAttr(alt)}">▶ 播放完整版</button>`
+              : `<img src="${escapeAttr(src)}" alt="${escapeAttr(alt)}">`}
           </div>
           <div class="hero-copy">
             ${campaign.eyebrow ? `<p class="eyebrow">${escapeHtml(campaign.eyebrow)}</p>` : ""}

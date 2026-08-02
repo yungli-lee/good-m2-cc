@@ -4,6 +4,7 @@ import { requireRole } from "@/lib/auth";
 import { recordAuditLog } from "@/lib/audit/audit-log";
 import { taipeiDateTimeLocalToUtcIso } from "@/lib/format";
 import { homeCampaignSchema, nullable, valuesFromFormData } from "@/lib/home-cms/schema";
+import { validateHomeCampaignMedia } from "@/lib/home-cms/media";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export const runtime = "edge";
@@ -45,6 +46,8 @@ export async function POST(request: Request) {
   };
 
   const supabase = await createSupabaseServerClient();
+  const mediaValidation = await validateHomeCampaignMedia(supabase, parsed.data.image_media_id);
+  if (!mediaValidation.ok) return NextResponse.json({ ok: false, message: `Campaign 影片不可用：${mediaValidation.error}` }, { status: 422 });
   const { data, error } = await supabase.from("home_campaigns").insert(payload).select("*").single();
   if (error) {
     return NextResponse.json({ ok: false, message: `新增失敗：${error.code || "create_failed"}` }, { status: 500 });

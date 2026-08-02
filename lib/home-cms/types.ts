@@ -19,6 +19,7 @@ export type HomeCampaign = {
   secondary_cta_label: string | null;
   secondary_cta_href: string | null;
   status: CmsStatus;
+  slide_duration_seconds: number;
   sort_order: number;
   starts_at: string | null;
   ends_at: string | null;
@@ -27,7 +28,7 @@ export type HomeCampaign = {
   created_at: string;
   updated_at: string;
   archived_at: string | null;
-  media_assets?: Pick<MediaLibraryAsset, "id" | "storage_path" | "alt_text" | "caption" | "original_filename"> | null;
+  media_assets?: Pick<MediaLibraryAsset, "id" | "storage_path" | "alt_text" | "caption" | "original_filename" | "media_type" | "mime_type" | "file_size" | "poster_url" | "poster_storage_path"> | null;
 };
 
 export type SitePage = {

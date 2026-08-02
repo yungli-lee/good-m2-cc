@@ -67,10 +67,13 @@ export type Property = {
 export type PropertyMedia = {
   id: string;
   property_id: string;
-  media_type: "image";
+  media_type: "image" | "video";
+  mime_type: string | null;
+  file_size: number | null;
   url: string;
   storage_path: string | null;
   thumbnail_url: string | null;
+  poster_storage_path: string | null;
   alt_text: string | null;
   sort_order: number;
   is_cover: boolean;
@@ -80,6 +83,6 @@ export type PropertyMedia = {
 };
 
 export function getCoverMedia(property: Pick<Property, "property_media">) {
-  const media = property.property_media || [];
+  const media = (property.property_media || []).filter((item) => item.media_type === "image");
   return media.find((item) => item.is_cover && !item.deleted_at) || media.find((item) => !item.deleted_at) || null;
 }

@@ -5,6 +5,7 @@ import { recordAuditLog } from "@/lib/audit/audit-log";
 import { taipeiDateTimeLocalToUtcIso } from "@/lib/format";
 import { getHomeCampaign } from "@/lib/home-cms/queries";
 import { homeCampaignSchema, nullable, valuesFromFormData } from "@/lib/home-cms/schema";
+import { validateHomeCampaignMedia } from "@/lib/home-cms/media";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export const runtime = "edge";
@@ -56,6 +57,8 @@ export async function PATCH(request: Request, { params }: Props) {
   };
 
   const supabase = await createSupabaseServerClient();
+  const mediaValidation = await validateHomeCampaignMedia(supabase, parsed.data.image_media_id);
+  if (!mediaValidation.ok) return NextResponse.json({ ok: false, message: `Campaign 影片不可用：${mediaValidation.error}` }, { status: 422 });
   const { data, error, count } = await supabase
     .from("home_campaigns")
     .update(payload, { count: "exact" })

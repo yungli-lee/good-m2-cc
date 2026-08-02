@@ -6,7 +6,7 @@ import { formatPing, formatPrice, propertyTypeLabel } from "@/lib/format";
 import { getPublishedPropertyBySlug } from "@/lib/properties/queries";
 import { resolvePropertySeo } from "@/lib/properties/seo";
 import type { Property } from "@/lib/properties/types";
-import { getCoverMedia } from "@/lib/properties/types";
+import { PropertyMediaGallery } from "@/components/media/property-media-gallery";
 
 export const runtime = "edge";
 
@@ -53,25 +53,13 @@ export default async function PropertyDetailPage({ params }: Props) {
     ["TikTok", companySettings.tiktok_url],
     ["LINE", companySettings.line_url]
   ].filter(([, href]) => href);
-  const cover = getCoverMedia(property);
-  const media = property.property_media?.filter((item) => item.media_type === "image" && !item.deleted_at) || [];
+  const media = property.property_media?.filter((item) => !item.deleted_at) || [];
 
   return (
     <main>
       <section className="section">
         <div className="container detail-layout">
-          <div className="gallery">
-            {cover ? (
-              <img className="gallery-main" src={cover.url} alt={cover.alt_text || property.title} />
-            ) : (
-              <div className="gallery-main" role="img" aria-label={`${property.title} 尚未設定封面照片`} />
-            )}
-            <div className="media-grid">
-              {media.map((item) => (
-                <img key={item.id} className="property-image" src={item.url} alt={item.alt_text || property.title} loading="lazy" />
-              ))}
-            </div>
-          </div>
+          <PropertyMediaGallery media={media} title={property.title} />
           <aside className="card">
             <div className="card-body">
               <h1 style={{ marginTop: 0 }}>{property.title}</h1>

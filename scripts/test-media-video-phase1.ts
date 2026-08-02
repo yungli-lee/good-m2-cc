@@ -1,0 +1,82 @@
+import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import { homeSlideDurationMs } from "../lib/media/playback.ts";
+import { validateMediaFile, validateMediaUpload } from "../lib/media/upload.ts";
+
+assert.equal(homeSlideDurationMs("video"), 30_000, "a 45-second uploaded video advances at 30 seconds");
+assert.equal(homeSlideDurationMs("image"), 5_000);
+assert.equal(homeSlideDurationMs("image", 17), 17_000);
+assert.equal(homeSlideDurationMs("image", 2), 5_000);
+assert.equal(homeSlideDurationMs("image", 45), 30_000);
+
+const mb = 1024 * 1024;
+assert.equal(validateMediaUpload({ name: "video.mp4", type: "video/mp4", size: 30 * mb }, "homepage").ok, true);
+assert.equal(validateMediaUpload({ name: "video.webm", type: "video/webm", size: 30 * mb }, "homepage").ok, true);
+assert.equal(validateMediaUpload({ name: "video.mov", type: "video/quicktime", size: mb }, "homepage").ok, false);
+assert.equal(validateMediaUpload({ name: "fake.jpg", type: "video/mp4", size: mb }, "homepage").ok, false);
+assert.equal(validateMediaUpload({ name: "fake.mp4", type: "image/jpeg", size: mb }, "homepage").ok, false);
+assert.equal(validateMediaUpload({ name: "fake.webm", type: "video/mp4", size: mb }, "homepage").ok, false);
+assert.equal(validateMediaUpload({ name: "video.mp4", type: "application/octet-stream", size: mb }, "homepage").ok, false);
+assert.equal(validateMediaUpload({ name: "video.mp4", type: "video/mp4", size: 30 * mb + 1 }, "homepage").ok, false);
+assert.equal(validateMediaUpload({ name: "video.mp4", type: "video/mp4", size: 50 * mb }, "property").ok, true);
+assert.equal(validateMediaUpload({ name: "video.mp4", type: "video/mp4", size: 100 * mb + 1 }, "property").ok, false);
+assert.equal(validateMediaUpload({ name: "poster.jpg", type: "image/jpeg", size: 5 * mb }, "poster").ok, true);
+assert.equal(validateMediaUpload({ name: "poster.mp4", type: "video/mp4", size: mb }, "poster").ok, false);
+
+function uploadFile(name: string, type: string, bytes: number[]) {
+  const blob = new Blob([new Uint8Array(bytes)], { type });
+  return { name, type, size: blob.size, slice: (start?: number, end?: number) => blob.slice(start, end) };
+}
+
+const mp4Bytes = [0, 0, 0, 24, 0x66, 0x74, 0x79, 0x70, 0x69, 0x73, 0x6f, 0x6d, 0, 0, 0, 0];
+const movBytes = [0, 0, 0, 24, 0x66, 0x74, 0x79, 0x70, 0x71, 0x74, 0x20, 0x20, 0, 0, 0, 0];
+const webmBytes = [0x1a, 0x45, 0xdf, 0xa3, 0x42, 0x82, 0x84, 0x77, 0x65, 0x62, 0x6d];
+assert.equal((await validateMediaFile(uploadFile("video.mp4", "video/mp4", mp4Bytes), "homepage")).ok, true);
+assert.equal((await validateMediaFile(uploadFile("video.webm", "video/webm", webmBytes), "homepage")).ok, true);
+assert.equal((await validateMediaFile(uploadFile("fake.mp4", "video/mp4", [1, 2, 3, 4]), "homepage")).ok, false);
+assert.equal((await validateMediaFile(uploadFile("renamed.jpg", "image/jpeg", mp4Bytes), "homepage")).ok, false);
+assert.equal((await validateMediaFile(uploadFile("quicktime.mp4", "video/mp4", movBytes), "homepage")).ok, false);
+
+const root = new URL("../", import.meta.url);
+const homeRender = readFileSync(new URL("lib/home-cms/render.ts", root), "utf8");
+const homeClient = readFileSync(new URL("components/home-cms-client.tsx", root), "utf8");
+const lightbox = readFileSync(new URL("components/media/video-lightbox.tsx", root), "utf8");
+const propertyGallery = readFileSync(new URL("components/media/property-media-gallery.tsx", root), "utf8");
+const propertySeo = readFileSync(new URL("lib/properties/types.ts", root), "utf8");
+const mediaUploadRoute = readFileSync(new URL("app/api/admin/media/route.ts", root), "utf8");
+const mediaDeleteRoute = readFileSync(new URL("app/api/admin/media/[id]/route.ts", root), "utf8");
+const propertyUploadRoute = readFileSync(new URL("app/admin/properties/[id]/edit/upload/route.ts", root), "utf8");
+const propertyDeleteRoute = readFileSync(new URL("app/admin/properties/[id]/edit/media/[mediaId]/delete/route.ts", root), "utf8");
+const migration = readFileSync(new URL("supabase/migrations/202608020101_media_library_video_phase_1.sql", root), "utf8");
+
+assert.match(homeRender, /autoplay preload="metadata"/);
+assert.match(homeRender, /data-video-src=.*preload="none"/);
+assert.doesNotMatch(homeRender, /video\/quicktime|\.mov/);
+assert.match(homeRender, /播放完整版/);
+assert.match(homeClient, /home-video-lightbox-close/);
+assert.match(homeClient, /\.pause\(\)/, "background video pauses while the lightbox is open");
+assert.match(homeClient, /removeAttribute\("src"\)/);
+assert.match(homeClient, /5_000/);
+assert.match(homeClient, /prefers-reduced-motion: reduce/);
+assert.match(homeClient, /dataset\.slideDurationSeconds/);
+assert.match(lightbox, /controls playsInline/);
+assert.match(lightbox, /event\.key === "Escape"/);
+assert.match(lightbox, /event\.target === event\.currentTarget/);
+assert.match(propertyGallery, /VideoLightbox/);
+assert.doesNotMatch(propertyGallery, /<video/);
+assert.match(propertySeo, /item\.media_type === "image"/, "cover and OG selection stays image-only");
+assert.match(mediaUploadRoute, /影片必須上傳 poster 圖片/);
+assert.match(mediaUploadRoute, /poster_storage_path/);
+assert.match(mediaUploadRoute, /remove\(\[storagePath, posterStoragePath\]/, "DB failure cleans both uploaded objects");
+assert.match(mediaDeleteRoute, /before\.poster_storage_path/);
+assert.match(propertyUploadRoute, /video_poster_required/);
+assert.match(propertyUploadRoute, /poster_storage_path/);
+assert.match(propertyDeleteRoute, /before\.poster_storage_path/);
+assert.match(migration, /add column if not exists poster_url text/);
+assert.match(migration, /video\/mp4/);
+assert.match(migration, /video\/webm/);
+assert.doesNotMatch(migration, /video\/quicktime|\.mov/);
+assert.match(migration, /slide_duration_seconds integer not null default 5/);
+assert.match(migration, /slide_duration_seconds between 5 and 30/);
+
+console.log("Media Library Video Phase 1 tests: PASS");

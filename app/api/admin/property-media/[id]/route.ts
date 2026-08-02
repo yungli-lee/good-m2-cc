@@ -24,6 +24,14 @@ export async function DELETE(_request: Request, { params }: Props) {
     .select()
     .single();
   if (error) return apiError("Unable to delete media", 500);
+  if (before.media_type === "video") {
+    const paths = [before.storage_path, before.poster_storage_path].filter(Boolean) as string[];
+    const { error: removeError } = await supabase.storage.from("property-media").remove(paths);
+    if (removeError) {
+      await supabase.from("property_media").update({ deleted_at: null }).eq("id", id);
+      return apiError("Unable to delete media files", 500);
+    }
+  }
   await recordAuditLog({
     action: "property_image_delete",
     resourceType: "property_media",

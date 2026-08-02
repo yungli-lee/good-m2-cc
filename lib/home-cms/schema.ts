@@ -18,6 +18,7 @@ export const homeCampaignSchema = z.object({
   secondary_cta_label: optionalText(80),
   secondary_cta_href: optionalText(800),
   status: z.enum(cmsStatusValues).default("draft"),
+  slide_duration_seconds: z.coerce.number().int().min(5).max(30).default(5),
   sort_order: z.coerce.number().int().min(0).default(1000),
   starts_at: optionalDate,
   ends_at: optionalDate

@@ -37,13 +37,28 @@ export const mediaUsedByTypes = [
 
 export const mediaStatuses = ["active", "deleted"] as const;
 
+export const mediaTypes = ["image", "video"] as const;
+
 export const mediaBucketName = "media";
 
 export const mediaAllowedMimeTypes = [
   "image/jpeg",
   "image/png",
   "image/webp",
-  "image/gif"
+  "image/gif",
+  "video/mp4",
+  "video/webm"
 ] as const;
 
-export const mediaMaxFileSize = 5 * 1024 * 1024;
+export const mediaImageMaxFileSize = 5 * 1024 * 1024;
+export const homepageVideoMaxFileSize = 30 * 1024 * 1024;
+export const propertyVideoMaxFileSize = 100 * 1024 * 1024;
+export const mediaPerformanceWarningFileSize = 20 * 1024 * 1024;
+
+export function mediaTypeFromMimeType(mimeType: string) {
+  return mimeType.startsWith("video/") ? "video" as const : "image" as const;
+}
+
+export function mediaMaxFileSizeForType(mimeType: string) {
+  return mediaTypeFromMimeType(mimeType) === "video" ? homepageVideoMaxFileSize : mediaImageMaxFileSize;
+}
