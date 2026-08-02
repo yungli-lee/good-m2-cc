@@ -1,0 +1,14 @@
+export const requirementTypes = ["residential","townhouse","storefront","office","factory","warehouse","building_land","industrial_land","farmland","investment","rental","other"] as const;
+export const transactionTypes = ["buy","rent"] as const;
+export const requirementStatuses = ["active","paused","fulfilled","archived"] as const;
+export const urgencyLevels = ["high","normal","low"] as const;
+export const fundingStatuses = ["cash","loan","cash_and_loan","asset_sale","undecided"] as const;
+export const purchaseTimelines = ["immediate","within_1_month","within_3_months","within_6_months","within_1_year","undecided"] as const;
+export const propertyCategories = ["townhouse","apartment","building","land","farmland","building_land","storefront","factory","office","warehouse","other"] as const;
+export const statusTransitions: Record<string, readonly string[]> = { active:["paused","fulfilled","archived"], paused:["active","fulfilled","archived"], fulfilled:["archived"], archived:[] };
+export const requirementTypeLabels: Record<(typeof requirementTypes)[number],string> = { residential:"住宅",townhouse:"透天",storefront:"店面",office:"辦公室",factory:"工廠",warehouse:"倉儲",building_land:"建地",industrial_land:"工業地",farmland:"農地",investment:"投資",rental:"租賃",other:"其他" };
+export const statusLabels: Record<(typeof requirementStatuses)[number],string> = { active:"有效",paused:"暫停",fulfilled:"已完成",archived:"已封存" };
+export const urgencyLabels: Record<(typeof urgencyLevels)[number],string> = { high:"高",normal:"一般",low:"低" };
+export const activityTypeForStatus = { paused:"requirement_paused",active:"requirement_resumed",fulfilled:"requirement_closed",archived:"requirement_archived" } as const;
+export const DB_CURRENCY_UNIT = "TWD" as const;
+export const UI_CURRENCY_UNIT = "TWD_10K" as const;

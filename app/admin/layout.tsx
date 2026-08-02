@@ -28,6 +28,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           <nav className="nav" aria-label="後台導覽">
             <Link href="/admin/properties">物件管理</Link>
             <Link href="/admin/people">客戶 / People</Link>
+            <Link href="/admin/crm/requirements">客需管理</Link>
             <Link href="/admin/knowledge">知識管理</Link>
             <Link href="/admin/media">媒體中心</Link>
             <Link href="/admin/home-campaigns">首頁 Campaign</Link>

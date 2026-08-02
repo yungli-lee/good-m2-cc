@@ -20,7 +20,8 @@ type AuditAction =
   | "site_page_create" | "site_page_update" | "site_page_publish" | "site_page_archive" | "site_page_delete"
   | "media_upload" | "media_update" | "media_delete" | "media_restore" | "media_attach" | "media_detach"
   | "media_cover_set" | "media_alt_update" | "media_caption_update" | "media_replace"
-  | "people_created" | "people_updated" | "people_deleted" | "people_role_added" | "people_role_removed";
+  | "people_created" | "people_updated" | "people_deleted" | "people_role_added" | "people_role_removed"
+  | "requirement_created" | "requirement_updated" | "requirement_status_changed" | "requirement_duplicated" | "requirement_deleted";
 
 type AuditResult = "success" | "denied" | "failed";
 

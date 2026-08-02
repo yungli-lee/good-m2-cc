@@ -1,0 +1,11 @@
+select column_name,data_type,is_nullable,column_default from information_schema.columns where table_schema='public' and table_name='crm_customer_requirements' order by ordinal_position;
+select conname,pg_get_constraintdef(oid) from pg_constraint where conrelid='public.crm_customer_requirements'::regclass order by conname;
+select indexname,indexdef from pg_indexes where schemaname='public' and tablename='crm_customer_requirements' order by indexname;
+select relrowsecurity from pg_class where oid='public.crm_customer_requirements'::regclass;
+select policyname,cmd,qual,with_check from pg_policies where schemaname='public' and tablename='crm_customer_requirements' order by policyname;
+select grantee,privilege_type from information_schema.role_table_grants where table_schema='public' and table_name='crm_customer_requirements' order by grantee,privilege_type;
+select column_name from information_schema.columns where table_schema='public' and table_name='people_activities' and column_name='requirement_id';
+select count(*) as orphan_requirements from public.crm_customer_requirements r left join public.people p on p.id=r.person_id where p.id is null;
+select count(*) as people_count from public.people;
+select count(*) as activities_count from public.people_activities;
+select version from supabase_migrations.schema_migrations where version='202608020201';
