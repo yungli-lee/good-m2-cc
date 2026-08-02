@@ -105,9 +105,9 @@ export function MediaLibraryManager({ assets, filters }: Props) {
   function handleUploadDrop(event: React.DragEvent<HTMLLabelElement>) {
     event.preventDefault();
     setIsDraggingUpload(false);
-    const file = Array.from(event.dataTransfer.files).find((item) => item.type.startsWith("image/"));
+    const file = Array.from(event.dataTransfer.files).find((item) => item.type.startsWith("image/") || item.type.startsWith("video/"));
     if (!file) {
-      setError("請拖放圖片檔案。");
+      setError("請拖放圖片或影片檔案。");
       return;
     }
     setUploadFile(file);
@@ -249,7 +249,7 @@ export function MediaLibraryManager({ assets, filters }: Props) {
   }
 
   function shouldShowRestore(asset: MediaLibraryAsset) {
-    return asset.status === "deleted";
+    return asset.status === "deleted" && asset.media_type === "image";
   }
 
   function detailTitle(asset: MediaLibraryAsset) {
@@ -325,7 +325,11 @@ export function MediaLibraryManager({ assets, filters }: Props) {
               className={`media-library-card${selectedAsset?.id === asset.id ? " is-selected" : ""}`}
               onClick={() => setSelected(asset)}
             >
-              <img src={asset.public_url} alt={asset.alt_text || asset.original_filename || "媒體圖片"} loading="lazy" />
+              {asset.media_type === "video"
+                ? asset.poster_url
+                  ? <img src={asset.poster_url} alt={asset.alt_text || asset.original_filename || "影片 Poster"} loading="lazy" />
+                  : <span className="property-video-fallback">影片無法播放</span>
+                : <img src={asset.public_url} alt={asset.alt_text || asset.original_filename || "媒體圖片"} loading="lazy" />}
               <span className="media-library-card-body">
                 <strong>{mediaName(asset)}</strong>
                 <span>{usageText(asset)} · {statusBadge(asset.status)}</span>
@@ -340,7 +344,9 @@ export function MediaLibraryManager({ assets, filters }: Props) {
         <aside className="media-library-detail" aria-label="媒體詳細資料">
           {selectedAsset ? (
             <>
-              <img className="media-library-preview" src={selectedAsset.public_url} alt={selectedAsset.alt_text || selectedAsset.original_filename || "媒體預覽"} />
+              {selectedAsset.media_type === "video"
+                ? <video className="media-library-preview" src={selectedAsset.public_url} controls playsInline preload="metadata" />
+                : <img className="media-library-preview" src={selectedAsset.public_url} alt={selectedAsset.alt_text || selectedAsset.original_filename || "媒體預覽"} />}
               <div className="media-library-detail-header">
                 <h2>{detailTitle(selectedAsset)}</h2>
                 <div className="actions">
@@ -358,8 +364,10 @@ export function MediaLibraryManager({ assets, filters }: Props) {
                 <div><dt>圖片說明</dt><dd>{detailValue(selectedAsset.caption)}</dd></div>
                 <div><dt>用途類型</dt><dd>{usageText(selectedAsset)}</dd></div>
                 <div><dt>MIME</dt><dd>{selectedAsset.mime_type}</dd></div>
+                <div><dt>類型</dt><dd>{selectedAsset.media_type}</dd></div>
+                <div><dt>檔案大小</dt><dd>{formatBytes(selectedAsset.file_size)}{selectedAsset.media_type === "video" && (selectedAsset.file_size || 0) > 20 * 1024 * 1024 ? "（效能警告：超過 20MB）" : ""}</dd></div>
+                <div><dt>Poster URL</dt><dd>{detailValue(selectedAsset.poster_url)}</dd></div>
                 <div><dt>尺寸</dt><dd>{dimensions(selectedAsset)}</dd></div>
-                <div><dt>檔案大小</dt><dd>{formatBytes(selectedAsset.file_size)}</dd></div>
                 <div><dt>建立者</dt><dd>{createdByLabel(selectedAsset)}</dd></div>
                 <div><dt>建立時間</dt><dd>{formatTaipeiDateTime(selectedAsset.created_at)}</dd></div>
                 <div><dt>是否被引用</dt><dd>{selectedAsset.references.length ? "是" : "否"}</dd></div>
@@ -391,7 +399,7 @@ export function MediaLibraryManager({ assets, filters }: Props) {
             <h2>上傳媒體</h2>
           </div>
           <label className="field full">
-            <span>圖片</span>
+            <span>圖片或影片</span>
             <span
               className={`media-upload-dropzone${isDraggingUpload ? " is-dragging" : ""}`}
               onDragOver={(event) => {
@@ -401,18 +409,23 @@ export function MediaLibraryManager({ assets, filters }: Props) {
               onDragLeave={() => setIsDraggingUpload(false)}
               onDrop={handleUploadDrop}
             >
-              <strong>{uploadFile ? uploadFile.name : "拖放圖片到這裡"}</strong>
-              <small className="muted">或點選下方欄位選擇圖片</small>
+              <strong>{uploadFile ? uploadFile.name : "拖放圖片或影片到這裡"}</strong>
+              <small className="muted">圖片 5MB；首頁影片僅支援 MP4、WebM，上限 30MB</small>
             </span>
             <input
               ref={fileInputRef}
               className="input"
               name="file"
               type="file"
-              accept="image/jpeg,image/png,image/webp,image/gif"
+              accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm"
               required={!uploadFile}
               onChange={(event) => setUploadFile(event.target.files?.[0] || null)}
             />
+          </label>
+          <label className="field full">
+            <span>影片 Poster（影片必填）</span>
+            <input className="input" name="poster" type="file" accept="image/jpeg,image/png,image/webp,image/gif" />
+            {uploadFile?.type.startsWith("video/") && uploadFile.size > 20 * 1024 * 1024 ? <small className="notice">影片超過 20MB，可能影響首頁載入效能。</small> : null}
           </label>
           <label className="field">
             <span>用途類型</span>

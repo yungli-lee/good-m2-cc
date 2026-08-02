@@ -3,12 +3,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { canManagePropertyMedia, getCurrentProfile } from "@/lib/auth";
 import { recordAuditLog } from "@/lib/audit/audit-log";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { validateMediaUpload } from "@/lib/media/upload";
 
 export const runtime = "edge";
-
-const imageTypes = new Set(["image/jpeg", "image/png", "image/webp"]);
-const imageExtensions = new Set(["jpg", "jpeg", "png", "webp"]);
-const maxImageSize = 5 * 1024 * 1024;
 
 function redirectTo(request: NextRequest, path: string) {
   return NextResponse.redirect(new URL(path, request.url), { status: 303 });
@@ -18,11 +15,6 @@ function cleanFilename(name: string) {
   const extension = name.split(".").pop()?.toLowerCase() || "";
   const base = name.replace(/\.[^.]+$/, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
   return `${base || "property-image"}-${crypto.randomUUID()}.${extension}`;
-}
-
-function isImageFile(file: File) {
-  const extension = file.name.split(".").pop()?.toLowerCase() || "";
-  return imageTypes.has(file.type) && imageExtensions.has(extension) && file.size > 0 && file.size <= maxImageSize;
 }
 
 function uploadedImageFiles(formData: FormData) {
@@ -46,7 +38,15 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   const formData = await request.formData();
   const files = uploadedImageFiles(formData);
   if (!files.length) return redirectTo(request, `/admin/properties/${id}/edit?error=no_file`);
-  if (files.some((file) => !isImageFile(file))) return redirectTo(request, `/admin/properties/${id}/edit?error=invalid_file`);
+  const validations = files.map((file) => validateMediaUpload(file, "property"));
+  if (validations.some((result) => !result.ok)) return redirectTo(request, `/admin/properties/${id}/edit?error=invalid_file`);
+  const videoCount = validations.filter((result) => result.ok && result.mediaType === "video").length;
+  const poster = formData.get("poster");
+  const posterFile = poster instanceof File && poster.size > 0 ? poster : null;
+  const posterValidation = posterFile ? validateMediaUpload(posterFile, "poster") : null;
+  if (videoCount > 1 || (videoCount === 1 && (!posterFile || !posterValidation?.ok))) {
+    return redirectTo(request, `/admin/properties/${id}/edit?error=video_poster_required`);
+  }
 
   const supabase = await createSupabaseServerClient();
   const { data: property } = await supabase.from("properties").select("id").eq("id", id).is("deleted_at", null).maybeSingle();
@@ -63,6 +63,8 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   const rows = [];
   const uploadedPaths: string[] = [];
   for (const [index, file] of files.entries()) {
+    const validation = validations[index];
+    if (!validation.ok) continue;
     const filename = cleanFilename(file.name);
     const storagePath = `${current.user.id}/${id}/${filename}`;
     const { error: uploadError } = await supabase.storage.from("property-media").upload(storagePath, file, {
@@ -82,13 +84,33 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       return redirectTo(request, `/admin/properties/${id}/edit?error=media_url_failed`);
     }
 
+    let posterUrl: string | null = null;
+    let posterStoragePath: string | null = null;
+    if (validation.mediaType === "video" && posterFile && posterValidation?.ok) {
+      posterStoragePath = `${current.user.id}/${id}/${cleanFilename(`poster-${crypto.randomUUID()}.${posterValidation.extension}`)}`;
+      const { error: posterUploadError } = await supabase.storage.from("property-media").upload(posterStoragePath, posterFile, {
+        contentType: posterFile.type,
+        upsert: false
+      });
+      if (posterUploadError) {
+        await supabase.storage.from("property-media").remove(uploadedPaths);
+        return redirectTo(request, `/admin/properties/${id}/edit?error=poster_upload_failed`);
+      }
+      uploadedPaths.push(posterStoragePath);
+      posterUrl = supabase.storage.from("property-media").getPublicUrl(posterStoragePath).data.publicUrl;
+    }
+
     rows.push({
       property_id: id,
-      media_type: "image",
+      media_type: validation.mediaType,
+      mime_type: file.type,
+      file_size: file.size,
       url: publicUrl.publicUrl,
       storage_path: storagePath,
+      thumbnail_url: posterUrl,
+      poster_storage_path: posterStoragePath,
       alt_text: String(formData.get("alt_text") || "").trim() || null,
-      is_cover: !existingCover && index === 0
+      is_cover: !existingCover && index === 0 && validation.mediaType === "image"
     });
   }
 

@@ -7,6 +7,7 @@ import { toTaipeiDateTimeLocal } from "@/lib/format";
 import type { HomeCampaign } from "@/lib/home-cms/types";
 import { cmsStatusLabels } from "@/lib/home-cms/types";
 import type { MediaLibraryAsset, MediaUsageType } from "@/lib/media";
+import { homepageVideoMaxFileSize } from "@/lib/media";
 
 type Props = {
   campaign?: HomeCampaign | null;
@@ -29,6 +30,9 @@ export function HomeCampaignForm({ campaign, mediaAssets }: Props) {
   const initialAsset = mediaAssets.find((asset) => asset.id === campaign?.image_media_id) || null;
   const [mediaId, setMediaId] = useState(initialAsset?.id || "");
   const [imageUrl, setImageUrl] = useState("");
+  const campaignMediaAssets = mediaAssets.filter((asset) => asset.media_type === "image" || (
+    Boolean(asset.poster_url && asset.poster_storage_path) && Boolean(asset.file_size && asset.file_size <= homepageVideoMaxFileSize)
+  ));
 
   function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -75,6 +79,10 @@ export function HomeCampaignForm({ campaign, mediaAssets }: Props) {
         <input className="input" type="number" min="0" name="sort_order" defaultValue={campaign?.sort_order ?? 1000} disabled={pending} />
       </label>
       <label className="field">
+        <span>圖片顯示秒數</span>
+        <input className="input" type="number" min="5" max="30" name="slide_duration_seconds" defaultValue={campaign?.slide_duration_seconds ?? 5} disabled={pending} />
+      </label>
+      <label className="field">
         <span>上架開始</span>
         <input className="input" type="datetime-local" name="starts_at" defaultValue={toTaipeiDateTimeLocal(campaign?.starts_at)} disabled={pending} />
       </label>
@@ -101,7 +109,8 @@ export function HomeCampaignForm({ campaign, mediaAssets }: Props) {
       <input type="hidden" name="image_media_id" value={mediaId} />
       <div className="field full">
         <MediaPicker
-          assets={mediaAssets}
+          assets={campaignMediaAssets}
+          allowedMediaTypes={["image", "video"]}
           preferredUsageTypes={preferredUsageTypes}
           selectedId={mediaId}
           title="Campaign 圖片"
@@ -112,6 +121,7 @@ export function HomeCampaignForm({ campaign, mediaAssets }: Props) {
           }}
         />
       </div>
+      <div className="field full muted">首頁影片必須包含 Poster 且不超過 30MB；超過 20MB 可能影響行動網路效能。</div>
       <label className="field full">
         <span>Fallback 圖片 URL</span>
         <input className="input" name="fallback_image_url" defaultValue={campaign?.fallback_image_url || imageUrl} disabled={pending} />

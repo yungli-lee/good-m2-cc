@@ -3,7 +3,8 @@ import type {
   mediaStatuses,
   mediaUsageRoles,
   mediaUsageTypes,
-  mediaUsedByTypes
+  mediaUsedByTypes,
+  mediaTypes
 } from "@/lib/media/constants";
 
 export type MediaUsageType = (typeof mediaUsageTypes)[number];
@@ -11,6 +12,7 @@ export type MediaUsageRole = (typeof mediaUsageRoles)[number];
 export type MediaUsedByType = (typeof mediaUsedByTypes)[number];
 export type MediaStatus = (typeof mediaStatuses)[number];
 export type MediaMimeType = (typeof mediaAllowedMimeTypes)[number];
+export type MediaType = (typeof mediaTypes)[number];
 
 export type MediaAsset = {
   id: string;
@@ -18,6 +20,9 @@ export type MediaAsset = {
   storage_path: string;
   original_filename: string | null;
   mime_type: MediaMimeType | string;
+  media_type: MediaType;
+  poster_url: string | null;
+  poster_storage_path: string | null;
   file_size: number | null;
   width: number | null;
   height: number | null;

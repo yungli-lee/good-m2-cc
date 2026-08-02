@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { mediaCategoryLabels, mediaUsageTypeLabels } from "@/lib/media";
 import { mediaCategoryUsageTypes, type MediaCategoryFilter } from "@/lib/media/schema";
-import type { MediaLibraryAsset, MediaUsageType } from "@/lib/media";
+import type { MediaLibraryAsset, MediaType, MediaUsageType } from "@/lib/media";
 
 type Props = {
   assets: MediaLibraryAsset[];
@@ -13,6 +13,7 @@ type Props = {
   title: string;
   emptyText?: string;
   onSelect: (asset: MediaLibraryAsset) => void;
+  allowedMediaTypes?: MediaType[];
 };
 
 const categoryValues: MediaCategoryFilter[] = ["all", "knowledge", "property", "company", "hero", "general"];
@@ -45,23 +46,24 @@ export function MediaPicker({
   preferredUsageTypes = [],
   selectedId,
   title,
-  onSelect
+  onSelect,
+  allowedMediaTypes = ["image"]
 }: Props) {
   const [category, setCategory] = useState<MediaCategoryFilter>("all");
   const [query, setQuery] = useState("");
   const preferred = useMemo(() => new Set(preferredUsageTypes), [preferredUsageTypes]);
   const sortedAssets = useMemo(
-    () => [...assets].sort((a, b) => Number(preferred.has(b.usage_type)) - Number(preferred.has(a.usage_type))),
-    [assets, preferred]
+    () => assets.filter((asset) => allowedMediaTypes.includes(asset.media_type)).sort((a, b) => Number(preferred.has(b.usage_type)) - Number(preferred.has(a.usage_type))),
+    [allowedMediaTypes, assets, preferred]
   );
   const filteredAssets = sortedAssets.filter((asset) => matchesCategory(asset, category) && matchesSearch(asset, query));
-  const selectedAsset = assets.find((asset) => asset.id === selectedId) || filteredAssets[0] || assets[0] || null;
+  const selectedAsset = sortedAssets.find((asset) => asset.id === selectedId) || filteredAssets[0] || sortedAssets[0] || null;
 
   return (
     <div className="media-picker">
       <div className="media-picker-header">
         <strong>{title}</strong>
-        <span className="muted">{filteredAssets.length} 張圖片</span>
+        <span className="muted">{filteredAssets.length} 個媒體</span>
       </div>
       <div className="media-picker-controls">
         <label className="field">
@@ -90,7 +92,11 @@ export function MediaPicker({
                 onClick={() => onSelect(asset)}
                 type="button"
               >
-                <img src={asset.public_url} alt={asset.alt_text || asset.original_filename || "媒體圖片"} loading="lazy" />
+                {asset.media_type === "video"
+                  ? asset.poster_url
+                    ? <img src={asset.poster_url} alt={asset.alt_text || asset.original_filename || "影片 Poster"} loading="lazy" />
+                    : <span className="property-video-fallback">影片無法播放</span>
+                  : <img src={asset.public_url} alt={asset.alt_text || asset.original_filename || "媒體圖片"} loading="lazy" />}
                 <span>
                   <strong>{assetName(asset)}</strong>
                   <em>{mediaUsageTypeLabels[asset.usage_type]}</em>
@@ -104,7 +110,9 @@ export function MediaPicker({
         <aside className="media-picker-preview" aria-label={`${title}預覽`}>
           {selectedAsset ? (
             <>
-              <img src={selectedAsset.public_url} alt={selectedAsset.alt_text || selectedAsset.original_filename || "媒體預覽"} loading="lazy" />
+              {selectedAsset.media_type === "video"
+                ? <video src={selectedAsset.public_url} controls playsInline preload="metadata" />
+                : <img src={selectedAsset.public_url} alt={selectedAsset.alt_text || selectedAsset.original_filename || "媒體預覽"} loading="lazy" />}
               <dl>
                 <div>
                   <dt>ALT</dt>

@@ -4,18 +4,13 @@ import { recordAuditLog } from "@/lib/audit/audit-log";
 import {
   buildMediaStoragePath,
   listAdminMediaAssets,
-  mediaAllowedMimeTypes,
   mediaBucketName,
-  mediaExtensionFromFilename,
-  mediaExtensionFromMimeType,
-  mediaMaxFileSize
+  validateMediaUpload
 } from "@/lib/media";
 import { mediaMetadataSchema, parseMediaCategory, parseMediaSort, parseMediaStatus } from "@/lib/media/schema";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export const runtime = "edge";
-
-const allowedMimeTypes = new Set<string>(mediaAllowedMimeTypes);
 
 function isUploadedFile(value: FormDataEntryValue | null): value is File {
   return value instanceof File && value.size > 0;
@@ -49,10 +44,14 @@ export async function POST(request: Request) {
 
   const formData = await request.formData();
   const file = formData.get("file");
-  if (!isUploadedFile(file)) return uploadError("請選擇圖片檔案。");
-
-  if (!allowedMimeTypes.has(file.type)) return uploadError("圖片格式不支援。");
-  if (file.size > mediaMaxFileSize) return uploadError("圖片大小不可超過 5MB。");
+  if (!isUploadedFile(file)) return uploadError("請選擇媒體檔案。");
+  const validatedFile = validateMediaUpload(file, "homepage");
+  if (!validatedFile.ok) return uploadError(`媒體檔案不符合規格：${validatedFile.error}`);
+  const poster = formData.get("poster");
+  const posterFile = isUploadedFile(poster) ? poster : null;
+  if (validatedFile.mediaType === "video" && !posterFile) return uploadError("影片必須上傳 poster 圖片。");
+  const validatedPoster = posterFile ? validateMediaUpload(posterFile, "poster") : null;
+  if (validatedPoster && !validatedPoster.ok) return uploadError(`Poster 不符合規格：${validatedPoster.error}`);
 
   const parsed = mediaMetadataSchema.safeParse({
     alt_text: String(formData.get("alt_text") || ""),
@@ -61,24 +60,39 @@ export async function POST(request: Request) {
   });
   if (!parsed.success) return uploadError("媒體資料格式不正確。");
 
-  const extension = mediaExtensionFromMimeType(file.type) || mediaExtensionFromFilename(file.name);
-  if (!extension) return uploadError("無法辨識檔案副檔名。");
-
   const supabase = await createSupabaseServerClient();
   const mediaId = crypto.randomUUID();
   const storagePath = buildMediaStoragePath({
     scope: auth.current!.user.id,
     usageType: parsed.data.usage_type,
     mediaId,
-    extension
+    extension: validatedFile.extension
   });
+  const posterStoragePath = posterFile && validatedPoster?.ok ? buildMediaStoragePath({
+    scope: auth.current!.user.id,
+    usageType: parsed.data.usage_type,
+    mediaId: `${mediaId}-poster`,
+    extension: validatedPoster.extension
+  }) : null;
 
   const { error: uploadStorageError } = await supabase.storage.from(mediaBucketName).upload(storagePath, file, {
     contentType: file.type,
     upsert: false
   });
-  if (uploadStorageError) return apiError("圖片上傳失敗。", 500);
+  if (uploadStorageError) return apiError("媒體上傳失敗。", 500);
   const { data: publicUrl } = supabase.storage.from(mediaBucketName).getPublicUrl(storagePath);
+  let posterUrl: string | null = null;
+  if (posterFile && posterStoragePath) {
+    const { error: posterUploadError } = await supabase.storage.from(mediaBucketName).upload(posterStoragePath, posterFile, {
+      contentType: posterFile.type,
+      upsert: false
+    });
+    if (posterUploadError) {
+      await supabase.storage.from(mediaBucketName).remove([storagePath]);
+      return apiError("Poster 上傳失敗。", 500);
+    }
+    posterUrl = supabase.storage.from(mediaBucketName).getPublicUrl(posterStoragePath).data.publicUrl;
+  }
 
   const { data, error } = await supabase
     .from("media_assets")
@@ -88,6 +102,9 @@ export async function POST(request: Request) {
       storage_path: storagePath,
       original_filename: file.name,
       mime_type: file.type,
+      media_type: validatedFile.mediaType,
+      poster_url: posterUrl,
+      poster_storage_path: posterStoragePath,
       file_size: file.size,
       alt_text: parsed.data.alt_text || null,
       caption: parsed.data.caption || null,
@@ -100,7 +117,7 @@ export async function POST(request: Request) {
     .single();
 
   if (error) {
-    await supabase.storage.from(mediaBucketName).remove([storagePath]);
+    await supabase.storage.from(mediaBucketName).remove([storagePath, posterStoragePath].filter(Boolean) as string[]);
     return apiError("媒體資料儲存失敗。", 500);
   }
 

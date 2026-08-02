@@ -42,6 +42,15 @@ export async function POST(request: NextRequest, { params }: Props) {
 
   if (error) return redirectTo(request, `/admin/properties/${id}/edit?error=${encodeURIComponent(error.code || "media_delete_failed")}`);
 
+  if (before.media_type === "video") {
+    const paths = [before.storage_path, before.poster_storage_path].filter(Boolean) as string[];
+    const { error: removeError } = await supabase.storage.from("property-media").remove(paths);
+    if (removeError) {
+      await supabase.from("property_media").update({ deleted_at: null }).eq("id", mediaId).eq("property_id", id);
+      return redirectTo(request, `/admin/properties/${id}/edit?error=media_storage_delete_failed`);
+    }
+  }
+
   await tryRecordAuditLog({
     action: "property_image_delete",
     resourceType: "property_media",

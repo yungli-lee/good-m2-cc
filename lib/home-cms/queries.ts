@@ -10,7 +10,7 @@ function withPublicUrl<T extends { media_assets?: { storage_path?: string | null
   return { ...item, media_public_url: data.publicUrl };
 }
 
-const homeCampaignSelect = "*,media_assets(id,storage_path,alt_text,caption,original_filename)";
+const homeCampaignSelect = "*,media_assets(id,storage_path,alt_text,caption,original_filename,media_type,mime_type,file_size,poster_url,poster_storage_path)";
 const sitePageSelect = "*,media_assets(id,storage_path,alt_text,caption,original_filename)";
 
 export async function listActiveHomeCampaigns() {

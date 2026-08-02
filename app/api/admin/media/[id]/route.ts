@@ -31,6 +31,7 @@ export async function PATCH(request: Request, { params }: Props) {
     .eq("id", parsedParams.data.id)
     .maybeSingle();
   if (!before) return apiError("Not found", 404);
+  if (restoreActive && before.media_type === "video") return apiError("Deleted videos must be uploaded again", 409);
 
   const { data, error } = await supabase
     .from("media_assets")
@@ -84,6 +85,14 @@ export async function DELETE(_request: Request, { params }: Props) {
     .maybeSingle();
   if (!before) return apiError("Not found", 404);
 
+  if (before.media_type === "video") {
+    const [{ count: usageCount }, { count: campaignCount }] = await Promise.all([
+      supabase.from("media_usages").select("id", { count: "exact", head: true }).eq("media_id", before.id).is("deleted_at", null),
+      supabase.from("home_campaigns").select("id", { count: "exact", head: true }).eq("image_media_id", before.id).neq("status", "archived")
+    ]);
+    if ((usageCount || 0) > 0 || (campaignCount || 0) > 0) return apiError("Media is still referenced", 409);
+  }
+
   const now = new Date().toISOString();
   const { data, error } = await supabase
     .from("media_assets")
@@ -97,6 +106,15 @@ export async function DELETE(_request: Request, { params }: Props) {
     .select("*")
     .single();
   if (error) return apiError("Unable to delete media", 500);
+
+  if (before.media_type === "video") {
+    const paths = [before.storage_path, before.poster_storage_path].filter(Boolean) as string[];
+    const { error: removeError } = await supabase.storage.from(mediaBucketName).remove(paths);
+    if (removeError) {
+      await supabase.from("media_assets").update({ status: "active", deleted_at: null, deleted_by: null }).eq("id", before.id);
+      return apiError("Unable to delete media files", 500);
+    }
+  }
 
   await recordAuditLog({
     action: "media_delete",
