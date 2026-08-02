@@ -9,7 +9,7 @@ export type RequirementTypeValue = (typeof requirementTypes)[number];
 export type PropertyCategoryValue = (typeof propertyCategories)[number];
 export const statusTransitions: Record<string, readonly string[]> = { active:["paused","fulfilled","archived"], paused:["active","fulfilled","archived"], fulfilled:["archived"], archived:[] };
 export const requirementTypeLabels: Record<(typeof requirementTypes)[number],string> = { residential:"住宅",townhouse:"透天",storefront:"店面",office:"辦公室",factory:"工廠",warehouse:"倉儲",building_land:"建地",industrial_land:"工業地",farmland:"農地",investment:"投資",rental:"租賃",other:"其他" };
-export const propertyCategoryLabels: Record<PropertyCategoryValue,string> = { townhouse:"透天",apartment:"公寓／大樓",building:"整棟建物",land:"土地",farmland:"農地",building_land:"建地",storefront:"店面",factory:"工廠",office:"辦公室",warehouse:"倉儲",other:"其他" };
+export const propertyCategoryLabels: Record<PropertyCategoryValue,string> = { townhouse:"透天厝",apartment:"公寓",building:"電梯大樓",land:"土地",farmland:"農地",building_land:"建地",storefront:"店面",factory:"工廠",office:"辦公室",warehouse:"倉儲",other:"其他" };
 export const requirementPropertyCategoryMap: Record<RequirementTypeValue,readonly PropertyCategoryValue[]> = {
  residential:["townhouse","apartment","building","other"],townhouse:["townhouse","building"],storefront:["storefront","building"],office:["office","building"],factory:["factory","warehouse"],warehouse:["warehouse","factory"],building_land:["building_land","land"],industrial_land:["land","building_land"],farmland:["farmland","land"],investment:propertyCategories,rental:["townhouse","apartment","building","storefront","factory","office","warehouse","other"],other:propertyCategories,
 };

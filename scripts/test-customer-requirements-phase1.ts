@@ -32,6 +32,9 @@ assert.deepEqual(normalizePropertyCategories("factory",["townhouse","factory","w
 assert.equal(requirementInputSchema.safeParse({...base,requirement_type:"residential",property_categories:["factory"]}).success,false);
 assert.equal(requirementTypeLabel("legacy_type"),"未知需求類型");
 assert.equal(propertyCategoryLabel("legacy_category"),"未知物件類型");
+assert.equal(propertyCategoryLabel("townhouse"),"透天厝");
+assert.equal(propertyCategoryLabel("apartment"),"公寓");
+assert.equal(propertyCategoryLabel("building"),"電梯大樓");
 const completeness=getRequirementCompleteness(parsed as unknown as Record<string,unknown>);
 assert.equal(completeness.sections.find(x=>x.label==="客需資料")?.complete,true);
 
