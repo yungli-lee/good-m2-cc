@@ -2629,7 +2629,7 @@ td {
 .media-library-card video, .media-picker-card video { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; background: #000; }
 .media-library-preview:is(video), .media-picker-preview video { width: 100%; background: #000; }
 @media (max-width: 640px) {
-  .home-campaign-carousel { min-height: clamp(420px, 118vw, 480px); }
+  .hero.home-campaign-carousel { min-height: clamp(420px, 118vw, 480px); }
   .home-campaign-slide { overflow: hidden; }
   .home-campaign-slide .hero-media video,
   .home-campaign-slide .home-video-fallback img { object-position: center center; }

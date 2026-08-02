@@ -141,7 +141,7 @@ carouselVideo.dispatch("canplay");
 assert.equal(carouselVideo.playCalls, 5, "a rejected autoplay attempt does not permanently lock the slide");
 
 const globalCss = readFileSync(new URL("app/globals.css", root), "utf8");
-assert.match(globalCss, /home-campaign-carousel \{ min-height: clamp\(420px, 118vw, 480px\); \}/);
+assert.match(globalCss, /hero\.home-campaign-carousel \{ min-height: clamp\(420px, 118vw, 480px\); \}/);
 assert.match(globalCss, /home-campaign-slide \.hero-media video,[\s\S]*home-video-fallback img \{ object-position: center center; \}/);
 assert.match(globalCss, /home-video-full-button \{ top: 76px; bottom: auto; max-width: calc\(100vw - 40px\); \}/);
 
