@@ -23,8 +23,8 @@ const optionalQueryBoolean=blankUndefined(z.enum(["required","not_required"]));
 const optionalDate=blankUndefined(z.string().regex(/^\d{4}-\d{2}-\d{2}$/));
 export const requirementListQuerySchema=z.object({
  page:z.coerce.number().int().min(1).default(1),pageSize:z.coerce.number().int().min(10).max(100).default(20),search:z.string().trim().max(120).default(""),personId:blankUndefined(z.string().uuid()),requirementType:blankUndefined(z.enum(requirementTypes)),transactionType:blankUndefined(z.enum(transactionTypes)),status:blankUndefined(z.enum(requirementStatuses)),urgency:blankUndefined(z.enum(urgencyLevels)),assignedUserId:blankUndefined(z.string().uuid()),city:blankUndefined(z.string().trim().max(80)),district:blankUndefined(z.string().trim().max(80)),propertyCategory:blankUndefined(z.enum(propertyCategories)),purchaseTimeline:blankUndefined(z.enum(purchaseTimelines)),
- budgetMin:optionalQueryNumber,budgetMax:optionalQueryNumber,landAreaMin:optionalQueryNumber,buildingAreaMin:optionalQueryNumber,bedroomsMin:optionalQueryNumber,elevator:optionalQueryBoolean,parking:optionalQueryBoolean,createdFrom:optionalDate,createdTo:optionalDate,updatedFrom:optionalDate,updatedTo:optionalDate,
+ propertyPrice:optionalQueryNumber,landAreaMin:optionalQueryNumber,buildingAreaMin:optionalQueryNumber,bedroomsMin:optionalQueryNumber,elevator:optionalQueryBoolean,parking:optionalQueryBoolean,createdFrom:optionalDate,createdTo:optionalDate,updatedFrom:optionalDate,updatedTo:optionalDate,
  sort:z.enum(["newest","updated","budget_asc","budget_desc"]).default("updated")
-}).superRefine((v,c)=>{if(v.budgetMin!=null&&v.budgetMax!=null&&v.budgetMin>v.budgetMax)c.addIssue({code:"custom",path:["budgetMax"],message:"預算上限不得小於下限"});});
+});
 export type RequirementInput=z.infer<typeof requirementInputSchema>;
 export function fieldErrors(error:z.ZodError){return error.issues.reduce<Record<string,string>>((o,i)=>{const k=String(i.path[0]||"form");if(!o[k])o[k]=i.message;return o;},{});}
