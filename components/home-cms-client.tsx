@@ -140,7 +140,8 @@ export function HomeCmsClient() {
         const handler = () => {
           paused = true;
           window.clearTimeout(timeoutId);
-          slides[index]?.querySelector<HTMLVideoElement>("[data-home-campaign-video]")?.pause();
+          const backgroundVideo = slides[index]?.querySelector<HTMLVideoElement>("[data-home-campaign-video]");
+          if (backgroundVideo) deactivateHomeCarouselVideo(backgroundVideo);
           setLightbox({ src: button.dataset.videoLightboxSrc || "", title: button.dataset.videoLightboxTitle || "完整影片" });
         };
         button.addEventListener("click", handler);

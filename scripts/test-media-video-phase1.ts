@@ -58,7 +58,7 @@ assert.doesNotMatch(homeRender, /video\/quicktime|\.mov/);
 assert.match(homeRender, /播放完整版/);
 assert.match(homeClient, /home-video-lightbox-close/);
 assert.match(homeClient, /visibilitychange/);
-assert.match(homeClient, /\.pause\(\)/, "background video pauses while the lightbox is open");
+assert.match(homeClient, /if \(backgroundVideo\) deactivateHomeCarouselVideo\(backgroundVideo\)/, "opening the lightbox fully deactivates its background video");
 assert.match(homeVideoLifecycle, /removeAttribute\("src"\)/);
 assert.match(homeClient, /5_000/);
 assert.match(homeClient, /prefers-reduced-motion: reduce/);
