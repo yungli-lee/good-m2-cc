@@ -56,6 +56,7 @@ assert.match(homeRender, /data-video-src=/, "the initially active video keeps a 
 assert.match(homeRender, /data-video-src=.*preload="none"/);
 assert.doesNotMatch(homeRender, /video\/quicktime|\.mov/);
 assert.match(homeRender, /播放完整版/);
+assert.match(homeRender, /home-campaign-video-slide/, "video slides expose a mobile-only framing hook");
 assert.match(homeClient, /home-video-lightbox-close/);
 assert.match(homeClient, /const HomeCmsMarkup = memo/, "lightbox state changes must not remount the imperative carousel DOM");
 assert.match(homeClient, /visibilitychange/);
@@ -142,7 +143,8 @@ carouselVideo.dispatch("canplay");
 assert.equal(carouselVideo.playCalls, 5, "a rejected autoplay attempt does not permanently lock the slide");
 
 const globalCss = readFileSync(new URL("app/globals.css", root), "utf8");
-assert.match(globalCss, /hero\.home-campaign-carousel \{ min-height: clamp\(420px, 118vw, 480px\); \}/);
+assert.match(globalCss, /hero\.home-campaign-carousel \{ min-height: clamp\(400px, 108vw, 440px\); \}/);
+assert.match(globalCss, /home-campaign-video-slide \.hero-media \{[\s\S]*aspect-ratio: 16 \/ 9;/);
 assert.match(globalCss, /home-campaign-slide \.hero-media video,[\s\S]*home-video-fallback img \{ object-position: center center; \}/);
 assert.match(globalCss, /home-video-full-button \{ top: 76px; bottom: auto; max-width: calc\(100vw - 40px\); \}/);
 

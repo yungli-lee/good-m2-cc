@@ -111,7 +111,7 @@ function renderCampaign(campaign: CampaignForRender, index: number) {
     : "";
 
   return `
-        <div class="home-campaign-slide"${hidden} data-home-campaign-slide data-slide-duration-seconds="${campaign.slide_duration_seconds || 5}">
+        <div class="home-campaign-slide${isVideo ? " home-campaign-video-slide" : ""}"${hidden} data-home-campaign-slide data-slide-duration-seconds="${campaign.slide_duration_seconds || 5}">
           <div class="hero-media">
             ${isVideo
               ? `<video data-video-src="${escapeAttr(src)}" ${index === 0 ? `src="${escapeAttr(src)}" autoplay preload="metadata"` : `preload="none"`} poster="${escapeAttr(poster)}" aria-label="${escapeAttr(alt)}" muted playsinline data-home-campaign-video></video>
