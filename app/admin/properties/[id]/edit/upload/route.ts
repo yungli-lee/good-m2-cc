@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { canManagePropertyMedia, getCurrentProfile } from "@/lib/auth";
 import { recordAuditLog } from "@/lib/audit/audit-log";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { validateMediaUpload } from "@/lib/media/upload";
+import { validateMediaFile } from "@/lib/media/upload";
 
 export const runtime = "edge";
 
@@ -38,12 +38,12 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   const formData = await request.formData();
   const files = uploadedImageFiles(formData);
   if (!files.length) return redirectTo(request, `/admin/properties/${id}/edit?error=no_file`);
-  const validations = files.map((file) => validateMediaUpload(file, "property"));
+  const validations = await Promise.all(files.map((file) => validateMediaFile(file, "property")));
   if (validations.some((result) => !result.ok)) return redirectTo(request, `/admin/properties/${id}/edit?error=invalid_file`);
   const videoCount = validations.filter((result) => result.ok && result.mediaType === "video").length;
   const poster = formData.get("poster");
   const posterFile = poster instanceof File && poster.size > 0 ? poster : null;
-  const posterValidation = posterFile ? validateMediaUpload(posterFile, "poster") : null;
+  const posterValidation = posterFile ? await validateMediaFile(posterFile, "poster") : null;
   if (videoCount > 1 || (videoCount === 1 && (!posterFile || !posterValidation?.ok))) {
     return redirectTo(request, `/admin/properties/${id}/edit?error=video_poster_required`);
   }

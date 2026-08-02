@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { homeSlideDurationMs } from "../lib/media/playback.ts";
-import { validateMediaUpload } from "../lib/media/upload.ts";
+import { validateMediaFile, validateMediaUpload } from "../lib/media/upload.ts";
 
 assert.equal(homeSlideDurationMs("video"), 30_000, "a 45-second uploaded video advances at 30 seconds");
 assert.equal(homeSlideDurationMs("image"), 5_000);
@@ -22,6 +22,20 @@ assert.equal(validateMediaUpload({ name: "video.mp4", type: "video/mp4", size: 5
 assert.equal(validateMediaUpload({ name: "video.mp4", type: "video/mp4", size: 100 * mb + 1 }, "property").ok, false);
 assert.equal(validateMediaUpload({ name: "poster.jpg", type: "image/jpeg", size: 5 * mb }, "poster").ok, true);
 assert.equal(validateMediaUpload({ name: "poster.mp4", type: "video/mp4", size: mb }, "poster").ok, false);
+
+function uploadFile(name: string, type: string, bytes: number[]) {
+  const blob = new Blob([new Uint8Array(bytes)], { type });
+  return { name, type, size: blob.size, slice: (start?: number, end?: number) => blob.slice(start, end) };
+}
+
+const mp4Bytes = [0, 0, 0, 24, 0x66, 0x74, 0x79, 0x70, 0x69, 0x73, 0x6f, 0x6d, 0, 0, 0, 0];
+const movBytes = [0, 0, 0, 24, 0x66, 0x74, 0x79, 0x70, 0x71, 0x74, 0x20, 0x20, 0, 0, 0, 0];
+const webmBytes = [0x1a, 0x45, 0xdf, 0xa3, 0x42, 0x82, 0x84, 0x77, 0x65, 0x62, 0x6d];
+assert.equal((await validateMediaFile(uploadFile("video.mp4", "video/mp4", mp4Bytes), "homepage")).ok, true);
+assert.equal((await validateMediaFile(uploadFile("video.webm", "video/webm", webmBytes), "homepage")).ok, true);
+assert.equal((await validateMediaFile(uploadFile("fake.mp4", "video/mp4", [1, 2, 3, 4]), "homepage")).ok, false);
+assert.equal((await validateMediaFile(uploadFile("renamed.jpg", "image/jpeg", mp4Bytes), "homepage")).ok, false);
+assert.equal((await validateMediaFile(uploadFile("quicktime.mp4", "video/mp4", movBytes), "homepage")).ok, false);
 
 const root = new URL("../", import.meta.url);
 const homeRender = readFileSync(new URL("lib/home-cms/render.ts", root), "utf8");

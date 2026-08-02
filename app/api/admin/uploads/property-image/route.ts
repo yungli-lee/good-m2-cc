@@ -3,7 +3,7 @@ import { requireApiRole, apiError } from "@/lib/auth-api";
 import { recordAuditLog } from "@/lib/audit/audit-log";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { uploadPropertyImageSchema } from "@/lib/validation/common";
-import { validateMediaUpload } from "@/lib/media/upload";
+import { validateMediaFile } from "@/lib/media/upload";
 
 export const runtime = "edge";
 
@@ -25,11 +25,11 @@ export async function POST(request: Request) {
   if (!parsed.success || !(file instanceof File)) return apiError("Invalid upload", 422);
   const propertyId = parsed.data.property_id;
 
-  const validation = validateMediaUpload(file, "property");
+  const validation = await validateMediaFile(file, "property");
   if (!validation.ok) return apiError(`Invalid file: ${validation.error}`, 422);
   const poster = formData.get("poster");
   const posterFile = poster instanceof File && poster.size > 0 ? poster : null;
-  const posterValidation = posterFile ? validateMediaUpload(posterFile, "poster") : null;
+  const posterValidation = posterFile ? await validateMediaFile(posterFile, "poster") : null;
   if (validation.mediaType === "video" && (!posterFile || !posterValidation?.ok)) return apiError("Video poster required", 422);
 
   const supabase = await createSupabaseServerClient();

@@ -5,7 +5,7 @@ import {
   buildMediaStoragePath,
   listAdminMediaAssets,
   mediaBucketName,
-  validateMediaUpload
+  validateMediaFile
 } from "@/lib/media";
 import { mediaMetadataSchema, parseMediaCategory, parseMediaSort, parseMediaStatus } from "@/lib/media/schema";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -45,12 +45,12 @@ export async function POST(request: Request) {
   const formData = await request.formData();
   const file = formData.get("file");
   if (!isUploadedFile(file)) return uploadError("請選擇媒體檔案。");
-  const validatedFile = validateMediaUpload(file, "homepage");
+  const validatedFile = await validateMediaFile(file, "homepage");
   if (!validatedFile.ok) return uploadError(`媒體檔案不符合規格：${validatedFile.error}`);
   const poster = formData.get("poster");
   const posterFile = isUploadedFile(poster) ? poster : null;
   if (validatedFile.mediaType === "video" && !posterFile) return uploadError("影片必須上傳 poster 圖片。");
-  const validatedPoster = posterFile ? validateMediaUpload(posterFile, "poster") : null;
+  const validatedPoster = posterFile ? await validateMediaFile(posterFile, "poster") : null;
   if (validatedPoster && !validatedPoster.ok) return uploadError(`Poster 不符合規格：${validatedPoster.error}`);
 
   const parsed = mediaMetadataSchema.safeParse({
