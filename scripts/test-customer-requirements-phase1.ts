@@ -34,6 +34,9 @@ const form=readFileSync("components/admin/customer-requirement-form.tsx","utf8")
 assert.match(form,/client fetch JSON|fetch\(/);
 assert.match(form,/if\(busy\)return/);
 assert.match(form,/fieldErrors/);
+assert.match(form,/firstError/);
 const list=readFileSync("lib/customer-requirements/queries.ts","utf8");
 assert.match(list,/\.range\(from,to\)/);
+assert.doesNotMatch(list,/assignee:profiles!crm_customer_requirements_assigned_user_id_fkey/);
+assert.match(list,/person:people\(id,display_name\)/);
 console.log("CRM Customer Requirements Phase 1 tests: PASS");
