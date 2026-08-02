@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { requirementListQuerySchema } from "../lib/customer-requirements/schema.ts";
+import { sanitizeRequirementSearch } from "../lib/customer-requirements/queries.ts";
 
 const defaults = requirementListQuerySchema.parse({});
 assert.equal(defaults.page, 1);
@@ -26,6 +27,8 @@ assert.equal(filters.budgetMin, 500);
 assert.equal(filters.bedroomsMin, 3);
 assert.equal(filters.elevator, "required");
 assert.equal(filters.pageSize, 50);
+assert.equal(sanitizeRequirementSearch("CRM B4.1A"), "CRM B4.1A");
+assert.equal(sanitizeRequirementSearch("王先生,()_%"), "王先生");
 assert.equal(requirementListQuerySchema.safeParse({ budgetMin: 900, budgetMax: 800 }).success, false);
 assert.equal(requirementListQuerySchema.safeParse({ createdFrom: "2026/08/01" }).success, false);
 assert.equal(requirementListQuerySchema.safeParse({ elevator: "yes" }).success, false);

@@ -4,11 +4,12 @@ import type { requirementListQuerySchema } from "./schema";
 type Filters=z.infer<typeof requirementListQuerySchema>;
 const tenThousandsToTwd=(value:number)=>value*10_000;
 const endOfDay=(date:string)=>`${date}T23:59:59.999Z`;
+export const sanitizeRequirementSearch=(value:string)=>value.replace(/[%_,()]/g," ").trim();
 export async function listRequirements(supabase:SupabaseClient,f:Filters){
  const from=(f.page-1)*f.pageSize,to=from+f.pageSize-1;
  let q=supabase.from("crm_customer_requirements").select("*,person:people(id,display_name)",{count:"exact"});
  if(f.search){
-  const search=f.search.replace(/[%_,().]/g," ").trim();
+  const search=sanitizeRequirementSearch(f.search);
   const {data:matchingPeople}=await supabase.from("people").select("id").is("deleted_at",null).or(`display_name.ilike.%${search}%,legal_name.ilike.%${search}%,phone.ilike.%${search}%`).limit(100);
   const clauses=[`title.ilike.%${search}%`,`area_note.ilike.%${search}%`,`notes.ilike.%${search}%`];
   const personIds=(matchingPeople||[]).map(person=>person.id);
