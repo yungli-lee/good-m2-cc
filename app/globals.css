@@ -2617,17 +2617,23 @@ td {
 }
 .home-video-full-button { position: absolute; left: 20px; bottom: 20px; z-index: 2; }
 .hero-media { position: relative; }
-.hero-media video { width: 100%; height: 100%; object-fit: cover; }
+.hero-media video { width: 100%; height: 100%; object-fit: cover; object-position: center center; }
 .property-video-card { position: relative; padding: 0; border: 0; background: #000; cursor: pointer; overflow: hidden; }
 .property-video-card img { display: block; width: 100%; height: 100%; object-fit: cover; }
 .property-video-card span { position: absolute; inset: auto 12px 12px; padding: 8px 12px; border-radius: 999px; background: rgb(0 0 0 / 70%); color: #fff; }
 .property-video-card .property-video-fallback { inset: 0; display: grid; place-items: center; border-radius: 0; }
 .video-fallback, .home-video-fallback { position: relative; width: 100%; height: 100%; background: #111; color: #fff; text-align: center; }
 .video-fallback img, .home-video-fallback img { width: 100%; height: 100%; object-fit: cover; opacity: .75; }
+.hero-media .home-video-fallback img { object-position: center center; }
 .video-fallback p, .home-video-fallback span { position: absolute; inset: auto 0 16px; }
 .media-library-card video, .media-picker-card video { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; background: #000; }
 .media-library-preview:is(video), .media-picker-preview video { width: 100%; background: #000; }
 @media (max-width: 640px) {
+  .home-campaign-carousel { min-height: clamp(420px, 118vw, 480px); }
+  .home-campaign-slide { overflow: hidden; }
+  .home-campaign-slide .hero-media video,
+  .home-campaign-slide .home-video-fallback img { object-position: center center; }
+  .home-video-full-button { top: 76px; bottom: auto; max-width: calc(100vw - 40px); }
   .video-lightbox { padding: 12px; }
   .video-lightbox-close { top: 8px; right: 8px; }
 }

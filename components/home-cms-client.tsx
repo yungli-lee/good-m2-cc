@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { VideoLightbox } from "@/components/media/video-lightbox";
+import { activateHomeCarouselVideo, deactivateHomeCarouselVideo } from "@/lib/media/home-carousel-video";
 import { homeSlideDurationMs } from "@/lib/media/playback";
 import { renderHomeCmsHtml } from "@/lib/home-cms/render";
 import type { HomeCampaign, SitePage } from "@/lib/home-cms/types";
@@ -68,6 +69,15 @@ export function HomeCmsClient() {
       let index = 0;
       let paused = false;
       let videoFailed = false;
+      const failActiveVideo = (slide: HTMLElement, video: HTMLVideoElement, slideIndex: number) => {
+        if (slideIndex !== index) return;
+        videoFailed = true;
+        video.pause();
+        video.hidden = true;
+        const fallback = slide.querySelector<HTMLElement>("[data-home-video-fallback]");
+        if (fallback) fallback.hidden = false;
+        schedule();
+      };
       const schedule = () => {
         if (paused || reducedMotion || slides.length < 2) return;
         window.clearTimeout(timeoutId);
@@ -76,6 +86,7 @@ export function HomeCmsClient() {
         timeoutId = window.setTimeout(() => show(index + 1), videoFailed ? 5_000 : homeSlideDurationMs(activeVideo ? "video" : "image", imageDuration));
       };
       const show = (next: number) => {
+        window.clearTimeout(timeoutId);
         index = next % slides.length;
         videoFailed = false;
         slides.forEach((slide, slideIndex) => {
@@ -83,25 +94,14 @@ export function HomeCmsClient() {
           const video = slide.querySelector<HTMLVideoElement>("[data-home-campaign-video]");
           if (!video) return;
           if (slideIndex === index) {
-            video.hidden = false;
             const fallback = slide.querySelector<HTMLElement>("[data-home-video-fallback]");
             if (fallback) fallback.hidden = true;
-            const deferredSrc = video.dataset.videoSrc;
-            if (!video.getAttribute("src") && deferredSrc) {
-              video.setAttribute("src", deferredSrc);
-              video.load();
-            }
-            video.preload = "metadata";
-            video.currentTime = 0;
-            if (reducedMotion) return;
-            void video.play().catch(() => {
-              video.dispatchEvent(new Event("error"));
+            activateHomeCarouselVideo(video, {
+              reducedMotion,
+              onPlayRejected: () => failActiveVideo(slide, video, slideIndex)
             });
           } else {
-            video.pause();
-            video.removeAttribute("src");
-            video.preload = "none";
-            video.load();
+            deactivateHomeCarouselVideo(video);
           }
         });
         dots.forEach((dot, dotIndex) => {
@@ -125,13 +125,7 @@ export function HomeCmsClient() {
         video.addEventListener("ended", handler);
         dotHandlers.push(() => video.removeEventListener("ended", handler));
         const failureHandler = () => {
-          if (slideIndex !== index) return;
-          videoFailed = true;
-          video.pause();
-          video.hidden = true;
-          const fallback = slide.querySelector<HTMLElement>("[data-home-video-fallback]");
-          if (fallback) fallback.hidden = false;
-          schedule();
+          failActiveVideo(slide, video, slideIndex);
         };
         const fallbackImage = slide.querySelector<HTMLImageElement>("[data-home-video-fallback] img");
         const posterFailureHandler = () => {
@@ -154,17 +148,22 @@ export function HomeCmsClient() {
       });
       const resume = () => {
         paused = false;
-        if (!reducedMotion) void slides[index]?.querySelector<HTMLVideoElement>("[data-home-campaign-video]")?.play().catch(() => undefined);
-        schedule();
+        show(index);
       };
       window.addEventListener("home-video-lightbox-close", resume);
       dotHandlers.push(() => window.removeEventListener("home-video-lightbox-close", resume));
+      const resumeVisibleVideo = () => {
+        if (document.visibilityState === "visible" && !paused) show(index);
+      };
+      document.addEventListener("visibilitychange", resumeVisibleVideo);
+      dotHandlers.push(() => document.removeEventListener("visibilitychange", resumeVisibleVideo));
       show(0);
     }, 0);
 
     return () => {
       window.clearTimeout(timer);
       if (timeoutId) window.clearTimeout(timeoutId);
+      document.querySelectorAll<HTMLVideoElement>("[data-home-campaign-video]").forEach(deactivateHomeCarouselVideo);
       dotHandlers.forEach((removeHandler) => removeHandler());
     };
   }, [html]);

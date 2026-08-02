@@ -114,7 +114,7 @@ function renderCampaign(campaign: CampaignForRender, index: number) {
         <div class="home-campaign-slide"${hidden} data-home-campaign-slide data-slide-duration-seconds="${campaign.slide_duration_seconds || 5}">
           <div class="hero-media">
             ${isVideo
-              ? `<video ${index === 0 ? `src="${escapeAttr(src)}" autoplay preload="metadata"` : `data-video-src="${escapeAttr(src)}" preload="none"`} poster="${escapeAttr(poster)}" aria-label="${escapeAttr(alt)}" muted playsinline data-home-campaign-video></video>
+              ? `<video data-video-src="${escapeAttr(src)}" ${index === 0 ? `src="${escapeAttr(src)}" autoplay preload="metadata"` : `preload="none"`} poster="${escapeAttr(poster)}" aria-label="${escapeAttr(alt)}" muted playsinline data-home-campaign-video></video>
                  <div class="home-video-fallback" data-home-video-fallback hidden><img src="${escapeAttr(poster)}" alt="${escapeAttr(alt)}"><span>影片暫時無法播放</span></div>
                  <button class="home-video-full-button" type="button" data-video-lightbox-src="${escapeAttr(src)}" data-video-lightbox-title="${escapeAttr(alt)}">▶ 播放完整版</button>`
               : `<img src="${escapeAttr(src)}" alt="${escapeAttr(alt)}">`}
