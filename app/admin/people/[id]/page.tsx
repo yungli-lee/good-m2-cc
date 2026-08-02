@@ -103,6 +103,7 @@ export default async function PersonDetailPage({ params, searchParams }: Props) 
                 <Field label="手機 / 電話" value={person.phone} />
                 <Field label="Line ID" value={person.line_id} />
                 <Field label="Email" value={person.email} />
+                <Field label="地址" value={person.address} />
                 <Field label="來源" value={sourceLabel[person.source] || person.source} />
                 <Field label="狀態" value={statusLabel[person.status] || person.status} />
                 <Field label="負責人" value={person.assigned_to_label} />
