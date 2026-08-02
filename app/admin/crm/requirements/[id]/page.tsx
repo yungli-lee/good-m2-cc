@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireRole } from "@/lib/auth";
-import { requirementTypeLabels, statusLabels, urgencyLabels } from "@/lib/customer-requirements/constants";
+import { propertyCategoryLabel, requirementTypeLabel, statusLabels, urgencyLabels } from "@/lib/customer-requirements/constants";
 import { getRequirement } from "@/lib/customer-requirements/queries";
 import { formatDateTime } from "@/lib/format";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -22,12 +22,12 @@ export default async function RequirementDetail({ params }: Props) {
 
   return <main className="section"><div className="container">
     <div className="actions" style={{ justifyContent: "space-between" }}>
-      <div><h1>{requirement.title}</h1><p className="muted">{requirement.person?.display_name}／{requirementTypeLabels[requirement.requirement_type as keyof typeof requirementTypeLabels]}</p></div>
+      <div><h1>{requirement.title}</h1><p className="muted">{requirement.person?.display_name}／{requirementTypeLabel(String(requirement.requirement_type))}</p></div>
       <div className="actions"><Link className="button ghost" href={`/admin/people/${requirement.person_id}#requirements`}>返回客戶</Link><Link className="button" href={`/admin/crm/requirements/${requirement.id}/edit`}>編輯</Link></div>
     </div>
     <section className="card"><div className="card-body"><dl className="company-info-panel">
       <div><dt>交易</dt><dd>{requirement.transaction_type === "buy" ? "購買" : "承租"}</dd></div>
-      <div><dt>物件類型</dt><dd>{(requirement.property_categories || []).join("、")}</dd></div>
+      <div><dt>物件類型</dt><dd>{(requirement.property_categories || []).map((value:string)=>propertyCategoryLabel(value)).join("、")||"-"}</dd></div>
       <div><dt>區域</dt><dd>{[...(requirement.cities || []), ...(requirement.districts || [])].join("、") || requirement.area_note || "-"}</dd></div>
       <div><dt>預算</dt><dd>{requirement.transaction_type === "buy" ? money(requirement.sale_budget_max) : money(requirement.rent_budget_max)}</dd></div>
       <div><dt>急迫度</dt><dd>{urgencyLabels[requirement.urgency as keyof typeof urgencyLabels] || "-"}</dd></div>
