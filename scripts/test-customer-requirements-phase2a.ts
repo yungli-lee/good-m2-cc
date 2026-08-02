@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { requirementListQuerySchema } from "../lib/customer-requirements/schema.ts";
-import { sanitizeRequirementSearch } from "../lib/customer-requirements/queries.ts";
+import { budgetOverlapFilter, sanitizeRequirementSearch } from "../lib/customer-requirements/queries.ts";
 
 const defaults = requirementListQuerySchema.parse({});
 assert.equal(defaults.page, 1);
@@ -65,13 +65,25 @@ assert.equal(browserFormQuery.district, undefined);
 assert.equal(browserFormQuery.elevator, undefined);
 assert.equal(browserFormQuery.createdFrom, undefined);
 
+assert.equal(
+  budgetOverlapFilter("buy", "min", 5_000_000),
+  "sale_budget_max.gte.5000000,sale_budget_max.is.null",
+);
+assert.equal(
+  budgetOverlapFilter("buy", "max", 20_000_000),
+  "sale_budget_min.lte.20000000,sale_budget_min.is.null",
+);
+assert.equal(
+  budgetOverlapFilter(undefined, "min", 5_000_000),
+  "and(transaction_type.eq.buy,or(sale_budget_max.gte.5000000,sale_budget_max.is.null)),and(transaction_type.eq.rent,or(rent_budget_max.gte.5000000,rent_budget_max.is.null))",
+);
+
 const querySource = readFileSync("lib/customer-requirements/queries.ts", "utf8");
 assert.match(querySource, /display_name\.ilike/);
 assert.match(querySource, /legal_name\.ilike/);
 assert.match(querySource, /phone\.ilike/);
 assert.match(querySource, /person_id\.in/);
-assert.match(querySource, /sale_budget_min\.gte/);
-assert.match(querySource, /rent_budget_max\.lte/);
+assert.match(querySource, /budgetOverlapFilter/);
 assert.match(querySource, /land_area_min/);
 assert.match(querySource, /building_area_min/);
 assert.match(querySource, /bedrooms_min/);
