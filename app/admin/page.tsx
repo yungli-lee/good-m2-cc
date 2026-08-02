@@ -38,6 +38,7 @@ export default async function AdminIndexPage() {
 
         <div className="actions">
           <Link className="button" href="/admin/properties">物件管理</Link>
+          <Link className="button" href="/admin/crm/requirements">客需管理</Link>
           <Link className="button secondary" href="/admin/knowledge">知識管理</Link>
           <Link className="button secondary" href="/admin/home-campaigns">首頁 Campaign</Link>
           <Link className="button secondary" href="/admin/site-pages">靜態頁面</Link>

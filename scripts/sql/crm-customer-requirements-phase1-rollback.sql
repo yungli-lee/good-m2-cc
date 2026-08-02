@@ -1,0 +1,11 @@
+begin;
+drop index if exists public.people_activities_requirement_idx;
+alter table public.people_activities drop constraint if exists people_activities_type_check;
+alter table public.people_activities add constraint people_activities_type_check check (activity_type in ('visit','phone','line','sms','email','initial_contact','requirement_discussion','other'));
+alter table public.people_activities drop column if exists requirement_id;
+drop policy if exists "scoped read people activities" on public.people_activities;
+drop policy if exists "scoped insert people activities" on public.people_activities;
+create policy "staff read people activities" on public.people_activities for select to authenticated using (public.is_admin_role(array['editor','admin','owner']));
+create policy "staff insert people activities" on public.people_activities for insert to authenticated with check (public.is_admin_role(array['editor','admin','owner']));
+drop table if exists public.crm_customer_requirements;
+commit;
