@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import { requirementInputSchema } from "../lib/customer-requirements/schema.ts";
 import { buildRequirementPayload, tenThousandsToTwd, twdToTenThousands } from "../lib/customer-requirements/payload.ts";
 import { getRequirementCompleteness } from "../lib/customer-requirements/completeness.ts";
-import { statusTransitions } from "../lib/customer-requirements/constants.ts";
+import { allowedPropertyCategories, normalizePropertyCategories, propertyCategoryLabel, requirementTypeLabel, statusTransitions } from "../lib/customer-requirements/constants.ts";
 
 const base = { person_id:"11111111-1111-4111-8111-111111111111", title:" 和美孝親三房 ", requirement_type:"residential", transaction_type:"buy", status:"active", urgency:"high", property_categories:["townhouse"], cities:["彰化縣"], districts:["和美鎮"], area_note:"", sale_budget_min:500, sale_budget_max:800, rent_budget_min:null, rent_budget_max:null, must_have:["電梯"], nice_to_have:[], unacceptable:[] };
 const parsed = requirementInputSchema.parse(base);
@@ -22,6 +22,16 @@ assert.equal(requirementInputSchema.safeParse({ ...base, transaction_type:"rent"
 assert.equal(requirementInputSchema.safeParse({ ...base, transaction_type:"rent", rent_budget_max:20 }).success, false);
 assert.deepEqual(statusTransitions.active, ["paused","fulfilled","archived"]);
 assert.deepEqual(statusTransitions.archived, []);
+assert.deepEqual(allowedPropertyCategories("residential"),["townhouse","apartment","building","other"]);
+assert.equal(allowedPropertyCategories("residential").includes("factory"),false);
+assert.equal(allowedPropertyCategories("residential").includes("warehouse"),false);
+assert.equal(allowedPropertyCategories("residential").includes("farmland"),false);
+assert.deepEqual(allowedPropertyCategories("factory"),["factory","warehouse"]);
+assert.deepEqual(allowedPropertyCategories("building_land"),["building_land","land"]);
+assert.deepEqual(normalizePropertyCategories("factory",["townhouse","factory","warehouse"]),["factory","warehouse"]);
+assert.equal(requirementInputSchema.safeParse({...base,requirement_type:"residential",property_categories:["factory"]}).success,false);
+assert.equal(requirementTypeLabel("legacy_type"),"未知需求類型");
+assert.equal(propertyCategoryLabel("legacy_category"),"未知物件類型");
 const completeness=getRequirementCompleteness(parsed as unknown as Record<string,unknown>);
 assert.equal(completeness.sections.find(x=>x.label==="客需資料")?.complete,true);
 

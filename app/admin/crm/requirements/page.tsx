@@ -2,8 +2,11 @@ import Link from "next/link";
 import { requireRole } from "@/lib/auth";
 import {
   propertyCategories,
+  allowedPropertyCategories,
+  propertyCategoryLabel,
   purchaseTimelines,
   requirementTypeLabels,
+  requirementTypeLabel,
   requirementTypes,
   statusLabels,
   requirementStatuses,
@@ -23,7 +26,7 @@ type RequirementListRow = {
   person_id: string;
   assigned_user_id: string | null;
   title: string;
-  requirement_type: keyof typeof requirementTypeLabels;
+  requirement_type: string;
   transaction_type: "buy" | "rent";
   property_categories: string[];
   cities: string[] | null;
@@ -89,7 +92,7 @@ export default async function RequirementsPage({ searchParams }: Props) {
       <label className="field"><span>客戶</span><select className="select" name="personId" defaultValue={filters.personId || ""}><option value="">全部客戶</option>{(people || []).map((person) => <option key={person.id} value={person.id}>{person.display_name}{person.phone ? `｜${person.phone}` : ""}</option>)}</select></label>
       <label className="field"><span>交易</span><select className="select" name="transactionType" defaultValue={filters.transactionType || ""}><option value="">買／租皆可</option><option value="buy">購買</option><option value="rent">承租</option></select></label>
       <label className="field"><span>需求類型</span><select className="select" name="requirementType" defaultValue={filters.requirementType || ""}><option value="">全部</option>{requirementTypes.map((value) => <option key={value} value={value}>{requirementTypeLabels[value]}</option>)}</select></label>
-      <label className="field"><span>物件類型</span><select className="select" name="propertyCategory" defaultValue={filters.propertyCategory || ""}><option value="">全部</option>{propertyCategories.map((value) => <option key={value} value={value}>{value}</option>)}</select></label>
+      <label className="field"><span>物件類型</span><select className="select" name="propertyCategory" defaultValue={filters.propertyCategory || ""}><option value="">全部</option>{(filters.requirementType ? allowedPropertyCategories(filters.requirementType) : propertyCategories).map((value) => <option key={value} value={value}>{propertyCategoryLabel(value)}</option>)}</select></label>
       <label className="field"><span>縣市</span><input className="input" name="city" defaultValue={filters.city || ""} placeholder="例如：彰化縣" /></label>
       <label className="field"><span>行政區</span><input className="input" name="district" defaultValue={filters.district || ""} placeholder="例如：和美鎮" /></label>
       <label className="field"><span>預算下限至少（萬元）</span><input className="input" type="number" min="0" name="budgetMin" defaultValue={filters.budgetMin} /></label>
@@ -120,8 +123,8 @@ export default async function RequirementsPage({ searchParams }: Props) {
     <div className="table-wrap"><table><thead><tr><th>客戶／客需</th><th>交易／類型</th><th>區域／物件</th><th>預算／房數</th><th>急迫度／狀態</th><th>負責人</th><th>更新</th></tr></thead><tbody>
       {((data || []) as RequirementListRow[]).map((row) => <tr key={row.id}>
         <td><Link href={`/admin/people/${row.person_id}`}>{row.person?.display_name || row.person_id}</Link><br/><Link href={`/admin/crm/requirements/${row.id}`}><strong>{row.title}</strong></Link></td>
-        <td>{row.transaction_type === "buy" ? "購買" : "承租"}／{requirementTypeLabels[row.requirement_type]}</td>
-        <td>{[...(row.cities || []), ...(row.districts || [])].join("、") || row.area_note || "-"}<br/><span className="muted">{row.property_categories.join("、")}</span></td>
+        <td>{row.transaction_type === "buy" ? "購買" : "承租"}／{requirementTypeLabel(row.requirement_type)}</td>
+        <td>{[...(row.cities || []), ...(row.districts || [])].join("、") || row.area_note || "-"}<br/><span className="muted">{row.property_categories.map(propertyCategoryLabel).join("、")}</span></td>
         <td>{formatBudget(row)}<br/><span className="muted">{row.bedrooms_min == null ? "房數不限" : `${row.bedrooms_min} 房以上`}</span></td>
         <td>{row.urgency ? urgencyLabels[row.urgency] : "-"}／{statusLabels[row.status]}</td>
         <td>{row.assigned_user_id ? profileLabels.get(row.assigned_user_id) || row.assigned_user_id : "-"}</td>
