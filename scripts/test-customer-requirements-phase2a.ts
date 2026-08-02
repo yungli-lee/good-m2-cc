@@ -34,6 +34,37 @@ assert.equal(requirementListQuerySchema.safeParse({ createdFrom: "2026/08/01" })
 assert.equal(requirementListQuerySchema.safeParse({ elevator: "yes" }).success, false);
 assert.equal(requirementListQuerySchema.safeParse({ pageSize: 5 }).success, false);
 
+const browserFormQuery = requirementListQuerySchema.parse({
+  page: "1",
+  search: "",
+  personId: "",
+  transactionType: "",
+  requirementType: "",
+  propertyCategory: "",
+  city: "彰化縣",
+  district: "",
+  budgetMin: "",
+  budgetMax: "",
+  status: "",
+  urgency: "",
+  assignedUserId: "",
+  sort: "updated",
+  elevator: "",
+  parking: "",
+  purchaseTimeline: "",
+  createdFrom: "",
+  createdTo: "",
+  updatedFrom: "",
+  updatedTo: "",
+  pageSize: "20",
+});
+assert.equal(browserFormQuery.city, "彰化縣");
+assert.equal(browserFormQuery.personId, undefined);
+assert.equal(browserFormQuery.transactionType, undefined);
+assert.equal(browserFormQuery.district, undefined);
+assert.equal(browserFormQuery.elevator, undefined);
+assert.equal(browserFormQuery.createdFrom, undefined);
+
 const querySource = readFileSync("lib/customer-requirements/queries.ts", "utf8");
 assert.match(querySource, /display_name\.ilike/);
 assert.match(querySource, /legal_name\.ilike/);
