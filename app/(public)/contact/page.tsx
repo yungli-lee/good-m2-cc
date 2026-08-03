@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { notFound } from "next/navigation";
 import { getPublicCompanySettings } from "@/lib/company-settings";
 import { getPublishedSitePageByType } from "@/lib/home-cms/queries";
 import { markdownToHtml } from "@/lib/home-cms/markdown";
@@ -35,6 +36,7 @@ export default async function ContactPage() {
     getPublishedSitePageByType("contact")
   ]);
   const page = pageResult.data;
+  if (!page) notFound();
   const links = [
     ["LINE", company.line_url],
     ["Facebook", company.facebook_url],
@@ -48,16 +50,16 @@ export default async function ContactPage() {
     <main>
       <section className="hero-lite">
         <div className="container">
-          <p className="eyebrow">{page?.eyebrow || "Contact"}</p>
-          <h1>{page?.title || "聯絡我們"}</h1>
-          <p>{page?.subtitle || "把需求告訴我們，一起整理條件與下一步。"}</p>
+          <p className="eyebrow">{page.eyebrow || "Contact"}</p>
+          <h1>{page.title}</h1>
+          <p>{page.subtitle || "把需求告訴我們，一起整理條件與下一步。"}</p>
         </div>
       </section>
       <section className="section">
         <div className="container contact-page-grid">
           <article className="card">
             <div className="card-body">
-              {page?.markdown_content ? (
+              {page.markdown_content ? (
                 <div
                   className="cms-markdown-body"
                   dangerouslySetInnerHTML={{ __html: markdownToHtml(page.markdown_content) }}

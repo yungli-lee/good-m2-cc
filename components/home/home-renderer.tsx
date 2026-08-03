@@ -6,7 +6,7 @@ import { HomeLegacyEnhancements } from "@/components/home/home-legacy-enhancemen
 import { legacyHomeSections } from "@/components/home/legacy-section-content";
 import { ManagedReminders, ManagedSection } from "@/components/home/managed-section";
 import type { CompanySettings } from "@/lib/company-settings";
-import { resolveManagedHomeSection, sortHomeSections } from "@/lib/home-cms/registry";
+import { resolveManagedHomeSection, shouldRenderHomeSection, sortHomeSections } from "@/lib/home-cms/registry";
 import type { HomeCampaign, SitePage } from "@/lib/home-cms/types";
 import type { ResolvedNavigationItem } from "@/lib/navigation";
 
@@ -43,11 +43,13 @@ export function HomeRenderer({ campaigns, pages, company, navigation }: { campai
   const resolved = pages.map(resolveManagedHomeSection).filter((section): section is NonNullable<typeof section> => Boolean(section));
   const managedByKey = new Map<string, Page[]>();
   for (const section of resolved) managedByKey.set(section.key, [...(managedByKey.get(section.key) || []), section.page]);
+  const publishedManagedKeys = new Set(managedByKey.keys());
 
-  const sections = legacyHomeSections.map((section, index) => {
+  const sections = legacyHomeSections.flatMap((section, index) => {
+    if (!shouldRenderHomeSection(section.key, publishedManagedKeys, campaigns.length)) return [];
     const managed = managedByKey.get(section.key);
     const sortOrder = managed?.[0]?.sort_order ?? index * 100;
-    return {
+    return [{
       stableKey: section.key,
       sortOrder,
       node: section.key === "hero" && campaigns.length
@@ -57,7 +59,7 @@ export function HomeRenderer({ campaigns, pages, company, navigation }: { campai
           : managed?.[0] && managedKeys.has(section.key)
             ? <ManagedSection page={managed[0]} sectionId={section.id || section.key} />
             : <StaticSection section={section} company={company} />
-    };
+    }];
   });
 
   return (

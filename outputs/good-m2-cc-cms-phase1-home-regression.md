@@ -18,7 +18,8 @@
 ## Homepage and media protection
 
 - Header/footer have one React owner each.
-- All 19 homepage section slots and existing anchors remain present.
+- Published CMS sections retain their anchors; archived/draft/missing sections
+  no longer resurrect legacy fallback content.
 - CMS unavailable state renders the static fallback instead of returning 500.
 - Video source is active-only; inactive slides release the source.
 - First and later rounds reset and replay through the explicit lifecycle helper.
@@ -30,11 +31,11 @@
 
 ## Manual/local verification
 
-Local browser verification confirmed one header, one footer, 19 main sections,
-all expected IDs, the default H1, no horizontal overflow, no not-found heading,
-and the behavior-only enhancement script loading after hydration. With local
-Supabase variables intentionally absent, all four CMS sources safely degraded
-and the homepage remained usable.
+Initial local browser verification confirmed one header, one footer, the default
+H1, no horizontal overflow, no not-found heading, and the behavior-only
+enhancement script loading after hydration. The follow-up fail-closed policy is
+covered by registry tests: with no published CMS rows only the data-driven
+property/knowledge shells remain; archived informational sections do not return.
 
 Live CMS update, live reorder/hidden mutation and production media playback are
 not performed in this implementation worktree. They require a deployed Preview
@@ -42,8 +43,8 @@ with authenticated CMS access and are acceptance items, not fabricated PASSes.
 
 ## Known partials
 
-- Non-CMS static copy remains in an explicit per-section compatibility content
-  map. The old full-page skeleton and regex adapter are gone.
+- Non-CMS informational sections are fail-closed and removed. The compatibility
+  map remains only for data-driven discovery shells and CMS-adjacent behaviors.
 - Property discovery, calculator, reminder accordion and inquiry form still use
   the legacy behavior script. These are isolated from structural rendering.
 - The baseline Supabase Edge `process.version` warning remains a known upstream

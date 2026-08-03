@@ -33,17 +33,17 @@ Data flow:
 
 ## Compatibility remaining
 
-Sections not yet represented by a CMS row use the explicit, generated,
-per-section content map in `legacy-section-content.ts`. It is bundled locally;
-it is never fetched, appended as a full page, or regex-rewritten at runtime.
+Data-driven discovery shells use the explicit, generated, per-section content
+map in `legacy-section-content.ts`. It is bundled locally; it is never fetched,
+appended as a full page, or regex-rewritten at runtime. Static informational
+sections without a published CMS control row are fail-closed and not rendered.
 `legacy-static/script.js` temporarily remains for property discovery, mortgage
 calculator, reminder accordion and inquiry submission. It is not responsible
 for homepage structure, CMS selection, header/footer or video carousel.
 
-Removal condition: migrate each compatibility section to a typed React
-component, then replace the remaining script behaviors with focused client
-components. The section IDs and visual copy are intentionally preserved until
-that work is separately accepted.
+Removal condition: migrate the remaining property/knowledge discovery shells to
+typed React components, then replace the remaining script behaviors with
+focused client components.
 
 ## Rollback
 

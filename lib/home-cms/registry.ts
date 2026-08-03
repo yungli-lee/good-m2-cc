@@ -56,3 +56,30 @@ export function resolveManagedHomeSection(page: ManagedHomeSection["page"]): Man
 export function sortHomeSections<T extends { sortOrder: number; stableKey: string }>(sections: T[]) {
   return [...sections].sort((left, right) => left.sortOrder - right.sortOrder || left.stableKey.localeCompare(right.stableKey));
 }
+
+const dataDrivenSections = new Set<HomeSectionType>([
+  "featured-properties",
+  "property-search",
+  "latest-properties",
+  "knowledge-preview"
+]);
+
+const cmsControlledSections = new Set<HomeSectionType>([
+  "philosophy",
+  "services",
+  "process",
+  "reminders",
+  "team"
+]);
+
+/**
+ * Homepage visibility is fail-closed. Missing CMS rows never resurrect legacy
+ * copy. Data-driven discovery sections use their own published-data APIs.
+ */
+export function shouldRenderHomeSection(type: HomeSectionType, managedKeys: ReadonlySet<string>, campaignCount: number) {
+  if (type === "hero") return campaignCount > 0;
+  if (dataDrivenSections.has(type)) return true;
+  if (cmsControlledSections.has(type)) return managedKeys.has(type);
+  if (type === "contact" || type === "service-form") return managedKeys.has("team");
+  return false;
+}
