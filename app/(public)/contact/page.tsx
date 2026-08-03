@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { getPublicCompanySettings } from "@/lib/company-settings";
 import { getPublishedSitePageByType } from "@/lib/home-cms/queries";
-import { markdownToHtml } from "@/lib/home-cms/render";
+import { markdownToHtml } from "@/lib/home-cms/markdown";
 import { siteOrigin } from "@/lib/home-cms/routing";
 
 export const runtime = "edge";

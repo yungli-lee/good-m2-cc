@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { markdownToHtml } from "@/lib/home-cms/render";
+import { markdownToHtml } from "@/lib/home-cms/markdown";
 import { getPublicCompanySettings } from "@/lib/company-settings";
 import { getPublishedSitePageBySlug } from "@/lib/home-cms/queries";
 import { isReservedSitePageSlug, siteOrigin } from "@/lib/home-cms/routing";

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { navigationItemSchema, resolveNavigationItem, type NavigationItem } from "../lib/navigation-core.ts";
-import { renderHomeCmsHtml } from "../lib/home-cms/render.ts";
 
 const base: NavigationItem = {
   id: "00000000-0000-4000-8000-000000000001",
@@ -59,16 +59,10 @@ assert.equal(navigationItemSchema.safeParse({
   is_visible: true
 }).success, false);
 
-const staticHtml = `<header><nav class="site-nav" aria-label="主選單"><a href="/legacy">Legacy</a></nav></header><main></main><footer></footer>`;
-const rendered = renderHomeCmsHtml(staticHtml, [], [], null, [
-  base,
-  { ...base, id: "00000000-0000-4000-8000-000000000003", location: "mobile" as const, label: "Mobile" },
-  { ...base, id: "00000000-0000-4000-8000-000000000004", location: "footer" as const, label: "Footer" }
-].map((item) => resolveNavigationItem(item)!).filter(Boolean));
-
-assert.match(rendered, /CMS 測試頁/);
-assert.match(rendered, /cms-nav-mobile-item/);
-assert.match(rendered, /cms-footer-navigation/);
-assert.doesNotMatch(rendered, /Legacy/);
+const homeHeader = readFileSync("components/home/home-header.tsx", "utf8");
+const homeFooter = readFileSync("components/home/home-footer.tsx", "utf8");
+assert.match(homeHeader, /item\.location === "header" \|\| item\.location === "mobile"/);
+assert.match(homeHeader, /cms-nav-mobile-item/);
+assert.match(homeFooter, /cms-footer-navigation/);
 
 console.log("navigation contract tests passed");

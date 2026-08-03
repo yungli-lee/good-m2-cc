@@ -39,8 +39,7 @@ assert.equal((await validateMediaFile(uploadFile("renamed.jpg", "image/jpeg", mp
 assert.equal((await validateMediaFile(uploadFile("quicktime.mp4", "video/mp4", movBytes), "homepage")).ok, false);
 
 const root = new URL("../", import.meta.url);
-const homeRender = readFileSync(new URL("lib/home-cms/render.ts", root), "utf8");
-const homeClient = readFileSync(new URL("components/home-cms-client.tsx", root), "utf8");
+const homeRender = readFileSync(new URL("components/home/home-campaign-carousel.tsx", root), "utf8");
 const homeVideoLifecycle = readFileSync(new URL("lib/media/home-carousel-video.ts", root), "utf8");
 const lightbox = readFileSync(new URL("components/media/video-lightbox.tsx", root), "utf8");
 const propertyGallery = readFileSync(new URL("components/media/property-media-gallery.tsx", root), "utf8");
@@ -51,20 +50,19 @@ const propertyUploadRoute = readFileSync(new URL("app/admin/properties/[id]/edit
 const propertyDeleteRoute = readFileSync(new URL("app/admin/properties/[id]/edit/media/[mediaId]/delete/route.ts", root), "utf8");
 const migration = readFileSync(new URL("supabase/migrations/202608020101_media_library_video_phase_1.sql", root), "utf8");
 
-assert.match(homeRender, /autoplay preload="metadata"/);
+assert.match(homeRender, /preload=\{index === active \? "metadata" : "none"\}/);
 assert.match(homeRender, /data-video-src=/, "the initially active video keeps a reusable source for later rounds");
-assert.match(homeRender, /data-video-src=.*preload="none"/);
+assert.match(homeRender, /data-video-src=\{src\}/);
+assert.match(homeRender, /preload=\{index === active \? "metadata" : "none"\}/);
 assert.doesNotMatch(homeRender, /video\/quicktime|\.mov/);
 assert.match(homeRender, /播放完整版/);
 assert.match(homeRender, /home-campaign-video-slide/, "video slides expose a mobile-only framing hook");
-assert.match(homeClient, /home-video-lightbox-close/);
-assert.match(homeClient, /const HomeCmsMarkup = memo/, "lightbox state changes must not remount the imperative carousel DOM");
-assert.match(homeClient, /visibilitychange/);
-assert.match(homeClient, /if \(backgroundVideo\) deactivateHomeCarouselVideo\(backgroundVideo\)/, "opening the lightbox fully deactivates its background video");
+assert.match(homeRender, /visibilitychange/);
+assert.match(homeRender, /index !== active \|\| lightbox/, "opening the lightbox fully deactivates its background video");
 assert.match(homeVideoLifecycle, /removeAttribute\("src"\)/);
-assert.match(homeClient, /5_000/);
-assert.match(homeClient, /prefers-reduced-motion: reduce/);
-assert.match(homeClient, /dataset\.slideDurationSeconds/);
+assert.match(homeRender, /5_000/);
+assert.match(homeRender, /prefers-reduced-motion: reduce/);
+assert.match(homeRender, /slide_duration_seconds/);
 assert.match(lightbox, /controls playsInline/);
 assert.match(lightbox, /event\.key === "Escape"/);
 assert.match(lightbox, /event\.target === event\.currentTarget/);
