@@ -6,6 +6,7 @@ import { getSitePage } from "@/lib/home-cms/queries";
 import { nullable, sitePageSchema, valuesFromFormData } from "@/lib/home-cms/schema";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { revalidateSitePageContent } from "@/lib/home-cms/revalidation";
+import { normalizeMarkdown } from "@/lib/home-cms/markdown";
 
 export const runtime = "edge";
 
@@ -65,7 +66,7 @@ export async function PATCH(request: Request, { params }: Props) {
     ...parsed.data,
     eyebrow: nullable(parsed.data.eyebrow),
     subtitle: nullable(parsed.data.subtitle),
-    markdown_content: nullable(parsed.data.markdown_content),
+    markdown_content: nullable(normalizeMarkdown(parsed.data.markdown_content)),
     cover_media_id: nullable(parsed.data.cover_media_id),
     fallback_cover_url: nullable(parsed.data.fallback_cover_url),
     seo_title: nullable(parsed.data.seo_title),

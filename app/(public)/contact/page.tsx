@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getPublicCompanySettings } from "@/lib/company-settings";
 import { getPublishedSitePageByType } from "@/lib/home-cms/queries";
-import { markdownToHtml } from "@/lib/home-cms/markdown";
+import { MarkdownContent } from "@/components/home/markdown-content";
 import { siteOrigin } from "@/lib/home-cms/routing";
 
 export const runtime = "edge";
@@ -60,10 +60,7 @@ export default async function ContactPage() {
           <article className="card">
             <div className="card-body">
               {page.markdown_content ? (
-                <div
-                  className="cms-markdown-body"
-                  dangerouslySetInnerHTML={{ __html: markdownToHtml(page.markdown_content) }}
-                />
+                <MarkdownContent value={page.markdown_content} />
               ) : (
                 <p>歡迎透過電話、Email 或 LINE 聯絡，我們會協助您整理買屋、賣屋與不動產服務需求。</p>
               )}

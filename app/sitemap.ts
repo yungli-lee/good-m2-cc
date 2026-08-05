@@ -1,6 +1,6 @@
 import type { MetadataRoute } from "next";
 import { listPublicKnowledgeItems } from "@/lib/content/queries";
-import { listPublishedSitePages } from "@/lib/home-cms/queries";
+import { listPublicPageSitePages } from "@/lib/home-cms/queries";
 import { isReservedSitePageSlug, siteOrigin } from "@/lib/home-cms/routing";
 import { listPublishedProperties } from "@/lib/properties/queries";
 
@@ -12,7 +12,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const [propertyResult, knowledgeResult, sitePages] = await Promise.all([
     listPublishedProperties(),
     listPublicKnowledgeItems({ page: 1, pageSize: 1000 }),
-    listPublishedSitePages()
+    listPublicPageSitePages()
   ]);
 
   const properties = (propertyResult.data || []).map((property) => ({

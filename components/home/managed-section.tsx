@@ -1,19 +1,8 @@
 import Link from "next/link";
+import { MarkdownContent } from "@/components/home/markdown-content";
 import type { SitePage } from "@/lib/home-cms/types";
 
 type PageForRender = SitePage & { media_public_url?: string | null };
-
-function MarkdownContent({ value }: { value?: string | null }) {
-  const lines = String(value || "").replace(/\r\n/g, "\n").split("\n");
-  return <div className="cms-markdown-body">{lines.map((line, index) => {
-    const text = line.trim();
-    if (!text) return <br key={index} />;
-    if (text.startsWith("### ")) return <h3 key={index}>{text.slice(4)}</h3>;
-    if (text.startsWith("## ")) return <h2 key={index}>{text.slice(3)}</h2>;
-    if (text.startsWith("- ") || text.startsWith("* ")) return <li key={index}>{text.slice(2)}</li>;
-    return <p key={index}>{text}</p>;
-  })}</div>;
-}
 
 export function ManagedSection({ page, sectionId }: { page: PageForRender; sectionId: string }) {
   return (

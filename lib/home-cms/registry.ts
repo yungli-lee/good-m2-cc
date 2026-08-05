@@ -42,7 +42,7 @@ const managedPageTypeToSection = {
 } as const;
 
 export function resolveManagedHomeSection(page: ManagedHomeSection["page"]): ManagedHomeSection | null {
-  if (page.status !== "published" || page.archived_at) return null;
+  if (page.status !== "published" || page.archived_at || !page.show_on_homepage) return null;
   const key = page.page_type === "reminder"
     ? "reminders"
     : managedPageTypeToSection[page.page_type as keyof typeof managedPageTypeToSection] || page.page_key;

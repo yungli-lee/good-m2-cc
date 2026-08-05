@@ -44,6 +44,8 @@ export type SitePage = {
   seo_title: string | null;
   seo_description: string | null;
   status: CmsStatus;
+  show_as_page: boolean;
+  show_on_homepage: boolean;
   sort_order: number;
   created_by: string | null;
   updated_by: string | null;

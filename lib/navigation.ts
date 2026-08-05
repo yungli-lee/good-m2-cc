@@ -18,23 +18,23 @@ export type {
   ResolvedNavigationItem
 } from "@/lib/navigation-core";
 
-const navigationSelect = "*,site_pages(page_key,status,archived_at)";
+const navigationSelect = "*,site_pages(page_key,page_type,status,archived_at,show_as_page,show_on_homepage)";
+const navigationPageSelect = "page_key,page_type,status,archived_at,show_as_page,show_on_homepage";
 
 export async function getAllPublicNavigationItems() {
   const supabase = await createSupabaseServerClient();
-  const { data, error } = await supabase
-    .from("site_navigation_items")
-    .select(navigationSelect)
-    .eq("is_visible", true)
-    .order("location", { ascending: true })
-    .order("sort_order", { ascending: true })
-    .order("id", { ascending: true });
-  if (error) {
-    console.error("public_navigation_failed", { code: error.code, message: error.message });
+  const [navigationResult, pagesResult] = await Promise.all([
+    supabase.from("site_navigation_items").select(navigationSelect).eq("is_visible", true).order("location", { ascending: true }).order("sort_order", { ascending: true }).order("id", { ascending: true }),
+    supabase.from("site_pages").select(navigationPageSelect).eq("status", "published").is("archived_at", null)
+  ]);
+  if (navigationResult.error || pagesResult.error) {
+    const error = navigationResult.error || pagesResult.error;
+    console.error("public_navigation_failed", { code: error?.code, message: error?.message });
     return [] as ResolvedNavigationItem[];
   }
-  return ((data || []) as unknown as NavigationItem[])
-    .map(resolveNavigationItem)
+  const pages = (pagesResult.data || []) as unknown as NonNullable<NavigationItem["site_pages"]>[];
+  return ((navigationResult.data || []) as unknown as NavigationItem[])
+    .map((item) => resolveNavigationItem(item, pages))
     .filter((item): item is ResolvedNavigationItem => Boolean(item));
 }
 

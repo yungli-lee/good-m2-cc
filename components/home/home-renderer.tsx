@@ -5,6 +5,9 @@ import { HomeHeader } from "@/components/home/home-header";
 import { HomeLegacyEnhancements } from "@/components/home/home-legacy-enhancements";
 import { legacyHomeSections } from "@/components/home/legacy-section-content";
 import { ManagedReminders, ManagedSection } from "@/components/home/managed-section";
+import { HomeKnowledgePreview, HomePropertyCollection, HomePropertySearch } from "@/components/home/home-data-driven-sections";
+import type { HomeProperty } from "@/components/home/home-property-search";
+import type { ContentItem } from "@/lib/content/types";
 import type { CompanySettings } from "@/lib/company-settings";
 import { resolveManagedHomeSection, shouldRenderHomeSection, sortHomeSections } from "@/lib/home-cms/registry";
 import type { HomeCampaign, SitePage } from "@/lib/home-cms/types";
@@ -39,7 +42,7 @@ function StaticSection({ section, company }: { section: (typeof legacyHomeSectio
   });
 }
 
-export function HomeRenderer({ campaigns, pages, company, navigation }: { campaigns: Campaign[]; pages: Page[]; company: CompanySettings; navigation: ResolvedNavigationItem[] }) {
+export function HomeRenderer({ campaigns, pages, company, navigation, featuredProperties, latestProperties, knowledge }: { campaigns: Campaign[]; pages: Page[]; company: CompanySettings; navigation: ResolvedNavigationItem[]; featuredProperties: HomeProperty[]; latestProperties: HomeProperty[]; knowledge: ContentItem[] }) {
   const resolved = pages.map(resolveManagedHomeSection).filter((section): section is NonNullable<typeof section> => Boolean(section));
   const managedByKey = new Map<string, Page[]>();
   for (const section of resolved) managedByKey.set(section.key, [...(managedByKey.get(section.key) || []), section.page]);
@@ -54,6 +57,14 @@ export function HomeRenderer({ campaigns, pages, company, navigation }: { campai
       sortOrder,
       node: section.key === "hero" && campaigns.length
         ? <HomeCampaignCarousel campaigns={campaigns} />
+        : section.key === "featured-properties"
+          ? <HomePropertyCollection kind="featured" properties={featuredProperties} />
+          : section.key === "property-search"
+            ? <HomePropertySearch lineUrl={company.line_url || ""} />
+            : section.key === "latest-properties"
+              ? <HomePropertyCollection kind="latest" properties={latestProperties} />
+              : section.key === "knowledge-preview"
+                ? <HomeKnowledgePreview items={knowledge} />
         : section.key === "reminders" && managed?.length
           ? <ManagedReminders pages={managed} />
           : managed?.[0] && managedKeys.has(section.key)
