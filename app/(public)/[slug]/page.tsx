@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { markdownToHtml } from "@/lib/home-cms/markdown";
+import { MarkdownContent } from "@/components/home/markdown-content";
 import { getPublicCompanySettings } from "@/lib/company-settings";
 import { getPublishedSitePageBySlug } from "@/lib/home-cms/queries";
 import { isReservedSitePageSlug, siteOrigin } from "@/lib/home-cms/routing";
@@ -73,10 +73,7 @@ export default async function PublicSitePage({ params }: Props) {
             {page.subtitle ? <p>{page.subtitle}</p> : null}
             {image ? <img src={image} alt={page.media_assets?.alt_text || page.title} /> : null}
           </header>
-          <div
-            className="cms-markdown-body"
-            dangerouslySetInnerHTML={{ __html: markdownToHtml(page.markdown_content) }}
-          />
+          <MarkdownContent value={page.markdown_content} />
         </div>
       </article>
     </main>

@@ -2,6 +2,7 @@ import { z } from "zod";
 import { isReservedSitePageSlug } from "@/lib/home-cms/routing";
 const optionalText = (max = 4000) => z.string().trim().max(max).optional().or(z.literal(""));
 const optionalDate = z.string().trim().max(40).optional().or(z.literal(""));
+const checkbox = z.preprocess((value) => value === true || value === "true" || value === "on", z.boolean());
 export const cmsStatusValues = ["draft", "published", "archived"] as const;
 export const sitePageTypeValues = ["philosophy", "services", "contact", "reminder", "custom"] as const;
 
@@ -37,6 +38,8 @@ export const sitePageSchema = z.object({
   seo_title: optionalText(180),
   seo_description: optionalText(300),
   status: z.enum(cmsStatusValues).default("draft"),
+  show_as_page: checkbox.default(false),
+  show_on_homepage: checkbox.default(false),
   sort_order: z.coerce.number().int().min(0).default(1000)
 }).superRefine((value, context) => {
   if ((value.page_type === "custom" || value.page_type === "reminder") && isReservedSitePageSlug(value.page_key)) {

@@ -6,8 +6,11 @@ export type NavigationTarget = "_self" | "_blank";
 
 type NavigationPage = {
   page_key: string;
+  page_type: string;
   status: "draft" | "published" | "archived";
   archived_at: string | null;
+  show_as_page: boolean;
+  show_on_homepage: boolean;
 };
 
 export type NavigationItem = {
@@ -65,11 +68,30 @@ export const navigationItemSchema = z.object({
   }
 });
 
-export function resolveNavigationItem(item: NavigationItem): ResolvedNavigationItem | null {
+function homeAnchor(page: NavigationPage) {
+  if (page.page_type === "contact") return "team";
+  if (page.page_type === "reminder") return "reminders";
+  return page.page_key;
+}
+
+function pageHref(page: NavigationPage) {
+  if (page.status !== "published" || page.archived_at) return null;
+  if (page.show_on_homepage) return `/#${homeAnchor(page)}`;
+  if (page.show_as_page) return page.page_type === "contact" ? "/contact" : `/${page.page_key}`;
+  return null;
+}
+
+export function resolveNavigationItem(item: NavigationItem, publishedPages?: NavigationPage[]): ResolvedNavigationItem | null {
   const page = item.site_pages;
-  const href = item.page_id
-    ? page?.status === "published" && !page.archived_at ? `/${page.page_key}` : null
-    : item.href;
+  let href = item.page_id && page ? pageHref(page) : item.href;
+  if (!item.page_id && publishedPages && href?.startsWith("/#")) {
+    const anchor = href.slice(2);
+    const managed = publishedPages.find((candidate) => homeAnchor(candidate) === anchor);
+    href = managed ? pageHref(managed) : null;
+  } else if (!item.page_id && publishedPages && href === "/contact") {
+    const contact = publishedPages.find((candidate) => candidate.page_type === "contact");
+    href = contact ? pageHref(contact) : null;
+  }
   if (!href) return null;
   return {
     id: item.id,

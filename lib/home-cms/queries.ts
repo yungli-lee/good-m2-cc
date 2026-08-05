@@ -55,13 +55,14 @@ export async function getHomeCampaign(id: string) {
   return { data: data as HomeCampaign | null, error };
 }
 
-export async function listPublishedSitePages() {
+async function listPublishedSitePagesByPlacement(placement: "show_as_page" | "show_on_homepage") {
   const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase
     .from("site_pages")
     .select(sitePageSelect)
     .eq("status", "published")
     .is("archived_at", null)
+    .eq(placement, true)
     .order("sort_order", { ascending: true })
     .order("published_at", { ascending: false, nullsFirst: false });
 
@@ -72,6 +73,17 @@ export async function listPublishedSitePages() {
 
   return ((data || []) as SitePage[]).map((page) => withPublicUrl(supabase, page));
 }
+
+export function listHomepageSitePages() {
+  return listPublishedSitePagesByPlacement("show_on_homepage");
+}
+
+export function listPublicPageSitePages() {
+  return listPublishedSitePagesByPlacement("show_as_page");
+}
+
+/** @deprecated Choose a placement-specific query. */
+export const listPublishedSitePages = listHomepageSitePages;
 
 export async function listAdminSitePages() {
   const supabase = await createSupabaseServerClient();
@@ -103,6 +115,7 @@ export async function getPublishedSitePageBySlug(slug: string) {
     .eq("page_key", slug)
     .eq("status", "published")
     .is("archived_at", null)
+    .eq("show_as_page", true)
     .maybeSingle();
 
   if (error) {
@@ -124,6 +137,7 @@ export async function getPublishedSitePageByType(pageType: SitePage["page_type"]
     .eq("page_type", pageType)
     .eq("status", "published")
     .is("archived_at", null)
+    .eq("show_as_page", true)
     .order("sort_order", { ascending: true })
     .limit(1)
     .maybeSingle();

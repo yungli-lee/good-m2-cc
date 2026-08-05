@@ -196,6 +196,14 @@ export function SitePageForm({ page, mediaAssets, existingPageTypes = [] }: Prop
           {Object.entries(cmsStatusLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
         </select>
       </label>
+      <label className="field consent-check">
+        <input name="show_as_page" type="checkbox" defaultChecked={page?.show_as_page ?? false} disabled={pending} />
+        <span>顯示為獨立頁面</span>
+      </label>
+      <label className="field consent-check">
+        <input name="show_on_homepage" type="checkbox" defaultChecked={page?.show_on_homepage ?? false} disabled={pending} />
+        <span>顯示於首頁</span>
+      </label>
       <label className="field">
         <span>排序</span>
         <input className="input" type="number" min="0" name="sort_order" defaultValue={page?.sort_order ?? 1000} disabled={pending} />

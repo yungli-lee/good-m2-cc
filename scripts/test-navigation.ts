@@ -16,8 +16,11 @@ const base: NavigationItem = {
   updated_at: "2026-07-24T00:00:00.000Z",
   site_pages: {
     page_key: "cms-preview-test",
+    page_type: "custom",
     status: "published",
-    archived_at: null
+    archived_at: null,
+    show_as_page: true,
+    show_on_homepage: false
   }
 };
 
@@ -25,6 +28,10 @@ assert.equal(resolveNavigationItem(base)?.href, "/cms-preview-test");
 assert.equal(resolveNavigationItem({ ...base, site_pages: { ...base.site_pages!, status: "draft" } }), null);
 assert.equal(resolveNavigationItem({ ...base, site_pages: { ...base.site_pages!, archived_at: "2026-07-24T01:00:00.000Z" } }), null);
 assert.equal(resolveNavigationItem({ ...base, page_id: null, href: "/properties", site_pages: null })?.href, "/properties");
+assert.equal(resolveNavigationItem({ ...base, site_pages: { ...base.site_pages!, show_on_homepage: true } })?.href, "/#cms-preview-test");
+assert.equal(resolveNavigationItem({ ...base, page_id: null, href: "/#cms-preview-test", site_pages: null }, [base.site_pages!])?.href, "/cms-preview-test");
+assert.equal(resolveNavigationItem({ ...base, page_id: null, href: "/#missing", site_pages: null }, [base.site_pages!]), null);
+assert.equal(resolveNavigationItem({ ...base, site_pages: { ...base.site_pages!, show_as_page: false } }), null);
 
 assert.equal(navigationItemSchema.safeParse({
   item_key: "external",
