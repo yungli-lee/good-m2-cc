@@ -29,13 +29,16 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       url: `${origin}/${page.page_key}`,
       lastModified: page.updated_at || page.published_at || undefined
     }));
+  const contact = sitePages.some((page) => page.page_type === "contact")
+    ? [{ url: `${origin}/contact` }]
+    : [];
 
   return [
     { url: origin },
     { url: `${origin}/properties` },
     { url: `${origin}/knowledge` },
     { url: `${origin}/calculator` },
-    { url: `${origin}/contact` },
+    ...contact,
     ...properties,
     ...knowledge,
     ...pages

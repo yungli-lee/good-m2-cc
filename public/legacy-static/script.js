@@ -1,4 +1,4 @@
-const menuButton = document.querySelector(".menu-toggle");
+const menuButton = document.querySelector(".menu-toggle:not([data-react-managed])");
 const nav = document.querySelector(".site-nav");
 
 menuButton?.addEventListener("click", () => {
@@ -13,7 +13,7 @@ nav?.querySelectorAll("a").forEach((link) => {
   });
 });
 
-document.querySelectorAll(".article-card").forEach((card, index) => {
+document.querySelectorAll(".article-card:not([data-react-managed])").forEach((card, index) => {
   const button = card.querySelector(".article-toggle");
   if (index === 0) {
     card.classList.add("is-open");
