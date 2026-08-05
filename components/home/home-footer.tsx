@@ -14,13 +14,6 @@ export function HomeFooter({ company, navigation }: { company: CompanySettings; 
         <div className="site-footer">
           <span>嚴選好物件</span><span>價格透明</span><span>安全交易</span><span>售後服務</span>
           <strong>讓我們協助您安心成家・投資增值</strong>
-          <div className="cms-company-legal">
-            <small>{company.brand_name}・{company.franchise_name}</small>
-            <small>{company.company_name}</small>
-            <small>{company.brokerage_license_no}</small>
-            <small>{company.realtor_certificate_no}</small>
-            {company.company_address ? <small>{company.company_address}</small> : null}
-          </div>
         </div>
       </footer>
       {company.line_url ? <a className="floating-line" href={company.line_url}>Line 諮詢</a> : null}
