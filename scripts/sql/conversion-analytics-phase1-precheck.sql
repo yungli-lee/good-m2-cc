@@ -13,6 +13,28 @@ where table_schema = 'public'
   and table_name in ('analytics_events','lead_attributions','inquiries')
 order by table_name, ordinal_position;
 
+select table_schema, table_name, column_name, data_type, udt_name, is_nullable, column_default
+from information_schema.columns
+where table_schema = 'public'
+  and table_name = 'analytics_events'
+  and column_name = 'session_id';
+
+select
+  count(*) as total_rows,
+  count(*) filter (where session_id is null) as null_count,
+  count(*) filter (where session_id is not null and btrim(session_id::text) = '') as empty_string_count,
+  count(*) filter (
+    where session_id is not null
+      and btrim(session_id::text) <> ''
+      and btrim(session_id::text) ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
+  ) as valid_uuid_count,
+  count(*) filter (
+    where session_id is not null
+      and btrim(session_id::text) <> ''
+      and btrim(session_id::text) !~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
+  ) as invalid_uuid_count
+from public.analytics_events;
+
 select conrelid::regclass::text as table_name, conname, pg_get_constraintdef(oid) as definition
 from pg_constraint
 where connamespace = 'public'::regnamespace

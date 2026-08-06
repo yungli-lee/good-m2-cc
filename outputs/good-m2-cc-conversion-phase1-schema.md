@@ -10,6 +10,8 @@ Migration draft：`supabase/migrations/202608060101_conversion_analytics_phase1.
 
 舊 row backfill：event_id 隨機 UUID；occurred/received 使用 created_at；device_class 使用既有 device_type；source_system=`legacy_server`；environment=`legacy_unknown`；event_properties 使用 metadata。`legacy_unknown` 是 fail-closed 隔離，不能進 Preview/Production 報表。
 
+Session compatibility：migration先讀 `information_schema.columns.udt_name`。已是 uuid時不變；text空表或所有非空值符合UUID格式時，將欄位明確轉成 uuid；空字串被明確視為 legacy missing並轉 NULL。任何非法非空值或未知型別都 raise exception，整個 transaction rollback；不刪除、不歸零、不生成替代 session id。舊 `char_length(session_id)` constraint在 transaction內移除，rollback轉回text並恢復。
+
 Constraints：event_id global unique；v1；source/environment/device allowlist；event_properties 必須 object 且禁止常見敏感 key；CRM/property FK on delete set null。舊/new event name 在 rollout 期間並存，避免 TypeScript 與 DB constraint 不同步。
 
 Indexes：environment+time、environment+event+time、visitor+time、session+time、inquiry、property。歸因查詢不能 scan 全表。
@@ -31,7 +33,7 @@ Indexes：environment+time、environment+event+time、visitor+time、session+tim
 
 ## Rollback / roll-forward
 
-Preview 且沒有任何 Phase 1 event 時，可執行 rollback SQL，還原 event-name constraint並移除新表/欄。若已產生 Phase 1 events，rollback 會主動拒絕，必須 roll-forward，避免刪除 journey/attribution。Production 未核准前不得執行 migration 或 rollback。
+Preview 且沒有任何 Phase 1 event 時，可執行 rollback SQL，將 analytics session UUID無損轉回text、恢復長度與event-name constraints並移除新表/欄。若已產生 Phase 1 events，rollback 會主動拒絕，必須 roll-forward，避免刪除 journey/attribution。Production 未核准前不得執行 migration 或 rollback。
 
 ## Known review points before approval
 

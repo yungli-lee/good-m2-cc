@@ -6,7 +6,7 @@
 
 1. 確認 URL/project 是 Preview，不是 Production。
 2. 執行 `scripts/sql/conversion-analytics-phase1-precheck.sql`（SELECT only）。
-3. 保存 row counts、constraints、RLS、grants與 migration ledger evidence。
+3. 保存 session_id型別及 null/empty/valid/invalid UUID counts、table row counts、constraints、RLS、grants與 migration ledger evidence。invalid_uuid_count非零時不得執行 migration。
 4. Review migration diff；使用者人工執行 migration。
 5. 立即執行 `scripts/sql/conversion-analytics-phase1-verify.sql`。
 6. 任一 schema/security/data check失敗即停止，不繼續 application E2E。

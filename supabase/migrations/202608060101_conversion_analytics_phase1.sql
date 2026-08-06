@@ -22,6 +22,57 @@ alter table public.analytics_events
   add column if not exists is_internal boolean,
   add column if not exists event_properties jsonb;
 
+-- The baseline column is text while Phase 1 identity uses UUID everywhere.
+-- Empty text is an explicitly recognized legacy missing value. Any non-empty
+-- value that cannot be cast safely aborts this transaction without changing
+-- or replacing the legacy session identifier.
+alter table public.analytics_events
+  drop constraint if exists analytics_events_session_id_length_check;
+
+do $$
+declare
+  session_udt text;
+  invalid_count bigint;
+  empty_count bigint;
+begin
+  select c.udt_name
+  into session_udt
+  from information_schema.columns c
+  where c.table_schema = 'public'
+    and c.table_name = 'analytics_events'
+    and c.column_name = 'session_id';
+
+  if session_udt is null then
+    raise exception 'analytics_events.session_id is missing';
+  elsif session_udt = 'uuid' then
+    raise notice 'analytics_events.session_id is already uuid; conversion skipped';
+  elsif session_udt = 'text' then
+    select
+      count(*) filter (where session_id is not null and btrim(session_id::text) = ''),
+      count(*) filter (
+        where session_id is not null
+          and btrim(session_id::text) <> ''
+          and btrim(session_id::text) !~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
+      )
+    into empty_count, invalid_count
+    from public.analytics_events;
+
+    if invalid_count > 0 then
+      raise exception 'analytics_events.session_id contains % invalid non-empty UUID value(s); migration aborted', invalid_count;
+    end if;
+
+    raise notice 'Converting analytics_events.session_id text to uuid; % explicit empty legacy value(s) become NULL', empty_count;
+    alter table public.analytics_events
+      alter column session_id type uuid
+      using case
+        when session_id is null or btrim(session_id::text) = '' then null
+        else btrim(session_id::text)::uuid
+      end;
+  else
+    raise exception 'analytics_events.session_id has unsupported type: %', session_udt;
+  end if;
+end $$;
+
 update public.analytics_events
 set
   event_id = coalesce(event_id, gen_random_uuid()),
@@ -268,6 +319,7 @@ grant select on table public.analytics_events to authenticated;
 grant select, insert, update, delete on table public.analytics_events to service_role;
 
 comment on column public.analytics_events.event_id is 'Producer-generated idempotency UUID; globally unique across retries.';
+comment on column public.analytics_events.session_id is 'Anonymous first-party session UUID; explicit legacy empty text was normalized to NULL during migration.';
 comment on column public.analytics_events.environment is 'Explicit runtime isolation: preview, production, development, test, or legacy_unknown.';
 comment on column public.analytics_events.event_properties is 'Event-specific allowlisted properties only; no form values, arbitrary DOM, tokens, or cookies.';
 comment on table public.lead_attributions is 'Immutable acquisition snapshot created after a successful inquiry; person_id may be linked later.';

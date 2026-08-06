@@ -65,6 +65,32 @@ alter table public.analytics_events
   drop column if exists is_internal,
   drop column if exists event_properties;
 
+do $$
+declare
+  session_udt text;
+begin
+  select c.udt_name into session_udt
+  from information_schema.columns c
+  where c.table_schema = 'public'
+    and c.table_name = 'analytics_events'
+    and c.column_name = 'session_id';
+
+  if session_udt = 'uuid' then
+    alter table public.analytics_events
+      alter column session_id type text
+      using session_id::text;
+  elsif session_udt is distinct from 'text' then
+    raise exception 'analytics_events.session_id has unsupported rollback type: %', session_udt;
+  end if;
+end $$;
+
+alter table public.analytics_events
+  drop constraint if exists analytics_events_session_id_length_check;
+alter table public.analytics_events
+  add constraint analytics_events_session_id_length_check check (
+    session_id is null or char_length(session_id) <= 120
+  );
+
 alter table public.analytics_events
   drop constraint if exists analytics_events_event_name_check;
 alter table public.analytics_events
