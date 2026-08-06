@@ -1,6 +1,6 @@
 # Conversion Analytics Phase 1 Preview Verification Runbook
 
-狀態：等待 migration 核准；以下命令/SQL均未執行。
+狀態：Preview migration與schema verify已由使用者完成；Application E2E待新Preview deployment。
 
 ## Approval gate
 
@@ -22,6 +22,8 @@
 ## E2E after implementation
 
 Facebook UTM property landing→page/view_property→media→LINE；隔日 direct→form submit→inquiry_created→lead attribution。以相同 event_id重送驗證不增加 row。關閉 analytics endpoint驗證網站/inquiry仍成功。確認 Preview全部 environment=preview，production filter為零。
+
+使用 `conversion-analytics-phase1-e2e-verify.sql` 保存 event/inquiry/attribution UUID。將精確UUID填入cleanup SQL後人工執行；placeholder guard未解除時transaction必須abort。Cleanup後重跑verify，並確認原有7筆inquiry仍存在。
 
 ## Performance evidence
 
