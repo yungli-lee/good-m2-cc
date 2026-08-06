@@ -7,7 +7,7 @@
     "db:check": "bash scripts/db-check.sh",
     "pages:build": "CI=true XDG_CACHE_HOME=/tmp/pnpm-cache pnpm exec next-on-pages",
     "lint": "eslint .",
-    "test": "pnpm run test:requirements-phase1 && pnpm run test:requirements-phase2a && pnpm run test:media-video && pnpm run test:cms-phase1 && pnpm run test:health && pnpm run test:analytics-migration",
+    "test": "pnpm run test:requirements-phase1 && pnpm run test:requirements-phase2a && pnpm run test:media-video && pnpm run test:cms-phase1 && pnpm run test:health && pnpm run test:analytics-migration && pnpm run test:analytics-phase1",
     "test:requirements-phase1": "node --experimental-strip-types --experimental-specifier-resolution=node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/test-customer-requirements-phase1.ts",
     "test:requirements-phase2a": "node --experimental-strip-types --experimental-specifier-resolution=node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/test-customer-requirements-phase2a.ts",
     "test:export": "node --experimental-strip-types --experimental-specifier-resolution=node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/test-property-export.ts",
@@ -25,6 +25,7 @@
     "test:navigation-routing": "node --experimental-strip-types --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/test-navigation-routing.ts",
     "test:media-video": "node --experimental-strip-types --experimental-specifier-resolution=node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/test-media-video-phase1.ts",
     "test:analytics-migration": "node --experimental-strip-types --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/test-conversion-analytics-phase1-migration.ts",
+    "test:analytics-phase1": "node --experimental-strip-types --experimental-specifier-resolution=node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/test-conversion-analytics-phase1-application.ts",
     "start": "next start",
     "typecheck": "tsc --noEmit"
   },
