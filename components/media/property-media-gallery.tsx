@@ -3,6 +3,7 @@
 import { useCallback, useState } from "react";
 import type { PropertyMedia } from "@/lib/properties/types";
 import { VideoLightbox } from "@/components/media/video-lightbox";
+import { trackEvent } from "@/lib/analytics/client";
 
 function PropertyVideoPoster({ item, title, onPlay }: { item: PropertyMedia; title: string; onPlay: () => void }) {
   const [posterFailed, setPosterFailed] = useState(false);
@@ -16,7 +17,7 @@ function PropertyVideoPoster({ item, title, onPlay }: { item: PropertyMedia; tit
   );
 }
 
-export function PropertyMediaGallery({ media, title }: { media: PropertyMedia[]; title: string }) {
+export function PropertyMediaGallery({ media, title, propertyId }: { media: PropertyMedia[]; title: string; propertyId: string }) {
   const images = media.filter((item) => item.media_type === "image" && !item.deleted_at);
   const cover = images.find((item) => item.is_cover) || images[0] || null;
   const [activeVideo, setActiveVideo] = useState<PropertyMedia | null>(null);
@@ -27,9 +28,12 @@ export function PropertyMediaGallery({ media, title }: { media: PropertyMedia[];
       {cover ? <img className="gallery-main" src={cover.url} alt={cover.alt_text || title} /> : <div className="gallery-main" role="img" aria-label={`${title} 尚未設定封面照片`} />}
       <div className="media-grid">
         {media.filter((item) => !item.deleted_at).map((item) => item.media_type === "video" ? (
-          <PropertyVideoPoster key={item.id} item={item} title={title} onPlay={() => setActiveVideo(item)} />
+          <PropertyVideoPoster key={item.id} item={item} title={title} onPlay={() => {
+            setActiveVideo(item);
+            void trackEvent("view_property_media", { propertyId, properties: { media_type: "video", media_index: media.indexOf(item), action: "play" } });
+          }} />
         ) : (
-          <img key={item.id} className="property-image" src={item.url} alt={item.alt_text || title} loading="lazy" />
+          <img key={item.id} className="property-image" src={item.url} alt={item.alt_text || title} loading="lazy" onClick={() => void trackEvent("view_property_media", { propertyId, properties: { media_type: "image", media_index: media.indexOf(item), action: "view" } })} />
         ))}
       </div>
       <VideoLightbox open={Boolean(activeVideo)} src={activeVideo?.url || ""} poster={activeVideo?.thumbnail_url} title={activeVideo?.alt_text || title} onClose={close} />
