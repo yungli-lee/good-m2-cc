@@ -1,11 +1,13 @@
 # Conversion Analytics Phase 1 Security Review
 
-- Browser只能POST application endpoint；anon/authenticated無analytics direct insert grant。
-- Supabase service-role只由server module讀取，不在client import graph或response。
-- Client payload strict；environment/source/received/internal/bot/person/inquiry/requirement server-controlled。
-- 8KB limit在JSON parse前檢查actual bytes；invalid JSON 400；oversize 413；rate limit 429。
-- Event-specific schema拒絕unknown keys；recursive sensitive-key scan拒絕PII/token/cookie/DOM/HTML/form_data。
-- IP只做HMAC rate-limit key，不是visitor identity，也不進public analytics payload。
-- DB error只回安全code；structured logs不含表單內容、token、cookie或完整Supabase error。
-- Admin/API/error paths不產生public page view；bot UA標記後排除歸因。
-- Inquiry attribution failure不影響主 inquiry，immutable snapshot由unique constraint及trigger保護。
+- Browser 只能 POST application endpoint；service-role key 僅 server 使用，未回傳 client。
+- `rate_limit_events` 明確授予 service_role SELECT/INSERT；anon/authenticated 無新增寫入權。
+- Client payload strict；environment/source/received/internal/bot/inquiry identity 由 server 控制。
+- 8KB limit、invalid JSON、event-specific schema 與 recursive sensitive-key rejection 已測試。
+- SQL evidence：sensitive keys=0；environment isolation PASS；bot/internal eligible rows=0。
+- DB error 回安全 code；log 不含表單內容、token、cookie 或完整 Supabase error。
+- Invalid analytics payload 回 400，但 inquiry 仍 200，failure containment PASS。
+- Exact-ID cleanup：transaction + Preview environment + fixed IDs；無模糊日期或 campaign-wide DELETE。
+- Cleanup 前 inquiries=11（E2E 4、original 7）；cleanup 後 E2E events/inquiries/attributions=0，original inquiries=7。
+- Two random attribution UUIDs were not retained before verified cleanup; no values were fabricated.
+- Production DB：UNTOUCHED；Production deployment：NOT STARTED。
