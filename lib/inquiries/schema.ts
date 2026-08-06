@@ -8,6 +8,8 @@ export const inquirySchema = z.object({
   message: z.string().trim().min(10, "請簡單描述您的需求，至少 10 個字").max(1000, "請簡單描述您的需求，至少 10 個字"),
   property_id: z.string().uuid().optional().or(z.literal("")),
   source_page: z.string().trim().max(300).optional().or(z.literal("")),
+  visitor_id: z.string().uuid().optional().or(z.literal("")),
+  session_id: z.string().uuid().optional().or(z.literal("")),
   website: z.string().trim().optional().default(""),
   turnstile_token: z.string().trim().optional().or(z.literal(""))
 });
