@@ -35,6 +35,11 @@ assert.match(migration, /session_udt = 'text'/, "migration has text conversion b
 assert.match(migration, /invalid_count > 0[\s\S]*raise exception/i, "invalid legacy data aborts transaction");
 assert.match(migration, /alter column session_id type uuid[\s\S]*btrim\(session_id::text\)::uuid/i, "migration explicitly converts safe text");
 assert.doesNotMatch(migration, /session_id\s*=\s*gen_random_uuid/i, "migration never replaces legacy sessions");
+assert.match(
+  migration,
+  /grant select, insert on table public\.rate_limit_events to service_role/i,
+  "server-side analytics rate limiting has explicit table privileges"
+);
 assert.match(precheck, /null_count[\s\S]*empty_string_count[\s\S]*valid_uuid_count[\s\S]*invalid_uuid_count/i, "precheck reports every compatibility bucket");
 assert.match(rollback, /alter column session_id type text[\s\S]*session_id::text/i, "rollback restores baseline text type");
 

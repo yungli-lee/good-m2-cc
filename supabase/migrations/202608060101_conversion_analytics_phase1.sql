@@ -318,6 +318,11 @@ revoke all on table public.analytics_events from anon, authenticated;
 grant select on table public.analytics_events to authenticated;
 grant select, insert, update, delete on table public.analytics_events to service_role;
 
+-- Public ingestion rate limiting also runs through the server-held service role.
+-- The existing RLS policy does not itself grant table privileges, so make the
+-- dependency explicit and idempotent for both fresh and rerun environments.
+grant select, insert on table public.rate_limit_events to service_role;
+
 comment on column public.analytics_events.event_id is 'Producer-generated idempotency UUID; globally unique across retries.';
 comment on column public.analytics_events.session_id is 'Anonymous first-party session UUID; explicit legacy empty text was normalized to NULL during migration.';
 comment on column public.analytics_events.environment is 'Explicit runtime isolation: preview, production, development, test, or legacy_unknown.';
