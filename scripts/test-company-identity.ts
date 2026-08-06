@@ -37,12 +37,14 @@ assert.match(header, /<strong>\{settings\.brand_name\}<\/strong>/);
 assert.match(header, /<small>\{settings\.brand_tagline\}<\/small>/);
 assert.doesNotMatch(header, /<strong>\{settings\.company_name\}<\/strong>/);
 
-assert.match(footer, /\{settings\.brand_name\}・\{settings\.franchise_name\}/);
+assert.doesNotMatch(footer, /\{settings\.brand_name\}・\{settings\.franchise_name\}/);
 assert.match(header, /settings\.brand_logo_url/);
 assert.doesNotMatch(header, /settings\.logo_url/);
 assert.match(contact, /company\.franchise_logo_url/);
 assert.match(property, /companySettings\.franchise_logo_url/);
-assert.match(footer, /<small>\{settings\.company_name\}<\/small>/);
+assert.doesNotMatch(footer, /<small>\{settings\.company_name\}<\/small>/);
+assert.doesNotMatch(footer, /brokerage_license_no|realtor_certificate/);
+assert.match(footer, /settings\.copyright_text/);
 
 assert.match(contact, /<h2>\{company\.company_name\}<\/h2>/);
 assert.match(contact, /<p>\{company\.franchise_name\}<\/p>/);
