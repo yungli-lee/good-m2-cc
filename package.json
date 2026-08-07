@@ -26,6 +26,13 @@
     "test:media-video": "node --experimental-strip-types --experimental-specifier-resolution=node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/test-media-video-phase1.ts",
     "test:analytics-migration": "node --experimental-strip-types --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/test-conversion-analytics-phase1-migration.ts",
     "test:analytics-phase1": "node --experimental-strip-types --experimental-specifier-resolution=node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/test-conversion-analytics-phase1-application.ts",
+    "test:analytics-dashboard-phase2a": "node --experimental-strip-types --experimental-specifier-resolution=node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/test-analytics-dashboard-phase2a.ts",
+    "test:analytics-dashboard-phase2a-trend": "node --experimental-strip-types --experimental-specifier-resolution=node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/test-analytics-dashboard-phase2a-trend.ts",
+    "test:analytics-dashboard-phase2a-sources": "node --experimental-strip-types --experimental-specifier-resolution=node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/test-analytics-dashboard-phase2a-sources.ts",
+    "test:analytics-dashboard-phase2a-properties": "node --experimental-strip-types --experimental-specifier-resolution=node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/test-analytics-dashboard-phase2a-properties.ts",
+    "test:analytics-dashboard-phase2a-insights": "node --experimental-strip-types --experimental-specifier-resolution=node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/test-analytics-dashboard-phase2a-insights.ts",
+    "test:analytics-dashboard-phase2a-inquiries": "node --experimental-strip-types --experimental-specifier-resolution=node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/test-analytics-dashboard-phase2a-inquiries.ts",
+    "test:analytics-dashboard-phase2a-final-ui": "node --experimental-strip-types --experimental-specifier-resolution=node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/test-analytics-dashboard-phase2a-final-ui.ts",
     "start": "next start",
     "typecheck": "tsc --noEmit"
   },
