@@ -31,6 +31,7 @@
     "test:analytics-dashboard-phase2a-sources": "node --experimental-strip-types --experimental-specifier-resolution=node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/test-analytics-dashboard-phase2a-sources.ts",
     "test:analytics-dashboard-phase2a-properties": "node --experimental-strip-types --experimental-specifier-resolution=node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/test-analytics-dashboard-phase2a-properties.ts",
     "test:analytics-dashboard-phase2a-insights": "node --experimental-strip-types --experimental-specifier-resolution=node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/test-analytics-dashboard-phase2a-insights.ts",
+    "test:analytics-dashboard-phase2a-inquiries": "node --experimental-strip-types --experimental-specifier-resolution=node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/test-analytics-dashboard-phase2a-inquiries.ts",
     "start": "next start",
     "typecheck": "tsc --noEmit"
   },

@@ -12,6 +12,8 @@ import { getAnalyticsProperties } from "@/lib/analytics-dashboard/properties";
 import { PropertyPerformance } from "@/components/admin/analytics/property-performance";
 import { classifyLowConversionInsights } from "@/lib/analytics-dashboard/insights";
 import { PropertyInsights } from "@/components/admin/analytics/property-insights";
+import { getAnalyticsRecentInquiries } from "@/lib/analytics-dashboard/recent-inquiries";
+import { RecentInquiryAttribution } from "@/components/admin/analytics/recent-inquiry-attribution";
 
 export const runtime = "edge";
 export const dynamic = "force-dynamic";
@@ -23,11 +25,12 @@ export default async function AnalyticsDashboardPage({ searchParams }: { searchP
   const range = parseAnalyticsRange((await searchParams).range);
 
   const environment = getDashboardEnvironment();
-  const [summaryResult, trendResult, sourcesResult, propertiesResult] = await Promise.allSettled([
+  const [summaryResult, trendResult, sourcesResult, propertiesResult, inquiriesResult] = await Promise.allSettled([
     getAnalyticsSummary(range, environment),
     getAnalyticsTrend(range, environment),
     getAnalyticsSources(range, environment),
-    getAnalyticsProperties(range, environment)
+    getAnalyticsProperties(range, environment),
+    getAnalyticsRecentInquiries(range, environment)
   ]);
   if (summaryResult.status === "fulfilled") {
     const summary = summaryResult.value;
@@ -71,6 +74,7 @@ export default async function AnalyticsDashboardPage({ searchParams }: { searchP
           <SourcePerformance sources={sourcesResult.status === "fulfilled" ? sourcesResult.value : undefined} error={sourcesResult.status === "rejected"} />
           <PropertyPerformance properties={propertiesResult.status === "fulfilled" ? propertiesResult.value : undefined} error={propertiesResult.status === "rejected"} />
           <PropertyInsights insights={insightData ? { range, timezone: "Asia/Taipei", environment, rows: insightData.rows, thresholds: insightData.thresholds, meta: { generatedAt: new Date().toISOString(), insufficientCohort: insightData.insufficientCohort } } : undefined} error={propertiesResult.status === "rejected"} />
+          <RecentInquiryAttribution inquiries={inquiriesResult.status === "fulfilled" ? inquiriesResult.value : undefined} error={inquiriesResult.status === "rejected"} />
           <p className="analytics-updated">資料更新時間：{new Date(summary.meta.generatedAt).toLocaleString("zh-TW", { timeZone: "Asia/Taipei" })}</p>
         </div>
       </main>

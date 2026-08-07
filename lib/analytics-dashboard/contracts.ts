@@ -143,3 +143,33 @@ export type AnalyticsInsights = {
   };
   meta: { generatedAt: string; insufficientCohort: boolean };
 };
+
+export type InquiryAttributionStatus = "complete" | "partial" | "missing" | "failed";
+
+export type AttributionTouch = {
+  source: string;
+  medium: string | null;
+  campaign: string | null;
+};
+
+export type RecentInquiryAttributionRow = {
+  inquiryId: string;
+  inquiryAt: string;
+  propertyId: string | null;
+  propertyTitle: string | null;
+  propertySlug: string | null;
+  propertyStatus: string | null;
+  attributionStatus: InquiryAttributionStatus;
+  firstTouch: AttributionTouch | null;
+  leadTouch: AttributionTouch | null;
+  lastNonDirect: AttributionTouch | null;
+  firstSeenAt: string | null;
+};
+
+export type AnalyticsRecentInquiries = {
+  range: AnalyticsRangePreset;
+  timezone: "Asia/Taipei";
+  environment: DashboardEnvironment;
+  rows: RecentInquiryAttributionRow[];
+  meta: { generatedAt: string; limit: number };
+};
