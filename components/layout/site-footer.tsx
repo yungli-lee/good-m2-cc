@@ -33,21 +33,27 @@ export function SiteFooter({ settings, navigation }: { settings: CompanySettings
         </div>
       </section>
       <footer>
-        <div className="site-app-footer">
-          <nav className="site-app-footer-nav" aria-label="頁尾導覽">
-            {navigation.filter((item) => item.location === "footer").map((item) => (
-              <Link href={item.href} key={item.id} target={item.target} rel={item.target === "_blank" ? "noopener noreferrer" : undefined}>
-                {item.label}
-              </Link>
-            ))}
-          </nav>
-          <img className="site-app-brand-logo" src={settings.brand_logo_url} alt={`${settings.brand_name}標誌`} />
-          <span>嚴選好物件</span>
-          <span>價格透明</span>
-          <span>安全交易</span>
-          <span>售後服務</span>
-          <strong>讓我們協助您安心成家・投資增值</strong>
-          <small>{settings.copyright_text}</small>
+        <div className="site-app-footer-shell">
+          <div className="container site-app-footer">
+            <nav className="site-app-footer-nav" aria-label="頁尾導覽">
+              {navigation.filter((item) => item.location === "footer").map((item) => (
+                <Link href={item.href} key={item.id} target={item.target} rel={item.target === "_blank" ? "noopener noreferrer" : undefined}>
+                  {item.label}
+                </Link>
+              ))}
+            </nav>
+            <div className="site-app-footer-brand">
+              <img className="site-app-brand-logo" src={settings.brand_logo_url} alt={`${settings.brand_name}標誌`} />
+            </div>
+            <div className="site-app-footer-services" aria-label="服務承諾">
+              <span>嚴選好物件</span>
+              <span>價格透明</span>
+              <span>安全交易</span>
+              <span>售後服務</span>
+            </div>
+            <strong>讓我們協助您安心成家・投資增值</strong>
+            <small>{settings.copyright_text}</small>
+          </div>
         </div>
       </footer>
     </>

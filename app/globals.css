@@ -922,6 +922,24 @@ td {
   background: #d9dee8;
 }
 
+.gallery-main-button,
+.property-image-button {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  cursor: zoom-in;
+  overflow: hidden;
+}
+
+.gallery-main-button:focus-visible,
+.property-image-button:focus-visible {
+  outline: 3px solid #c99a43;
+  outline-offset: 3px;
+}
+
 .media-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -2219,8 +2237,7 @@ td {
 }
 
 .site-app-contact-actions,
-.site-app-social,
-.site-app-footer {
+.site-app-social {
   display: flex;
   flex-wrap: wrap;
   gap: 12px;
@@ -2236,20 +2253,43 @@ td {
   color: #64708a;
 }
 
-.site-app-footer {
-  justify-content: center;
-  align-items: center;
-  padding: 28px;
+.site-app-footer-shell {
   background: #102343;
   color: #fff;
 }
 
+.site-app-footer {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 22px 32px;
+  padding-block: 32px;
+}
+
+.site-app-footer-nav {
+  justify-content: flex-start;
+}
+
+.site-app-footer-brand {
+  display: grid;
+  place-items: center;
+}
+
+.site-app-footer-services {
+  display: grid;
+  grid-template-columns: repeat(2, max-content);
+  justify-content: end;
+  gap: 8px 18px;
+}
+
 .site-app-footer strong {
-  flex-basis: 100%;
+  grid-column: 1 / -1;
   text-align: center;
 }
 
 .site-app-footer small {
+  grid-column: 1 / -1;
+  text-align: center;
   color: rgba(255, 255, 255, 0.72);
 }
 
@@ -2260,7 +2300,7 @@ td {
   max-width: 120px;
   max-height: 120px;
   object-fit: contain;
-  margin: 0 auto 12px;
+  margin: 0;
 }
 
 .breadcrumb {
@@ -2375,6 +2415,27 @@ td {
 
   .site-app-contact-actions {
     justify-content: flex-start;
+  }
+
+  .site-app-footer {
+    grid-template-columns: 1fr;
+    gap: 20px;
+    padding-block: 28px;
+    text-align: center;
+  }
+
+  .site-app-footer-nav,
+  .site-app-footer-services {
+    justify-content: center;
+  }
+
+  .site-app-footer-services {
+    grid-template-columns: repeat(2, max-content);
+  }
+
+  .site-app-footer strong,
+  .site-app-footer small {
+    grid-column: 1;
   }
 
   .topbar-inner {
@@ -2615,6 +2676,22 @@ td {
   position: absolute; z-index: 1; top: -18px; right: -18px; width: 44px; height: 44px;
   border: 0; border-radius: 999px; background: #fff; color: #111; font-size: 28px; cursor: pointer;
 }
+.image-lightbox {
+  position: fixed; inset: 0; z-index: 10000; display: grid; place-items: center;
+  padding: 24px; background: rgb(0 0 0 / 88%);
+}
+.image-lightbox-panel { position: relative; display: grid; place-items: center; width: min(1200px, 100%); height: min(88vh, 900px); }
+.image-lightbox-panel > img { display: block; max-width: 100%; max-height: 100%; width: auto; height: auto; object-fit: contain; }
+.image-lightbox-close,
+.image-lightbox-nav {
+  position: absolute; z-index: 1; display: grid; place-items: center; width: 44px; height: 44px;
+  border: 0; border-radius: 999px; background: #fff; color: #111; cursor: pointer;
+}
+.image-lightbox-close { top: 0; right: 0; font-size: 28px; }
+.image-lightbox-nav { top: 50%; transform: translateY(-50%); font-size: 36px; }
+.image-lightbox-nav.is-previous { left: 0; }
+.image-lightbox-nav.is-next { right: 0; }
+.image-lightbox-count { position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); padding: 5px 10px; border-radius: 999px; background: rgb(0 0 0 / 70%); color: #fff; }
 .home-video-full-button { position: absolute; left: 20px; bottom: 20px; z-index: 2; }
 .hero-media { position: relative; }
 .hero-media video { width: 100%; height: 100%; object-fit: cover; object-position: center center; }
@@ -2643,6 +2720,10 @@ td {
   .home-video-full-button { top: 76px; bottom: auto; max-width: calc(100vw - 40px); }
   .video-lightbox { padding: 12px; }
   .video-lightbox-close { top: 8px; right: 8px; }
+  .image-lightbox { padding: 12px; }
+  .image-lightbox-close { top: 8px; right: 8px; }
+  .image-lightbox-nav.is-previous { left: 8px; }
+  .image-lightbox-nav.is-next { right: 8px; }
 }
 
 .analytics-dashboard { min-height: 70vh; }
