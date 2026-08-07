@@ -59,3 +59,28 @@ export type AnalyticsTrend = {
     lowData: boolean;
   };
 };
+
+export type SourcePerformanceRow = {
+  source: string;
+  medium: string;
+  campaign: string;
+  visitors: number;
+  sessions: number;
+  propertyViews: number;
+  lineClicks: number;
+  phoneClicks: number;
+  inquiries: number;
+  conversionRate: number | null;
+};
+
+export type AnalyticsSources = {
+  range: AnalyticsRangePreset;
+  timezone: "Asia/Taipei";
+  environment: DashboardEnvironment;
+  rows: SourcePerformanceRow[];
+  meta: {
+    generatedAt: string;
+    lowData: boolean;
+    attributionModel: "event_source";
+  };
+};
