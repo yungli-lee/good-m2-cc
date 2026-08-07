@@ -265,18 +265,61 @@ drop trigger if exists lead_attributions_set_updated_at on public.lead_attributi
 create trigger lead_attributions_set_updated_at before update on public.lead_attributions
 for each row execute function public.set_updated_at();
 
+-- Inquiry placement is DDL-only. Production already has role-enforcement
+-- triggers on this table, so migration compatibility must never depend on a
+-- row-level UPDATE or on bypassing those triggers. A fresh column receives the
+-- complete contract in the ADD COLUMN statement; a pre-existing column is
+-- accepted only when it already matches that contract exactly.
+do $$
+declare
+  status_type text;
+  status_default text;
+  status_not_null boolean;
+  status_null_count bigint;
+begin
+  select
+    format_type(a.atttypid, a.atttypmod),
+    pg_get_expr(d.adbin, d.adrelid),
+    a.attnotnull
+  into status_type, status_default, status_not_null
+  from pg_attribute a
+  join pg_class t on t.oid = a.attrelid
+  join pg_namespace n on n.oid = t.relnamespace
+  left join pg_attrdef d on d.adrelid = a.attrelid and d.adnum = a.attnum
+  where n.nspname = 'public'
+    and t.relname = 'inquiries'
+    and a.attname = 'attribution_status'
+    and a.attnum > 0
+    and not a.attisdropped;
+
+  if status_type is not null then
+    if status_type <> 'text' then
+      raise exception 'inquiries.attribution_status has unsupported type: %', status_type;
+    end if;
+
+    if status_default is distinct from '''missing''::text' then
+      raise exception 'inquiries.attribution_status must default to missing; found %', coalesce(status_default, 'NULL');
+    end if;
+
+    select count(*)
+    into status_null_count
+    from public.inquiries
+    where attribution_status is null;
+
+    if status_null_count > 0 then
+      raise exception 'inquiries.attribution_status contains % NULL value(s); migration will not update inquiry rows', status_null_count;
+    end if;
+
+    if not status_not_null then
+      raise exception 'inquiries.attribution_status must already be NOT NULL';
+    end if;
+  end if;
+end $$;
+
 alter table public.inquiries
   add column if not exists visitor_id uuid,
   add column if not exists session_id uuid,
-  add column if not exists attribution_status text;
-
-update public.inquiries
-set attribution_status = 'missing'
-where attribution_status is null;
-
-alter table public.inquiries
-  alter column attribution_status set default 'missing',
-  alter column attribution_status set not null;
+  add column if not exists attribution_status text not null default 'missing';
 
 do $$
 begin

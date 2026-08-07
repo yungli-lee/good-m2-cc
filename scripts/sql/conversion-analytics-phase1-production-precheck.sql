@@ -11,8 +11,31 @@ order by table_name;
 select table_schema, table_name, column_name, data_type, udt_name, is_nullable, column_default
 from information_schema.columns
 where table_schema = 'public'
-  and table_name = 'analytics_events'
-  and column_name = 'session_id';
+  and (
+    (table_name = 'analytics_events' and column_name = 'session_id')
+    or (table_name = 'inquiries' and column_name in ('visitor_id', 'session_id', 'attribution_status'))
+  )
+order by table_name, ordinal_position;
+
+select
+  count(*) as inquiry_count,
+  count(*) filter (where attribution_status is null) as attribution_status_null_count,
+  count(*) filter (where attribution_status = 'missing') as attribution_status_missing_count
+from public.inquiries;
+
+select
+  n.nspname as schema_name,
+  c.relname as table_name,
+  t.tgname as trigger_name,
+  t.tgenabled as trigger_enabled,
+  pg_get_triggerdef(t.oid) as trigger_definition
+from pg_trigger t
+join pg_class c on c.oid = t.tgrelid
+join pg_namespace n on n.oid = c.relnamespace
+where n.nspname = 'public'
+  and c.relname = 'inquiries'
+  and not t.tgisinternal
+order by t.tgname;
 
 select
   count(*) as total_rows,

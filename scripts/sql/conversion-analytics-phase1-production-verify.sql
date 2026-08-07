@@ -98,6 +98,25 @@ order by table_name, grantee, privilege_type;
 select count(*) as original_inquiry_count
 from public.inquiries;
 
+select
+  count(*) filter (where attribution_status is null) as attribution_status_null_count,
+  count(*) filter (where attribution_status = 'missing') as attribution_status_missing_count
+from public.inquiries;
+
+select
+  n.nspname as schema_name,
+  c.relname as table_name,
+  t.tgname as trigger_name,
+  t.tgenabled as trigger_enabled,
+  pg_get_triggerdef(t.oid) as trigger_definition
+from pg_trigger t
+join pg_class c on c.oid = t.tgrelid
+join pg_namespace n on n.oid = c.relnamespace
+where n.nspname = 'public'
+  and c.relname = 'inquiries'
+  and not t.tgisinternal
+order by t.tgname;
+
 select count(*) as lead_attribution_count
 from public.lead_attributions;
 
