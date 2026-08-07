@@ -2644,3 +2644,38 @@ td {
   .video-lightbox { padding: 12px; }
   .video-lightbox-close { top: 8px; right: 8px; }
 }
+
+.analytics-dashboard { min-height: 70vh; }
+.analytics-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; margin-bottom: 20px; }
+.analytics-heading h1 { margin: 0; line-height: 1.25; }
+.analytics-heading .muted { max-width: 720px; }
+.analytics-meta, .analytics-range { display: flex; flex-wrap: wrap; gap: 8px; }
+.analytics-meta span { padding: 4px 10px; border: 1px solid var(--line); border-radius: 999px; color: var(--muted); font-size: 13px; white-space: nowrap; }
+.analytics-range { margin-bottom: 20px; }
+.analytics-range a {
+  display: inline-flex; min-width: 72px; min-height: 44px; align-items: center; justify-content: center;
+  padding: 8px 14px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--white); font-weight: 800;
+}
+.analytics-range a[aria-current="page"] { border-color: var(--navy); background: var(--navy); color: var(--white); }
+.analytics-notice, .analytics-empty { margin-bottom: 20px; }
+.analytics-metric-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; padding: 0; }
+.analytics-metric-card { padding: 20px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--white); box-shadow: 0 10px 30px rgba(23, 32, 51, 0.06); }
+.analytics-metric-card > p { margin: 0; color: var(--muted); font-weight: 800; }
+.analytics-metric-card > strong { display: block; margin: 8px 0 14px; color: var(--navy); font-size: clamp(28px, 4vw, 40px); line-height: 1.2; }
+.analytics-metric-card dl, .analytics-metric-card dl div { margin: 0; }
+.analytics-metric-card dl div { display: flex; justify-content: space-between; gap: 12px; border-top: 1px solid var(--line); padding-top: 7px; }
+.analytics-metric-card dt, .analytics-metric-card small { color: var(--muted); }
+.analytics-metric-card dd { margin: 0; font-weight: 800; }
+.analytics-metric-card small { display: block; margin-top: 8px; }
+.analytics-updated { margin-top: 18px; color: var(--muted); font-size: 14px; }
+
+@media (max-width: 900px) {
+  .analytics-metric-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .analytics-heading { display: block; }
+  .analytics-meta { margin-top: 12px; }
+}
+
+@media (max-width: 560px) {
+  .analytics-metric-grid { grid-template-columns: 1fr; }
+  .analytics-range a { flex: 1 1 calc(50% - 8px); }
+}

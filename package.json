@@ -26,6 +26,7 @@
     "test:media-video": "node --experimental-strip-types --experimental-specifier-resolution=node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/test-media-video-phase1.ts",
     "test:analytics-migration": "node --experimental-strip-types --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/test-conversion-analytics-phase1-migration.ts",
     "test:analytics-phase1": "node --experimental-strip-types --experimental-specifier-resolution=node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/test-conversion-analytics-phase1-application.ts",
+    "test:analytics-dashboard-phase2a": "node --experimental-strip-types --experimental-specifier-resolution=node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/test-analytics-dashboard-phase2a.ts",
     "start": "next start",
     "typecheck": "tsc --noEmit"
   },

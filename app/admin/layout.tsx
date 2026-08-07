@@ -35,6 +35,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
             <Link href="/admin/site-pages">靜態頁面</Link>
             <Link href="/admin/navigation">導覽選單</Link>
             <Link href="/admin/inquiries">詢問單</Link>
+            {current.profile.role === "admin" || current.profile.role === "owner" ? <Link href="/admin/analyze">成效分析</Link> : null}
             <Link href="/admin/tools">後台工具</Link>
             <Link href="/admin/settings/company">公司資料</Link>
             {current.profile.role === "admin" || current.profile.role === "owner" ? <Link href="/admin/system/email">Email 診斷</Link> : null}
