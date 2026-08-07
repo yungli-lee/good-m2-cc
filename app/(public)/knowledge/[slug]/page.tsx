@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import type React from "react";
 import Link from "next/link";
+import { KnowledgeViewTracker } from "@/components/analytics/content-trackers";
 import { notFound } from "next/navigation";
 import { getPublicKnowledgeBySlug } from "@/lib/content/queries";
 import { getPublicCompanySettings } from "@/lib/company-settings";
@@ -308,6 +309,7 @@ export default async function KnowledgeDetailPage({ params }: Props) {
 
   return (
     <main>
+      <KnowledgeViewTracker articleId={item.id} slug={item.slug} category={category} />
       <article className="section">
         <div className="container knowledge-detail-shell">
           <div className="knowledge-article-layout">

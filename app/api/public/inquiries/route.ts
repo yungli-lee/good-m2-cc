@@ -5,6 +5,7 @@ import { inquirySchema } from "@/lib/inquiries/schema";
 import { getRequestMeta } from "@/lib/security/request";
 import { createSupabaseAdminClient } from "@/lib/supabase/server";
 import { getSupabaseEnv } from "@/lib/supabase/env";
+import { attributeInquiry } from "@/lib/analytics/lead-attribution";
 
 export const runtime = "edge";
 
@@ -181,16 +182,23 @@ export async function POST(request: Request) {
       message: input.message,
       property_id: input.property_id || null,
       source_page: input.source_page || null,
+      visitor_id: input.visitor_id || null,
+      session_id: input.session_id || null,
+      attribution_status: input.visitor_id && input.session_id ? "pending" : "missing",
       status: "new",
       turnstile_verified: turnstile.ok,
       ip_hash: ipHash,
       user_agent: userAgent.slice(0, 500)
-    }).select("id").single();
+    }).select("id,visitor_id,session_id,property_id,source_page,created_at").single();
     if (error) {
       console.error("[inquiry_insert_failed]", safeErrorSummary(error));
       return NextResponse.json({ ok: false, error: "送出失敗，請稍後再試。", code: "inquiry_failed" }, { status: 500 });
     }
     console.info("[public_inquiries_insert_ok]", { inquiry_id: inquiry.id });
+
+    // Awaited on Edge so the request lifecycle is deterministic. Failures are
+    // contained by the service and never change the successful inquiry result.
+    const attribution = await attributeInquiry(supabase, inquiry);
 
     try {
       console.info("[public_inquiries_audit_start]", { action: "inquiry_create", inquiry_id: inquiry.id });
@@ -281,7 +289,7 @@ export async function POST(request: Request) {
       });
     }
 
-    return NextResponse.json({ ok: true, email_sent: emailResult.ok });
+    return NextResponse.json({ ok: true, inquiry_id: inquiry.id, attribution_status: attribution.status, email_sent: emailResult.ok });
   } catch (error) {
     console.error("[public_inquiries_failed]", safeErrorSummary(error));
     return NextResponse.json({ ok: false, error: "送出失敗，請稍後再試。", code: "inquiry_failed" }, { status: 500 });

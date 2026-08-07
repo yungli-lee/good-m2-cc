@@ -7,6 +7,7 @@ import { getPublishedPropertyBySlug } from "@/lib/properties/queries";
 import { resolvePropertySeo } from "@/lib/properties/seo";
 import type { Property } from "@/lib/properties/types";
 import { PropertyMediaGallery } from "@/components/media/property-media-gallery";
+import { PropertyViewTracker } from "@/components/analytics/content-trackers";
 
 export const runtime = "edge";
 
@@ -56,10 +57,18 @@ export default async function PropertyDetailPage({ params }: Props) {
   const media = property.property_media?.filter((item) => !item.deleted_at) || [];
 
   return (
-    <main>
+    <main data-property-id={property.id}>
+      <PropertyViewTracker propertyId={property.id} properties={{
+        property_title: property.title,
+        property_category: property.property_type || null,
+        city: null,
+        district: null,
+        price: property.price == null ? null : Number(property.price),
+        listing_status: property.status || null
+      }} />
       <section className="section">
         <div className="container detail-layout">
-          <PropertyMediaGallery media={media} title={property.title} />
+          <PropertyMediaGallery media={media} title={property.title} propertyId={property.id} />
           <aside className="card">
             <div className="card-body">
               <h1 style={{ marginTop: 0 }}>{property.title}</h1>

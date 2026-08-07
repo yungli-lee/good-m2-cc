@@ -545,6 +545,7 @@ function buildInquiryMessage(payload) {
 
 function buildInquiryPayload(formData) {
   const rawPayload = Object.fromEntries(formData.entries());
+  const identity = window.goodM2Analytics?.getIdentity?.();
 
   return {
     form_type: "service-form",
@@ -554,6 +555,8 @@ function buildInquiryPayload(formData) {
     source_page: `${window.location.pathname}${window.location.hash}`,
     website: readPayloadValue(rawPayload, "website"),
     turnstile_token: readPayloadValue(rawPayload, "turnstile_token"),
+    visitor_id: identity?.visitorId || "",
+    session_id: identity?.sessionId || "",
     message: buildInquiryMessage(rawPayload),
   };
 }
@@ -564,6 +567,10 @@ consultForm?.addEventListener("submit", async (event) => {
   const submitButton = consultForm.querySelector("button[type='submit']");
   const formData = new FormData(consultForm);
   const payload = buildInquiryPayload(formData);
+
+  void window.goodM2Analytics?.trackEvent?.("submit_inquiry", {
+    properties: { form_type: "service-form", form_location: "homepage" }
+  });
 
   clearConsultFieldErrors();
   submitButton.disabled = true;

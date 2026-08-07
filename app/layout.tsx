@@ -1,4 +1,5 @@
 import { HomeHashScroll } from "@/components/layout/home-hash-scroll";
+import { AnalyticsProvider } from "@/components/analytics/analytics-provider";
 import "./globals.css";
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -7,6 +8,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body>
         {children}
         <HomeHashScroll />
+        <AnalyticsProvider />
       </body>
     </html>
   );

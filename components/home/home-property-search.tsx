@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { trackEvent } from "@/lib/analytics/client";
 
 export type HomeProperty = {
   id: string;
@@ -59,6 +60,7 @@ export function HomePropertySearch({ lineUrl }: { lineUrl: string }) {
       const body = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error("搜尋暫時無法使用，請稍後再試。");
       setResults(Array.isArray(body.data) ? body.data : []);
+      void trackEvent("search_property", { properties: { query: query.trim() || null, district: null, category: null, price_min: null, price_max: null, result_count: Array.isArray(body.data) ? body.data.length : 0 } });
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "搜尋暫時無法使用，請稍後再試。");
       setResults(null);
