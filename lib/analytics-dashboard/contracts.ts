@@ -84,3 +84,30 @@ export type AnalyticsSources = {
     attributionModel: "event_source";
   };
 };
+
+export type PropertyPerformanceRow = {
+  propertyId: string;
+  title: string | null;
+  slug: string | null;
+  status: string | null;
+  views: number;
+  visitors: number;
+  sessions: number;
+  mediaViews: number;
+  lineClicks: number;
+  phoneClicks: number;
+  shares: number;
+  mapOpens: number;
+  inquiryStarts: number;
+  inquiries: number;
+  viewInquiryConversionRate: number | null;
+  ctaRate: number | null;
+};
+
+export type AnalyticsProperties = {
+  range: AnalyticsRangePreset;
+  timezone: "Asia/Taipei";
+  environment: DashboardEnvironment;
+  rows: PropertyPerformanceRow[];
+  meta: { generatedAt: string; sampleGuardViews: 5 };
+};
