@@ -9,7 +9,7 @@ export type PropertyEventRow = {
   is_internal?: boolean;
 };
 
-export type PropertyMetadataRow = { id: string; title: string; slug: string; status: string };
+export type PropertyMetadataRow = { id: string; title: string; slug: string; status: string; published_at: string | null };
 export type PropertySortKey = "views" | "visitors" | "lineClicks" | "phoneClicks" | "inquiries" | "viewInquiryConversionRate" | "ctaRate";
 
 type MutableRow = {
@@ -82,6 +82,7 @@ export function aggregatePropertyRows(events: PropertyEventRow[], metadata: Prop
       title: property?.title ?? null,
       slug: property?.slug ?? null,
       status: property?.status ?? null,
+      firstPublishedAt: property?.published_at ?? null,
       visitors: visitorIds.size,
       sessions: sessionIds.size,
       viewInquiryConversionRate: roundRate(inquiryVisitorIds.size, viewerVisitorIds.size),

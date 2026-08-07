@@ -90,6 +90,7 @@ export type PropertyPerformanceRow = {
   title: string | null;
   slug: string | null;
   status: string | null;
+  firstPublishedAt: string | null;
   views: number;
   visitors: number;
   sessions: number;
@@ -110,4 +111,35 @@ export type AnalyticsProperties = {
   environment: DashboardEnvironment;
   rows: PropertyPerformanceRow[];
   meta: { generatedAt: string; sampleGuardViews: 5 };
+};
+
+export type PropertyInsightSignal = "HIGH_VIEW_LOW_INQUIRY" | "HIGH_VIEW_LOW_CTA" | "HIGH_CTA_NO_INQUIRY";
+export type PropertyInsightSeverity = "high" | "medium";
+
+export type LowConversionInsight = {
+  property: PropertyPerformanceRow;
+  reasonCode: "HIGH_VIEWS_LOW_CONVERSION" | "HIGH_CTA_ZERO_INQUIRY";
+  signal: PropertyInsightSignal;
+  severity: PropertyInsightSeverity;
+  reason: string;
+  cohortSize: number;
+  minimumViews: number;
+  viewPercentileThreshold: number;
+  conversionPercentileThreshold: number;
+};
+
+export type AnalyticsInsights = {
+  range: AnalyticsRangePreset;
+  timezone: "Asia/Taipei";
+  environment: DashboardEnvironment;
+  rows: LowConversionInsight[];
+  thresholds: {
+    minimumPublishedDays: number;
+    minimumCohortSize: number;
+    configuredMinimumViews: number;
+    effectiveMinimumViews: number | null;
+    viewPercentileThreshold: number | null;
+    conversionPercentileThreshold: number | null;
+  };
+  meta: { generatedAt: string; insufficientCohort: boolean };
 };

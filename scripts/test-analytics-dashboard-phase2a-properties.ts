@@ -10,14 +10,14 @@ const events: PropertyEventRow[] = [
   event("p1", "view_property", null, null, { is_bot: true }), event("p1", "view_property", null, null, { is_internal: true }),
   event(null, "view_property"), event("missing", "inquiry_created", null, null)
 ];
-const rows = aggregatePropertyRows(events, [{ id: "p1", title: "很長的測試物件名稱", slug: "long-home", status: "published" }]);
+const rows = aggregatePropertyRows(events, [{ id: "p1", title: "很長的測試物件名稱", slug: "long-home", status: "published", published_at: "2026-01-01T00:00:00.000Z" }]);
 assert.deepEqual(rows[0], {
-  propertyId: "p1", title: "很長的測試物件名稱", slug: "long-home", status: "published",
+  propertyId: "p1", title: "很長的測試物件名稱", slug: "long-home", status: "published", firstPublishedAt: "2026-01-01T00:00:00.000Z",
   views: 2, visitors: 2, sessions: 2, mediaViews: 1, lineClicks: 1, phoneClicks: 1,
   shares: 1, mapOpens: 1, inquiryStarts: 1, inquiries: 1, viewInquiryConversionRate: 100, ctaRate: 100
 });
 assert.deepEqual(rows[1], {
-  propertyId: "missing", title: null, slug: null, status: null, views: 0, visitors: 0, sessions: 0,
+  propertyId: "missing", title: null, slug: null, status: null, firstPublishedAt: null, views: 0, visitors: 0, sessions: 0,
   mediaViews: 0, lineClicks: 0, phoneClicks: 0, shares: 0, mapOpens: 0, inquiryStarts: 0, inquiries: 1,
   viewInquiryConversionRate: null, ctaRate: null
 });
@@ -40,7 +40,7 @@ assert.match(service, /\.not\("property_id", "is", null\)/);
 assert.match(service, /\.eq\("environment", environment\)/);
 assert.match(service, /\.eq\("is_bot", false\)/);
 assert.match(service, /\.eq\("is_internal", false\)/);
-assert.match(service, /from\("properties"\)\.select\("id,title,slug,status"\)\.in\("id", propertyIds\)/, "metadata is fetched in one batched query");
+assert.match(service, /from\("properties"\)\.select\("id,title,slug,status,published_at"\)\.in\("id", propertyIds\)/, "metadata is fetched in one batched query");
 assert.match(service, /await createSupabaseServerClient\(\)/, "metadata uses the authenticated server client so property RLS remains enforced");
 assert.doesNotMatch(service, /event_properties|owner_|owner_name|owner_phone|email|message|address_public|address_private/i);
 assert.match(route, /requireApiRole\(\["admin", "owner"\]\)/);

@@ -10,6 +10,8 @@ import { getAnalyticsSources } from "@/lib/analytics-dashboard/sources";
 import { SourcePerformance } from "@/components/admin/analytics/source-performance";
 import { getAnalyticsProperties } from "@/lib/analytics-dashboard/properties";
 import { PropertyPerformance } from "@/components/admin/analytics/property-performance";
+import { classifyLowConversionInsights } from "@/lib/analytics-dashboard/insights";
+import { PropertyInsights } from "@/components/admin/analytics/property-insights";
 
 export const runtime = "edge";
 export const dynamic = "force-dynamic";
@@ -31,6 +33,7 @@ export default async function AnalyticsDashboardPage({ searchParams }: { searchP
     const summary = summaryResult.value;
     const metrics = summary.metrics;
     const hasNoEvents = metrics.visitors.current === 0 && metrics.sessions.current === 0 && metrics.propertyViews.current === 0 && metrics.inquiries.current === 0;
+    const insightData = propertiesResult.status === "fulfilled" ? classifyLowConversionInsights(propertiesResult.value.rows, range) : null;
     return (
       <main className="section analytics-dashboard">
         <div className="container">
@@ -67,6 +70,7 @@ export default async function AnalyticsDashboardPage({ searchParams }: { searchP
           <TrendChart trend={trendResult.status === "fulfilled" ? trendResult.value : undefined} error={trendResult.status === "rejected"} />
           <SourcePerformance sources={sourcesResult.status === "fulfilled" ? sourcesResult.value : undefined} error={sourcesResult.status === "rejected"} />
           <PropertyPerformance properties={propertiesResult.status === "fulfilled" ? propertiesResult.value : undefined} error={propertiesResult.status === "rejected"} />
+          <PropertyInsights insights={insightData ? { range, timezone: "Asia/Taipei", environment, rows: insightData.rows, thresholds: insightData.thresholds, meta: { generatedAt: new Date().toISOString(), insufficientCohort: insightData.insufficientCohort } } : undefined} error={propertiesResult.status === "rejected"} />
           <p className="analytics-updated">資料更新時間：{new Date(summary.meta.generatedAt).toLocaleString("zh-TW", { timeZone: "Asia/Taipei" })}</p>
         </div>
       </main>

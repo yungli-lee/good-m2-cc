@@ -37,9 +37,9 @@ async function readPropertyEvents(range: AnalyticsRangePreset, environment: Dash
 async function readPropertyMetadata(propertyIds: string[]) {
   if (!propertyIds.length) return [];
   const supabase = await createSupabaseServerClient();
-  const { data, error } = await supabase.from("properties").select("id,title,slug,status").in("id", propertyIds);
+  const { data, error } = await supabase.from("properties").select("id,title,slug,status,published_at").in("id", propertyIds);
   if (error) throw new Error(`analytics_property_metadata_failed:${error.code || "unknown"}`);
-  return (data || []).filter((row): row is PropertyMetadataRow => typeof row.id === "string" && typeof row.title === "string" && typeof row.slug === "string" && typeof row.status === "string");
+  return (data || []).filter((row): row is PropertyMetadataRow => typeof row.id === "string" && typeof row.title === "string" && typeof row.slug === "string" && typeof row.status === "string" && (row.published_at === null || typeof row.published_at === "string"));
 }
 
 export async function getAnalyticsProperties(range: AnalyticsRangePreset, environment: DashboardEnvironment) {
