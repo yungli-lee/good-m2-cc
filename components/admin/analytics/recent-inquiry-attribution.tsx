@@ -15,9 +15,9 @@ const inquiryTime = (value: string) => new Date(value).toLocaleString("zh-TW", {
 export function RecentInquiryAttribution({ inquiries, error = false }: Props) {
   if (error || !inquiries) return <section className="analytics-inquiry-panel"><h2>最近詢問歸因</h2><div className="notice" role="status">最近詢問目前無法載入，其他分析仍可正常使用。</div></section>;
   return <section className="analytics-inquiry-panel" aria-labelledby="analytics-inquiry-title">
-    <div className="analytics-inquiry-heading"><h2 id="analytics-inquiry-title">最近詢問歸因</h2><p className="muted">使用詢問建立當下的 immutable attribution snapshot；不會從後續事件重新推算。</p></div>
+    <div className="analytics-inquiry-heading"><h2 id="analytics-inquiry-title">最近詢問歸因</h2><p className="muted">使用詢問送出當下的來源紀錄，後續瀏覽不會改寫。</p></div>
     {!inquiries.rows.length ? <div className="notice analytics-empty"><strong>這個期間尚無詢問。</strong></div> : <>
-      <div className="analytics-inquiry-desktop table-wrap"><table><thead><tr><th>時間</th><th>物件</th><th>狀態</th><th>First touch</th><th>Lead touch</th><th>Last non-direct</th></tr></thead><tbody>{inquiries.rows.map((row) => <tr key={row.inquiryId}>
+      <div className="analytics-inquiry-desktop table-wrap"><table><thead><tr><th>時間</th><th>物件</th><th>狀態</th><th>首次來源</th><th>詢問來源</th><th>最近一次非直接來源</th></tr></thead><tbody>{inquiries.rows.map((row) => <tr key={row.inquiryId}>
         <td>{inquiryTime(row.inquiryAt)}</td><td className="analytics-inquiry-property">{row.propertySlug ? <Link href={`/properties/${row.propertySlug}`}>{row.propertyTitle || "已下架／未知物件"}</Link> : <strong>{row.propertyTitle || "已下架／未知物件"}</strong>}<small>{row.propertyId ? `ID: ${row.propertyId}${row.propertyStatus ? ` · ${row.propertyStatus}` : ""}` : "未指定物件"}</small></td>
         <td><span className={`analytics-attribution-status analytics-attribution-${row.attributionStatus}`}>{statusLabels[row.attributionStatus]}</span></td><td><Touch value={row.firstTouch} /></td><td><Touch value={row.leadTouch} /></td><td><Touch value={row.lastNonDirect} /></td>
       </tr>)}</tbody></table></div>

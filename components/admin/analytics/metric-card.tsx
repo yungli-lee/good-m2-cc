@@ -4,17 +4,18 @@ type Props = {
   label: string;
   metric: SummaryMetric;
   rate?: boolean;
+  compact?: boolean;
 };
 
 function formatValue(value: number, rate: boolean) {
   return rate ? new Intl.NumberFormat("zh-TW", { style: "percent", maximumFractionDigits: 1 }).format(value) : value.toLocaleString("zh-TW");
 }
 
-export function MetricCard({ label, metric, rate = false }: Props) {
+export function MetricCard({ label, metric, rate = false, compact = false }: Props) {
   const change = metric.changePercent;
   const changeLabel = change === null ? "—" : `${change > 0 ? "+" : ""}${new Intl.NumberFormat("zh-TW", { style: "percent", maximumFractionDigits: 1 }).format(change)}`;
   return (
-    <article className="analytics-metric-card">
+    <article className={`analytics-metric-card${compact ? " analytics-metric-card-compact" : ""}`}>
       <p>{label}</p>
       <strong>{formatValue(metric.current, rate)}</strong>
       <dl>

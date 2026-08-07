@@ -60,7 +60,7 @@ assert.doesNotMatch(service, /analytics_events|properties.*select|event_properti
 assert.match(route, /requireApiRole\(\["admin", "owner"\]\)/);
 assert.match(route, /private, no-store/);
 assert.match(component, /目前沒有需要特別關注的物件/);
-assert.match(component, /資料量不足，暫不判定/);
+assert.match(component, /目前資料量不足，暫不進行物件比較/);
 assert.doesNotMatch(component, /不好賣|沒有市場|建議降價|AI|LLM/);
 assert.match(css, /analytics-insight-grid[\s\S]*grid-template-columns: 1fr/);
 
