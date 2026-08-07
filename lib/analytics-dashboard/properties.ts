@@ -1,4 +1,4 @@
-import { createSupabaseAdminClient } from "@/lib/supabase/server";
+import { createSupabaseAdminClient, createSupabaseServerClient } from "@/lib/supabase/server";
 import type { AnalyticsRangePreset, DashboardEnvironment } from "./contracts.ts";
 import { getAnalyticsPeriod } from "./date-range.ts";
 import { aggregatePropertyRows, type PropertyEventRow, type PropertyMetadataRow } from "./property-aggregation.ts";
@@ -36,7 +36,7 @@ async function readPropertyEvents(range: AnalyticsRangePreset, environment: Dash
 
 async function readPropertyMetadata(propertyIds: string[]) {
   if (!propertyIds.length) return [];
-  const supabase = createSupabaseAdminClient();
+  const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase.from("properties").select("id,title,slug,status").in("id", propertyIds);
   if (error) throw new Error(`analytics_property_metadata_failed:${error.code || "unknown"}`);
   return (data || []).filter((row): row is PropertyMetadataRow => typeof row.id === "string" && typeof row.title === "string" && typeof row.slug === "string" && typeof row.status === "string");

@@ -16,6 +16,10 @@ type MutableRow = {
   propertyId: string;
   visitorIds: Set<string>;
   sessionIds: Set<string>;
+  viewerVisitorIds: Set<string>;
+  viewerSessionIds: Set<string>;
+  ctaSessionIds: Set<string>;
+  inquiryVisitorIds: Set<string>;
   views: number;
   mediaViews: number;
   lineClicks: number;
@@ -52,24 +56,27 @@ export function aggregatePropertyRows(events: PropertyEventRow[], metadata: Prop
     if (!event.property_id || event.is_bot || event.is_internal) continue;
     let row = groups.get(event.property_id);
     if (!row) {
-      row = { propertyId: event.property_id, visitorIds: new Set(), sessionIds: new Set(), views: 0, mediaViews: 0, lineClicks: 0, phoneClicks: 0, shares: 0, mapOpens: 0, inquiryStarts: 0, inquiries: 0 };
+      row = { propertyId: event.property_id, visitorIds: new Set(), sessionIds: new Set(), viewerVisitorIds: new Set(), viewerSessionIds: new Set(), ctaSessionIds: new Set(), inquiryVisitorIds: new Set(), views: 0, mediaViews: 0, lineClicks: 0, phoneClicks: 0, shares: 0, mapOpens: 0, inquiryStarts: 0, inquiries: 0 };
       groups.set(event.property_id, row);
     }
     if (event.visitor_id) row.visitorIds.add(event.visitor_id);
     if (event.session_id) row.sessionIds.add(event.session_id);
-    if (event.event_name === "view_property") row.views += 1;
+    if (event.event_name === "view_property") {
+      row.views += 1;
+      if (event.visitor_id) row.viewerVisitorIds.add(event.visitor_id);
+      if (event.session_id) row.viewerSessionIds.add(event.session_id);
+    }
     if (event.event_name === "view_property_media") row.mediaViews += 1;
-    if (event.event_name === "click_line") row.lineClicks += 1;
-    if (event.event_name === "click_phone") row.phoneClicks += 1;
+    if (event.event_name === "click_line") { row.lineClicks += 1; if (event.session_id) row.ctaSessionIds.add(event.session_id); }
+    if (event.event_name === "click_phone") { row.phoneClicks += 1; if (event.session_id) row.ctaSessionIds.add(event.session_id); }
     if (event.event_name === "share_property") row.shares += 1;
     if (event.event_name === "open_map") row.mapOpens += 1;
     if (event.event_name === "start_inquiry") row.inquiryStarts += 1;
-    if (event.event_name === "inquiry_created") row.inquiries += 1;
+    if (event.event_name === "inquiry_created") { row.inquiries += 1; if (event.visitor_id) row.inquiryVisitorIds.add(event.visitor_id); }
   }
   const metadataById = new Map(metadata.map((property) => [property.id, property]));
-  return [...groups.values()].map(({ visitorIds, sessionIds, ...row }) => {
+  return [...groups.values()].map(({ visitorIds, sessionIds, viewerVisitorIds, viewerSessionIds, ctaSessionIds, inquiryVisitorIds, ...row }) => {
     const property = metadataById.get(row.propertyId);
-    const ctaActions = row.lineClicks + row.phoneClicks + row.inquiryStarts;
     return {
       ...row,
       title: property?.title ?? null,
@@ -77,8 +84,8 @@ export function aggregatePropertyRows(events: PropertyEventRow[], metadata: Prop
       status: property?.status ?? null,
       visitors: visitorIds.size,
       sessions: sessionIds.size,
-      viewInquiryConversionRate: roundRate(row.inquiries, row.views),
-      ctaRate: roundRate(ctaActions, row.views)
+      viewInquiryConversionRate: roundRate(inquiryVisitorIds.size, viewerVisitorIds.size),
+      ctaRate: roundRate(ctaSessionIds.size, viewerSessionIds.size)
     };
   }).sort(defaultCompare);
 }

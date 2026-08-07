@@ -14,7 +14,7 @@ const rows = aggregatePropertyRows(events, [{ id: "p1", title: "很長的測試�
 assert.deepEqual(rows[0], {
   propertyId: "p1", title: "很長的測試物件名稱", slug: "long-home", status: "published",
   views: 2, visitors: 2, sessions: 2, mediaViews: 1, lineClicks: 1, phoneClicks: 1,
-  shares: 1, mapOpens: 1, inquiryStarts: 1, inquiries: 1, viewInquiryConversionRate: 50, ctaRate: 150
+  shares: 1, mapOpens: 1, inquiryStarts: 1, inquiries: 1, viewInquiryConversionRate: 100, ctaRate: 100
 });
 assert.deepEqual(rows[1], {
   propertyId: "missing", title: null, slug: null, status: null, views: 0, visitors: 0, sessions: 0,
@@ -41,6 +41,7 @@ assert.match(service, /\.eq\("environment", environment\)/);
 assert.match(service, /\.eq\("is_bot", false\)/);
 assert.match(service, /\.eq\("is_internal", false\)/);
 assert.match(service, /from\("properties"\)\.select\("id,title,slug,status"\)\.in\("id", propertyIds\)/, "metadata is fetched in one batched query");
+assert.match(service, /await createSupabaseServerClient\(\)/, "metadata uses the authenticated server client so property RLS remains enforced");
 assert.doesNotMatch(service, /event_properties|owner_|owner_name|owner_phone|email|message|address_public|address_private/i);
 assert.match(route, /requireApiRole\(\["admin", "owner"\]\)/);
 assert.match(route, /private, no-store/);
