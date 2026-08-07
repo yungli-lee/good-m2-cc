@@ -5,7 +5,7 @@ import { useMemo, useState } from "react";
 import type { AnalyticsProperties, PropertyPerformanceRow } from "@/lib/analytics-dashboard/contracts";
 import { sortPropertyRows, type PropertySortKey } from "@/lib/analytics-dashboard/property-aggregation";
 
-type Props = { properties?: AnalyticsProperties; error?: boolean };
+type Props = { properties?: AnalyticsProperties; error?: boolean; errorStage?: "events" | "metadata" | "unknown" };
 const sortOptions: Array<{ key: PropertySortKey; label: string }> = [
   { key: "views", label: "瀏覽" }, { key: "visitors", label: "訪客" }, { key: "lineClicks", label: "LINE" },
   { key: "phoneClicks", label: "電話" }, { key: "inquiries", label: "詢問" },
@@ -18,10 +18,10 @@ function PropertyName({ row }: { row: PropertyPerformanceRow }) {
   return <div className="analytics-property-name">{row.slug ? <Link href={`/properties/${row.slug}`}>{name}</Link> : <strong>{name}</strong>}<small>ID: {row.propertyId}{row.status ? ` · ${row.status}` : ""}</small></div>;
 }
 
-export function PropertyPerformance({ properties, error = false }: Props) {
+export function PropertyPerformance({ properties, error = false, errorStage = "unknown" }: Props) {
   const [sortKey, setSortKey] = useState<PropertySortKey>("views");
   const rows = useMemo(() => sortPropertyRows(properties?.rows || [], sortKey), [properties?.rows, sortKey]);
-  if (error || !properties) return <section className="analytics-property-panel"><h2>物件成效</h2><div className="notice" role="status">物件成效目前無法載入，其他分析仍可正常使用。</div></section>;
+  if (error || !properties) return <section className="analytics-property-panel"><h2>物件成效</h2><div className="notice" role="status">物件成效目前無法載入（{errorStage === "metadata" ? "物件資料連結" : errorStage === "events" ? "成效事件查詢" : "未知階段"}），其他分析仍可正常使用。</div></section>;
   if (!rows.length) return <section className="analytics-property-panel"><h2>物件成效</h2><div className="notice analytics-empty"><strong>這個期間尚無物件瀏覽資料。</strong></div></section>;
   const viewLeader = sortPropertyRows(rows, "views")[0];
   const inquiryLeader = sortPropertyRows(rows, "inquiries")[0];

@@ -66,7 +66,14 @@ export default async function AnalyticsDashboardPage({ searchParams }: { searchP
           </section>
           <TrendChart trend={trendResult.status === "fulfilled" ? trendResult.value : undefined} error={trendResult.status === "rejected"} />
           <SourcePerformance sources={sourcesResult.status === "fulfilled" ? sourcesResult.value : undefined} error={sourcesResult.status === "rejected"} />
-          <PropertyPerformance properties={propertiesResult.status === "fulfilled" ? propertiesResult.value : undefined} error={propertiesResult.status === "rejected"} />
+          <PropertyPerformance
+            properties={propertiesResult.status === "fulfilled" ? propertiesResult.value : undefined}
+            error={propertiesResult.status === "rejected"}
+            errorStage={propertiesResult.status === "rejected" && propertiesResult.reason instanceof Error
+              ? propertiesResult.reason.message.startsWith("analytics_property_metadata_failed") ? "metadata"
+                : propertiesResult.reason.message.startsWith("analytics_properties_failed") ? "events" : "unknown"
+              : undefined}
+          />
           <p className="analytics-updated">資料更新時間：{new Date(summary.meta.generatedAt).toLocaleString("zh-TW", { timeZone: "Asia/Taipei" })}</p>
         </div>
       </main>
