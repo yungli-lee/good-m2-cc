@@ -42,5 +42,7 @@ assert.match(
 );
 assert.match(precheck, /null_count[\s\S]*empty_string_count[\s\S]*valid_uuid_count[\s\S]*invalid_uuid_count/i, "precheck reports every compatibility bucket");
 assert.match(rollback, /alter column session_id type text[\s\S]*session_id::text/i, "rollback restores baseline text type");
+assert.match(rollback, /if exists \(select 1 from public\.lead_attributions\)[\s\S]*raise exception/i, "rollback refuses to delete attribution history");
+assert.match(rollback, /alter table public\.analytics_events no force row level security/i, "rollback restores baseline analytics RLS mode");
 
 console.log("Conversion analytics Phase 1 migration compatibility tests: PASS");

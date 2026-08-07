@@ -4,6 +4,10 @@ begin;
 
 do $$
 begin
+  if exists (select 1 from public.lead_attributions) then
+    raise exception 'Rollback refused: lead attribution rows exist. Preserve attribution history and use a reviewed roll-forward instead.';
+  end if;
+
   if exists (
     select 1 from public.analytics_events
     where event_name in (
@@ -19,6 +23,11 @@ end $$;
 
 drop table if exists public.lead_attributions;
 drop function if exists public.enforce_lead_attribution_snapshot_immutable();
+
+-- Restore the analytics ledger's pre-Phase-1 RLS mode. Existing policies and
+-- table grants remain intact; rate-limit grants require environment-specific
+-- review because the migration cannot know whether they predated Phase 1.
+alter table public.analytics_events no force row level security;
 
 drop index if exists public.inquiries_attribution_status_idx;
 drop index if exists public.inquiries_visitor_session_idx;
