@@ -2668,6 +2668,23 @@ td {
 .analytics-metric-card dd { margin: 0; font-weight: 800; }
 .analytics-metric-card small { display: block; margin-top: 8px; }
 .analytics-updated { margin-top: 18px; color: var(--muted); font-size: 14px; }
+.analytics-trend-panel { margin-top: 24px; padding: clamp(18px, 3vw, 28px); border: 1px solid rgba(16, 35, 67, 0.1); border-radius: 8px; background: #fff; overflow: hidden; }
+.analytics-trend-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+.analytics-trend-heading h2, .analytics-trend-heading p { margin: 0; }
+.analytics-low-data { padding: 4px 10px; border-radius: 999px; background: #fff7df; color: #7a4c00; font-size: 13px; font-weight: 800; white-space: nowrap; }
+.analytics-trend-legend { display: flex; flex-wrap: wrap; gap: 12px 20px; margin: 18px 0 10px; padding: 0; list-style: none; }
+.analytics-trend-legend li { display: inline-flex; align-items: center; gap: 7px; font-weight: 800; }
+.analytics-trend-legend span { width: 22px; height: 4px; border-radius: 999px; }
+.analytics-trend-tooltip { display: flex; flex-wrap: wrap; gap: 8px 18px; min-height: 44px; align-items: center; padding: 9px 12px; border-radius: 8px; background: #f3f5f8; }
+.analytics-trend-tooltip strong { color: #102343; }
+.analytics-trend-chart { display: block; width: 100%; height: auto; margin-top: 8px; overflow: visible; }
+.analytics-trend-chart text { fill: #64708a; font-size: 12px; }
+.analytics-trend-chart g[role="button"] { cursor: pointer; outline: none; }
+.analytics-trend-chart g[role="button"]:focus circle { stroke: #fff; stroke-width: 3px; }
+.analytics-grid-line { stroke: rgba(16, 35, 67, 0.12); stroke-width: 1px; }
+.analytics-trend-table { margin-top: 10px; }
+.analytics-trend-table summary { min-height: 44px; display: inline-flex; align-items: center; color: #102343; font-weight: 800; cursor: pointer; }
+.analytics-trend-table .table-wrap { max-height: 360px; overflow: auto; }
 
 @media (max-width: 900px) {
   .analytics-metric-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -2678,4 +2695,9 @@ td {
 @media (max-width: 560px) {
   .analytics-metric-grid { grid-template-columns: 1fr; }
   .analytics-range a { flex: 1 1 calc(50% - 8px); }
+  .analytics-trend-heading { display: block; }
+  .analytics-low-data { display: inline-flex; margin-top: 8px; }
+  .analytics-trend-tooltip { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .analytics-trend-tooltip strong { grid-column: 1 / -1; }
+  .analytics-trend-chart { min-width: 0; }
 }

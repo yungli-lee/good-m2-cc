@@ -37,3 +37,25 @@ export type AnalyticsSummary = {
     lowData: boolean;
   };
 };
+
+export type TrendGranularity = "hour" | "day";
+
+export type AnalyticsTrendPoint = {
+  bucket: string;
+  bucketStart: string;
+  visitors: number;
+  propertyViews: number;
+  inquiries: number;
+};
+
+export type AnalyticsTrend = {
+  range: AnalyticsRangePreset;
+  timezone: "Asia/Taipei";
+  environment: DashboardEnvironment;
+  granularity: TrendGranularity;
+  series: AnalyticsTrendPoint[];
+  meta: {
+    generatedAt: string;
+    lowData: boolean;
+  };
+};

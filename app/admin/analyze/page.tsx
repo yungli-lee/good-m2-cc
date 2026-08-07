@@ -4,6 +4,8 @@ import { parseAnalyticsRange } from "@/lib/analytics-dashboard/date-range";
 import { getDashboardEnvironment } from "@/lib/analytics-dashboard/environment";
 import { getAnalyticsSummary } from "@/lib/analytics-dashboard/summary";
 import { MetricCard } from "@/components/admin/analytics/metric-card";
+import { TrendChart } from "@/components/admin/analytics/trend-chart";
+import { getAnalyticsTrend } from "@/lib/analytics-dashboard/trend";
 
 export const runtime = "edge";
 export const dynamic = "force-dynamic";
@@ -14,8 +16,13 @@ export default async function AnalyticsDashboardPage({ searchParams }: { searchP
   await requireRole(["admin", "owner"]);
   const range = parseAnalyticsRange((await searchParams).range);
 
-  try {
-    const summary = await getAnalyticsSummary(range, getDashboardEnvironment());
+  const environment = getDashboardEnvironment();
+  const [summaryResult, trendResult] = await Promise.allSettled([
+    getAnalyticsSummary(range, environment),
+    getAnalyticsTrend(range, environment)
+  ]);
+  if (summaryResult.status === "fulfilled") {
+    const summary = summaryResult.value;
     const metrics = summary.metrics;
     const hasNoEvents = metrics.visitors.current === 0 && metrics.sessions.current === 0 && metrics.propertyViews.current === 0 && metrics.inquiries.current === 0;
     return (
@@ -51,11 +58,12 @@ export default async function AnalyticsDashboardPage({ searchParams }: { searchP
             <MetricCard label="詢問" metric={metrics.inquiries} />
             <MetricCard label="詢問轉換率" metric={metrics.inquiryConversionRate} rate />
           </section>
+          <TrendChart trend={trendResult.status === "fulfilled" ? trendResult.value : undefined} error={trendResult.status === "rejected"} />
           <p className="analytics-updated">資料更新時間：{new Date(summary.meta.generatedAt).toLocaleString("zh-TW", { timeZone: "Asia/Taipei" })}</p>
         </div>
       </main>
     );
-  } catch {
+  } else {
     return (
       <main className="section analytics-dashboard">
         <div className="container">

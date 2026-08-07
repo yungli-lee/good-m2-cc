@@ -27,6 +27,7 @@
     "test:analytics-migration": "node --experimental-strip-types --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/test-conversion-analytics-phase1-migration.ts",
     "test:analytics-phase1": "node --experimental-strip-types --experimental-specifier-resolution=node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/test-conversion-analytics-phase1-application.ts",
     "test:analytics-dashboard-phase2a": "node --experimental-strip-types --experimental-specifier-resolution=node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/test-analytics-dashboard-phase2a.ts",
+    "test:analytics-dashboard-phase2a-trend": "node --experimental-strip-types --experimental-specifier-resolution=node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/test-analytics-dashboard-phase2a-trend.ts",
     "start": "next start",
     "typecheck": "tsc --noEmit"
   },
