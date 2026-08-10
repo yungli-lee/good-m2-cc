@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { MarkdownContent } from "@/components/home/markdown-content";
+import { MobileReminderAccordion } from "@/components/home/mobile-reminder-accordion";
 import type { SitePage } from "@/lib/home-cms/types";
 
 type PageForRender = SitePage & { media_public_url?: string | null };
@@ -36,16 +37,7 @@ export function ManagedReminders({ pages }: { pages: PageForRender[] }) {
           </Link>
         </article>)}
       </div>
-      <div className="article-grid life-note-mobile-grid">
-        {pages.map((page, index) => <article className={`article-card${index === 0 ? " is-open" : ""}`} data-reminder-slug={page.page_key} key={page.id}>
-          <button type="button" className="article-toggle"><span><strong>{page.title}</strong>{page.subtitle ? <small>{page.subtitle}</small> : null}</span><b>{index === 0 ? "收合" : "展開"}</b></button>
-          <div className="article-body">
-            {page.media_public_url ? <figure className="cms-reminder-cover"><img src={page.media_public_url} alt={page.title} loading="lazy" /></figure> : null}
-            <MarkdownContent value={page.markdown_content} />
-            <p><Link href={`/${page.page_key}`}>閱讀完整內容</Link></p>
-          </div>
-        </article>)}
-      </div>
+      <MobileReminderAccordion pages={pages} />
     </section>
   );
 }
