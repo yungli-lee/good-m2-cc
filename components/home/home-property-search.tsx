@@ -79,7 +79,7 @@ export function HomePropertySearch({ lineUrl }: { lineUrl: string }) {
       {error ? <p className="notice" role="alert">{error}</p> : null}
       {results ? <div className="property-search-results">
         <div className="property-search-heading"><h3>搜尋結果</h3><Link className="button ghost" href="/properties">查看所有物件</Link></div>
-        {results.length ? <div className="property-card-track">{results.map((item) => <HomePropertyCard property={item} key={item.id} />)}</div> : <div className="property-empty-cta"><p>目前沒有符合條件的公開物件，可以直接把需求傳給阿勇協助留意。</p>{lineUrl ? <a className="button primary" href={lineUrl}>Line 阿勇諮詢</a> : null}</div>}
+        {results.length ? <div className="property-carousel"><div className="property-card-track">{results.map((item) => <HomePropertyCard property={item} key={item.id} />)}</div></div> : <div className="property-empty-cta"><p>目前沒有符合條件的公開物件，可以直接把需求傳給阿勇協助留意。</p>{lineUrl ? <a className="button primary" href={lineUrl}>Line 阿勇諮詢</a> : null}</div>}
       </div> : null}
     </section>
   );
