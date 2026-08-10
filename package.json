@@ -27,6 +27,7 @@
     "test:property-gallery": "node --experimental-strip-types --experimental-specifier-resolution=node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/test-property-gallery-hotfix.ts",
     "test:footer": "node --experimental-strip-types --experimental-specifier-resolution=node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/test-footer-hotfix.ts",
     "test:homepage-carousel": "node --experimental-strip-types --experimental-specifier-resolution=node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/test-homepage-carousel-hotfix.ts",
+    "test:life-notes": "node --experimental-strip-types --experimental-specifier-resolution=node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/test-life-notes-desktop-ux.ts",
     "test:analytics-migration": "node --experimental-strip-types --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/test-conversion-analytics-phase1-migration.ts",
     "test:analytics-phase1": "node --experimental-strip-types --experimental-specifier-resolution=node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/test-conversion-analytics-phase1-application.ts",
     "test:analytics-dashboard-phase2a": "node --experimental-strip-types --experimental-specifier-resolution=node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/test-analytics-dashboard-phase2a.ts",

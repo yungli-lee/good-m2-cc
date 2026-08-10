@@ -964,6 +964,96 @@ h3 {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
+.life-note-mobile-grid {
+  display: none;
+}
+
+.life-note-desktop-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 22px;
+}
+
+.life-note-card {
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--white);
+  box-shadow: var(--shadow);
+  transition: border-color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
+}
+
+.life-note-card:hover,
+.life-note-card:focus-within {
+  border-color: rgba(176, 132, 55, 0.5);
+  box-shadow: 0 18px 42px rgba(19, 41, 75, 0.16);
+  transform: translateY(-4px);
+}
+
+.life-note-card-link {
+  display: flex;
+  height: 100%;
+  flex-direction: column;
+  color: inherit;
+  text-decoration: none;
+}
+
+.life-note-card-link:focus-visible {
+  outline: 3px solid var(--gold);
+  outline-offset: -3px;
+}
+
+.life-note-card-image {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  background: var(--soft);
+}
+
+.life-note-card-placeholder {
+  display: grid;
+  place-items: center;
+  background: linear-gradient(135deg, var(--navy), #285080);
+  color: var(--gold);
+  font-weight: 900;
+  letter-spacing: 0.12em;
+}
+
+.life-note-card-content {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 22px;
+}
+
+.life-note-card-content h3,
+.life-note-card-content p {
+  margin: 0;
+}
+
+.life-note-card-content h3 {
+  color: var(--navy);
+  font-size: 22px;
+  line-height: 1.35;
+}
+
+.life-note-card-content p {
+  display: -webkit-box;
+  overflow: hidden;
+  color: var(--muted);
+  line-height: 1.7;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.life-note-card-content .button {
+  margin-top: auto;
+}
+
 .article-card {
   overflow: hidden;
 }
@@ -1372,6 +1462,14 @@ h3 {
 }
 
 @media (max-width: 900px) {
+  .life-note-desktop-grid {
+    display: none;
+  }
+
+  .life-note-mobile-grid {
+    display: grid;
+  }
+
   .site-nav {
     position: absolute;
     left: 14px;
@@ -1477,6 +1575,17 @@ h3 {
 
   .person-card {
     grid-template-columns: minmax(120px, 0.55fr) minmax(0, 1fr);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .life-note-card {
+    transition: none;
+  }
+
+  .life-note-card:hover,
+  .life-note-card:focus-within {
+    transform: none;
   }
 }
 
