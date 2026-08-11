@@ -162,6 +162,18 @@ a {
   background: linear-gradient(90deg, rgba(19, 41, 75, 0.72), rgba(19, 41, 75, 0.32), rgba(19, 41, 75, 0.04));
 }
 
+.home-campaign-slide[data-overlay-strength="none"] .hero-media::after {
+  background: transparent;
+}
+
+.home-campaign-slide[data-overlay-strength="light"] .hero-media::after {
+  background: linear-gradient(90deg, rgba(19, 41, 75, 0.32), rgba(19, 41, 75, 0.14), rgba(19, 41, 75, 0.02));
+}
+
+.home-campaign-slide[data-overlay-strength="dark"] .hero-media::after {
+  background: linear-gradient(90deg, rgba(19, 41, 75, 0.88), rgba(19, 41, 75, 0.55), rgba(19, 41, 75, 0.18));
+}
+
 .hero-media img {
   width: 100%;
   height: 100%;
@@ -1520,6 +1532,18 @@ h3 {
 
   .hero-media::after {
     background: linear-gradient(180deg, rgba(19, 41, 75, 0.16), rgba(19, 41, 75, 0.82));
+  }
+
+  .home-campaign-slide[data-overlay-strength="none"] .hero-media::after {
+    background: transparent;
+  }
+
+  .home-campaign-slide[data-overlay-strength="light"] .hero-media::after {
+    background: linear-gradient(180deg, rgba(19, 41, 75, 0.07), rgba(19, 41, 75, 0.36));
+  }
+
+  .home-campaign-slide[data-overlay-strength="dark"] .hero-media::after {
+    background: linear-gradient(180deg, rgba(19, 41, 75, 0.28), rgba(19, 41, 75, 0.92));
   }
 
   .hero-media img {

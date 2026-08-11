@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { isReservedSitePageSlug } from "@/lib/home-cms/routing";
+import { heroOverlayStrengthValues } from "@/lib/home-cms/hero-overlay";
 const optionalText = (max = 4000) => z.string().trim().max(max).optional().or(z.literal(""));
 const optionalDate = z.string().trim().max(40).optional().or(z.literal(""));
 const checkbox = z.preprocess((value) => value === true || value === "true" || value === "on", z.boolean());
@@ -14,6 +15,7 @@ export const homeCampaignSchema = z.object({
   image_media_id: z.string().trim().uuid().optional().or(z.literal("")),
   fallback_image_url: optionalText(800),
   image_alt: optionalText(200),
+  overlay_strength: z.enum(heroOverlayStrengthValues).default("medium"),
   cta_label: optionalText(80),
   cta_href: optionalText(800),
   secondary_cta_label: optionalText(80),

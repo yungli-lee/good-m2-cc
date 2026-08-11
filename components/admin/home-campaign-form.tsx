@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { MediaPicker } from "@/components/admin/media-picker";
 import { toTaipeiDateTimeLocal } from "@/lib/format";
+import { heroOverlayStrengthLabels, normalizeHeroOverlayStrength } from "@/lib/home-cms/hero-overlay";
 import type { HomeCampaign } from "@/lib/home-cms/types";
 import { cmsStatusLabels } from "@/lib/home-cms/types";
 import type { MediaLibraryAsset, MediaUsageType } from "@/lib/media";
@@ -81,6 +82,12 @@ export function HomeCampaignForm({ campaign, mediaAssets }: Props) {
       <label className="field">
         <span>圖片顯示秒數</span>
         <input className="input" type="number" min="5" max="30" name="slide_duration_seconds" defaultValue={campaign?.slide_duration_seconds ?? 5} disabled={pending} />
+      </label>
+      <label className="field">
+        <span>主視覺遮罩</span>
+        <select className="select" name="overlay_strength" defaultValue={normalizeHeroOverlayStrength(campaign?.overlay_strength)} disabled={pending}>
+          {Object.entries(heroOverlayStrengthLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+        </select>
       </label>
       <label className="field">
         <span>上架開始</span>

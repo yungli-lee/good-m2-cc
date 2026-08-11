@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { homeSlideDurationMs } from "../lib/media/playback.ts";
 import { validateMediaFile, validateMediaUpload } from "../lib/media/upload.ts";
-import { activateHomeCarouselVideo, deactivateHomeCarouselVideo, type HomeCarouselVideoElement } from "../lib/media/home-carousel-video.ts";
+import { activateHomeCarouselVideo, deactivateHomeCarouselVideo, isActiveHomeCarouselVideoFailure, type HomeCarouselVideoElement } from "../lib/media/home-carousel-video.ts";
 
 assert.equal(homeSlideDurationMs("video"), 30_000, "a 45-second uploaded video advances at 30 seconds");
 assert.equal(homeSlideDurationMs("image"), 5_000);
@@ -59,6 +59,7 @@ assert.match(homeRender, /播放完整版/);
 assert.match(homeRender, /home-campaign-video-slide/, "video slides expose a mobile-only framing hook");
 assert.match(homeRender, /visibilitychange/);
 assert.match(homeRender, /index !== active \|\| lightbox/, "opening the lightbox fully deactivates its background video");
+assert.match(homeRender, /isActiveHomeCarouselVideoFailure/, "React restores the legacy active-slide failure guard");
 assert.match(homeVideoLifecycle, /removeAttribute\("src"\)/);
 assert.match(homeRender, /5_000/);
 assert.match(homeRender, /prefers-reduced-motion: reduce/);
@@ -108,11 +109,14 @@ class FakeVideo implements HomeCarouselVideoElement {
 
 const carouselVideo = new FakeVideo();
 assert.equal(activateHomeCarouselVideo(carouselVideo), true);
+assert.equal(isActiveHomeCarouselVideoFailure(carouselVideo, 0, 0), true, "a real failure from the active sourced video is handled");
 assert.equal(carouselVideo.getAttribute("src"), carouselVideo.dataset.videoSrc);
 assert.equal(carouselVideo.currentTime, 0);
 carouselVideo.dispatch("canplay");
 assert.equal(carouselVideo.playCalls, 1, "the first activation plays once ready");
 deactivateHomeCarouselVideo(carouselVideo);
+assert.equal(isActiveHomeCarouselVideoFailure(carouselVideo, 0, 1), false, "the expected abort while leaving a slide is ignored");
+assert.equal(isActiveHomeCarouselVideoFailure(carouselVideo, 0, 0), false, "a source-clearing lifecycle event cannot replace the video with fallback");
 assert.equal(carouselVideo.pauseCalls >= 1, true);
 assert.equal(carouselVideo.getAttribute("src"), null, "inactive video releases its source");
 assert.equal(carouselVideo.preload, "none");
