@@ -1,4 +1,5 @@
 import type { MediaLibraryAsset } from "@/lib/media";
+import type { HeroOverlayStrength } from "@/lib/home-cms/hero-overlay";
 
 export type CmsStatus = "draft" | "published" | "archived";
 export type SitePageType = "philosophy" | "services" | "contact" | "reminder" | "custom";
@@ -14,6 +15,7 @@ export type HomeCampaign = {
   image_media_id: string | null;
   fallback_image_url: string | null;
   image_alt: string | null;
+  overlay_strength: HeroOverlayStrength | null;
   cta_label: string | null;
   cta_href: string | null;
   secondary_cta_label: string | null;

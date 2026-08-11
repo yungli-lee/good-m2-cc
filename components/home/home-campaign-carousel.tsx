@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { VideoLightbox } from "@/components/media/video-lightbox";
 import { activateHomeCarouselVideo, deactivateHomeCarouselVideo } from "@/lib/media/home-carousel-video";
 import { homeSlideDurationMs } from "@/lib/media/playback";
+import { normalizeHeroOverlayStrength } from "@/lib/home-cms/hero-overlay";
 import type { HomeCampaign } from "@/lib/home-cms/types";
 
 type Campaign = HomeCampaign & { media_public_url?: string | null };
@@ -61,7 +62,7 @@ export function HomeCampaignCarousel({ campaigns }: { campaigns: Campaign[] }) {
           const alt = campaign.image_alt || campaign.media_assets?.alt_text || campaign.title;
           const video = campaign.media_assets?.media_type === "video";
           const poster = campaign.media_assets?.poster_url || "";
-          return <div className={`home-campaign-slide${video ? " home-campaign-video-slide" : ""}`} hidden={index !== active} data-home-campaign-slide data-slide-duration-seconds={campaign.slide_duration_seconds || 5} key={campaign.id}>
+          return <div className={`home-campaign-slide${video ? " home-campaign-video-slide" : ""}`} hidden={index !== active} data-home-campaign-slide data-overlay-strength={normalizeHeroOverlayStrength(campaign.overlay_strength)} data-slide-duration-seconds={campaign.slide_duration_seconds || 5} key={campaign.id}>
             <div className="hero-media">
               {video && !failed[index] ? <video
                 ref={(element) => { videos.current[index] = element; }}
