@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { VideoLightbox } from "@/components/media/video-lightbox";
-import { activateHomeCarouselVideo, deactivateHomeCarouselVideo } from "@/lib/media/home-carousel-video";
+import { activateHomeCarouselVideo, deactivateHomeCarouselVideo, isActiveHomeCarouselVideoFailure } from "@/lib/media/home-carousel-video";
 import { homeSlideDurationMs } from "@/lib/media/playback";
 import { normalizeHeroOverlayStrength } from "@/lib/home-cms/hero-overlay";
 import type { HomeCampaign } from "@/lib/home-cms/types";
@@ -14,6 +14,7 @@ export function HomeCampaignCarousel({ campaigns }: { campaigns: Campaign[] }) {
   const [failed, setFailed] = useState<Record<number, boolean>>({});
   const [lightbox, setLightbox] = useState<Campaign | null>(null);
   const videos = useRef<Array<HTMLVideoElement | null>>([]);
+  const activeRef = useRef(active);
   const timer = useRef<number | null>(null);
   const reducedMotion = useRef(false);
   const clearTimer = useCallback(() => {
@@ -21,6 +22,11 @@ export function HomeCampaignCarousel({ campaigns }: { campaigns: Campaign[] }) {
     timer.current = null;
   }, []);
   const advance = useCallback(() => setActive((index) => (index + 1) % Math.max(campaigns.length, 1)), [campaigns.length]);
+  activeRef.current = active;
+  const failVideo = useCallback((index: number, video: HTMLVideoElement) => {
+    if (!isActiveHomeCarouselVideoFailure(video, index, activeRef.current)) return;
+    setFailed((current) => ({ ...current, [index]: true }));
+  }, []);
 
   useEffect(() => {
     reducedMotion.current = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -33,7 +39,7 @@ export function HomeCampaignCarousel({ campaigns }: { campaigns: Campaign[] }) {
       if (index !== active || lightbox) deactivateHomeCarouselVideo(video);
       else activateHomeCarouselVideo(video, {
         reducedMotion: reducedMotion.current,
-        onPlayRejected: () => setFailed((current) => ({ ...current, [index]: true }))
+        onPlayRejected: () => failVideo(index, video)
       });
     });
     if (lightbox || reducedMotion.current || campaigns.length < 2) return clearTimer;
@@ -41,7 +47,7 @@ export function HomeCampaignCarousel({ campaigns }: { campaigns: Campaign[] }) {
     const isVideo = campaign?.media_assets?.media_type === "video";
     timer.current = window.setTimeout(advance, failed[active] ? 5_000 : homeSlideDurationMs(isVideo ? "video" : "image", campaign?.slide_duration_seconds || 5));
     return clearTimer;
-  }, [active, advance, campaigns, clearTimer, failed, lightbox]);
+  }, [active, advance, campaigns, clearTimer, failVideo, failed, lightbox]);
 
   useEffect(() => {
     const onVisible = () => {
@@ -74,9 +80,9 @@ export function HomeCampaignCarousel({ campaigns }: { campaigns: Campaign[] }) {
                 preload={index === active ? "metadata" : "none"}
                 data-home-campaign-video
                 onEnded={advance}
-                onError={() => setFailed((current) => ({ ...current, [index]: true }))}
-                onStalled={() => setFailed((current) => ({ ...current, [index]: true }))}
-                onAbort={() => setFailed((current) => ({ ...current, [index]: true }))}
+                onError={(event) => failVideo(index, event.currentTarget)}
+                onStalled={(event) => failVideo(index, event.currentTarget)}
+                onAbort={(event) => failVideo(index, event.currentTarget)}
               /> : video ? <div className="home-video-fallback"><img src={poster} alt={alt} onError={(event) => { event.currentTarget.hidden = true; }} /><span>影片暫時無法播放</span></div> : <img src={src} alt={alt} />}
               {video ? <button className="home-video-full-button" type="button" onClick={() => setLightbox(campaign)}>▶ 播放完整版</button> : null}
             </div>

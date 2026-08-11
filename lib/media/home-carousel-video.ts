@@ -40,6 +40,14 @@ export function deactivateHomeCarouselVideo(video: HomeCarouselVideoElement) {
   video.load();
 }
 
+export function isActiveHomeCarouselVideoFailure(
+  video: HomeCarouselVideoElement,
+  videoIndex: number,
+  activeIndex: number
+) {
+  return videoIndex === activeIndex && Boolean(video.getAttribute("src"));
+}
+
 type ActivateOptions = {
   reducedMotion?: boolean;
   onPlayRejected?: () => void;
