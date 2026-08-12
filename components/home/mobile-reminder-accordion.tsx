@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useState } from "react";
 import { MarkdownContent } from "@/components/home/markdown-content";
 import { toggleReminder } from "@/lib/home-cms/reminder-accordion";
@@ -14,10 +13,11 @@ function contentId(page: ReminderPage) {
 
 export function MobileReminderAccordion({ pages }: { pages: ReminderPage[] }) {
   const [openIds, setOpenIds] = useState<ReadonlySet<string>>(() => new Set(pages[0] ? [pages[0].id] : []));
+  const [visibleCount, setVisibleCount] = useState(4);
 
   return (
     <div className="article-grid life-note-mobile-grid">
-      {pages.map((page) => {
+      {pages.slice(0, visibleCount).map((page) => {
         const isOpen = openIds.has(page.id);
         const panelId = contentId(page);
         return (
@@ -35,11 +35,11 @@ export function MobileReminderAccordion({ pages }: { pages: ReminderPage[] }) {
             <div className="article-body" id={panelId}>
               {page.media_public_url ? <figure className="cms-reminder-cover"><img src={page.media_public_url} alt={page.title} loading="lazy" /></figure> : null}
               <MarkdownContent value={page.markdown_content} />
-              <p><Link href={`/${page.page_key}`}>閱讀完整內容</Link></p>
             </div>
           </article>
         );
       })}
+      {pages.length > 4 ? <div className="reminder-more-actions">{visibleCount < pages.length ? <button className="button" type="button" onClick={() => setVisibleCount((count) => Math.min(count + 4, pages.length))}>顯示更多</button> : <button className="button ghost" type="button" onClick={() => setVisibleCount(4)}>收合提醒</button>}</div> : null}
     </div>
   );
 }

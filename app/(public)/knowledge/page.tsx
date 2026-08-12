@@ -4,10 +4,10 @@ import { KnowledgeCard } from "@/components/content/knowledge-card";
 import { listKnowledgeCategories, listPublicKnowledgeItems } from "@/lib/content/queries";
 import type { ContentItem } from "@/lib/content/types";
 import { getPublicCompanySettings } from "@/lib/company-settings";
+import { defaultSiteDisplaySettings, getSiteDisplaySettings } from "@/lib/site-display-settings";
 
 export const runtime = "edge";
 export const dynamic = "force-dynamic";
-const pageSize = 12;
 
 export async function generateMetadata(): Promise<Metadata> {
   const company = await getPublicCompanySettings();
@@ -40,6 +40,8 @@ export default async function KnowledgeIndexPage({ searchParams }: Props) {
   const q = String(params.q || "").trim().slice(0, 80);
   const category = String(params.category || "").trim().toLowerCase();
   const page = normalizePage(params.page);
+  const displaySettings = await getSiteDisplaySettings().catch(() => defaultSiteDisplaySettings);
+  const pageSize = displaySettings.knowledge_page_size;
   const [
     { data: items, error, count, totalPages },
     categories

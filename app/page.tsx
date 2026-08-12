@@ -5,6 +5,7 @@ import { listActiveHomeCampaigns, listHomepageSitePages } from "@/lib/home-cms/q
 import { getFeaturedPublishedProperties, getLatestPublishedProperties } from "@/lib/properties/queries";
 import { listPublicKnowledgeItems } from "@/lib/content/queries";
 import { getAllPublicNavigationItems } from "@/lib/navigation";
+import { defaultSiteDisplaySettings, getSiteDisplaySettings } from "@/lib/site-display-settings";
 
 export const dynamic = "force-dynamic";
 export const runtime = "edge";
@@ -24,13 +25,14 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function HomePage() {
+  const settings = await getSiteDisplaySettings().catch(() => defaultSiteDisplaySettings);
   const [campaignResult, pageResult, companyResult, navigationResult, featuredResult, latestResult, knowledgeResult] = await Promise.allSettled([
     listActiveHomeCampaigns(),
     listHomepageSitePages(),
     getPublicCompanySettings(),
     getAllPublicNavigationItems(),
-    getFeaturedPublishedProperties(12),
-    getLatestPublishedProperties(12),
+    getFeaturedPublishedProperties(settings.featured_property_limit),
+    getLatestPublishedProperties(settings.latest_property_limit),
     listPublicKnowledgeItems(3)
   ]);
   const campaigns = campaignResult.status === "fulfilled" ? campaignResult.value : [];
@@ -47,7 +49,7 @@ export default async function HomePage() {
   return (
     <>
       <link rel="stylesheet" href="/legacy-static/styles.css" />
-      <HomeRenderer campaigns={campaigns} pages={pages} company={company} navigation={navigation} featuredProperties={featuredProperties} latestProperties={latestProperties} knowledge={knowledge} />
+      <HomeRenderer campaigns={campaigns} pages={pages} company={company} navigation={navigation} featuredProperties={featuredProperties} latestProperties={latestProperties} knowledge={knowledge} displaySettings={settings} />
     </>
   );
 }

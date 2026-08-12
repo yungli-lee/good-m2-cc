@@ -383,8 +383,34 @@ section {
 .property-card-track {
   display: grid;
   grid-auto-flow: column;
-  grid-auto-columns: calc((100% - 16px) / 2);
+  grid-auto-columns: calc((100% - 32px) / 3);
   gap: 16px;
+}
+
+.audience-paths {
+  background: #fbfaf7;
+}
+
+.audience-path-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 22px;
+}
+
+.audience-path-grid article {
+  padding: 30px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--white);
+  box-shadow: var(--shadow);
+}
+
+.audience-path-grid h3 { margin-top: 0; }
+.audience-path-actions, .reminder-more-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+.reminder-more-actions { justify-content: center; margin-top: 24px; }
+
+@media (min-width: 901px) and (max-width: 1100px) {
+  .property-card-track { grid-auto-columns: calc((100% - 16px) / 2); }
 }
 
 .property-discovery-card {
@@ -1047,6 +1073,10 @@ h3 {
   margin: 0;
 }
 
+.life-note-card-body { color: var(--muted); }
+.life-note-card-body > :first-child { margin-top: 0; }
+.life-note-card-body > :last-child { margin-bottom: 0; }
+
 .life-note-card-content h3 {
   color: var(--navy);
   font-size: 22px;
@@ -1481,6 +1511,10 @@ h3 {
   .life-note-mobile-grid {
     display: grid;
   }
+
+  .life-note-mobile-grid .reminder-more-actions { grid-column: 1 / -1; }
+
+  .audience-path-grid { grid-template-columns: 1fr; }
 
   .site-nav {
     position: absolute;

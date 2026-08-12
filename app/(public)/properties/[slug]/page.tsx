@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getPublicCompanySettings } from "@/lib/company-settings";
-import { formatPing, formatPrice, propertyTypeLabel } from "@/lib/format";
+import { formatPublicPing, formatPrice, isLandProperty, propertyTypeLabel } from "@/lib/format";
 import { getPublishedPropertyBySlug } from "@/lib/properties/queries";
 import { resolvePropertySeo } from "@/lib/properties/seo";
 import type { Property } from "@/lib/properties/types";
@@ -75,9 +75,9 @@ export default async function PropertyDetailPage({ params }: Props) {
               <div className="price">{formatPrice(property.price)}</div>
               <p>{property.address_public || "地址洽詢"}</p>
               <p>類型：{propertyTypeLabel(property.property_type)}</p>
-              <p>土地：{formatPing(property.land_area_ping)}</p>
-              <p>建物：{formatPing(property.building_area_ping)}</p>
-              <p>格局：{property.layout || "-"}</p>
+              {formatPublicPing(property.land_area_ping) ? <p>土地：{formatPublicPing(property.land_area_ping)}</p> : null}
+              {formatPublicPing(property.building_area_ping) ? <p>建物：{formatPublicPing(property.building_area_ping)}</p> : null}
+              {!isLandProperty(property.property_type) && property.layout ? <p>格局：{property.layout}</p> : null}
               <p>屋齡：{property.age == null ? "-" : `${property.age} 年`}</p>
               <p>座向：{property.orientation || "-"}</p>
               <div className="actions">

@@ -8,6 +8,17 @@ export function formatPing(value?: number | null) {
   return `${Number(value).toLocaleString("zh-TW", { maximumFractionDigits: 3 })} 坪`;
 }
 
+const landPropertyTypes = new Set(["land", "farmland", "building_land", "industrial_land"]);
+
+export function isLandProperty(propertyType?: string | null) {
+  return landPropertyTypes.has(propertyType || "");
+}
+
+export function formatPublicPing(value?: number | null) {
+  if (value == null || !Number.isFinite(Number(value))) return null;
+  return `${Number(value).toLocaleString("zh-TW", { maximumFractionDigits: 2 })} 坪`;
+}
+
 export function formatDateTime(value?: string | null) {
   if (!value) return "-";
   return formatTaipeiDateTime(value);

@@ -6,6 +6,7 @@ import { toggleReminder } from "../lib/home-cms/reminder-accordion.ts";
 const root = process.cwd();
 const component = readFileSync(resolve(root, "components/home/mobile-reminder-accordion.tsx"), "utf8");
 const desktop = readFileSync(resolve(root, "components/home/managed-section.tsx"), "utf8");
+const desktopCards = readFileSync(resolve(root, "components/home/desktop-reminders.tsx"), "utf8");
 const styles = readFileSync(resolve(root, "public/legacy-static/styles.css"), "utf8");
 
 const abnormal = { id: "extension-cord", title: "延長線不是插得下就能一直插！", image: null };
@@ -37,7 +38,8 @@ assert.match(component, /aria-expanded={isOpen}/, "each trigger must expose its 
 assert.match(component, /page\.media_public_url[\s\S]*cms-reminder-cover/, "items with images must render their cover");
 assert.match(component, /onClick={\(\) => setOpenIds\(\(current\) => toggleReminder\(current, page\.id\)\)}/, "every trigger must update state by stable media-independent id");
 assert.match(styles, /@media \(max-width: 900px\)[\s\S]*?\.life-note-mobile-grid\s*{\s*display:\s*grid;/, "mobile accordion must render below 900px");
-assert.match(desktop, /className="life-note-card-link"/, "desktop cards must remain clickable");
-assert.match(desktop, /life-note-card-placeholder/, "desktop no-image fallback must remain intact");
+assert.match(desktop, /<DesktopReminders pages={pages} \/>/, "managed section must render desktop reminders");
+assert.match(desktopCards, /life-note-card-placeholder/, "desktop no-image fallback must remain intact");
+assert.match(component, /slice\(0, visibleCount\)/, "mobile initially limits reminders");
 
 console.log("Life Notes mobile accordion regression checks passed.");

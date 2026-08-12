@@ -38,9 +38,11 @@ const featuredPropertySelect = `
   land_area_ping,
   building_area_ping,
   layout,
+  property_type,
   highlights,
   status,
   is_featured,
+  sort_order,
   published_at,
   property_media(
     id,
@@ -79,6 +81,7 @@ export async function listFeaturedProperties(limit = 3) {
   const query = publishedPropertiesQuery(supabase, featuredPropertySelect);
   return query
     .eq("is_featured", true)
+    .order("sort_order", { ascending: true })
     .order("published_at", { ascending: false })
     .order("updated_at", { ascending: false })
     .limit(limit);
@@ -92,6 +95,7 @@ export async function getLatestPublishedProperties(limit = 12) {
   const supabase = await createSupabaseServerClient();
   const query = publishedPropertiesQuery(supabase, featuredPropertySelect);
   return query
+    .eq("is_featured", false)
     .order("published_at", { ascending: false })
     .order("updated_at", { ascending: false })
     .limit(limit);
