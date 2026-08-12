@@ -34,7 +34,7 @@ export function PropertyCarousel({ kind, properties, autoplay, intervalSeconds }
     return () => window.clearInterval(timer);
   }, [autoplay, intervalSeconds, paused, properties.length, visible]);
 
-  return <div className="property-discovery" onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)} onFocusCapture={() => setPaused(true)} onBlurCapture={() => setPaused(false)}>
+  return <div className="property-discovery" onFocusCapture={() => setPaused(true)} onBlurCapture={() => setPaused(false)}>
     <div className="property-carousel-actions" aria-label={kind === "featured" ? "精選物件切換" : "最新物件切換"}>
       <button className="button ghost" type="button" onClick={() => move(-1)} aria-label="上一批物件">←</button>
       <button className="button ghost" type="button" onClick={() => move(1)} aria-label="下一批物件">→</button>
