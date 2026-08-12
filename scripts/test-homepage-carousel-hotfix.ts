@@ -24,8 +24,7 @@ assert.match(css, /@media \(max-width: 900px\)[\s\S]*?\.property-card-track \{[\
 assert.match(collections, /autoplay={autoplay} intervalSeconds={intervalSeconds}/);
 assert.match(carousel, /prefers-reduced-motion: reduce/);
 assert.doesNotMatch(carousel, /onMouseEnter|onMouseLeave/, "desktop pointer hover must not disable autoplay");
-ass
-path = Path("comp, /onFocusCapture[\s\S]*?onBlurCapture/, "keyboard focus pauses autoplay for accessible interaction");
+assert.match(carousel, /onFocusCapture[\s\S]*?onBlurCapture/, "keyboard focus pauses autoplay for accessible interaction");
 assert.doesNotMatch(css, /(?:html|body)[^{}]*\{[^}]*overflow-x:\s*(?:hidden|clip)/, "document overflow is not globally hidden");
 
 console.log("homepage carousel hotfix tests passed");
