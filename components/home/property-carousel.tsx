@@ -40,6 +40,6 @@ export function PropertyCarousel({ kind, properties, autoplay, intervalSeconds }
       <button className="button ghost" type="button" onClick={() => move(1)} aria-label="下一批物件">→</button>
       <Link className="button" href="/properties">查看更多物件</Link>
     </div>
-    <div className="property-carousel"><div className="property-card-track" ref={trackRef}>{properties.map((property) => <HomePropertyCard property={property} key={property.id} />)}</div></div>
+    <div className="property-carousel" ref={trackRef}><div className="property-card-track">{properties.map((property) => <HomePropertyCard property={property} key={property.id} />)}</div></div>
   </div>;
 }

@@ -8,7 +8,7 @@ const css = readFileSync("public/legacy-static/styles.css", "utf8");
 
 assert.match(
   carousel,
-  /className="property-carousel"><div className="property-card-track" ref={trackRef}>/,
+  /className="property-carousel" ref={trackRef}><div className="property-card-track">/,
   "homepage discovery tracks are contained by their carousel viewport"
 );
 assert.match(
