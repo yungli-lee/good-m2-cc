@@ -11,7 +11,11 @@ export function PropertyCarousel({ kind, properties, autoplay, intervalSeconds }
     const track = trackRef.current;
     if (!track) return;
     const card = track.querySelector<HTMLElement>(".property-discovery-card");
-    const gap = Number.parseFloat(getComputedStyle(track).gap || "0");
+    const cardTrack = card?.parentElement;
+    const parsedGap = cardTrack
+      ? Number.parseFloat(getComputedStyle(cardTrack).columnGap)
+      : 0;
+    const gap = Number.isFinite(parsedGap) ? parsedGap : 0;
     const step = (card?.offsetWidth || track.clientWidth) + gap;
     const max = track.scrollWidth - track.clientWidth;
     const next = direction > 0 && track.scrollLeft >= max - 8 ? 0 : direction < 0 && track.scrollLeft <= 8 ? max : track.scrollLeft + direction * step;
