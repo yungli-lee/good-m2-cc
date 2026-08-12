@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { MarkdownContent } from "@/components/home/markdown-content";
 import { toggleReminder } from "@/lib/home-cms/reminder-accordion";
 import type { SitePage } from "@/lib/home-cms/types";
@@ -14,6 +14,14 @@ function contentId(page: ReminderPage) {
 export function MobileReminderAccordion({ pages }: { pages: ReminderPage[] }) {
   const [openIds, setOpenIds] = useState<ReadonlySet<string>>(() => new Set(pages[0] ? [pages[0].id] : []));
   const [visibleCount, setVisibleCount] = useState(4);
+  const actionsRef = useRef<HTMLDivElement>(null);
+  const collapseReminders = () => {
+    setVisibleCount(4);
+    requestAnimationFrame(() => {
+      const behavior = window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth";
+      actionsRef.current?.scrollIntoView({ behavior, block: "center" });
+    });
+  };
 
   return (
     <div className="article-grid life-note-mobile-grid">
@@ -39,7 +47,7 @@ export function MobileReminderAccordion({ pages }: { pages: ReminderPage[] }) {
           </article>
         );
       })}
-      {pages.length > 4 ? <div className="reminder-more-actions">{visibleCount < pages.length ? <button className="button" type="button" onClick={() => setVisibleCount((count) => Math.min(count + 4, pages.length))}>顯示更多</button> : <button className="button ghost" type="button" onClick={() => setVisibleCount(4)}>收合提醒</button>}</div> : null}
+      {pages.length > 4 ? <div className="reminder-more-actions" ref={actionsRef}>{visibleCount < pages.length ? <button className="button" type="button" onClick={() => setVisibleCount((count) => Math.min(count + 4, pages.length))}>顯示更多</button> : <button className="button ghost" type="button" onClick={collapseReminders}>收合提醒</button>}</div> : null}
     </div>
   );
 }
