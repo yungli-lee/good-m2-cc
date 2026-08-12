@@ -12,6 +12,8 @@ import type { CompanySettings } from "@/lib/company-settings";
 import { resolveManagedHomeSection, shouldRenderHomeSection, sortHomeSections } from "@/lib/home-cms/registry";
 import type { HomeCampaign, SitePage } from "@/lib/home-cms/types";
 import type { ResolvedNavigationItem } from "@/lib/navigation";
+import type { SiteDisplaySettings } from "@/lib/site-display-settings";
+import { HomeAudiencePaths } from "@/components/home/home-audience-paths";
 
 type Campaign = HomeCampaign & { media_public_url?: string | null };
 type Page = SitePage & { media_public_url?: string | null };
@@ -42,7 +44,7 @@ function StaticSection({ section, company }: { section: (typeof legacyHomeSectio
   });
 }
 
-export function HomeRenderer({ campaigns, pages, company, navigation, featuredProperties, latestProperties, knowledge }: { campaigns: Campaign[]; pages: Page[]; company: CompanySettings; navigation: ResolvedNavigationItem[]; featuredProperties: HomeProperty[]; latestProperties: HomeProperty[]; knowledge: ContentItem[] }) {
+export function HomeRenderer({ campaigns, pages, company, navigation, featuredProperties, latestProperties, knowledge, displaySettings }: { campaigns: Campaign[]; pages: Page[]; company: CompanySettings; navigation: ResolvedNavigationItem[]; featuredProperties: HomeProperty[]; latestProperties: HomeProperty[]; knowledge: ContentItem[]; displaySettings: SiteDisplaySettings }) {
   const resolved = pages.map(resolveManagedHomeSection).filter((section): section is NonNullable<typeof section> => Boolean(section));
   const managedByKey = new Map<string, Page[]>();
   for (const section of resolved) managedByKey.set(section.key, [...(managedByKey.get(section.key) || []), section.page]);
@@ -58,11 +60,11 @@ export function HomeRenderer({ campaigns, pages, company, navigation, featuredPr
       node: section.key === "hero" && campaigns.length
         ? <HomeCampaignCarousel campaigns={campaigns} />
         : section.key === "featured-properties"
-          ? <HomePropertyCollection kind="featured" properties={featuredProperties} />
+          ? <HomePropertyCollection kind="featured" properties={featuredProperties} autoplay={displaySettings.featured_property_autoplay} intervalSeconds={displaySettings.featured_property_interval_seconds} />
           : section.key === "property-search"
-            ? <HomePropertySearch lineUrl={company.line_url || ""} />
+            ? <><HomePropertySearch lineUrl={company.line_url || ""} /><HomeAudiencePaths /></>
             : section.key === "latest-properties"
-              ? <HomePropertyCollection kind="latest" properties={latestProperties} />
+              ? <HomePropertyCollection kind="latest" properties={latestProperties} autoplay={displaySettings.latest_property_autoplay} intervalSeconds={displaySettings.latest_property_interval_seconds} />
               : section.key === "knowledge-preview"
                 ? <HomeKnowledgePreview items={knowledge} />
         : section.key === "reminders" && managed?.length

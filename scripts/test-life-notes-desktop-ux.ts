@@ -4,19 +4,20 @@ import { resolve } from "node:path";
 
 const root = process.cwd();
 const component = readFileSync(resolve(root, "components/home/managed-section.tsx"), "utf8");
+const desktop = readFileSync(resolve(root, "components/home/desktop-reminders.tsx"), "utf8");
 const mobile = readFileSync(resolve(root, "components/home/mobile-reminder-accordion.tsx"), "utf8");
 const styles = readFileSync(resolve(root, "public/legacy-static/styles.css"), "utf8");
 const script = readFileSync(resolve(root, "public/legacy-static/script.js"), "utf8");
 
-assert.match(component, /life-note-desktop-grid/, "desktop reminders grid must render");
+assert.match(desktop, /life-note-desktop-grid/, "desktop reminders grid must render");
 assert.match(mobile, /life-note-mobile-grid/, "mobile reminders grid must remain separate");
-assert.equal(
-  component.split('href={`/${page.page_key}`}').length + mobile.split('href={`/${page.page_key}`}').length - 2,
-  2,
-  "desktop and mobile cards must reuse the public detail route"
-);
-assert.match(component, /life-note-card-placeholder/, "cards without an image must keep a stable media area");
-assert.ok(component.includes('aria-label={`閱讀全文：${page.title}`}'), "desktop card link must have an accessible name");
+assert.doesNotMatch(desktop + mobile, /href={`\/\${page\.page_key}`}/, "reminders must not link to cancelled standalone pages");
+assert.match(desktop, /life-note-card-placeholder/, "cards without an image must keep a stable media area");
+assert.match(desktop, /slice\(0, visibleCount\)/, "desktop initially limits reminders");
+assert.match(desktop, /Math\.min\(count \+ 4, pages\.length\)/, "desktop reveals four more reminders at a time");
+assert.match(desktop, /actionsRef\.current\?\.scrollIntoView\(\{ behavior, block: "center" \}\)/, "desktop collapse must keep the viewport near the remaining reminder tail");
+assert.match(mobile, /actionsRef\.current\?\.scrollIntoView\(\{ behavior, block: "center" \}\)/, "mobile collapse must keep the viewport near the remaining reminder tail");
+assert.match(desktop + mobile, /prefers-reduced-motion: reduce/, "collapse scrolling must respect reduced motion");
 assert.match(component, /<MobileReminderAccordion pages={pages} \/>/, "managed reminders must delegate mobile interaction to React");
 assert.match(mobile, /new Set\(pages\[0\] \? \[pages\[0\]\.id\] : \[\]\)/, "first mobile reminder must remain open by default");
 assert.match(mobile, /<b>{isOpen \? "收合" : "展開"}<\/b>/, "mobile toggle labels must remain unchanged");

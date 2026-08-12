@@ -338,8 +338,19 @@ select {
 
 .knowledge-card h2 {
   margin: 0;
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
   font-size: 1.22rem;
   line-height: 1.35;
+}
+
+.knowledge-card-summary {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
 }
 
 .knowledge-card-image {

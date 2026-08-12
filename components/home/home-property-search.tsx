@@ -13,6 +13,7 @@ export type HomeProperty = {
   land_area_ping: number | null;
   building_area_ping: number | null;
   layout: string | null;
+  property_type?: string | null;
   highlights?: string[] | null;
   property_media?: Array<{ url?: string | null; alt_text?: string | null; is_cover?: boolean; deleted_at?: string | null }> | null;
 };
@@ -26,6 +27,13 @@ function price(value: number | null) {
   return value ? `${value.toLocaleString("zh-TW")} 萬元` : "價格洽詢";
 }
 
+function area(value: number | null) {
+  if (value === null || !Number.isFinite(value)) return null;
+  return new Intl.NumberFormat("zh-TW", { maximumFractionDigits: 2 }).format(value);
+}
+
+const landTypes = new Set(["farmland", "building_land", "industrial_land", "land"]);
+
 export function HomePropertyCard({ property }: { property: HomeProperty }) {
   const media = cover(property);
   return (
@@ -35,8 +43,8 @@ export function HomePropertyCard({ property }: { property: HomeProperty }) {
         <h3>{property.title}</h3>
         <p><strong>{price(property.price)}</strong></p>
         <p>{property.address_public || "地址洽詢"}</p>
-        <p>土地 {property.land_area_ping ?? "-"} 坪 / 建物 {property.building_area_ping ?? "-"} 坪</p>
-        <p>{property.layout || "格局洽詢"}</p>
+        {area(property.land_area_ping) || area(property.building_area_ping) ? <p>{[area(property.land_area_ping) ? `土地 ${area(property.land_area_ping)} 坪` : "", area(property.building_area_ping) ? `建物 ${area(property.building_area_ping)} 坪` : ""].filter(Boolean).join(" / ")}</p> : null}
+        {!landTypes.has(property.property_type || "") && property.layout ? <p>{property.layout}</p> : null}
         <Link className="button" href={`/properties/${property.slug}`}>查看詳情</Link>
       </div>
     </article>
