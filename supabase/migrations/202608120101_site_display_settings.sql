@@ -23,5 +23,7 @@ create policy "staff update site display settings" on public.site_display_settin
 using (public.is_admin_role(array['editor','admin','owner']))
 with check (public.is_admin_role(array['editor','admin','owner']));
 
+revoke all privileges on public.site_display_settings from anon, authenticated;
+
 grant select on public.site_display_settings to anon, authenticated;
 grant update on public.site_display_settings to authenticated;
