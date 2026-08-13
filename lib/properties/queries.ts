@@ -76,22 +76,19 @@ export async function listPublishedProperties() {
     .order("updated_at", { ascending: false });
 }
 
-export async function listPublishedPropertiesByArea(searchTerms: string[], limit = 12) {
-  const terms = searchTerms.map((term) => escapeSearchTerm(term.trim())).filter(Boolean);
+export async function listPublishedPropertiesByArea(city: string, district: string, limit = 12) {
   const supabase = await createSupabaseServerClient();
-  let query = publishedPropertiesQuery(supabase, publicPropertySelect)
+  const structured = publishedPropertiesQuery(supabase, publicPropertySelect)
     .order("sort_order", { ascending: true })
     .order("published_at", { ascending: false })
     .order("updated_at", { ascending: false })
-    .limit(limit);
-
-  if (terms.length) {
-    query = query.or(
-      terms.flatMap((term) => [`address_public.ilike.%${term}%`, `title.ilike.%${term}%`]).join(",")
-    );
-  }
-
-  return query;
+    .limit(limit)
+    .eq("city", city).eq("district", district);
+  const result = await structured;
+  if (!result.error) return result;
+  return publishedPropertiesQuery(supabase, publicPropertySelect)
+    .or(`address_public.ilike.%${escapeSearchTerm(district)}%,title.ilike.%${escapeSearchTerm(district.replace(/[市鄉鎮區]$/, ""))}%`)
+    .order("sort_order", { ascending: true }).order("published_at", { ascending: false }).limit(limit);
 }
 
 export async function listFeaturedProperties(limit = 3) {
@@ -125,6 +122,11 @@ export async function getPublishedPropertyBySlug(slug: string) {
   return query
     .eq("slug", slug)
     .maybeSingle();
+}
+
+export async function getPublicPropertyAvailability(slug: string) {
+  const supabase = await createSupabaseServerClient();
+  return supabase.rpc("get_public_property_availability", { requested_slug: slug }).maybeSingle();
 }
 
 function escapeSearchTerm(value: string) {
@@ -205,6 +207,10 @@ export async function listAdminProperties(search = "", filter: AdminPropertyLife
       slug,
       address_public,
       address_private,
+      city,
+      district,
+      unavailable_reason,
+      unavailable_at,
       listing_no,
       listing_type,
       listing_start_date,

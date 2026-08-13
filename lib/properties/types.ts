@@ -6,6 +6,10 @@ export type Property = {
   slug: string;
   address_public: string | null;
   address_private: string | null;
+  city?: string | null;
+  district?: string | null;
+  unavailable_reason?: string | null;
+  unavailable_at?: string | null;
   listing_no: string | null;
   listing_type: string | null;
   listing_start_date: string | null;

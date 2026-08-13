@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { areaPages } from "@/lib/areas";
+import { listPublicAreaPages } from "@/lib/areas-cms";
 import { getPublicCompanySettings } from "@/lib/company-settings";
 
 export const runtime = "edge";
@@ -12,7 +12,10 @@ export async function generateMetadata(): Promise<Metadata> {
   return { title, description, alternates: { canonical: "/areas" }, openGraph: { title, description, siteName: company.brand_name, url: "/areas" } };
 }
 
-export default function AreasPage() {
+export const dynamic = "force-dynamic";
+
+export default async function AreasPage() {
+  const areaPages = await listPublicAreaPages();
   return <main>
     <section className="hero-lite area-index-hero"><div className="container"><p className="area-eyebrow">Local Service</p><h1>從熟悉的地區，開始找房或規劃出售</h1><p>先整理彰化市、秀水鄉與鹿港鎮。每個地區的住宅、土地與交易條件不同，阿勇陪您從實際需求出發。</p></div></section>
     <section className="section"><div className="container">

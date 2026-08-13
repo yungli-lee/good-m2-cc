@@ -80,6 +80,8 @@ export function AiPropertyForm({
       "slug",
       "address_public",
       "address_private",
+      "city",
+      "district",
       "listing_no",
       "listing_type",
       "listing_start_date",
@@ -179,6 +181,8 @@ export function AiPropertyForm({
         <label htmlFor="address_private">內部備註（後台限定）</label>
         <textarea className="textarea" id="address_private" name="address_private" defaultValue={state.values.address_private} />
       </div>
+      <div className="field"><label htmlFor="city">縣市</label><input className="input" id="city" name="city" defaultValue={state.values.city || "彰化縣"} required /></div>
+      <div className="field"><label htmlFor="district">鄉鎮市區</label><input className="input" id="district" name="district" defaultValue={state.values.district} placeholder="例如：彰化市" required /></div>
       <div className="field">
         <label htmlFor="listing_no">委託書編號</label>
         <input className="input" id="listing_no" name="listing_no" defaultValue={state.values.listing_no} />
@@ -292,8 +296,6 @@ export function AiPropertyForm({
         <select className="select" id="status" name="status" defaultValue={state.values.status || "draft"} disabled={!canPublish}>
           <option value="draft">草稿</option>
           <option value="published">已上架</option>
-          <option value="archived">下架</option>
-          <option value="expired">委託到期</option>
         </select>
         {!canPublish ? <input type="hidden" name="status" value="draft" /> : null}
       </div>

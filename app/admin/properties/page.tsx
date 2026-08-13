@@ -130,7 +130,7 @@ function PublishAction({ id, status, canPublish, deleted }: { id: string; status
           <p className="muted">下架需填寫原因，紀錄會寫入時間軸。</p>
           <label className="field">
             <span>下架原因</span>
-            <select className="select" name="unpublish_reason" defaultValue="成交" required>
+            <select className="select" name="unpublish_reason" defaultValue="已成交" required>
               {unpublishReasons.map((reason) => <option key={reason} value={reason}>{reason}</option>)}
             </select>
           </label>

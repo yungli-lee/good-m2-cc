@@ -3,17 +3,18 @@ import { listPublicKnowledgeItems } from "@/lib/content/queries";
 import { listPublicPageSitePages } from "@/lib/home-cms/queries";
 import { isReservedSitePageSlug, siteOrigin } from "@/lib/home-cms/routing";
 import { listPublishedProperties } from "@/lib/properties/queries";
-import { areaPages } from "@/lib/areas";
+import { listPublicAreaPages } from "@/lib/areas-cms";
 
 export const runtime = "edge";
 export const dynamic = "force-dynamic";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const origin = siteOrigin();
-  const [propertyResult, knowledgeResult, sitePages] = await Promise.all([
+  const [propertyResult, knowledgeResult, sitePages, areaPages] = await Promise.all([
     listPublishedProperties(),
     listPublicKnowledgeItems({ page: 1, pageSize: 1000 }),
-    listPublicPageSitePages()
+    listPublicPageSitePages(),
+    listPublicAreaPages()
   ]);
 
   const properties = (propertyResult.data || []).map((property) => ({

@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { PropertyCard } from "@/components/properties/property-card";
-import { getAreaPage } from "@/lib/areas";
+import { getPublicAreaPage } from "@/lib/areas-cms";
 import { getPublicCompanySettings } from "@/lib/company-settings";
 import { listPublishedPropertiesByArea } from "@/lib/properties/queries";
 import type { Property } from "@/lib/properties/types";
@@ -12,20 +12,20 @@ export const dynamic = "force-dynamic";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
-  const area = getAreaPage(slug);
+  const area = await getPublicAreaPage(slug);
   if (!area) return {};
   const company = await getPublicCompanySettings();
-  const title = `${area.headline}｜${company.brand_name}`;
-  const description = area.summary;
+  const title = area.seo_title || `${area.headline}｜${company.brand_name}`;
+  const description = area.seo_description || area.summary;
   const url = `/areas/${area.slug}`;
   return { title, description, alternates: { canonical: url }, openGraph: { title, description, siteName: company.brand_name, url } };
 }
 
 export default async function AreaPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const area = getAreaPage(slug);
+  const area = await getPublicAreaPage(slug);
   if (!area) notFound();
-  const [company, propertyResult] = await Promise.all([getPublicCompanySettings(), listPublishedPropertiesByArea(area.searchTerms)]);
+  const [company, propertyResult] = await Promise.all([getPublicCompanySettings(), listPublishedPropertiesByArea(area.city, area.district)]);
   const properties = (propertyResult.data || []) as Property[];
   const phoneHref = company.company_phone ? `tel:${company.company_phone.replace(/[^\d+]/g, "")}` : null;
   const areaUrl = `https://good.m2.cc/areas/${area.slug}`;
