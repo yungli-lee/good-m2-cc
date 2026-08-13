@@ -76,6 +76,24 @@ export async function listPublishedProperties() {
     .order("updated_at", { ascending: false });
 }
 
+export async function listPublishedPropertiesByArea(searchTerms: string[], limit = 12) {
+  const terms = searchTerms.map((term) => escapeSearchTerm(term.trim())).filter(Boolean);
+  const supabase = await createSupabaseServerClient();
+  let query = publishedPropertiesQuery(supabase, publicPropertySelect)
+    .order("sort_order", { ascending: true })
+    .order("published_at", { ascending: false })
+    .order("updated_at", { ascending: false })
+    .limit(limit);
+
+  if (terms.length) {
+    query = query.or(
+      terms.flatMap((term) => [`address_public.ilike.%${term}%`, `title.ilike.%${term}%`]).join(",")
+    );
+  }
+
+  return query;
+}
+
 export async function listFeaturedProperties(limit = 3) {
   const supabase = await createSupabaseServerClient();
   const query = publishedPropertiesQuery(supabase, featuredPropertySelect);

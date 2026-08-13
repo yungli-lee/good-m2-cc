@@ -154,11 +154,6 @@ export default async function PropertyDetailPage({ params }: Props) {
           <p style={{ whiteSpace: "pre-line", lineHeight: 1.9 }}>{property.description || "詳細介紹整理中。"}</p>
         </div>
       </section>
-      <section className="section" id="inquiry">
-        <div className="container">
-          <div className="notice">物件詢問表單將在 Sprint C 串接完整安全流程；目前可先使用 Line 阿勇諮詢。</div>
-        </div>
-      </section>
     </main>
   );
 }

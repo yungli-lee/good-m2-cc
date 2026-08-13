@@ -3,6 +3,7 @@ import { listPublicKnowledgeItems } from "@/lib/content/queries";
 import { listPublicPageSitePages } from "@/lib/home-cms/queries";
 import { isReservedSitePageSlug, siteOrigin } from "@/lib/home-cms/routing";
 import { listPublishedProperties } from "@/lib/properties/queries";
+import { areaPages } from "@/lib/areas";
 
 export const runtime = "edge";
 export const dynamic = "force-dynamic";
@@ -37,6 +38,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: origin },
     { url: `${origin}/properties` },
     { url: `${origin}/knowledge` },
+    { url: `${origin}/areas` },
+    ...areaPages.map((area) => ({ url: `${origin}/areas/${area.slug}` })),
     { url: `${origin}/calculator` },
     ...contact,
     ...properties,
