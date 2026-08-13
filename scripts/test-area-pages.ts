@@ -4,6 +4,7 @@ import { areaPages, getAreaPage } from "../lib/areas.ts";
 
 const page = readFileSync("app/(public)/areas/[slug]/page.tsx", "utf8");
 const index = readFileSync("app/(public)/areas/page.tsx", "utf8");
+const propertiesPage = readFileSync("app/(public)/properties/page.tsx", "utf8");
 const queries = readFileSync("lib/properties/queries.ts", "utf8");
 const sitemap = readFileSync("app/sitemap.ts", "utf8");
 
@@ -12,12 +13,17 @@ assert.ok(areaPages.every((area) => area.features.length === 3));
 assert.ok(areaPages.every((area) => area.faqs.length >= 4));
 assert.equal(getAreaPage("changhua-city")?.name, "彰化市");
 assert.equal(getAreaPage("missing"), null);
-assert.match(page, /listPublishedPropertiesByArea\(area\.city, area\.district\)/);
+assert.match(page, /listPublishedPropertiesByArea\(area\.city, area\.district, 6\)/);
+assert.match(page, /\/properties\?city=/);
+assert.match(page, /查看\{area\.name\}全部物件/);
 assert.match(page, /getPublicAreaPage/);
 assert.match(page, /status|公開物件/);
 assert.match(page, /BreadcrumbList/);
 assert.match(page, /href="\/contact"/);
 assert.match(index, /areaPages\.map/);
+assert.match(propertiesPage, /searchParams/);
+assert.match(propertiesPage, /listPublishedPropertiesByArea\(city!, district!, 100\)/);
+assert.match(propertiesPage, /返回\{areaName\}地區頁/);
 assert.match(queries, /\.eq\("status", "published"\)/);
 assert.match(queries, /address_public\.ilike/);
 assert.match(sitemap, /areaPages\.map/);

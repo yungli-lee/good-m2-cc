@@ -25,7 +25,7 @@ export default async function AreaPage({ params }: { params: Promise<{ slug: str
   const { slug } = await params;
   const area = await getPublicAreaPage(slug);
   if (!area) notFound();
-  const [company, propertyResult] = await Promise.all([getPublicCompanySettings(), listPublishedPropertiesByArea(area.city, area.district)]);
+  const [company, propertyResult] = await Promise.all([getPublicCompanySettings(), listPublishedPropertiesByArea(area.city, area.district, 6)]);
   const properties = (propertyResult.data || []) as Property[];
   const phoneHref = company.company_phone ? `tel:${company.company_phone.replace(/[^\d+]/g, "")}` : null;
   const areaUrl = `https://good.m2.cc/areas/${area.slug}`;
@@ -53,7 +53,7 @@ export default async function AreaPage({ params }: { params: Promise<{ slug: str
 
     <section className="section area-feature-section"><div className="container"><div className="area-section-heading"><p className="area-eyebrow">Why Here</p><h2>{area.name}的三個觀察重點</h2></div><div className="area-feature-grid">{area.features.map((feature, index) => <article key={feature.title}><span>0{index + 1}</span><h3>{feature.title}</h3><p>{feature.description}</p></article>)}</div></div></section>
 
-    <section className="section" id="properties"><div className="container"><div className="area-section-heading area-listing-heading"><div><p className="area-eyebrow">For Sale</p><h2>目前{area.name}公開物件</h2></div><Link href="/properties">查看全部物件</Link></div>
+    <section className="section" id="properties"><div className="container"><div className="area-section-heading area-listing-heading"><div><p className="area-eyebrow">For Sale</p><h2>目前{area.name}公開物件</h2></div><Link href={`/properties?city=${encodeURIComponent(area.city)}&district=${encodeURIComponent(area.district)}&area=${encodeURIComponent(area.slug)}`}>查看{area.name}全部物件</Link></div>
       {propertyResult.error ? <div className="notice">目前物件資料讀取失敗，請稍後再試。</div> : null}
       {!propertyResult.error && properties.length === 0 ? <div className="area-empty"><h3>目前沒有符合條件的公開物件</h3><p>物件會隨委託狀態更新。您可以先把需求告訴阿勇，有合適的{area.shortName}物件時協助留意。</p>{company.line_url ? <a className="button" href={company.line_url}>LINE 告訴阿勇需求</a> : <Link className="button" href="/contact">留下找房需求</Link>}</div> : null}
       {properties.length ? <div className="grid">{properties.map((property) => <PropertyCard key={property.id} property={property} />)}</div> : null}
