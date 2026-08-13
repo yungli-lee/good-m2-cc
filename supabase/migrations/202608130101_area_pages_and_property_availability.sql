@@ -88,18 +88,4 @@ values
 ('fuxing','福興鄉','福興','FUXING','福興鄉農舍、建地、農地與住宅資訊','從福興市區、番婆、沿海聚落到產業道路周邊，依土地用途、交通條件及生活需求，協助您整理適合的方向。','福興鄉鄰近鹿港，區域內住宅、農舍、建地、農地與產業型不動產並存。不同地段的道路條件、使用分區、水電設施及生活便利性差異較大，看屋或看地前應先確認用途、通行條件與未來規劃。','彰化縣','福興鄉','["農舍","建地","農地","透天","廠房"]','["希望鄰近鹿港生活圈，又需要較大使用空間的家庭","尋找農舍、農地、建地或產業型不動產的買方","持有福興鄉房屋或土地、準備評估出售的屋主"]','[{"title":"鄰近鹿港生活圈","description":"福興鄉與鹿港往來密切，可共享採買、就學與工作機能，但仍要確認實際通勤路線。"},{"title":"產品類型多元","description":"區域內有透天、農舍、建地、農地及產業型不動產，評估方式與貸款條件各不相同。"},{"title":"道路與使用條件重要","description":"看地或農舍除了價格，也要確認臨路寬度、使用分區、水電及合法使用情形。"}]','["農地應先確認農業使用、臨路及灌排水條件","農舍須查明使用執照、保存登記及現況增建","建地須確認使用分區、建築線、排水及實際界址","廠房或倉儲應確認合法用途、消防、電力及大型車進出條件"]','[{"question":"福興鄉適合買農舍自住嗎？","answer":"要確認生活機能、交通、屋況及合法性，也要評估日常採買、就醫與通勤距離。"},{"question":"福興鄉農地可以蓋房子嗎？","answer":"農地不代表可以直接興建住宅，仍須依土地使用、農業設施及農舍相關規定個別確認。"},{"question":"購買福興鄉建地要注意什麼？","answer":"應確認使用分區、建築線、道路權利、排水、水電及實際界址，不能只看謄本上的地目或面積。"},{"question":"福興鄉農舍有建物權狀就一定合法嗎？","answer":"不一定，仍要核對使用執照、登記範圍與現況，確認是否有未登記增建或用途差異。"},{"question":"屋主想出售福興鄉房屋或土地，可以先做什麼？","answer":"可先整理權狀、地籍資料、現況照片、使用情形及貸款資料，再由阿勇協助評估價格與銷售方式。"}]','福興鄉農舍、建地、農地與住宅資訊｜阿勇不動產顧問','整理彰化縣福興鄉農舍、建地、農地、透天與廠房資訊，依用途、道路、生活圈及預算，協助買方找房找地與屋主規劃出售。','draft',400,null)
 on conflict (slug) do nothing;
 
-alter table public.properties disable trigger properties_enforce_role_rules;
-
-update public.properties set city = '彰化縣', district = case
-  when coalesce(address_public,'') || ' ' || title like '%彰化市%' then '彰化市'
-  when coalesce(address_public,'') || ' ' || title like '%秀水%' then '秀水鄉'
-  when coalesce(address_public,'') || ' ' || title like '%福興%' then '福興鄉'
-
-  when coalesce(address_public,'') || ' ' || title like '%鹿港%' then '鹿港鎮'
-  else district end
-where city is null or district is null;
-
-alter table public.properties enable trigger properties_enforce_role_rules;
-
-
 notify pgrst, 'reload schema';

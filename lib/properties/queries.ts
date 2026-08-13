@@ -78,17 +78,12 @@ export async function listPublishedProperties() {
 
 export async function listPublishedPropertiesByArea(city: string, district: string, limit = 12) {
   const supabase = await createSupabaseServerClient();
-  const structured = publishedPropertiesQuery(supabase, publicPropertySelect)
+  return publishedPropertiesQuery(supabase, publicPropertySelect)
     .order("sort_order", { ascending: true })
     .order("published_at", { ascending: false })
     .order("updated_at", { ascending: false })
     .limit(limit)
     .eq("city", city).eq("district", district);
-  const result = await structured;
-  if (!result.error) return result;
-  return publishedPropertiesQuery(supabase, publicPropertySelect)
-    .or(`address_public.ilike.%${escapeSearchTerm(district)}%,title.ilike.%${escapeSearchTerm(district.replace(/[市鄉鎮區]$/, ""))}%`)
-    .order("sort_order", { ascending: true }).order("published_at", { ascending: false }).limit(limit);
 }
 
 export async function listFeaturedProperties(limit = 3) {

@@ -15,6 +15,8 @@ assert.match(migration, /get_public_property_availability/);
 assert.match(migration, /security definer/);
 assert.match(migration, /add column if not exists city/);
 assert.match(migration, /add column if not exists unavailable_reason/);
+assert.doesNotMatch(migration, /update public\.properties set city/);
+assert.doesNotMatch(migration, /coalesce\(address_public/);
 assert.match(migration, /'changhua-city'[\s\S]*?'published',100,now\(\)\)/);
 assert.match(migration, /'xiushui'[\s\S]*?'published',200,now\(\)\)/);
 assert.match(migration, /'lukang'[\s\S]*?'published',300,now\(\)\)/);
