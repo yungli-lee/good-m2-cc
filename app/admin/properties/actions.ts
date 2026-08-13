@@ -393,6 +393,8 @@ export async function unpublishPropertyAction(id: string, formData: FormData) {
       status: "archived",
       published_at: null,
       is_featured: false,
+      unavailable_reason: reason,
+      unavailable_at: now,
       updated_by: current.user.id,
       updated_at: now
     })
@@ -445,6 +447,8 @@ export async function republishPropertyAction(id: string) {
     .update({
       status: "published",
       published_at: now,
+      unavailable_reason: null,
+      unavailable_at: null,
       updated_by: current.user.id,
       updated_at: now
     })
@@ -642,11 +646,7 @@ export async function updatePropertyAction(id: string, formData: FormData) {
         is_featured: before.is_featured
       }, role);
 
-  if (
-    canPublishProperties(role) &&
-    ((before.status === "published" && safePayload.status !== "published") ||
-      (before.status !== "published" && safePayload.status === "published"))
-  ) {
+  if (safePayload.status !== before.status) {
     redirect(`/admin/properties/${id}/edit?error=use_lifecycle_action`);
   }
 

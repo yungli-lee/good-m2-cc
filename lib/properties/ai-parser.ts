@@ -3,6 +3,8 @@ export type ParsedProperty = {
   slug?: string;
   address_public?: string;
   address_private?: string;
+  city?: string;
+  district?: string;
   listing_no?: string;
   listing_type?: string;
   listing_start_date?: string;
@@ -51,6 +53,8 @@ const fieldAliases: Array<[keyof ParsedProperty | "lot_number" | "main_building"
   ["title", /^(案名|物件名稱|社區|標題)$/],
   ["address_public", /^(地址|公開地址|座落)$/],
   ["address_private", /^(完整地址|私有地址|後台地址)$/],
+  ["city", /^(縣市)$/],
+  ["district", /^(鄉鎮市區|行政區)$/],
   ["listing_no", /^(委託書編號|委託編號)$/],
   ["listing_type", /^(委託類型)$/],
   ["owner_name", /^(屋主名稱|屋主)$/],

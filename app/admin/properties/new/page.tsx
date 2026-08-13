@@ -14,6 +14,8 @@ export default async function NewPropertyPage() {
       slug: "",
       address_public: "",
       address_private: "",
+      city: "彰化縣",
+      district: "",
       listing_no: "",
       listing_type: "",
       listing_start_date: "",

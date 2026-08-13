@@ -23,6 +23,8 @@ type AdminPropertyListItem = {
   title: string;
   slug: string;
   address_public: string | null;
+  city: string | null;
+  district: string | null;
   listing_no: string | null;
   listing_type: string | null;
   listing_start_date: string | null;
@@ -82,16 +84,6 @@ const statusLabel: Record<PropertyStatus, string> = {
   expired: "委託到期"
 };
 
-const cityPattern = /^(?<city>[^縣市]+[縣市])(?<district>[^鄉鎮市區]+[鄉鎮市區])?/;
-
-function parsePublicLocation(address?: string | null) {
-  const match = address?.match(cityPattern);
-  return {
-    city: match?.groups?.city || "-",
-    district: match?.groups?.district || "-"
-  };
-}
-
 type Props = {
   searchParams: Promise<{ error?: string; q?: string; lifecycle?: string }>;
 };
@@ -130,7 +122,7 @@ function PublishAction({ id, status, canPublish, deleted }: { id: string; status
           <p className="muted">下架需填寫原因，紀錄會寫入時間軸。</p>
           <label className="field">
             <span>下架原因</span>
-            <select className="select" name="unpublish_reason" defaultValue="成交" required>
+            <select className="select" name="unpublish_reason" defaultValue="已成交" required>
               {unpublishReasons.map((reason) => <option key={reason} value={reason}>{reason}</option>)}
             </select>
           </label>
@@ -289,7 +281,6 @@ export default async function AdminPropertiesPage({ searchParams }: Props) {
             </thead>
             <tbody>
               {properties.map((property) => {
-                const location = parsePublicLocation(property.address_public);
                 return (
                   <tr key={property.id}>
                     <td>
@@ -305,8 +296,8 @@ export default async function AdminPropertiesPage({ searchParams }: Props) {
                     </td>
                     <td>{property.listing_no || "-"}</td>
                     <td>{property.developer_names || "-"}</td>
-                    <td>{location.city}</td>
-                    <td>{location.district}</td>
+                    <td>{property.city || "未填"}</td>
+                    <td>{property.district || "未填"}</td>
                     <td>{formatPrice(property.price)}</td>
                     <td><HealthScoreCell property={property} /></td>
                     <td>

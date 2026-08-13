@@ -37,6 +37,8 @@ export async function POST(request: Request, { params }: Props) {
       status,
       published_at: status === "published" ? now : null,
       is_featured: status === "archived" ? false : before.is_featured,
+      unavailable_reason: status === "archived" ? reason : null,
+      unavailable_at: status === "archived" ? now : null,
       updated_by: auth.current!.user.id,
       updated_at: now
     })

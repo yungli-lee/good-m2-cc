@@ -39,6 +39,8 @@ export const propertySchema = z.object({
   slug: z.string().trim().min(1).max(140).regex(/^[a-z0-9-]+$/),
   address_public: z.string().trim().max(160).optional().or(z.literal("")),
   address_private: z.string().trim().max(4000).optional().or(z.literal("")),
+  city: z.string().trim().max(80).optional().or(z.literal("")),
+  district: z.string().trim().max(80).optional().or(z.literal("")),
   listing_no: z.string().trim().max(80).optional().or(z.literal("")),
   listing_type: z.enum(["專任", "一般委託", "口頭", ""]).optional(),
   listing_start_date: z.string().trim().max(10).optional().or(z.literal("")),
@@ -118,6 +120,8 @@ export type PropertyFormValues = {
   slug: string;
   address_public: string;
   address_private: string;
+  city: string;
+  district: string;
   listing_no: string;
   listing_type: string;
   listing_start_date: string;
@@ -190,6 +194,8 @@ export function propertyValuesFromFormData(formData: FormData): PropertyFormValu
     slug: String(formData.get("slug") || ""),
     address_public: String(formData.get("address_public") || ""),
     address_private: String(formData.get("address_private") || ""),
+    city: String(formData.get("city") || ""),
+    district: String(formData.get("district") || ""),
     listing_no: String(formData.get("listing_no") || ""),
     listing_type: String(formData.get("listing_type") || ""),
     listing_start_date: normalizeDateInput(String(formData.get("listing_start_date") || "")),
@@ -283,6 +289,8 @@ export function toPropertyPayload(input: PropertyFormInput) {
     ...input,
     address_public: emptyToNull(input.address_public || ""),
     address_private: emptyToNull(input.address_private || ""),
+    city: emptyToNull(input.city || ""),
+    district: emptyToNull(input.district || ""),
     listing_no: emptyToNull(input.listing_no || ""),
     listing_type: emptyToNull(input.listing_type || ""),
     listing_start_date: emptyToNull(input.listing_start_date || ""),

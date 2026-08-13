@@ -47,6 +47,8 @@ export function PropertyForm({
         <label htmlFor="address_private">完整地址（後台限定）</label>
         <input className="input" id="address_private" name="address_private" defaultValue={property?.address_private || ""} />
       </div>
+      <div className="field"><label htmlFor="city">縣市</label><input className="input" id="city" name="city" defaultValue={property?.city || "彰化縣"} required /></div>
+      <div className="field"><label htmlFor="district">鄉鎮市區</label><input className="input" id="district" name="district" defaultValue={property?.district || ""} placeholder="例如：彰化市" required /></div>
       <div className="field">
         <label htmlFor="listing_no">委託書編號</label>
         <input className="input" id="listing_no" name="listing_no" defaultValue={property?.listing_no || ""} />
@@ -149,13 +151,19 @@ export function PropertyForm({
       </div>
       <div className="field">
         <label htmlFor="status">上架狀態</label>
-        <select className="select" id="status" name="status" defaultValue={property?.status || "draft"} disabled={!canPublish}>
-          <option value="draft">草稿</option>
-          <option value="published">已上架</option>
-          <option value="archived">下架</option>
-          <option value="expired">委託到期</option>
-        </select>
-        {!canPublish ? <input type="hidden" name="status" value="draft" /> : null}
+        {property ? (
+          <>
+            <input className="input" id="status" value={{ draft: "草稿", published: "已上架", archived: "已下架", expired: "委託到期" }[property.status]} disabled />
+            <input type="hidden" name="status" value={property.status} />
+            <p className="muted">上架或下架請回物件列表操作；下架時系統會要求選擇原因。</p>
+          </>
+        ) : (
+          <select className="select" id="status" name="status" defaultValue="draft" disabled={!canPublish}>
+            <option value="draft">草稿</option>
+            <option value="published">已上架</option>
+          </select>
+        )}
+        {!property && !canPublish ? <input type="hidden" name="status" value="draft" /> : null}
       </div>
       {canPublish ? (
         <div className="field">
