@@ -2,8 +2,8 @@ import type { AreaPageRecord } from "@/lib/areas-cms";
 
 const lines = (value: string[]) => value.join("\n");
 const pairs = (value: Array<Record<string,string>>, first: string, second: string) => value.map((item) => `${item[first]}｜${item[second]}`).join("\n");
-export function AreaPageForm({ area, action }: { area?: AreaPageRecord | null; action: (formData: FormData) => Promise<void> }) {
-  return <form className="form-grid" action={action}>
+export function AreaPageForm({ area, action }: { area?: AreaPageRecord | null; action: string | ((formData: FormData) => Promise<void>) }) {
+  return <form className="form-grid" action={action} method={typeof action === "string" ? "post" : undefined}>
     <label className="field"><span>狀態</span><select className="select" name="status" defaultValue={area?.status || "draft"}><option value="draft">草稿</option><option value="published">發布</option><option value="archived">下架</option></select></label>
     <label className="field"><span>排序</span><input className="input" name="sort_order" type="number" min="0" defaultValue={area?.sort_order ?? 1000} required /></label>
     <label className="field"><span>網址 Slug</span><input className="input" name="slug" pattern="[a-z0-9]+(?:-[a-z0-9]+)*" defaultValue={area?.slug || ""} required /></label>
