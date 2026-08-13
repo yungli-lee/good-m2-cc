@@ -93,6 +93,8 @@ alter table public.properties disable trigger properties_enforce_role_rules;
 update public.properties set city = '彰化縣', district = case
   when coalesce(address_public,'') || ' ' || title like '%彰化市%' then '彰化市'
   when coalesce(address_public,'') || ' ' || title like '%秀水%' then '秀水鄉'
+  when coalesce(address_public,'') || ' ' || title like '%福興%' then '福興鄉'
+
   when coalesce(address_public,'') || ' ' || title like '%鹿港%' then '鹿港鎮'
   else district end
 where city is null or district is null;
