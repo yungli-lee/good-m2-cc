@@ -9,6 +9,7 @@ export function SiteHeader({ settings, navigation }: { settings: CompanySettings
   const [isOpen, setIsOpen] = useState(false);
   const headerItems = navigation.filter((item) => item.location === "header");
   const mobileItems = navigation.filter((item) => item.location === "mobile");
+  const hasAreaMobileLink = mobileItems.some((item) => item.href === "/areas");
 
   return (
     <header className="site-app-header">
@@ -55,6 +56,7 @@ export function SiteHeader({ settings, navigation }: { settings: CompanySettings
             {item.label}
           </Link>
         ))}
+        {!hasAreaMobileLink ? <Link className="site-app-nav-mobile-item" href="/areas" onClick={() => setIsOpen(false)}>服務地區</Link> : null}
       </nav>
     </header>
   );

@@ -10,6 +10,7 @@ export function SiteFooter({ settings, navigation }: { settings: CompanySettings
     ["YouTube", settings.youtube_url],
     ["TikTok", settings.tiktok_url]
   ].filter((entry): entry is [string, string] => Boolean(entry[1]));
+  const hasAreaFooterLink = navigation.some((item) => item.location === "footer" && item.href === "/areas");
 
   return (
     <>
@@ -41,6 +42,7 @@ export function SiteFooter({ settings, navigation }: { settings: CompanySettings
                   {item.label}
                 </Link>
               ))}
+              {!hasAreaFooterLink ? <Link href="/areas">服務地區</Link> : null}
             </nav>
             <div className="site-app-footer-brand">
               <img className="site-app-brand-logo" src={settings.brand_logo_url} alt={`${settings.brand_name}標誌`} />

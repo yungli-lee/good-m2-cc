@@ -7,6 +7,7 @@ import type { ResolvedNavigationItem } from "@/lib/navigation";
 
 export function HomeHeader({ company, navigation }: { company: CompanySettings; navigation: ResolvedNavigationItem[] }) {
   const [open, setOpen] = useState(false);
+  const hasAreaMobileLink = navigation.some((item) => item.location === "mobile" && item.href === "/areas");
   return (
     <header className="site-header" id="top">
       <Link className="brand" href="/" aria-label="回到首頁">
@@ -27,6 +28,7 @@ export function HomeHeader({ company, navigation }: { company: CompanySettings; 
             onClick={() => setOpen(false)}
           >{item.label}</Link>
         ))}
+        {!hasAreaMobileLink ? <Link className="cms-nav-mobile-item" href="/areas" onClick={() => setOpen(false)}>服務地區</Link> : null}
       </nav>
     </header>
   );

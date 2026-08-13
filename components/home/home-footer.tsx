@@ -3,6 +3,7 @@ import type { CompanySettings } from "@/lib/company-settings";
 import type { ResolvedNavigationItem } from "@/lib/navigation";
 
 export function HomeFooter({ company, navigation }: { company: CompanySettings; navigation: ResolvedNavigationItem[] }) {
+  const hasAreaFooterLink = navigation.some((item) => item.location === "footer" && item.href === "/areas");
   return (
     <>
       <footer>
@@ -10,6 +11,7 @@ export function HomeFooter({ company, navigation }: { company: CompanySettings; 
           {navigation.filter((item) => item.location === "footer").map((item) => (
             <Link href={item.href} key={item.id} target={item.target} rel={item.target === "_blank" ? "noopener noreferrer" : undefined}>{item.label}</Link>
           ))}
+          {!hasAreaFooterLink ? <Link href="/areas">服務地區</Link> : null}
         </nav>
         <div className="site-footer">
           <span>嚴選好物件</span><span>價格透明</span><span>安全交易</span><span>售後服務</span>
