@@ -136,7 +136,7 @@ export async function getPublicPropertyAvailability(slug: string) {
 }
 
 export async function searchPublishedProperties(input = "", limit = 24) {
-  const { keywords, propertyTypes, price, priceMode } = parsePropertySearch(input);
+  const { keywords, propertyTypes, typeKeyword, price, priceMode } = parsePropertySearch(input);
 
   const supabase = await createSupabaseServerClient();
   const query = publishedPropertiesQuery(supabase, featuredPropertySelect);
@@ -151,8 +151,15 @@ export async function searchPublishedProperties(input = "", limit = 24) {
     else searchQuery = searchQuery.gte("price", Math.round(price * 0.85)).lte("price", Math.round(price * 1.15));
   }
 
-  if (propertyTypes.length === 1) searchQuery = searchQuery.eq("property_type", propertyTypes[0]);
-  else if (propertyTypes.length > 1) searchQuery = searchQuery.in("property_type", propertyTypes);
+  if (propertyTypes.length && typeKeyword) {
+    const typeFilters = propertyTypes.map((type) => `property_type.eq.${type}`);
+    searchQuery = searchQuery.or([
+      ...typeFilters,
+      `title.ilike.%${typeKeyword}%`,
+      `address_public.ilike.%${typeKeyword}%`,
+      `description.ilike.%${typeKeyword}%`
+    ].join(","));
+  }
 
   for (const keyword of keywords) {
     const variants = propertySearchKeywordVariants(keyword);
@@ -171,7 +178,8 @@ export async function searchPublishedProperties(input = "", limit = 24) {
 
   const result = await searchQuery;
   if (result.error) return result;
-  return { ...result, data: rankPropertySearchResults(result.data || [], keywords, limit) };
+  const rankingKeywords = typeKeyword ? [...keywords, typeKeyword] : keywords;
+  return { ...result, data: rankPropertySearchResults(result.data || [], rankingKeywords, limit) };
 }
 
 export type AdminPropertyLifecycleFilter = "all" | "published" | "archived" | "expired" | "draft" | "deleted";

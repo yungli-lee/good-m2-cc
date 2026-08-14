@@ -4,6 +4,7 @@ export type PropertySearchRow = {
   city?: string | null;
   district?: string | null;
   layout?: string | null;
+  property_type?: string | null;
   highlights?: string[] | string | null;
   description?: string | null;
 };
@@ -24,6 +25,7 @@ const propertyTypeKeywords: Array<[string, string]> = [
 export type ParsedPropertySearch = {
   keywords: string[];
   propertyTypes: string[];
+  typeKeyword: string;
   price: number | null;
   priceMode: "below" | "above" | "around" | null;
 };
@@ -73,14 +75,19 @@ export function propertySearchKeywordVariants(keyword: string) {
 export function parsePropertySearch(input = ""): ParsedPropertySearch {
   let residual = normalizeSearchInput(input);
   let propertyTypes: string[] = [];
+  let typeKeyword = "";
 
   for (const [keyword, value] of propertyTypeKeywords) {
-    if (!propertyTypes.length && residual.includes(keyword)) propertyTypes = [value];
+    if (!propertyTypes.length && residual.includes(keyword)) {
+      propertyTypes = [value];
+      typeKeyword = keyword;
+    }
     residual = residual.replaceAll(keyword, " ");
   }
 
   if (!propertyTypes.length && residual.includes("土地")) {
     propertyTypes = ["farmland", "building_land", "industrial_land"];
+    typeKeyword = "土地";
     residual = residual.replaceAll("土地", " ");
   }
 
@@ -108,7 +115,7 @@ export function parsePropertySearch(input = ""): ParsedPropertySearch {
     .filter(Boolean)
     .flatMap(splitCompactLocationKeyword);
 
-  return { keywords, propertyTypes, price, priceMode };
+  return { keywords, propertyTypes, typeKeyword, price, priceMode };
 }
 
 function text(value: unknown) {
@@ -123,14 +130,20 @@ function keywordScore(row: PropertySearchRow, keyword: string) {
   const city = text(row.city);
   const title = text(row.title);
   const layout = text(row.layout);
+  const propertyType = text(row.property_type);
   const highlights = text(row.highlights);
   const description = text(row.description);
+
+  const matchingTypes = term === "土地"
+    ? ["land", "farmland", "building_land", "industrial_land"]
+    : propertyTypeKeywords.filter(([label]) => label === term).map(([, value]) => value);
 
   // Actual administrative location must outrank marketing copy such as "近鹿港".
   if (district === term || district === `${term}鎮` || district === `${term}鄉` || district === `${term}市`) return 500;
   if (district.includes(term)) return 450;
   if (address.includes(term)) return 400;
   if (city.includes(term)) return 350;
+  if (matchingTypes.includes(propertyType)) return 320;
   if (layout.includes(term)) return 300;
   if (title.includes(term)) return 220;
   if (highlights.includes(term)) return 140;

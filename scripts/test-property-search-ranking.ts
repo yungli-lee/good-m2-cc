@@ -5,6 +5,7 @@ const parsed = parsePropertySearch("鹿港 1000萬以下 農地");
 assert.deepEqual(parsed, {
   keywords: ["鹿港"],
   propertyTypes: ["farmland"],
+  typeKeyword: "農地",
   price: 1000,
   priceMode: "below"
 });
@@ -31,6 +32,7 @@ assert.deepEqual(parsePropertySearch("三房").keywords, ["三房"]);
 assert.equal(parsePropertySearch("三房").price, null);
 assert.deepEqual(propertySearchKeywordVariants("三房"), ["三房", "3房"]);
 assert.deepEqual(parsePropertySearch("土地").propertyTypes, ["farmland", "building_land", "industrial_land"]);
+assert.equal(parsePropertySearch("土地").typeKeyword, "土地");
 assert.deepEqual(parsePropertySearch("鹿港中山路").keywords, ["鹿港", "中山路"]);
 assert.deepEqual(parsePropertySearch("彰化市民權路").keywords, ["彰化市", "民權路"]);
 assert.deepEqual(parsePropertySearch("民生路").keywords, ["民生路"]);
@@ -40,5 +42,11 @@ const roadResults = rankPropertySearchResults([
   { title: "民權路透天", district: "彰化市", address_public: "彰化縣彰化市民權路" }
 ], parsePropertySearch("彰化市民權路").keywords, 24);
 assert.equal(roadResults[0].district, "彰化市");
+
+const typeFallbackResults = rankPropertySearchResults([
+  { title: "950坪大面寬農地", property_type: "building_land" },
+  { title: "一般建地", property_type: "building_land" }
+], ["農地"], 24);
+assert.equal(typeFallbackResults[0].title, "950坪大面寬農地");
 
 console.log("property search ranking tests passed");
