@@ -1,5 +1,6 @@
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import {
+  escapePropertySearchTerm,
   parsePropertySearch,
   propertySearchKeywordVariants,
   rankPropertySearchResults
@@ -254,7 +255,7 @@ export async function listAdminProperties(search = "", filter: AdminPropertyLife
     if (filter !== "all") query = query.eq("status", filter);
   }
 
-  const term = escapeSearchTerm(search.trim());
+  const term = escapePropertySearchTerm(search.trim());
   if (term) {
     query = query.or(`title.ilike.%${term}%,slug.ilike.%${term}%,listing_no.ilike.%${term}%,owner_name.ilike.%${term}%`);
   }
