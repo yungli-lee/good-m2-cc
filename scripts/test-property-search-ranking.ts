@@ -9,6 +9,8 @@ assert.deepEqual(parsed, {
   priceMode: "below"
 });
 
+assert.deepEqual(parsePropertySearch("農舍").propertyTypes, ["farmhouse"]);
+
 const rows = [
   { title: "福興農舍", district: "福興鄉", address_public: "彰化縣福興鄉彰鹿路", description: "往鹿港交通方便" },
   { title: "近鹿港｜植村墅 III", district: "福興鄉", address_public: "彰化縣福興鄉彰鹿路七段", description: "" },
