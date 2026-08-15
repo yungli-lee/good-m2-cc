@@ -79,7 +79,7 @@ export const propertySchema = z.object({
   age: optionalNumber,
   orientation: z.string().trim().max(40).optional().or(z.literal("")),
   floor: z.string().trim().max(40).optional().or(z.literal("")),
-  property_type: z.enum(["townhouse", "apartment", "building", "land", "farmland", "building_land", "industrial_land", "storefront", "factory", "other"]),
+  property_type: z.enum(["townhouse", "apartment", "building", "land", "farmland", "building_land", "industrial_land", "farmhouse", "storefront", "factory", "other"]),
   highlights: z.string().trim().max(500).optional().or(z.literal("")),
   description: z.string().trim().max(8000).optional().or(z.literal("")),
   status: z.enum(["draft", "published", "archived", "expired"]),

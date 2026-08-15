@@ -8,12 +8,16 @@ import type { PropertyFormState } from "@/lib/properties/schema";
 
 const typeOptions = [
   ["building_land", "建地"],
-  ["townhouse", "房屋"],
-  ["farmland", "農林漁牧地"],
+  ["farmland", "農地"],
   ["industrial_land", "工業用地"],
+  ["land", "其他土地"],
+  ["farmhouse", "農舍"],
+  ["townhouse", "透天住宅"],
+  ["apartment", "公寓"],
+  ["building", "電梯大樓／華廈"],
+  ["storefront", "店面"],
   ["factory", "廠房"],
-  ["building", "大廈"],
-  ["apartment", "公寓"]
+  ["other", "其他"]
 ];
 
 function setFormValue(form: HTMLFormElement, name: keyof ParsedProperty, value?: string) {

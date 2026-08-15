@@ -277,6 +277,7 @@ function inferType(text: string) {
   if (incomingCategory === "土地") return "building_land";
   if (incomingCategory === "大樓華廈" || incomingCategory === "大樓" || incomingCategory === "華廈") return "building";
 
+  if (/農舍/.test(text)) return "farmhouse";
   if (/農林漁牧地|農地|林地|漁牧地/.test(text)) return "farmland";
   if (/工業用地/.test(text)) return "industrial_land";
   if (/建地/.test(text)) return "building_land";

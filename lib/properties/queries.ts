@@ -1,10 +1,18 @@
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import {
+  escapePropertySearchTerm,
+  parsePropertySearch,
+  propertySearchKeywordVariants,
+  rankPropertySearchResults
+} from "@/lib/properties/search";
 
 const publicPropertySelect = `
   id,
   slug,
   title,
   address_public,
+  city,
+  district,
   price,
   land_area_ping,
   building_area_ping,
@@ -34,12 +42,15 @@ const featuredPropertySelect = `
   slug,
   title,
   address_public,
+  city,
+  district,
   price,
   land_area_ping,
   building_area_ping,
   layout,
   property_type,
   highlights,
+  description,
   status,
   is_featured,
   sort_order,
@@ -124,70 +135,51 @@ export async function getPublicPropertyAvailability(slug: string) {
   return supabase.rpc("get_public_property_availability", { requested_slug: slug }).maybeSingle();
 }
 
-function escapeSearchTerm(value: string) {
-  return value.replace(/[%_,]/g, "");
-}
-
-function priceFromWan(value: string) {
-  const match = value.match(/(\d+(?:\.\d+)?)/);
-  if (!match) return null;
-  const amount = Number(match[1]);
-  if (!Number.isFinite(amount) || amount <= 0) return null;
-  return Math.round(amount);
-}
-
-function propertyTypeKeyword(value: string) {
-  const keywords: Array<[string, string]> = [
-    ["農舍", "farmhouse"],
-    ["農地", "farmland"],
-    ["建地", "building_land"],
-    ["工業用地", "industrial_land"],
-    ["廠房", "factory"],
-    ["大廈", "building"],
-    ["公寓", "apartment"],
-    ["透天", "townhouse"],
-    ["房屋", "townhouse"],
-    ["店面", "storefront"]
-  ];
-  return keywords.find(([keyword]) => value.includes(keyword))?.[1] || "";
-}
-
 export async function searchPublishedProperties(input = "", limit = 24) {
-  const rawTerm = input.trim();
-  const term = escapeSearchTerm(rawTerm);
-  const propertyType = propertyTypeKeyword(rawTerm);
-  const price = priceFromWan(rawTerm);
-  const isBelow = /以下|以內|內|below|under/i.test(rawTerm);
-  const isAbove = /以上|起|above|over/i.test(rawTerm);
+  const { keywords, propertyTypes, typeKeyword, price, priceMode } = parsePropertySearch(input);
 
   const supabase = await createSupabaseServerClient();
   const query = publishedPropertiesQuery(supabase, featuredPropertySelect);
   let searchQuery = query
     .order("published_at", { ascending: false })
     .order("updated_at", { ascending: false })
-    .limit(limit);
+    .limit(Math.min(Math.max(limit * 4, 48), 192));
 
   if (price) {
-    if (isBelow) searchQuery = searchQuery.lte("price", price);
-    else if (isAbove) searchQuery = searchQuery.gte("price", price);
+    if (priceMode === "below") searchQuery = searchQuery.lte("price", price);
+    else if (priceMode === "above") searchQuery = searchQuery.gte("price", price);
     else searchQuery = searchQuery.gte("price", Math.round(price * 0.85)).lte("price", Math.round(price * 1.15));
   }
 
-  if (propertyType) searchQuery = searchQuery.eq("property_type", propertyType);
+  if (propertyTypes.length && typeKeyword) {
+    const typeFilters = propertyTypes.map((type) => `property_type.eq.${type}`);
+    searchQuery = searchQuery.or([
+      ...typeFilters,
+      `title.ilike.%${typeKeyword}%`,
+      `address_public.ilike.%${typeKeyword}%`,
+      `description.ilike.%${typeKeyword}%`
+    ].join(","));
+  }
 
-  if (term && !/^\d+(?:\.\d+)?\s*萬?(?:以下|以內|內|以上|起)?$/.test(term)) {
+  for (const keyword of keywords) {
+    const variants = propertySearchKeywordVariants(keyword);
     searchQuery = searchQuery.or(
-      [
-        `title.ilike.%${term}%`,
-        `slug.ilike.%${term}%`,
-        `address_public.ilike.%${term}%`,
-        `layout.ilike.%${term}%`,
-        `description.ilike.%${term}%`
-      ].join(",")
+      variants.flatMap((variant) => [
+        `title.ilike.%${variant}%`,
+        `slug.ilike.%${variant}%`,
+        `address_public.ilike.%${variant}%`,
+        `city.ilike.%${variant}%`,
+        `district.ilike.%${variant}%`,
+        `layout.ilike.%${variant}%`,
+        `description.ilike.%${variant}%`
+      ]).join(",")
     );
   }
 
-  return searchQuery;
+  const result = await searchQuery;
+  if (result.error) return result;
+  const rankingKeywords = typeKeyword ? [...keywords, typeKeyword] : keywords;
+  return { ...result, data: rankPropertySearchResults(result.data || [], rankingKeywords, limit) };
 }
 
 export type AdminPropertyLifecycleFilter = "all" | "published" | "archived" | "expired" | "draft" | "deleted";
@@ -271,7 +263,7 @@ export async function listAdminProperties(search = "", filter: AdminPropertyLife
     if (filter !== "all") query = query.eq("status", filter);
   }
 
-  const term = escapeSearchTerm(search.trim());
+  const term = escapePropertySearchTerm(search.trim());
   if (term) {
     query = query.or(`title.ilike.%${term}%,slug.ilike.%${term}%,listing_no.ilike.%${term}%,owner_name.ilike.%${term}%`);
   }
