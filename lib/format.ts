@@ -98,13 +98,14 @@ export function formatTaipeiRelationDate(value?: string | null) {
 
 export function propertyTypeLabel(value: string) {
   const labels: Record<string, string> = {
-    townhouse: "房屋",
+    townhouse: "透天住宅",
     apartment: "公寓",
-    building: "大廈",
-    land: "土地",
-    farmland: "農林漁牧地",
+    building: "電梯大樓／華廈",
+    land: "其他土地",
+    farmland: "農地",
     building_land: "建地",
     industrial_land: "工業用地",
+    farmhouse: "農舍",
     storefront: "店面",
     factory: "廠房",
     other: "其他"
