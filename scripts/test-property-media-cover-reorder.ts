@@ -86,6 +86,8 @@ assert.match(homeSearch, /media\?\.media_type === "video" \? media\.thumbnail_ur
 assert.match(seo, /ogImage: getMediaImageUrl\(cover\)/, "SEO and Open Graph use the Poster for a video cover");
 
 assert.match(manager, /draggable=\{orderStatus !== "saving"\}/, "desktop sorting has a dedicated drag handle");
+assert.match(manager, /<div[\s\S]*className="media-drag-handle"[\s\S]*draggable=/, "the drag handle is not a native button with inconsistent browser dragging");
+assert.match(manager, /draggedMediaIdRef\.current = item\.id/, "drag identity is available synchronously during browser drag events");
 assert.match(manager, />上移<\/button>/);
 assert.match(manager, />下移<\/button>/);
 assert.match(manager, /index === 0 \|\| orderStatus === "saving"/, "the first move-up button is disabled");
@@ -94,7 +96,9 @@ assert.match(manager, /setOrderedMedia\(previous\)/, "failed saves restore the p
 assert.match(manager, /正在儲存排序…/);
 assert.match(manager, /排序已儲存/);
 assert.match(manager, /排序儲存失敗，已恢復原順序/);
-assert.match(manager, /type="button"[\s\S]*draggable=/, "dragging is isolated from submit actions");
+assert.doesNotMatch(manager, /<button[\s\S]{0,160}draggable=/, "dragging is isolated from submit buttons");
+assert.match(manager, /event\.key === "ArrowUp"/);
+assert.match(manager, /event\.key === "ArrowDown"/, "the drag handle also supports keyboard reordering");
 
 assert.match(reorderRoute, /canManagePropertyMedia\(current\.profile\.role\)/, "unauthorized roles are rejected");
 assert.match(reorderRoute, /validateMediaOrder\(body\.ordered_ids, rows \|\| \[\], propertyId\)/);

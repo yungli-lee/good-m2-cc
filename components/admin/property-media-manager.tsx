@@ -23,6 +23,7 @@ export function PropertyMediaManager({
 }) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const selectedFilesRef = useRef<File[]>([]);
+  const draggedMediaIdRef = useRef<string | null>(null);
   const [selectedFileNames, setSelectedFileNames] = useState<string[]>([]);
   const [isDraggingFile, setIsDraggingFile] = useState(false);
   const [hasLargeVideo, setHasLargeVideo] = useState(false);
@@ -74,10 +75,12 @@ export function PropertyMediaManager({
   }
 
   function dropMedia(targetId: string) {
-    if (!draggedMediaId || orderStatus === "saving") return;
-    const ids = placeMediaId(orderedMedia.map((item) => item.id), draggedMediaId, targetId);
+    const draggedId = draggedMediaIdRef.current;
+    if (!draggedId || orderStatus === "saving") return;
+    const ids = placeMediaId(orderedMedia.map((item) => item.id), draggedId, targetId);
     const previous = orderedMedia;
     setDraggedMediaId(null);
+    draggedMediaIdRef.current = null;
     setDropTargetId(null);
     if (ids.every((id, index) => id === previous[index]?.id)) return;
     const byId = new Map(previous.map((item) => [item.id, item]));
@@ -140,7 +143,7 @@ export function PropertyMediaManager({
               className={`card property-media-admin-card${draggedMediaId === item.id ? " is-dragging" : ""}${dropTargetId === item.id ? " is-drop-target" : ""}`}
               key={item.id}
               onDragOver={(event) => {
-                if (!draggedMediaId || draggedMediaId === item.id) return;
+                if (!draggedMediaIdRef.current || draggedMediaIdRef.current === item.id) return;
                 event.preventDefault();
                 setDropTargetId(item.id);
               }}
@@ -149,21 +152,29 @@ export function PropertyMediaManager({
                 dropMedia(item.id);
               }}
             >
-              <button
+              <div
                 className="media-drag-handle"
-                type="button"
+                role="button"
+                tabIndex={0}
                 draggable={orderStatus !== "saving"}
+                aria-disabled={orderStatus === "saving"}
                 aria-label={`拖曳調整順序：${item.alt_text || (item.media_type === "video" ? "物件影片" : "物件照片")}`}
+                onKeyDown={(event) => {
+                  if (event.key === "ArrowUp") moveMedia(item.id, -1);
+                  if (event.key === "ArrowDown") moveMedia(item.id, 1);
+                }}
                 onDragStart={(event) => {
+                  draggedMediaIdRef.current = item.id;
                   setDraggedMediaId(item.id);
                   event.dataTransfer.effectAllowed = "move";
                   event.dataTransfer.setData("text/plain", item.id);
                 }}
                 onDragEnd={() => {
+                  draggedMediaIdRef.current = null;
                   setDraggedMediaId(null);
                   setDropTargetId(null);
                 }}
-              >☰ 拖曳調整順序</button>
+              >☰ 拖曳調整順序</div>
               <PropertyCoverImage
                 className="property-image"
                 src={item.media_type === "video" ? item.thumbnail_url || "" : item.url}
