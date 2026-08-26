@@ -45,24 +45,34 @@ const secondPhoto = { name: "kitchen.webp", type: "image/webp", size: mb } as Fi
 const largeVideo = { name: "large-tour.webm", type: "video/webm", size: 20 * mb + 1 } as File;
 
 const firstPhotoInput = fakeFileList([photo]);
-const firstPhotoSelection = buildFileSelection([], firstPhotoInput, fakeTransfer);
-(firstPhotoInput as unknown as File[]).length = 0;
-assert.deepEqual(firstPhotoSelection.files, [photo], "the first image survives replacement of the live input FileList");
+const firstPhotoSelection = buildFileSelection([], firstPhotoInput, "input", () => {
+  throw new Error("the first native input selection must not create a DataTransfer");
+});
+assert.equal(firstPhotoSelection.shouldReplaceInputFiles, false, "the first native image selection keeps the browser-owned input.files");
+assert.equal(firstPhotoSelection.fileList, firstPhotoInput);
+assert.deepEqual(firstPhotoSelection.files, [photo]);
 assert.deepEqual(firstPhotoSelection.fileNames, Array.from(firstPhotoSelection.fileList).map((file) => file.name));
 
 const firstVideoInput = fakeFileList([video]);
-const firstVideoSelection = buildFileSelection([], firstVideoInput, fakeTransfer);
-(firstVideoInput as unknown as File[]).length = 0;
-assert.deepEqual(firstVideoSelection.files, [video], "the first MP4 survives replacement of the live input FileList");
+const firstVideoSelection = buildFileSelection([], firstVideoInput, "input", () => {
+  throw new Error("the first native input selection must not create a DataTransfer");
+});
+assert.equal(firstVideoSelection.shouldReplaceInputFiles, false, "the first native MP4 selection keeps the browser-owned input.files");
+assert.equal(firstVideoSelection.fileList, firstVideoInput);
+assert.deepEqual(firstVideoSelection.files, [video]);
 
-const appendedSelection = buildFileSelection(firstPhotoSelection.files, fakeFileList([secondPhoto]), fakeTransfer);
+const appendedSelection = buildFileSelection(firstPhotoSelection.files, fakeFileList([secondPhoto]), "input", fakeTransfer);
+assert.equal(appendedSelection.shouldReplaceInputFiles, true, "a later native selection replaces input.files with the merged FileList");
 assert.deepEqual(appendedSelection.fileNames, [photo.name, secondPhoto.name], "a later selection keeps the previous file and adds the new file");
 assert.deepEqual(appendedSelection.fileNames, Array.from(appendedSelection.fileList).map((file) => file.name));
 
-const droppedSelection = buildFileSelection(appendedSelection.files, fakeFileList([video]), fakeTransfer);
+const droppedSelection = buildFileSelection(appendedSelection.files, fakeFileList([video]), "drop", fakeTransfer);
+assert.equal(droppedSelection.shouldReplaceInputFiles, true, "a drop replaces input.files so the form submits all selected files");
 assert.deepEqual(droppedSelection.fileNames, [photo.name, secondPhoto.name, video.name], "dropped files are appended to the selection");
 assert.equal(droppedSelection.hasLargeVideo, false);
-assert.equal(buildFileSelection([], fakeFileList([largeVideo]), fakeTransfer).hasLargeVideo, true, "videos over 20MB keep the existing warning");
+const firstDropSelection = buildFileSelection([], fakeFileList([photo]), "drop", fakeTransfer);
+assert.equal(firstDropSelection.shouldReplaceInputFiles, true, "even a first drop populates the real file input");
+assert.equal(buildFileSelection([], fakeFileList([largeVideo]), "input", fakeTransfer).hasLargeVideo, true, "videos over 20MB keep the existing warning");
 
 function uploadFile(name: string, type: string, bytes: number[]) {
   const blob = new Blob([new Uint8Array(bytes)], { type });
