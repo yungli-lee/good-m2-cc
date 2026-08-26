@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { homeSlideDurationMs } from "../lib/media/playback.ts";
 import { validateMediaFile, validateMediaUpload } from "../lib/media/upload.ts";
+import { buildFileSelection } from "../lib/media/file-selection.ts";
 import { activateHomeCarouselVideo, deactivateHomeCarouselVideo, isActiveHomeCarouselVideoFailure, type HomeCarouselVideoElement } from "../lib/media/home-carousel-video.ts";
 
 assert.equal(homeSlideDurationMs("video"), 30_000, "a 45-second uploaded video advances at 30 seconds");
@@ -23,6 +24,55 @@ assert.equal(validateMediaUpload({ name: "video.mp4", type: "video/mp4", size: 5
 assert.equal(validateMediaUpload({ name: "video.mp4", type: "video/mp4", size: 100 * mb + 1 }, "property").ok, false);
 assert.equal(validateMediaUpload({ name: "poster.jpg", type: "image/jpeg", size: 5 * mb }, "poster").ok, true);
 assert.equal(validateMediaUpload({ name: "poster.mp4", type: "video/mp4", size: mb }, "poster").ok, false);
+
+type TestFile = { name: string; type: string; size: number };
+
+function fakeFileList(files: TestFile[]) {
+  return Object.assign(files, { item: (index: number) => files[index] || null }) as unknown as FileList;
+}
+
+function fakeTransfer() {
+  const files: TestFile[] = [];
+  return {
+    files: fakeFileList(files),
+    items: { add: (file: File) => { files.push(file as unknown as TestFile); return null; } }
+  } as unknown as DataTransfer;
+}
+
+const photo = { name: "living-room.jpg", type: "image/jpeg", size: mb } as File;
+const video = { name: "tour.mp4", type: "video/mp4", size: 10 * mb } as File;
+const secondPhoto = { name: "kitchen.webp", type: "image/webp", size: mb } as File;
+const largeVideo = { name: "large-tour.webm", type: "video/webm", size: 20 * mb + 1 } as File;
+
+const firstPhotoInput = fakeFileList([photo]);
+const firstPhotoSelection = buildFileSelection([], firstPhotoInput, "input", () => {
+  throw new Error("the first native input selection must not create a DataTransfer");
+});
+assert.equal(firstPhotoSelection.shouldReplaceInputFiles, false, "the first native image selection keeps the browser-owned input.files");
+assert.equal(firstPhotoSelection.fileList, firstPhotoInput);
+assert.deepEqual(firstPhotoSelection.files, [photo]);
+assert.deepEqual(firstPhotoSelection.fileNames, Array.from(firstPhotoSelection.fileList).map((file) => file.name));
+
+const firstVideoInput = fakeFileList([video]);
+const firstVideoSelection = buildFileSelection([], firstVideoInput, "input", () => {
+  throw new Error("the first native input selection must not create a DataTransfer");
+});
+assert.equal(firstVideoSelection.shouldReplaceInputFiles, false, "the first native MP4 selection keeps the browser-owned input.files");
+assert.equal(firstVideoSelection.fileList, firstVideoInput);
+assert.deepEqual(firstVideoSelection.files, [video]);
+
+const appendedSelection = buildFileSelection(firstPhotoSelection.files, fakeFileList([secondPhoto]), "input", fakeTransfer);
+assert.equal(appendedSelection.shouldReplaceInputFiles, true, "a later native selection replaces input.files with the merged FileList");
+assert.deepEqual(appendedSelection.fileNames, [photo.name, secondPhoto.name], "a later selection keeps the previous file and adds the new file");
+assert.deepEqual(appendedSelection.fileNames, Array.from(appendedSelection.fileList).map((file) => file.name));
+
+const droppedSelection = buildFileSelection(appendedSelection.files, fakeFileList([video]), "drop", fakeTransfer);
+assert.equal(droppedSelection.shouldReplaceInputFiles, true, "a drop replaces input.files so the form submits all selected files");
+assert.deepEqual(droppedSelection.fileNames, [photo.name, secondPhoto.name, video.name], "dropped files are appended to the selection");
+assert.equal(droppedSelection.hasLargeVideo, false);
+const firstDropSelection = buildFileSelection([], fakeFileList([photo]), "drop", fakeTransfer);
+assert.equal(firstDropSelection.shouldReplaceInputFiles, true, "even a first drop populates the real file input");
+assert.equal(buildFileSelection([], fakeFileList([largeVideo]), "input", fakeTransfer).hasLargeVideo, true, "videos over 20MB keep the existing warning");
 
 function uploadFile(name: string, type: string, bytes: number[]) {
   const blob = new Blob([new Uint8Array(bytes)], { type });
@@ -47,6 +97,8 @@ const propertySeo = readFileSync(new URL("lib/properties/types.ts", root), "utf8
 const mediaUploadRoute = readFileSync(new URL("app/api/admin/media/route.ts", root), "utf8");
 const mediaDeleteRoute = readFileSync(new URL("app/api/admin/media/[id]/route.ts", root), "utf8");
 const propertyUploadRoute = readFileSync(new URL("app/admin/properties/[id]/edit/upload/route.ts", root), "utf8");
+const propertyMediaManager = readFileSync(new URL("components/admin/property-media-manager.tsx", root), "utf8");
+const propertyEditPage = readFileSync(new URL("app/admin/properties/[id]/edit/page.tsx", root), "utf8");
 const propertyDeleteRoute = readFileSync(new URL("app/admin/properties/[id]/edit/media/[mediaId]/delete/route.ts", root), "utf8");
 const migration = readFileSync(new URL("supabase/migrations/202608020101_media_library_video_phase_1.sql", root), "utf8");
 
@@ -76,6 +128,12 @@ assert.match(mediaUploadRoute, /remove\(\[storagePath, posterStoragePath\]/, "DB
 assert.match(mediaDeleteRoute, /before\.poster_storage_path/);
 assert.match(propertyUploadRoute, /video_poster_required/);
 assert.match(propertyUploadRoute, /poster_storage_path/);
+assert.match(propertyMediaManager, /accept="image\/jpeg,image\/png,image\/webp,video\/mp4,video\/webm"/);
+assert.match(propertyMediaManager, /name="poster" type="file" accept="image\/jpeg,image\/png,image\/webp"/);
+assert.match(propertyEditPage, /video_poster_required/);
+assert.match(propertyEditPage, /poster_upload_failed/);
+assert.match(propertyEditPage, /media_url_failed/);
+assert.doesNotMatch(propertyEditPage, /操作失敗：\$\{query\.error\}/, "internal error codes are not shown to users");
 assert.match(propertyDeleteRoute, /before\.poster_storage_path/);
 assert.match(migration, /add column if not exists poster_url text/);
 assert.match(migration, /video\/mp4/);

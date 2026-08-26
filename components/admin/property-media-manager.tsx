@@ -2,6 +2,8 @@
 
 import { useRef, useState } from "react";
 import type { DragEvent } from "react";
+import { buildFileSelection } from "@/lib/media/file-selection";
+import type { FileSelectionSource } from "@/lib/media/file-selection";
 import type { PropertyMedia } from "@/lib/properties/types";
 
 export function PropertyMediaManager({
@@ -21,21 +23,19 @@ export function PropertyMediaManager({
   const [isDraggingFile, setIsDraggingFile] = useState(false);
   const [hasLargeVideo, setHasLargeVideo] = useState(false);
 
-  function appendFiles(files: FileList | null) {
+  function appendFiles(files: FileList | null, source: FileSelectionSource) {
     if (!files?.length || !fileInputRef.current) return;
-    const transfer = new DataTransfer();
-    selectedFilesRef.current.forEach((file) => transfer.items.add(file));
-    Array.from(files).forEach((file) => transfer.items.add(file));
-    fileInputRef.current.files = transfer.files;
-    selectedFilesRef.current = Array.from(transfer.files);
-    setSelectedFileNames(Array.from(transfer.files).map((file) => file.name));
-    setHasLargeVideo(Array.from(transfer.files).some((file) => file.type.startsWith("video/") && file.size > 20 * 1024 * 1024));
+    const selection = buildFileSelection(selectedFilesRef.current, files, source);
+    if (selection.shouldReplaceInputFiles) fileInputRef.current.files = selection.fileList;
+    selectedFilesRef.current = selection.files;
+    setSelectedFileNames(selection.fileNames);
+    setHasLargeVideo(selection.hasLargeVideo);
   }
 
   function handleFileDrop(event: DragEvent<HTMLDivElement>) {
     event.preventDefault();
     setIsDraggingFile(false);
-    appendFiles(event.dataTransfer.files);
+    appendFiles(event.dataTransfer.files, "drop");
   }
 
   return (
@@ -61,7 +61,7 @@ export function PropertyMediaManager({
             accept="image/jpeg,image/png,image/webp,video/mp4,video/webm"
             multiple
             required
-            onChange={(event) => appendFiles(event.currentTarget.files)}
+            onChange={(event) => appendFiles(event.currentTarget.files, "input")}
           />
           <span className="muted">
             {selectedFileNames.length ? `已選擇 ${selectedFileNames.length} 個檔案：${selectedFileNames.join("、")}` : "圖片上限 5MB；影片僅支援 MP4、WebM，上限 100MB。"}
