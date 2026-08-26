@@ -25,11 +25,14 @@ const errorMessage: Record<string, string> = {
   "42501": "資料庫權限不足，請確認此帳號的後台角色與物件 RLS 權限。",
   forbidden: "此帳號沒有足夠權限。",
   invalid_form: "表單欄位格式有誤，請檢查後再儲存。",
-  no_file: "請先選擇照片。",
-  invalid_file: "照片格式或大小不符合規定，請使用 JPG、PNG 或 WebP，單張 5MB 以內。",
-  media_failed: "照片資料寫入失敗，請稍後再試。",
-  media_metadata_missing_required_field: "照片資料缺少必要欄位，請重新上傳。",
-  media_not_found: "找不到要刪除的照片。",
+  no_file: "請先選擇圖片或影片。",
+  invalid_file: "圖片或影片格式、內容或大小不符合規定。圖片請使用 JPEG、PNG 或 WebP（5MB 以內）；影片請使用 MP4 或 WebM（100MB 以內）。",
+  video_poster_required: "上傳影片時，請選擇一張 Poster 圖片。Poster 支援 JPEG、PNG 或 WebP，大小須在 5MB 以內。",
+  poster_upload_failed: "影片 Poster 上傳失敗，請確認圖片格式與大小後再試一次。",
+  media_url_failed: "媒體上傳完成，但無法取得檔案網址，請稍後再試。",
+  media_failed: "媒體資料寫入失敗，請稍後再試。",
+  media_metadata_missing_required_field: "媒體資料缺少必要欄位，請重新上傳。",
+  media_not_found: "找不到要刪除的媒體。",
   not_found: "找不到此物件。",
   use_lifecycle_action: "上架、下架與重新上架請使用物件列表的生命週期操作。",
   restore_failed: "還原失敗，請稍後再試。",
@@ -58,7 +61,7 @@ export default async function EditPropertyPage({ params, searchParams }: Props) 
         <h1>編輯物件</h1>
         <p className="muted">B-001：物件健康度協助檢查上架資料完整度。目前狀態：{property.status}</p>
         {query.saved ? <div className="notice">已儲存。</div> : null}
-        {query.error ? <div className="notice">{errorMessage[query.error] || `操作失敗：${query.error}`}</div> : null}
+        {query.error ? <div className="notice">{errorMessage[query.error] || "操作失敗，請稍後再試。"}</div> : null}
         {property.deleted_at ? (
           <div className="notice">
             此物件已刪除，不會出現在前台。刪除時間：{property.deleted_at.replace("T", " ").slice(0, 16)}

@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import type { DragEvent } from "react";
+import { buildFileSelection } from "@/lib/media/file-selection";
 import type { PropertyMedia } from "@/lib/properties/types";
 
 export function PropertyMediaManager({
@@ -23,13 +24,11 @@ export function PropertyMediaManager({
 
   function appendFiles(files: FileList | null) {
     if (!files?.length || !fileInputRef.current) return;
-    const transfer = new DataTransfer();
-    selectedFilesRef.current.forEach((file) => transfer.items.add(file));
-    Array.from(files).forEach((file) => transfer.items.add(file));
-    fileInputRef.current.files = transfer.files;
-    selectedFilesRef.current = Array.from(transfer.files);
-    setSelectedFileNames(Array.from(transfer.files).map((file) => file.name));
-    setHasLargeVideo(Array.from(transfer.files).some((file) => file.type.startsWith("video/") && file.size > 20 * 1024 * 1024));
+    const selection = buildFileSelection(selectedFilesRef.current, files);
+    fileInputRef.current.files = selection.fileList;
+    selectedFilesRef.current = selection.files;
+    setSelectedFileNames(selection.fileNames);
+    setHasLargeVideo(selection.hasLargeVideo);
   }
 
   function handleFileDrop(event: DragEvent<HTMLDivElement>) {
