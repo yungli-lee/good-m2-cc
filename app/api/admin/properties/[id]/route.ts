@@ -33,7 +33,11 @@ export async function GET(_request: Request, { params }: Props) {
   if (!parsedParams.success) return apiError("Invalid request data", 422);
   const { id } = parsedParams.data;
   const supabase = await createSupabaseServerClient();
-  const { data, error } = await supabase.from("properties").select("*, property_media(*)").eq("id", id).maybeSingle();
+  const { data, error } = await supabase.from("properties").select("*, property_media(*)").eq("id", id)
+    .order("sort_order", { referencedTable: "property_media", ascending: true })
+    .order("created_at", { referencedTable: "property_media", ascending: true })
+    .order("id", { referencedTable: "property_media", ascending: true })
+    .maybeSingle();
   if (error) return apiError("Unable to load property", 500);
   if (!data) return apiError("Not found", 404);
   return NextResponse.json({ data: redactProgressNotes(data, auth.current!.profile.role) });

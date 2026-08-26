@@ -86,7 +86,22 @@ export type PropertyMedia = {
   deleted_at: string | null;
 };
 
+export function sortPropertyMedia(media: readonly PropertyMedia[]) {
+  return [...media].sort((left, right) => {
+    const sortDifference = Number(left.sort_order || 0) - Number(right.sort_order || 0);
+    if (sortDifference) return sortDifference;
+    const createdDifference = String(left.created_at || "").localeCompare(String(right.created_at || ""));
+    return createdDifference || left.id.localeCompare(right.id);
+  });
+}
+
+export function getMediaImageUrl(media: Pick<PropertyMedia, "media_type" | "url" | "thumbnail_url"> | null | undefined) {
+  if (!media) return "";
+  return (media.media_type === "video" ? media.thumbnail_url : media.url)?.trim() || "";
+}
+
 export function getCoverMedia(property: Pick<Property, "property_media">) {
-  const media = (property.property_media || []).filter((item) => item.media_type === "image");
-  return media.find((item) => item.is_cover && !item.deleted_at) || media.find((item) => !item.deleted_at) || null;
+  const media = sortPropertyMedia(property.property_media || [])
+    .filter((item) => !item.deleted_at && Boolean(getMediaImageUrl(item)));
+  return media.find((item) => item.is_cover) || media[0] || null;
 }

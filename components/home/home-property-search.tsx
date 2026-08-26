@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { trackEvent } from "@/lib/analytics/client";
+import { PropertyCoverImage } from "@/components/media/property-cover-image";
 
 export type HomeProperty = {
   id: string;
@@ -15,12 +16,14 @@ export type HomeProperty = {
   layout: string | null;
   property_type?: string | null;
   highlights?: string[] | null;
-  property_media?: Array<{ url?: string | null; alt_text?: string | null; is_cover?: boolean; deleted_at?: string | null }> | null;
+  property_media?: Array<{ id: string; media_type: "image" | "video"; url: string; thumbnail_url: string | null; alt_text?: string | null; sort_order: number; is_cover?: boolean; created_at: string; deleted_at?: string | null }> | null;
 };
 
 function cover(property: HomeProperty) {
-  const media = property.property_media || [];
-  return media.find((item) => item.is_cover && !item.deleted_at) || media.find((item) => !item.deleted_at) || null;
+  const media = [...(property.property_media || [])]
+    .filter((item) => !item.deleted_at && Boolean(item.media_type === "video" ? item.thumbnail_url : item.url))
+    .sort((left, right) => left.sort_order - right.sort_order || left.created_at.localeCompare(right.created_at) || left.id.localeCompare(right.id));
+  return media.find((item) => item.is_cover) || media[0] || null;
 }
 
 function price(value: number | null) {
@@ -36,9 +39,10 @@ const landTypes = new Set(["farmland", "building_land", "industrial_land", "land
 
 export function HomePropertyCard({ property }: { property: HomeProperty }) {
   const media = cover(property);
+  const coverUrl = media?.media_type === "video" ? media.thumbnail_url || "" : media?.url || "";
   return (
     <article className="property-discovery-card">
-      {media?.url ? <img src={media.url} alt={media.alt_text || property.title} loading="lazy" /> : <div className="property-card-placeholder" role="img" aria-label={`${property.title} 尚未設定封面照片`} />}
+      {coverUrl ? <PropertyCoverImage className="property-card-image" fallbackClassName="property-card-placeholder" src={coverUrl} alt={media?.alt_text || property.title} /> : <div className="property-card-placeholder" role="img" aria-label={`${property.title} 尚未設定封面照片`} />}
       <div className="property-discovery-body">
         <h3>{property.title}</h3>
         <p><strong>{price(property.price)}</strong></p>

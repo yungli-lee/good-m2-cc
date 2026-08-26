@@ -121,7 +121,7 @@ assert.match(lightbox, /event\.key === "Escape"/);
 assert.match(lightbox, /event\.target === event\.currentTarget/);
 assert.match(propertyGallery, /VideoLightbox/);
 assert.doesNotMatch(propertyGallery, /<video/);
-assert.match(propertySeo, /item\.media_type === "image"/, "cover and OG selection stays image-only");
+assert.match(propertySeo, /media\.media_type === "video" \? media\.thumbnail_url : media\.url/, "video covers use their Poster for cards and OG images");
 assert.match(mediaUploadRoute, /影片必須上傳 poster 圖片/);
 assert.match(mediaUploadRoute, /poster_storage_path/);
 assert.match(mediaUploadRoute, /remove\(\[storagePath, posterStoragePath\]/, "DB failure cleans both uploaded objects");

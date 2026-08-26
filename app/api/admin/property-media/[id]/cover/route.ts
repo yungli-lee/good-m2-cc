@@ -15,16 +15,29 @@ export async function POST(_request: Request, { params }: Props) {
   if (!parsedParams.success) return apiError("Invalid request data", 422);
   const { id } = parsedParams.data;
   const supabase = await createSupabaseServerClient();
-  const { data: media } = await supabase.from("property_media").select("*").eq("id", id).maybeSingle();
+  const { data: media } = await supabase.from("property_media").select("*").eq("id", id).is("deleted_at", null).maybeSingle();
   if (!media) return apiError("Not found", 404);
-  await supabase.from("property_media").update({ is_cover: false, updated_by: auth.current!.user.id }).eq("property_id", media.property_id);
+  if (media.media_type === "video" && !media.thumbnail_url?.trim()) return apiError("Video poster is required", 422);
+  if (media.is_cover) return NextResponse.json({ data: media });
+  const { data: previousCover } = await supabase.from("property_media").select("id")
+    .eq("property_id", media.property_id).eq("is_cover", true).is("deleted_at", null).maybeSingle();
+  const { error: clearError } = await supabase.from("property_media")
+    .update({ is_cover: false, updated_by: auth.current!.user.id })
+    .eq("property_id", media.property_id).is("deleted_at", null);
+  if (clearError) return apiError("Unable to set cover", 500);
   const { data, error } = await supabase
     .from("property_media")
     .update({ is_cover: true, updated_by: auth.current!.user.id, updated_at: new Date().toISOString() })
     .eq("id", id)
+    .eq("property_id", media.property_id)
+    .is("deleted_at", null)
     .select()
     .single();
-  if (error) return apiError("Unable to set cover", 500);
+  if (error) {
+    if (previousCover?.id) await supabase.from("property_media").update({ is_cover: true })
+      .eq("id", previousCover.id).eq("property_id", media.property_id).is("deleted_at", null);
+    return apiError("Unable to set cover", 500);
+  }
   await recordAuditLog({
     action: "property_cover_set",
     resourceType: "property_media",

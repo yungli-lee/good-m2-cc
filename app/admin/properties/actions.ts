@@ -830,16 +830,31 @@ export async function setCoverImageAction(propertyId: string, mediaId: string) {
   if (!canManagePropertyMedia(current.profile.role)) redirect("/admin/login?error=forbidden");
   const supabase = await createSupabaseServerClient();
 
-  await supabase.from("property_media").update({ is_cover: false }).eq("property_id", propertyId);
+  const { data: media } = await supabase.from("property_media")
+    .select("id,media_type,thumbnail_url,is_cover")
+    .eq("id", mediaId).eq("property_id", propertyId).is("deleted_at", null).maybeSingle();
+  if (!media) redirect(`/admin/properties/${propertyId}/edit?error=cover_failed`);
+  if (media.media_type === "video" && !media.thumbnail_url?.trim()) redirect(`/admin/properties/${propertyId}/edit?error=video_poster_missing`);
+  if (media.is_cover) redirect(`/admin/properties/${propertyId}/edit?saved=1`);
+  const { data: previousCover } = await supabase.from("property_media").select("id")
+    .eq("property_id", propertyId).eq("is_cover", true).is("deleted_at", null).maybeSingle();
+  const { error: clearError } = await supabase.from("property_media").update({ is_cover: false })
+    .eq("property_id", propertyId).is("deleted_at", null);
+  if (clearError) redirect(`/admin/properties/${propertyId}/edit?error=cover_failed`);
   const { data, error } = await supabase
     .from("property_media")
     .update({ is_cover: true, updated_at: new Date().toISOString() })
     .eq("id", mediaId)
     .eq("property_id", propertyId)
+    .is("deleted_at", null)
     .select()
     .single();
 
-  if (error) redirect(`/admin/properties/${propertyId}/edit?error=${encodeURIComponent(error.code || "cover_failed")}`);
+  if (error) {
+    if (previousCover?.id) await supabase.from("property_media").update({ is_cover: true })
+      .eq("id", previousCover.id).eq("property_id", propertyId).is("deleted_at", null);
+    redirect(`/admin/properties/${propertyId}/edit?error=cover_failed`);
+  }
 
   await recordAuditLog({
     action: "property_image_upload",

@@ -29,16 +29,48 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   if (!mediaId) return redirectTo(request, `/admin/properties/${id}/edit?error=cover_failed`);
 
   const supabase = await createSupabaseServerClient();
-  await supabase.from("property_media").update({ is_cover: false }).eq("property_id", id);
+  const { data: media } = await supabase
+    .from("property_media")
+    .select("id,property_id,media_type,thumbnail_url,sort_order,is_cover,deleted_at")
+    .eq("id", mediaId)
+    .eq("property_id", id)
+    .is("deleted_at", null)
+    .maybeSingle();
+  if (!media) return redirectTo(request, `/admin/properties/${id}/edit?error=cover_failed`);
+  if (media.media_type === "video" && !media.thumbnail_url?.trim()) {
+    return redirectTo(request, `/admin/properties/${id}/edit?error=video_poster_missing`);
+  }
+  if (media.is_cover) return redirectTo(request, `/admin/properties/${id}/edit?saved=1`);
+
+  const { data: previousCover } = await supabase
+    .from("property_media")
+    .select("id")
+    .eq("property_id", id)
+    .eq("is_cover", true)
+    .is("deleted_at", null)
+    .maybeSingle();
+  const { error: clearError } = await supabase.from("property_media")
+    .update({ is_cover: false })
+    .eq("property_id", id)
+    .is("deleted_at", null);
+  if (clearError) return redirectTo(request, `/admin/properties/${id}/edit?error=cover_failed`);
+
   const { data, error } = await supabase
     .from("property_media")
     .update({ is_cover: true, updated_at: new Date().toISOString() })
     .eq("id", mediaId)
     .eq("property_id", id)
+    .is("deleted_at", null)
     .select()
     .single();
 
-  if (error) return redirectTo(request, `/admin/properties/${id}/edit?error=${encodeURIComponent(error.code || "cover_failed")}`);
+  if (error) {
+    if (previousCover?.id) {
+      await supabase.from("property_media").update({ is_cover: true })
+        .eq("id", previousCover.id).eq("property_id", id).is("deleted_at", null);
+    }
+    return redirectTo(request, `/admin/properties/${id}/edit?error=cover_failed`);
+  }
 
   await tryRecordAuditLog({
     action: "property_cover_set",
@@ -50,5 +82,8 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   });
 
   revalidatePath(`/admin/properties/${id}/edit`);
+  revalidatePath("/");
+  revalidatePath("/properties");
+  revalidatePath("/properties/[slug]", "page");
   return redirectTo(request, `/admin/properties/${id}/edit?saved=1`);
 }

@@ -26,7 +26,11 @@ export async function GET() {
   const auth = await requireApiRole(["editor", "admin", "owner"]);
   if (auth.response) return auth.response;
   const supabase = await createSupabaseServerClient();
-  const { data, error } = await supabase.from("properties").select("*, property_media(*)").is("deleted_at", null).order("updated_at", { ascending: false });
+  const { data, error } = await supabase.from("properties").select("*, property_media(*)").is("deleted_at", null)
+    .order("sort_order", { referencedTable: "property_media", ascending: true })
+    .order("created_at", { referencedTable: "property_media", ascending: true })
+    .order("id", { referencedTable: "property_media", ascending: true })
+    .order("updated_at", { ascending: false });
   if (error) return apiError("Unable to load properties", 500);
   return NextResponse.json({ data: (data || []).map((property) => redactProgressNotes(property, auth.current!.profile.role)) });
 }

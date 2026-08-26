@@ -1,5 +1,5 @@
 import type { Property } from "@/lib/properties/types";
-import { getCoverMedia } from "@/lib/properties/types";
+import { getCoverMedia, getMediaImageUrl } from "@/lib/properties/types";
 import { resolvePropertySeo } from "@/lib/properties/seo";
 import type { AdminRole } from "@/lib/auth";
 import { PropertyBusinessFields } from "./property-business-fields";
@@ -32,6 +32,7 @@ export function PropertyForm({
   const actionPath = typeof formAction === "string" ? formAction : undefined;
   const seoPreview = resolvePropertySeo(property || {});
   const cover = property ? getCoverMedia(property) : null;
+  const coverImageUrl = getMediaImageUrl(cover);
 
   return (
     <form action={formAction} method={actionPath ? "post" : undefined} className="form-grid">
@@ -199,8 +200,8 @@ export function PropertyForm({
           </div>
           <div className="field full">
             <strong>OG Image</strong>
-            <p className="muted">{cover?.url ? "系統預設使用物件封面圖片。" : "尚未設定封面圖片；上傳並設為封面後會自動作為 OG Image。"}</p>
-            {cover?.url ? <img className="property-image" src={cover.url} alt={cover.alt_text || property?.title || "OG Image"} loading="lazy" /> : null}
+            <p className="muted">{coverImageUrl ? "系統預設使用物件封面圖片或影片 Poster。" : "尚未設定封面；上傳並設為封面後會自動作為 OG Image。"}</p>
+            {coverImageUrl ? <img className="property-image" src={coverImageUrl} alt={cover?.alt_text || property?.title || "OG Image"} loading="lazy" /> : null}
           </div>
           <div className="field full">
             <strong>Canonical URL</strong>

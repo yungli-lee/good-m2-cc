@@ -1,27 +1,38 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { DragEvent } from "react";
 import { buildFileSelection } from "@/lib/media/file-selection";
 import type { FileSelectionSource } from "@/lib/media/file-selection";
+import { placeMediaId, moveMediaId } from "@/lib/properties/media-order";
 import type { PropertyMedia } from "@/lib/properties/types";
+import { PropertyCoverImage } from "@/components/media/property-cover-image";
 
 export function PropertyMediaManager({
   media,
   uploadAction,
   setCoverAction,
+  reorderAction,
   deleteActionBase
 }: {
   media: PropertyMedia[];
   uploadAction: string;
   setCoverAction: string;
+  reorderAction: string;
   deleteActionBase?: string;
 }) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const selectedFilesRef = useRef<File[]>([]);
+  const draggedMediaIdRef = useRef<string | null>(null);
   const [selectedFileNames, setSelectedFileNames] = useState<string[]>([]);
   const [isDraggingFile, setIsDraggingFile] = useState(false);
   const [hasLargeVideo, setHasLargeVideo] = useState(false);
+  const [orderedMedia, setOrderedMedia] = useState(media);
+  const [orderStatus, setOrderStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
+  const [draggedMediaId, setDraggedMediaId] = useState<string | null>(null);
+  const [dropTargetId, setDropTargetId] = useState<string | null>(null);
+
+  useEffect(() => setOrderedMedia(media), [media]);
 
   function appendFiles(files: FileList | null, source: FileSelectionSource) {
     if (!files?.length || !fileInputRef.current) return;
@@ -36,6 +47,44 @@ export function PropertyMediaManager({
     event.preventDefault();
     setIsDraggingFile(false);
     appendFiles(event.dataTransfer.files, "drop");
+  }
+
+  async function saveOrder(next: PropertyMedia[], previous: PropertyMedia[]) {
+    setOrderedMedia(next);
+    setOrderStatus("saving");
+    try {
+      const response = await fetch(reorderAction, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ ordered_ids: next.map((item) => item.id) })
+      });
+      if (!response.ok) throw new Error("reorder_failed");
+      setOrderStatus("saved");
+    } catch {
+      setOrderedMedia(previous);
+      setOrderStatus("error");
+    }
+  }
+
+  function moveMedia(mediaId: string, direction: -1 | 1) {
+    if (orderStatus === "saving") return;
+    const ids = moveMediaId(orderedMedia.map((item) => item.id), mediaId, direction);
+    if (ids.every((id, index) => id === orderedMedia[index]?.id)) return;
+    const byId = new Map(orderedMedia.map((item) => [item.id, item]));
+    void saveOrder(ids.map((id) => byId.get(id)!), orderedMedia);
+  }
+
+  function dropMedia(targetId: string) {
+    const draggedId = draggedMediaIdRef.current;
+    if (!draggedId || orderStatus === "saving") return;
+    const ids = placeMediaId(orderedMedia.map((item) => item.id), draggedId, targetId);
+    const previous = orderedMedia;
+    setDraggedMediaId(null);
+    draggedMediaIdRef.current = null;
+    setDropTargetId(null);
+    if (ids.every((id, index) => id === previous[index]?.id)) return;
+    const byId = new Map(previous.map((item) => [item.id, item]));
+    void saveOrder(ids.map((id) => byId.get(id)!), previous);
   }
 
   return (
@@ -82,25 +131,72 @@ export function PropertyMediaManager({
         </div>
       </form>
       {media.length === 0 ? <div className="notice">尚未上傳媒體。</div> : null}
-      <div className="grid">
-        {media.map((item) => {
+      {orderStatus === "saving" ? <div className="notice" role="status">正在儲存排序…</div> : null}
+      {orderStatus === "saved" ? <div className="notice" role="status">排序已儲存</div> : null}
+      {orderStatus === "error" ? <div className="notice" role="alert">排序儲存失敗，已恢復原順序</div> : null}
+      <p className="muted">拖曳調整順序，或使用上移、下移按鈕。</p>
+      <div className="grid property-media-admin-grid">
+        {orderedMedia.map((item, index) => {
+          const canSetCover = !item.is_cover && (item.media_type === "image" || Boolean(item.thumbnail_url));
           return (
-            <article className="card" key={item.id}>
-              {item.media_type === "video"
-                ? <div className="property-video-card"><img className="property-image" src={item.thumbnail_url || "/assets/hero-ayong-wu-laptop.jpeg"} alt={item.alt_text || "物件影片 Poster"} loading="lazy" /><span>▶ 播放影片</span></div>
-                : <img className="property-image" src={item.url} alt={item.alt_text || "物件照片"} loading="lazy" />}
+            <article
+              className={`card property-media-admin-card${draggedMediaId === item.id ? " is-dragging" : ""}${dropTargetId === item.id ? " is-drop-target" : ""}`}
+              key={item.id}
+              onDragOver={(event) => {
+                if (!draggedMediaIdRef.current || draggedMediaIdRef.current === item.id) return;
+                event.preventDefault();
+                setDropTargetId(item.id);
+              }}
+              onDrop={(event) => {
+                event.preventDefault();
+                dropMedia(item.id);
+              }}
+            >
+              <div
+                className="media-drag-handle"
+                role="button"
+                tabIndex={0}
+                draggable={orderStatus !== "saving"}
+                aria-disabled={orderStatus === "saving"}
+                aria-label={`拖曳調整順序：${item.alt_text || (item.media_type === "video" ? "物件影片" : "物件照片")}`}
+                onKeyDown={(event) => {
+                  if (event.key === "ArrowUp") moveMedia(item.id, -1);
+                  if (event.key === "ArrowDown") moveMedia(item.id, 1);
+                }}
+                onDragStart={(event) => {
+                  draggedMediaIdRef.current = item.id;
+                  setDraggedMediaId(item.id);
+                  event.dataTransfer.effectAllowed = "move";
+                  event.dataTransfer.setData("text/plain", item.id);
+                }}
+                onDragEnd={() => {
+                  draggedMediaIdRef.current = null;
+                  setDraggedMediaId(null);
+                  setDropTargetId(null);
+                }}
+              >☰ 拖曳調整順序</div>
+              <PropertyCoverImage
+                className="property-image"
+                src={item.media_type === "video" ? item.thumbnail_url || "" : item.url}
+                alt={item.alt_text || (item.media_type === "video" ? "物件影片 Poster" : "物件照片")}
+              />
               <div className="card-body">
                 <p>{item.alt_text || "未填寫照片說明"}</p>
-                <p className="muted">{item.is_cover ? "目前封面照片" : "一般照片"}</p>
-                {item.media_type === "image" && !item.is_cover ? (
+                <p className="muted">{item.is_cover ? (item.media_type === "video" ? "目前封面影片" : "目前封面照片") : (item.media_type === "video" ? "一般影片" : "一般照片")}</p>
+                <div className="media-order-actions" aria-label="媒體排序控制">
+                  <button className="button ghost media-order-button" type="button" disabled={index === 0 || orderStatus === "saving"} onClick={() => moveMedia(item.id, -1)}>上移</button>
+                  <button className="button ghost media-order-button" type="button" disabled={index === orderedMedia.length - 1 || orderStatus === "saving"} onClick={() => moveMedia(item.id, 1)}>下移</button>
+                </div>
+                {canSetCover ? (
                   <form action={setCoverAction} method="post">
                     <input type="hidden" name="media_id" value={item.id} />
-                    <button className="button secondary" type="submit" formAction={setCoverAction} formMethod="post">設為封面</button>
+                    <button className="button secondary" type="submit" formAction={setCoverAction} formMethod="post" disabled={orderStatus === "saving"}>設為封面</button>
                   </form>
                 ) : null}
+                {item.media_type === "video" && !item.thumbnail_url ? <p className="muted">缺少 Poster，無法設為封面。</p> : null}
                 {deleteActionBase ? (
                   <form action={`${deleteActionBase}/${item.id}/delete`} method="post" style={{ marginTop: 8 }}>
-                    <button className="button danger" type="submit">刪除媒體</button>
+                    <button className="button danger" type="submit" disabled={orderStatus === "saving"}>刪除媒體</button>
                   </form>
                 ) : null}
               </div>

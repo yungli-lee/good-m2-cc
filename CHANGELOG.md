@@ -7,6 +7,14 @@
 ### Added
 
 - 建立 Sprint A-0 產品管理文件基礎。
+- 物件媒體支援 MP4／WebM 上傳、影片 Poster 與 VideoLightbox 播放。
+- 圖片及有 Poster 的影片皆可設為封面，列表與 SEO／Open Graph 使用靜態封面圖片。
+- 後台物件媒體支援圖片／影片混合排序：桌機可拖曳或上移／下移，觸控裝置使用上移／下移。
+
+### Changed
+
+- 物件媒體依 `sort_order`、`created_at`、`id` 穩定排序，封面不在詳細媒體清單重複顯示。
+- 排序 API 驗證同一物件的完整未刪除媒體集合，失敗時回復原排序。
 
 ## [Sprint A Preview]
 
@@ -24,4 +32,3 @@
 
 - 首頁 Hero 背景圖改為「阿勇與吳小姐在筆電前討論」照片，並保留既有文案、CTA 與深藍遮罩。
 - 首頁服務表單 anchor 統一為 `#service-form`。
-
