@@ -30,6 +30,8 @@ const errorMessage: Record<string, string> = {
   video_poster_required: "上傳影片時，請選擇一張 Poster 圖片。Poster 支援 JPEG、PNG 或 WebP，大小須在 5MB 以內。",
   poster_upload_failed: "影片 Poster 上傳失敗，請確認圖片格式與大小後再試一次。",
   media_url_failed: "媒體上傳完成，但無法取得檔案網址，請稍後再試。",
+  video_poster_missing: "這支影片缺少 Poster，無法設為封面。",
+  cover_failed: "封面設定失敗，請稍後再試。",
   media_failed: "媒體資料寫入失敗，請稍後再試。",
   media_metadata_missing_required_field: "媒體資料缺少必要欄位，請重新上傳。",
   media_not_found: "找不到要刪除的媒體。",
@@ -53,7 +55,9 @@ export default async function EditPropertyPage({ params, searchParams }: Props) 
   const property = data as Property;
   const health = calculatePropertyHealthScore(property);
   const missing = health.missing.slice(0, 6);
-  const activeMedia = (property.property_media || []).filter((item) => !item.deleted_at);
+  const activeMedia = (property.property_media || [])
+    .filter((item) => !item.deleted_at)
+    .sort((left, right) => left.sort_order - right.sort_order || left.created_at.localeCompare(right.created_at) || left.id.localeCompare(right.id));
 
   return (
     <main className="section">
@@ -103,6 +107,7 @@ export default async function EditPropertyPage({ params, searchParams }: Props) 
                   media={activeMedia}
                   uploadAction={`/admin/properties/${property.id}/edit/upload`}
                   setCoverAction={`/admin/properties/${property.id}/edit/cover`}
+                  reorderAction={`/admin/properties/${property.id}/edit/media/reorder`}
                   deleteActionBase={`/admin/properties/${property.id}/edit/media`}
                 />
               </>

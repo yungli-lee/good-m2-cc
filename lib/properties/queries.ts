@@ -34,7 +34,23 @@ const publicPropertySelect = `
   created_at,
   updated_at,
   deleted_at,
-  property_media(*)
+  property_media(
+    id,
+    property_id,
+    media_type,
+    mime_type,
+    file_size,
+    url,
+    storage_path,
+    thumbnail_url,
+    poster_storage_path,
+    alt_text,
+    sort_order,
+    is_cover,
+    created_at,
+    updated_at,
+    deleted_at
+  )
 `;
 
 const featuredPropertySelect = `
@@ -58,10 +74,13 @@ const featuredPropertySelect = `
   property_media(
     id,
     property_id,
+    media_type,
     url,
+    thumbnail_url,
     alt_text,
     sort_order,
     is_cover,
+    created_at,
     deleted_at
   )
 `;
@@ -82,6 +101,9 @@ export async function listPublishedProperties() {
   const supabase = await createSupabaseServerClient();
   const query = publishedPropertiesQuery(supabase, publicPropertySelect);
   return query
+    .order("sort_order", { referencedTable: "property_media", ascending: true })
+    .order("created_at", { referencedTable: "property_media", ascending: true })
+    .order("id", { referencedTable: "property_media", ascending: true })
     .order("sort_order", { ascending: true })
     .order("published_at", { ascending: false })
     .order("updated_at", { ascending: false });
@@ -90,6 +112,9 @@ export async function listPublishedProperties() {
 export async function listPublishedPropertiesByArea(city: string, district: string, limit = 12) {
   const supabase = await createSupabaseServerClient();
   return publishedPropertiesQuery(supabase, publicPropertySelect)
+    .order("sort_order", { referencedTable: "property_media", ascending: true })
+    .order("created_at", { referencedTable: "property_media", ascending: true })
+    .order("id", { referencedTable: "property_media", ascending: true })
     .order("sort_order", { ascending: true })
     .order("published_at", { ascending: false })
     .order("updated_at", { ascending: false })
@@ -101,6 +126,9 @@ export async function listFeaturedProperties(limit = 3) {
   const supabase = await createSupabaseServerClient();
   const query = publishedPropertiesQuery(supabase, featuredPropertySelect);
   return query
+    .order("sort_order", { referencedTable: "property_media", ascending: true })
+    .order("created_at", { referencedTable: "property_media", ascending: true })
+    .order("id", { referencedTable: "property_media", ascending: true })
     .eq("is_featured", true)
     .order("sort_order", { ascending: true })
     .order("published_at", { ascending: false })
@@ -116,6 +144,9 @@ export async function getLatestPublishedProperties(limit = 12) {
   const supabase = await createSupabaseServerClient();
   const query = publishedPropertiesQuery(supabase, featuredPropertySelect);
   return query
+    .order("sort_order", { referencedTable: "property_media", ascending: true })
+    .order("created_at", { referencedTable: "property_media", ascending: true })
+    .order("id", { referencedTable: "property_media", ascending: true })
     .eq("is_featured", false)
     .order("published_at", { ascending: false })
     .order("updated_at", { ascending: false })
@@ -126,6 +157,9 @@ export async function getPublishedPropertyBySlug(slug: string) {
   const supabase = await createSupabaseServerClient();
   const query = publishedPropertiesQuery(supabase, publicPropertySelect);
   return query
+    .order("sort_order", { referencedTable: "property_media", ascending: true })
+    .order("created_at", { referencedTable: "property_media", ascending: true })
+    .order("id", { referencedTable: "property_media", ascending: true })
     .eq("slug", slug)
     .maybeSingle();
 }
@@ -141,6 +175,9 @@ export async function searchPublishedProperties(input = "", limit = 24) {
   const supabase = await createSupabaseServerClient();
   const query = publishedPropertiesQuery(supabase, featuredPropertySelect);
   let searchQuery = query
+    .order("sort_order", { referencedTable: "property_media", ascending: true })
+    .order("created_at", { referencedTable: "property_media", ascending: true })
+    .order("id", { referencedTable: "property_media", ascending: true })
     .order("published_at", { ascending: false })
     .order("updated_at", { ascending: false })
     .limit(Math.min(Math.max(limit * 4, 48), 192));
@@ -249,11 +286,19 @@ export async function listAdminProperties(search = "", filter: AdminPropertyLife
       property_media(
         id,
         property_id,
+        media_type,
         url,
+        thumbnail_url,
+        alt_text,
+        sort_order,
         is_cover,
+        created_at,
         deleted_at
       )
     `)
+    .order("sort_order", { referencedTable: "property_media", ascending: true })
+    .order("created_at", { referencedTable: "property_media", ascending: true })
+    .order("id", { referencedTable: "property_media", ascending: true })
     .order("updated_at", { ascending: false });
 
   if (filter === "deleted") {
@@ -277,5 +322,8 @@ export async function getAdminPropertyById(id: string) {
     .from("properties")
     .select("*, property_media(*)")
     .eq("id", id)
+    .order("sort_order", { referencedTable: "property_media", ascending: true })
+    .order("created_at", { referencedTable: "property_media", ascending: true })
+    .order("id", { referencedTable: "property_media", ascending: true })
     .maybeSingle();
 }

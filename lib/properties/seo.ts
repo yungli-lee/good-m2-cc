@@ -1,6 +1,6 @@
 import { formatPing, formatPrice, propertyTypeLabel } from "@/lib/format";
 import type { Property } from "./types";
-import { getCoverMedia } from "./types";
+import { getCoverMedia, getMediaImageUrl } from "./types";
 
 const siteName = "勇美不動產";
 const siteOrigin = "https://good.m2.cc";
@@ -72,7 +72,7 @@ export function resolvePropertySeo(property: SeoProperty) {
     description: property.meta_description?.trim() || generatePropertyMetaDescription(property),
     ogTitle: property.seo_title?.trim() || generatePropertySeoTitle(property),
     ogDescription: property.meta_description?.trim() || generatePropertyMetaDescription(property),
-    ogImage: cover?.url || undefined,
+    ogImage: getMediaImageUrl(cover) || undefined,
     canonical: propertyCanonicalUrl(property.slug)
   };
 }

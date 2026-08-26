@@ -7,10 +7,10 @@ import { ImageLightbox } from "@/components/media/image-lightbox";
 import { VideoLightbox } from "@/components/media/video-lightbox";
 import { trackEvent } from "@/lib/analytics/client";
 
-function PropertyVideoPoster({ item, title, onPlay }: { item: PropertyMedia; title: string; onPlay: () => void }) {
+function PropertyVideoPoster({ item, title, onPlay, main = false }: { item: PropertyMedia; title: string; onPlay: () => void; main?: boolean }) {
   const [posterFailed, setPosterFailed] = useState(false);
   return (
-    <button className="property-video-card" type="button" onClick={onPlay} aria-label={`播放完整版：${item.alt_text || title}`}>
+    <button className={`property-video-card${main ? " gallery-main-video" : ""}`} type="button" onClick={onPlay} aria-label={`播放完整版：${item.alt_text || title}`}>
       {posterFailed || !item.thumbnail_url
         ? <span className="property-video-fallback">影片無法播放</span>
         : <img src={item.thumbnail_url} alt={item.alt_text || `${title} 影片 Poster`} loading="lazy" onError={() => setPosterFailed(true)} />}
@@ -34,19 +34,23 @@ export function PropertyMediaGallery({ media, title, propertyId }: { media: Prop
     void trackEvent("view_property_media", { propertyId, properties: { media_type: "image", media_index: media.indexOf(item), action: "view" } });
   };
 
+  const openVideo = (item: PropertyMedia) => {
+    setActiveVideo(item);
+    void trackEvent("view_property_media", { propertyId, properties: { media_type: "video", media_index: media.indexOf(item), action: "play" } });
+  };
+
   return (
     <div className="gallery">
-      {cover ? (
+      {cover?.media_type === "video" ? (
+        <PropertyVideoPoster item={cover} title={title} onPlay={() => openVideo(cover)} main />
+      ) : cover ? (
         <button className="gallery-main-button" type="button" onClick={() => openImage(cover)} aria-label={`放大照片：${cover.alt_text || title}`}>
           <img className="gallery-main" src={cover.url} alt={cover.alt_text || title} />
         </button>
       ) : <div className="gallery-main" role="img" aria-label={`${title} 尚未設定封面照片`} />}
       {detailMedia.length ? <div className="media-grid">
         {detailMedia.map((item) => item.media_type === "video" ? (
-          <PropertyVideoPoster key={item.id} item={item} title={title} onPlay={() => {
-            setActiveVideo(item);
-            void trackEvent("view_property_media", { propertyId, properties: { media_type: "video", media_index: media.indexOf(item), action: "play" } });
-          }} />
+          <PropertyVideoPoster key={item.id} item={item} title={title} onPlay={() => openVideo(item)} />
         ) : (
           <button key={item.id} className="property-image-button" type="button" onClick={() => openImage(item)} aria-label={`放大照片：${item.alt_text || title}`}>
             <img className="property-image" src={item.url} alt={item.alt_text || title} loading="lazy" />

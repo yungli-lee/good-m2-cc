@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { formatPublicPing, formatPrice, isLandProperty } from "@/lib/format";
 import type { Property } from "@/lib/properties/types";
-import { getCoverMedia } from "@/lib/properties/types";
+import { getCoverMedia, getMediaImageUrl } from "@/lib/properties/types";
+import { PropertyCoverImage } from "@/components/media/property-cover-image";
 
 export function PropertyCard({ property }: { property: Property }) {
   const cover = getCoverMedia(property);
@@ -11,7 +12,7 @@ export function PropertyCard({ property }: { property: Property }) {
   return (
     <article className="card">
       {cover ? (
-        <img className="property-image" src={cover.url} alt={cover.alt_text || property.title} loading="lazy" />
+        <PropertyCoverImage className="property-image" src={getMediaImageUrl(cover)} alt={cover.alt_text || property.title} />
       ) : (
         <div className="property-image" role="img" aria-label={`${property.title} 尚未設定封面照片`} />
       )}
