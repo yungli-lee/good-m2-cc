@@ -19,7 +19,19 @@ function PropertyVideoPoster({ item, title, onPlay, main = false }: { item: Prop
   );
 }
 
-export function PropertyMediaGallery({ media, title, propertyId }: { media: PropertyMedia[]; title: string; propertyId: string }) {
+type PropertyMediaGalleryDisplay = "all" | "cover" | "details";
+
+export function PropertyMediaGallery({
+  media,
+  title,
+  propertyId,
+  display = "all"
+}: {
+  media: PropertyMedia[];
+  title: string;
+  propertyId: string;
+  display?: PropertyMediaGalleryDisplay;
+}) {
   const { images, cover, detailMedia } = resolvePropertyGallery(media);
   const [activeVideo, setActiveVideo] = useState<PropertyMedia | null>(null);
   const [activeImageIndex, setActiveImageIndex] = useState<number | null>(null);
@@ -41,14 +53,14 @@ export function PropertyMediaGallery({ media, title, propertyId }: { media: Prop
 
   return (
     <div className="gallery">
-      {cover?.media_type === "video" ? (
+      {display !== "details" && (cover?.media_type === "video" ? (
         <PropertyVideoPoster item={cover} title={title} onPlay={() => openVideo(cover)} main />
       ) : cover ? (
         <button className="gallery-main-button" type="button" onClick={() => openImage(cover)} aria-label={`放大照片：${cover.alt_text || title}`}>
           <img className="gallery-main" src={cover.url} alt={cover.alt_text || title} />
         </button>
-      ) : <div className="gallery-main" role="img" aria-label={`${title} 尚未設定封面照片`} />}
-      {detailMedia.length ? <div className="media-grid">
+      ) : <div className="gallery-main" role="img" aria-label={`${title} 尚未設定封面照片`} />)}
+      {display !== "cover" && detailMedia.length ? <div className="media-grid">
         {detailMedia.map((item) => item.media_type === "video" ? (
           <PropertyVideoPoster key={item.id} item={item} title={title} onPlay={() => openVideo(item)} />
         ) : (

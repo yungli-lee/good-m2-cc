@@ -1006,6 +1006,14 @@ td {
   gap: 24px;
 }
 
+.property-detail-mobile {
+  display: none;
+}
+
+.property-copy-section + .property-copy-section {
+  margin-top: 32px;
+}
+
 .gallery {
   display: grid;
   gap: 12px;
@@ -2440,6 +2448,29 @@ td {
 }
 
 @media (max-width: 760px) {
+  .property-detail-desktop {
+    display: none;
+  }
+
+  .property-detail-mobile {
+    display: block;
+  }
+
+  .property-detail-mobile-flow {
+    display: grid;
+    gap: 20px;
+  }
+
+  .property-detail-mobile-copy:empty {
+    display: none;
+  }
+
+  .property-detail-mobile-company .company-info-panel {
+    margin-top: 0;
+    padding-top: 0;
+    border-top: 0;
+  }
+
   .contact-page-grid {
     grid-template-columns: 1fr;
   }

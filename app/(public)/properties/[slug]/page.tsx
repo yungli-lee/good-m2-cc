@@ -73,6 +73,101 @@ export default async function PropertyDetailPage({ params }: Props) {
   ].filter(([, href]) => href);
   const media = property.property_media?.filter((item) => !item.deleted_at) || [];
 
+  const renderCompanyInfo = () => (
+    <section className="company-info-panel" aria-label="公司資訊">
+      {companySettings.franchise_logo_url ? <img className="company-info-logo" src={companySettings.franchise_logo_url} alt={companySettings.franchise_name} loading="lazy" /> : null}
+      <h2>{companySettings.company_name}</h2>
+      <p>{companySettings.franchise_name}</p>
+      <dl>
+        <div>
+          <dt>經紀業特許字號</dt>
+          <dd>{companySettings.brokerage_license_no}</dd>
+        </div>
+        <div>
+          <dt>不動產經紀人證號</dt>
+          <dd>{companySettings.realtor_certificate_no}</dd>
+        </div>
+        {companySettings.salesperson_registration_no ? (
+          <div>
+            <dt>營業員登記證號</dt>
+            <dd>{companySettings.salesperson_registration_no}</dd>
+          </div>
+        ) : null}
+        <div>
+          <dt>電話</dt>
+          <dd>{companySettings.company_phone ? <a href={`tel:${companySettings.company_phone}`}>{companySettings.company_phone}</a> : "-"}</dd>
+        </div>
+        <div>
+          <dt>地址</dt>
+          <dd>{companySettings.company_address || "-"}</dd>
+        </div>
+        <div>
+          <dt>Email</dt>
+          <dd>{companySettings.company_email ? <a href={`mailto:${companySettings.company_email}`}>{companySettings.company_email}</a> : "-"}</dd>
+        </div>
+      </dl>
+      {companyLinks.length ? (
+        <div className="company-info-links">
+          {companyLinks.map(([label, href]) => (
+            <a key={label} className="button ghost" href={href} target="_blank" rel="noreferrer">{label}</a>
+          ))}
+        </div>
+      ) : null}
+      {companySettings.line_qr_code_url ? (
+        <div className="company-info-qr">
+          <img src={companySettings.line_qr_code_url} alt="LINE QR Code" loading="lazy" />
+        </div>
+      ) : null}
+      {companySettings.copyright_text ? <p className="muted">{companySettings.copyright_text}</p> : null}
+    </section>
+  );
+
+  const renderPropertySummary = (includeCompanyInfo: boolean) => (
+    <aside className="card">
+      <div className="card-body">
+        <h1 style={{ marginTop: 0 }}>{property.title}</h1>
+        <div className="price">{formatPrice(property.price)}</div>
+        <p>{property.address_public || "地址洽詢"}</p>
+        <p>類型：{propertyTypeLabel(property.property_type)}</p>
+        {formatPublicPing(property.land_area_ping) ? <p>土地：{formatPublicPing(property.land_area_ping)}</p> : null}
+        {formatPublicPing(property.building_area_ping) ? <p>建物：{formatPublicPing(property.building_area_ping)}</p> : null}
+        {!isLandProperty(property.property_type) && property.layout ? <p>格局：{property.layout}</p> : null}
+        <p>屋齡：{property.age == null ? "-" : `${property.age} 年`}</p>
+        <p>座向：{property.orientation || "-"}</p>
+        <div className="actions">
+          <a className="button" href="https://line.me/ti/p/abQv5LYzzE" target="_blank" rel="noreferrer">
+            Line 阿勇諮詢
+          </a>
+          <Link className="button secondary" href="/#service-form">
+            填寫服務表單
+          </Link>
+        </div>
+        {includeCompanyInfo ? renderCompanyInfo() : null}
+      </div>
+    </aside>
+  );
+
+  const renderPropertyCopy = () => (
+    <>
+      {property.highlights?.length ? (
+        <section className="property-copy-section">
+          <h2>物件特色</h2>
+          <ul>
+            {property.highlights.map((item) => (
+              <li key={item}>{item}</li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
+      {property.description?.trim() ? (
+        <section className="property-copy-section">
+          <h2>詳細介紹</h2>
+          <p style={{ whiteSpace: "pre-line", lineHeight: 1.9 }}>{property.description}</p>
+        </section>
+      ) : null}
+    </>
+  );
+
   return (
     <main data-property-id={property.id}>
       <PropertyViewTracker propertyId={property.id} properties={{
@@ -83,92 +178,39 @@ export default async function PropertyDetailPage({ params }: Props) {
         price: property.price == null ? null : Number(property.price),
         listing_status: property.status || null
       }} />
-      <section className="section">
-        <div className="container detail-layout">
-          <PropertyMediaGallery media={media} title={property.title} propertyId={property.id} />
-          <aside className="card">
+      <div className="property-detail-desktop">
+        <section className="section">
+          <div className="container detail-layout">
+            <PropertyMediaGallery media={media} title={property.title} propertyId={property.id} />
+            {renderPropertySummary(true)}
+          </div>
+        </section>
+        {(property.highlights?.length || property.description?.trim()) ? <section className="section">
+          <div className="container">
+            {renderPropertyCopy()}
+          </div>
+        </section> : null}
+      </div>
+
+      <section className="section property-detail-mobile" aria-label="物件詳細資料">
+        <div className="container property-detail-mobile-flow">
+          <div data-mobile-section="cover">
+            <PropertyMediaGallery media={media} title={property.title} propertyId={property.id} display="cover" />
+          </div>
+          <div data-mobile-section="summary">
+            {renderPropertySummary(false)}
+          </div>
+          <div data-mobile-section="copy" className="property-detail-mobile-copy">
+            {renderPropertyCopy()}
+          </div>
+          <div data-mobile-section="media">
+            <PropertyMediaGallery media={media} title={property.title} propertyId={property.id} display="details" />
+          </div>
+          <div data-mobile-section="company" className="card property-detail-mobile-company">
             <div className="card-body">
-              <h1 style={{ marginTop: 0 }}>{property.title}</h1>
-              <div className="price">{formatPrice(property.price)}</div>
-              <p>{property.address_public || "地址洽詢"}</p>
-              <p>類型：{propertyTypeLabel(property.property_type)}</p>
-              {formatPublicPing(property.land_area_ping) ? <p>土地：{formatPublicPing(property.land_area_ping)}</p> : null}
-              {formatPublicPing(property.building_area_ping) ? <p>建物：{formatPublicPing(property.building_area_ping)}</p> : null}
-              {!isLandProperty(property.property_type) && property.layout ? <p>格局：{property.layout}</p> : null}
-              <p>屋齡：{property.age == null ? "-" : `${property.age} 年`}</p>
-              <p>座向：{property.orientation || "-"}</p>
-              <div className="actions">
-                <a className="button" href="https://line.me/ti/p/abQv5LYzzE" target="_blank" rel="noreferrer">
-                  Line 阿勇諮詢
-                </a>
-                <Link className="button secondary" href="/#service-form">
-                  填寫服務表單
-                </Link>
-              </div>
-              <section className="company-info-panel" aria-label="公司資訊">
-                {companySettings.franchise_logo_url ? <img className="company-info-logo" src={companySettings.franchise_logo_url} alt={companySettings.franchise_name} loading="lazy" /> : null}
-                <h2>{companySettings.company_name}</h2>
-                <p>{companySettings.franchise_name}</p>
-                <dl>
-                  <div>
-                    <dt>經紀業特許字號</dt>
-                    <dd>{companySettings.brokerage_license_no}</dd>
-                  </div>
-                  <div>
-                    <dt>不動產經紀人證號</dt>
-                    <dd>{companySettings.realtor_certificate_no}</dd>
-                  </div>
-                  {companySettings.salesperson_registration_no ? (
-                    <div>
-                      <dt>營業員登記證號</dt>
-                      <dd>{companySettings.salesperson_registration_no}</dd>
-                    </div>
-                  ) : null}
-                  <div>
-                    <dt>電話</dt>
-                    <dd>{companySettings.company_phone ? <a href={`tel:${companySettings.company_phone}`}>{companySettings.company_phone}</a> : "-"}</dd>
-                  </div>
-                  <div>
-                    <dt>地址</dt>
-                    <dd>{companySettings.company_address || "-"}</dd>
-                  </div>
-                  <div>
-                    <dt>Email</dt>
-                    <dd>{companySettings.company_email ? <a href={`mailto:${companySettings.company_email}`}>{companySettings.company_email}</a> : "-"}</dd>
-                  </div>
-                </dl>
-                {companyLinks.length ? (
-                  <div className="company-info-links">
-                    {companyLinks.map(([label, href]) => (
-                      <a key={label} className="button ghost" href={href} target="_blank" rel="noreferrer">{label}</a>
-                    ))}
-                  </div>
-                ) : null}
-                {companySettings.line_qr_code_url ? (
-                  <div className="company-info-qr">
-                    <img src={companySettings.line_qr_code_url} alt="LINE QR Code" loading="lazy" />
-                  </div>
-                ) : null}
-                {companySettings.copyright_text ? <p className="muted">{companySettings.copyright_text}</p> : null}
-              </section>
+              {renderCompanyInfo()}
             </div>
-          </aside>
-        </div>
-      </section>
-      <section className="section">
-        <div className="container">
-          <h2>物件特色</h2>
-          {property.highlights?.length ? (
-            <ul>
-              {property.highlights.map((item) => (
-                <li key={item}>{item}</li>
-              ))}
-            </ul>
-          ) : (
-            <p className="muted">物件特色整理中。</p>
-          )}
-          <h2>詳細介紹</h2>
-          <p style={{ whiteSpace: "pre-line", lineHeight: 1.9 }}>{property.description || "詳細介紹整理中。"}</p>
+          </div>
         </div>
       </section>
     </main>
