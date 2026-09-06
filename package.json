@@ -1,6 +1,7 @@
 {
   "name": "good-m2-cc",
   "private": true,
+  "packageManager": "pnpm@11.10.0",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
