@@ -52,6 +52,8 @@ Supabase 負責：
 
 目前支援圖片與封面。媒體能力缺口請看 [MEDIA_CAPABILITY_GAP.md](MEDIA_CAPABILITY_GAP.md)。
 
+媒體傳遞的 provider-neutral 基礎位於 `lib/media/delivery.ts`。它以 `card`、`detail`、`fullscreen`、`original` 語意層級與固定寬度 bucket 描述輸出，接受 canonical bucket/storage path 或既有 public URL。此基礎目前只供測試與後續漸進導入，尚未接到公開頁面，因此不改變 production 圖片 URL 或視覺行為。基準量測流程見 [MEDIA_DELIVERY_BASELINE.md](MEDIA_DELIVERY_BASELINE.md)。
+
 ## Auth
 
 後台登入使用 Supabase Auth。登入路由：

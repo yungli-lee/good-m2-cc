@@ -55,3 +55,11 @@
 2. 改善跨圖片／影片的完整輪播體驗。
 3. 若要加入 YouTube，先完成 URL 安全、隱私與前台嵌入規格。
 4. 若要擴充影片格式或轉碼，先更新 storage、安全、容量與備份文件。
+
+## Media Delivery Foundation
+
+- `lib/media/delivery.ts` 已定義 provider-neutral 的 `card`、`detail`、`fullscreen`、`original` 層級與固定寬度 bucket。
+- helper 可從 canonical Supabase bucket/storage path 或既有 Supabase public URL 產生固定規格的 transformation URL；無法辨識的外部 URL 保留原值，不自行改寫。
+- 2560px 保留於共用 bucket 集合供未來 provider 或預產 derivative 使用；Supabase transformation 目前上限低於 2560px，因此 fullscreen 的 Supabase 輸出最高使用 2048px。
+- 此階段未將 helper 套用到任何 public component，production 媒體行為不變。
+- 量測基準與 Chrome HAR checklist 見 [MEDIA_DELIVERY_BASELINE.md](MEDIA_DELIVERY_BASELINE.md)。
