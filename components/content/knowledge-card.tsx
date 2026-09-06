@@ -24,8 +24,6 @@ export function KnowledgeCard({ item }: { item: ContentItem }) {
           sourceUrl={item.cover_image_url}
           tier="card"
           sizes="(max-width: 760px) calc(100vw - 36px), (max-width: 1040px) calc((100vw - 54px) / 2), 360px"
-          width={16}
-          height={9}
           alt={item.title}
           loading="lazy"
         />

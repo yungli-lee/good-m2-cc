@@ -340,8 +340,6 @@ export default async function KnowledgeDetailPage({ params }: Props) {
                     sourceUrl={item.cover_image_url}
                     tier="detail"
                     sizes="(max-width: 760px) calc(100vw - 36px), 820px"
-                    width={16}
-                    height={9}
                     alt={item.title}
                   />
                 ) : null}

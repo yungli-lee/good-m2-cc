@@ -469,8 +469,6 @@ export function KnowledgeForm({ categories, mediaAssets = [], item, role, disabl
                 sourceUrl={coverImageUrl}
                 tier="card"
                 sizes="(max-width: 760px) calc(100vw - 64px), 820px"
-                width={16}
-                height={9}
                 alt={item?.title || "知識封面預覽"}
               />
               <small className="muted knowledge-cover-current-url">{coverImageUrl}</small>
