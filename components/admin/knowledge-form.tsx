@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { DeliveredImage } from "@/components/media/delivered-image";
 import type { AdminRole } from "@/lib/auth";
 import { imageFitValues, itemTagText, legalStatusValues } from "@/lib/content/schema";
 import type { ContentCategory, ContentItem } from "@/lib/content/types";
@@ -463,7 +464,15 @@ export function KnowledgeForm({ categories, mediaAssets = [], item, role, disabl
                   移除封面
                 </button>
               </div>
-              <img className={`knowledge-card-image is-${coverImageFit}`} src={coverImageUrl} alt={item?.title || "知識封面預覽"} />
+              <DeliveredImage
+                className={`knowledge-card-image is-${coverImageFit}`}
+                sourceUrl={coverImageUrl}
+                tier="card"
+                sizes="(max-width: 760px) calc(100vw - 64px), 820px"
+                width={16}
+                height={9}
+                alt={item?.title || "知識封面預覽"}
+              />
               <small className="muted knowledge-cover-current-url">{coverImageUrl}</small>
             </div>
           ) : (

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import type React from "react";
 import Link from "next/link";
 import { KnowledgeViewTracker } from "@/components/analytics/content-trackers";
+import { DeliveredImage } from "@/components/media/delivered-image";
 import { notFound } from "next/navigation";
 import { getPublicKnowledgeBySlug } from "@/lib/content/queries";
 import { getPublicCompanySettings } from "@/lib/company-settings";
@@ -216,11 +217,20 @@ function renderArticleBlocks(blocks: ArticleBlock[]) {
       return <Heading key={index} id={block.id}>{renderInlineMarkdown(block.text)}</Heading>;
     }
     if (block.type === "image") {
+      const sizes = block.width === "100%"
+        ? "(max-width: 760px) calc(100vw - 36px), 820px"
+        : block.width === "75%"
+          ? "(max-width: 760px) 75vw, 615px"
+          : block.width === "50%"
+            ? "(max-width: 760px) 50vw, 410px"
+            : "(max-width: 760px) 25vw, 205px";
       return (
         <figure className="knowledge-preview-figure" key={index}>
-          <img
+          <DeliveredImage
             className={`knowledge-inline-image is-align-${block.align}`}
-            src={block.url}
+            sourceUrl={block.url}
+            tier="detail"
+            sizes={sizes}
             alt={block.alt}
             loading="lazy"
             style={{ width: block.width, maxWidth: "100%" }}
@@ -324,7 +334,17 @@ export default async function KnowledgeDetailPage({ params }: Props) {
                   <a className="button ghost" href={`https://social-plugins.line.me/lineit/share?url=${shareUrl}`} target="_blank" rel="noreferrer">LINE 分享</a>
                   <a className="button ghost" href={`https://www.facebook.com/sharer/sharer.php?u=${shareUrl}&quote=${shareText}`} target="_blank" rel="noreferrer">Facebook 分享</a>
                 </div>
-                {item.cover_image_url ? <img className={`knowledge-hero-image is-${imageFit}`} src={item.cover_image_url} alt={item.title} /> : null}
+                {item.cover_image_url ? (
+                  <DeliveredImage
+                    className={`knowledge-hero-image is-${imageFit}`}
+                    sourceUrl={item.cover_image_url}
+                    tier="detail"
+                    sizes="(max-width: 760px) calc(100vw - 36px), 820px"
+                    width={16}
+                    height={9}
+                    alt={item.title}
+                  />
+                ) : null}
               </header>
               <div className="knowledge-body">
                 {renderArticleBlocks(articleBlocks)}
