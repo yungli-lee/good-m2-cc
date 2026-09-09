@@ -8,7 +8,7 @@
     "db:check": "bash scripts/db-check.sh",
     "pages:build": "CI=true XDG_CACHE_HOME=/tmp/pnpm-cache pnpm exec next-on-pages",
     "lint": "eslint .",
-    "test": "pnpm run test:requirements-phase1 && pnpm run test:requirements-phase2a && pnpm run test:media-delivery && pnpm run test:media-video && pnpm run test:property-media-cover-reorder && pnpm run test:mobile-property-detail-order && pnpm run test:cms-phase1 && pnpm run test:health && pnpm run test:analytics-migration && pnpm run test:analytics-phase1",
+    "test": "pnpm run test:requirements-phase1 && pnpm run test:requirements-phase2a && pnpm run test:home-social-metadata && pnpm run test:media-delivery && pnpm run test:media-video && pnpm run test:property-media-cover-reorder && pnpm run test:mobile-property-detail-order && pnpm run test:cms-phase1 && pnpm run test:health && pnpm run test:analytics-migration && pnpm run test:analytics-phase1",
     "test:requirements-phase1": "node --experimental-strip-types --experimental-specifier-resolution=node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/test-customer-requirements-phase1.ts",
     "test:requirements-phase2a": "node --experimental-strip-types --experimental-specifier-resolution=node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/test-customer-requirements-phase2a.ts",
     "test:export": "node --experimental-strip-types --experimental-specifier-resolution=node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/test-property-export.ts",
@@ -49,7 +49,8 @@
     "test:analytics-dashboard-phase2a-inquiries": "node --experimental-strip-types --experimental-specifier-resolution=node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/test-analytics-dashboard-phase2a-inquiries.ts",
     "test:analytics-dashboard-phase2a-final-ui": "node --experimental-strip-types --experimental-specifier-resolution=node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/test-analytics-dashboard-phase2a-final-ui.ts",
     "start": "next start",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test:home-social-metadata": "node --experimental-strip-types --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/test-home-social-metadata.ts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.6.1",
@@ -79,5 +80,6 @@
     "postcss": "^8.4.49",
     "tailwindcss": "^4.0.0",
     "typescript": "^5.6.0"
-  }
+  },
+  "packageManager": "pnpm@11.10.0"
 }

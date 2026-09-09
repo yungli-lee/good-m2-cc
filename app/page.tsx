@@ -6,20 +6,46 @@ import { getFeaturedPublishedProperties, getLatestPublishedProperties } from "@/
 import { listPublicKnowledgeItems } from "@/lib/content/queries";
 import { getAllPublicNavigationItems } from "@/lib/navigation";
 import { defaultSiteDisplaySettings, getSiteDisplaySettings } from "@/lib/site-display-settings";
+import { resolveHomeSocialImage } from "@/lib/home-social-metadata";
+import { getCachedHomeSocialImageUrl } from "@/lib/home-social-settings";
+import { getSupabaseEnv } from "@/lib/supabase/env";
 
 export const dynamic = "force-dynamic";
 export const runtime = "edge";
 
+const homeTitle = "阿勇不動產顧問｜彰化房地產資訊與服務";
+const homeDescription = "提供彰化地區房屋、土地、農地與廠房資訊，專業、用心、誠信協助您安心買賣。";
+const homeUrl = "https://good.m2.cc/";
+
 export async function generateMetadata(): Promise<Metadata> {
-  const company = await getPublicCompanySettings().catch(() => defaultCompanySettings);
+  const homeSocialImage = await resolveHomeSocialImage({
+    load: getCachedHomeSocialImageUrl,
+    supabaseOrigin: getSupabaseEnv().url
+  });
   return {
-    title: company.brand_name,
-    applicationName: company.brand_name,
-    description: "買屋、賣屋、貸款、稅務、簽約到交屋，每一步都清楚說明。",
+    title: homeTitle,
+    applicationName: "阿勇不動產顧問",
+    description: homeDescription,
+    alternates: { canonical: homeUrl },
     openGraph: {
-      title: company.brand_name,
-      siteName: company.brand_name,
-      description: "買屋、賣屋、貸款、稅務、簽約到交屋，每一步都清楚說明。"
+      title: homeTitle,
+      description: homeDescription,
+      url: homeUrl,
+      type: "website",
+      locale: "zh_TW",
+      siteName: "阿勇不動產顧問",
+      images: [{
+        url: homeSocialImage,
+        width: 1200,
+        height: 630,
+        alt: homeTitle
+      }]
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: homeTitle,
+      description: homeDescription,
+      images: [homeSocialImage]
     }
   };
 }
