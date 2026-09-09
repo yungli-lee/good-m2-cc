@@ -4,6 +4,7 @@ export const homeSocialHeight = 630;
 export const homeSocialMaxUploadBytes = 5 * 1024 * 1024;
 export const homeSocialTargetBytes = 500 * 1024;
 export const homeSocialAllowedTypes = new Set(["image/jpeg", "image/png", "image/webp"]);
+export const homeSocialPathPattern = /^home-social\/home-og-[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89aAbB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}\.jpg$/;
 
 export function absoluteHomeSocialFallback(origin = "https://good.m2.cc") {
   return new URL(homeSocialFallbackPath, origin).toString();
@@ -19,14 +20,22 @@ export function validHomeSocialUrl(value: unknown) {
   }
 }
 
-export function validHomeSocialSetting(value: unknown) {
+export function validHomeSocialSetting(value: unknown, expectedSupabaseOrigin: string | null | undefined) {
   if (!value || typeof value !== "object") return null;
   const { url: rawUrl, path } = value as { url?: unknown; path?: unknown };
-  if (typeof path !== "string" || !/^home-social\/home-og-[a-zA-Z0-9-]+\.jpg$/.test(path)) return null;
+  if (typeof path !== "string" || !homeSocialPathPattern.test(path)) return null;
   const url = validHomeSocialUrl(rawUrl);
-  if (!url) return null;
+  if (!url || !expectedSupabaseOrigin) return null;
+  let expectedOrigin: string;
+  try {
+    expectedOrigin = new URL(expectedSupabaseOrigin).origin;
+  } catch {
+    return null;
+  }
+  const parsedUrl = new URL(url);
+  if (parsedUrl.origin !== expectedOrigin || parsedUrl.search || parsedUrl.hash) return null;
   const expectedSuffix = `/storage/v1/object/public/media/${path.split("/").map(encodeURIComponent).join("/")}`;
-  return new URL(url).pathname === expectedSuffix ? url : null;
+  return parsedUrl.pathname === expectedSuffix ? url : null;
 }
 
 export function buildHomeSocialStoragePath(id = crypto.randomUUID()) {

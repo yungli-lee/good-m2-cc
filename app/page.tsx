@@ -8,6 +8,7 @@ import { getAllPublicNavigationItems } from "@/lib/navigation";
 import { defaultSiteDisplaySettings, getSiteDisplaySettings } from "@/lib/site-display-settings";
 import { resolveHomeSocialImage } from "@/lib/home-social-metadata";
 import { getCachedHomeSocialImageUrl } from "@/lib/home-social-settings";
+import { getSupabaseEnv } from "@/lib/supabase/env";
 
 export const dynamic = "force-dynamic";
 export const runtime = "edge";
@@ -17,7 +18,10 @@ const homeDescription = "提供彰化地區房屋、土地、農地與廠房資�
 const homeUrl = "https://good.m2.cc/";
 
 export async function generateMetadata(): Promise<Metadata> {
-  const homeSocialImage = await resolveHomeSocialImage({ load: getCachedHomeSocialImageUrl });
+  const homeSocialImage = await resolveHomeSocialImage({
+    load: getCachedHomeSocialImageUrl,
+    supabaseOrigin: getSupabaseEnv().url
+  });
   return {
     title: homeTitle,
     applicationName: "阿勇不動產顧問",

@@ -3,6 +3,7 @@ import { absoluteHomeSocialFallback, validHomeSocialSetting } from "./home-socia
 export async function resolveHomeSocialImage(input: {
   load: () => Promise<unknown>;
   fallbackOrigin?: string;
+  supabaseOrigin?: string | null;
   timeoutMs?: number;
 }) {
   const fallback = absoluteHomeSocialFallback(input.fallbackOrigin);
@@ -10,7 +11,7 @@ export async function resolveHomeSocialImage(input: {
   try {
     const timeout = new Promise<null>((resolve) => { timer = setTimeout(() => resolve(null), input.timeoutMs ?? 1500); });
     const value = await Promise.race([input.load(), timeout]);
-    return validHomeSocialSetting(value) || fallback;
+    return validHomeSocialSetting(value, input.supabaseOrigin) || fallback;
   } catch {
     return fallback;
   } finally {
