@@ -6,13 +6,13 @@ const origin = "https://project-ref.supabase.co";
 const rawImage = `${origin}/storage/v1/object/public/media/%E7%9F%A5%E8%AD%98/life%20note.png?version=7`;
 
 const knowledgeCard = resolveMediaDelivery({ publicUrl: rawImage }, "card");
-assert.equal(knowledgeCard.src, `${origin}/storage/v1/render/image/public/media/%E7%9F%A5%E8%AD%98/life%20note.png?version=7&width=640&quality=75`);
+assert.equal(knowledgeCard.src, `${origin}/storage/v1/render/image/public/media/%E7%9F%A5%E8%AD%98/life%20note.png?version=7&width=640&quality=75&resize=contain`);
 assert.deepEqual(knowledgeCard.widths, [384, 640, 960]);
-assert.match(knowledgeCard.srcSet, /width=384&quality=75 384w/);
-assert.match(knowledgeCard.srcSet, /width=960&quality=75 960w/);
+assert.match(knowledgeCard.srcSet, /width=384&quality=75&resize=contain 384w/);
+assert.match(knowledgeCard.srcSet, /width=960&quality=75&resize=contain 960w/);
 
 const knowledgeDetail = resolveMediaDelivery({ publicUrl: rawImage }, "detail");
-assert.equal(knowledgeDetail.src, `${origin}/storage/v1/render/image/public/media/%E7%9F%A5%E8%AD%98/life%20note.png?version=7&width=1280&quality=82`);
+assert.equal(knowledgeDetail.src, `${origin}/storage/v1/render/image/public/media/%E7%9F%A5%E8%AD%98/life%20note.png?version=7&width=1280&quality=82&resize=contain`);
 assert.deepEqual(knowledgeDetail.widths, [640, 960, 1280, 1600]);
 
 const lifeNotesCard = resolveMediaDelivery({ publicUrl: rawImage }, "card");

@@ -36,14 +36,14 @@ const unicodeUrl = `${origin}/storage/v1/object/public/media/%E7%9F%A5%E8%AD%98/
 assert.deepEqual(parseSupabasePublicUrl(unicodeUrl)?.storagePath, "知識/房屋 稅.png");
 assert.equal(
   buildSupabaseTransformedUrl(unicodeUrl, 384, 75),
-  `${origin}/storage/v1/render/image/public/media/%E7%9F%A5%E8%AD%98/%E6%88%BF%E5%B1%8B%20%E7%A8%85.png?width=384&quality=75`
+  `${origin}/storage/v1/render/image/public/media/%E7%9F%A5%E8%AD%98/%E6%88%BF%E5%B1%8B%20%E7%A8%85.png?width=384&quality=75&resize=contain`
 );
 
 const encodedSegmentUrl = `${origin}/storage/v1/object/public/media/literal%2520name.png`;
 assert.equal(parseSupabasePublicUrl(encodedSegmentUrl)?.storagePath, "literal%20name.png");
 assert.equal(
   buildSupabaseTransformedUrl(encodedSegmentUrl, 384, 75),
-  `${origin}/storage/v1/render/image/public/media/literal%2520name.png?width=384&quality=75`,
+  `${origin}/storage/v1/render/image/public/media/literal%2520name.png?width=384&quality=75&resize=contain`,
   "already encoded path data is not double-decoded or double-encoded"
 );
 
@@ -55,15 +55,17 @@ assert.equal(
 const transformed = buildSupabaseTransformedUrl(encodedRawUrl, 640, 75);
 assert.equal(
   transformed,
-  `${origin}/storage/v1/render/image/public/media/editor-id/general/2026/08/image%20name.png?width=640&quality=75`
+  `${origin}/storage/v1/render/image/public/media/editor-id/general/2026/08/image%20name.png?width=640&quality=75&resize=contain`
 );
 
-const withQuery = buildSupabaseTransformedUrl(`${encodedRawUrl}?cacheNonce=7&width=999&quality=20`, 960, 82);
+const withQuery = buildSupabaseTransformedUrl(`${encodedRawUrl}?cacheNonce=7&width=999&quality=20&resize=cover`, 960, 82);
 const withQueryUrl = new URL(withQuery);
 assert.equal(withQueryUrl.pathname, "/storage/v1/render/image/public/media/editor-id/general/2026/08/image%20name.png");
 assert.equal(withQueryUrl.searchParams.get("cacheNonce"), "7", "legacy query parameters are preserved");
 assert.equal(withQueryUrl.searchParams.get("width"), "960", "fixed transform width replaces legacy values");
 assert.equal(withQueryUrl.searchParams.get("quality"), "82", "tier quality replaces legacy values");
+
+assert.equal(withQueryUrl.searchParams.get("resize"), "contain", "explicit mode replaces legacy cover");
 
 const canonicalCard = resolveMediaDelivery({
   bucket: "media",
@@ -71,10 +73,10 @@ const canonicalCard = resolveMediaDelivery({
   supabaseUrl: origin
 }, "card");
 assert.equal(canonicalCard.provider, "supabase");
-assert.equal(canonicalCard.src, `${origin}/storage/v1/render/image/public/media/owner/general/photo.png?width=640&quality=75`);
+assert.equal(canonicalCard.src, `${origin}/storage/v1/render/image/public/media/owner/general/photo.png?width=640&quality=75&resize=contain`);
 assert.deepEqual(canonicalCard.widths, [384, 640, 960]);
-assert.match(canonicalCard.srcSet, /width=384&quality=75 384w/);
-assert.match(canonicalCard.srcSet, /width=960&quality=75 960w/);
+assert.match(canonicalCard.srcSet, /width=384&quality=75&resize=contain 384w/);
+assert.match(canonicalCard.srcSet, /width=960&quality=75&resize=contain 960w/);
 assert.doesNotMatch(canonicalCard.srcSet, /2560w/, "card output is restricted to its fixed tier widths");
 
 const legacyDetail = resolveMediaDelivery({ publicUrl: encodedRawUrl }, "detail");
@@ -82,7 +84,7 @@ assert.equal(legacyDetail.provider, "supabase");
 assert.equal(legacyDetail.bucket, "media");
 assert.equal(legacyDetail.storagePath, "editor-id/general/2026/08/image name.png");
 assert.deepEqual(legacyDetail.widths, [640, 960, 1280, 1600]);
-assert.equal(legacyDetail.src, `${origin}/storage/v1/render/image/public/media/editor-id/general/2026/08/image%20name.png?width=1280&quality=82`);
+assert.equal(legacyDetail.src, `${origin}/storage/v1/render/image/public/media/editor-id/general/2026/08/image%20name.png?width=1280&quality=82&resize=contain`);
 
 const fullscreen = resolveMediaDelivery({ publicUrl: encodedRawUrl }, "fullscreen");
 assert.deepEqual(fullscreen.widths, [1280, 1600, 2048]);
@@ -121,5 +123,21 @@ assert.equal(empty.src, "");
 
 // Compile-time calls only accept MediaImageWidth; the runtime guard also fails closed.
 assert.equal(buildSupabaseTransformedUrl(rawUrl, 777 as never, 75), rawUrl);
+
+for (const tier of ["card", "detail", "fullscreen"] as const) {
+  const delivery = resolveMediaDelivery({ publicUrl: encodedRawUrl }, tier);
+  const candidates = delivery.srcSet.split(", ");
+  assert.equal(candidates.length, mediaTierPolicies[tier].widths.length);
+  for (const [index, candidate] of candidates.entries()) {
+    const [url, descriptor] = candidate.split(" ");
+    const width = mediaTierPolicies[tier].widths[index];
+    const params = new URL(url).searchParams;
+    assert.equal(params.get("width"), String(width));
+    assert.equal(params.get("quality"), String(mediaTierPolicies[tier].quality));
+    assert.equal(params.get("resize"), "contain", `${tier} ${width} preserves proportions`);
+    assert.equal(params.has("height"), false, "no explicit height is introduced");
+    assert.equal(descriptor, `${width}w`);
+  }
+}
 
 console.log("Media delivery foundation tests: PASS");
