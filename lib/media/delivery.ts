@@ -161,6 +161,7 @@ export function buildSupabaseTransformedUrl(
   url.pathname = `${publicRenderPrefix}${encodeURIComponent(parsed.bucket)}/${encodeStoragePart(parsed.storagePath)}`;
   url.searchParams.set("width", String(width));
   url.searchParams.set("quality", String(quality));
+  url.searchParams.set("resize", "contain");
   return url.toString();
 }
 
