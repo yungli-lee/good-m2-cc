@@ -6,6 +6,8 @@ import { getFeaturedPublishedProperties, getLatestPublishedProperties } from "@/
 import { listPublicKnowledgeItems } from "@/lib/content/queries";
 import { getAllPublicNavigationItems } from "@/lib/navigation";
 import { defaultSiteDisplaySettings, getSiteDisplaySettings } from "@/lib/site-display-settings";
+import { resolveHomeSocialImage } from "@/lib/home-social-metadata";
+import { getCachedHomeSocialImageUrl } from "@/lib/home-social-settings";
 
 export const dynamic = "force-dynamic";
 export const runtime = "edge";
@@ -13,9 +15,9 @@ export const runtime = "edge";
 const homeTitle = "阿勇不動產顧問｜彰化房地產資訊與服務";
 const homeDescription = "提供彰化地區房屋、土地、農地與廠房資訊，專業、用心、誠信協助您安心買賣。";
 const homeUrl = "https://good.m2.cc/";
-const homeSocialImage = "https://good.m2.cc/images/social/home-og.jpg";
 
 export async function generateMetadata(): Promise<Metadata> {
+  const homeSocialImage = await resolveHomeSocialImage({ load: getCachedHomeSocialImageUrl });
   return {
     title: homeTitle,
     applicationName: "阿勇不動產顧問",
