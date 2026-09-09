@@ -7,7 +7,9 @@ export const defaultSiteDisplaySettings = {
   latest_property_limit: 12,
   latest_property_autoplay: true,
   latest_property_interval_seconds: 6,
-  knowledge_page_size: 6
+  knowledge_page_size: 6,
+  home_social_image_url: null as string | null,
+  home_social_image_path: null as string | null
 };
 
 export type SiteDisplaySettings = typeof defaultSiteDisplaySettings;
@@ -19,8 +21,10 @@ export const siteDisplaySettingsSchema = z.object({
   latest_property_limit: z.coerce.number().int().min(3).max(24),
   latest_property_autoplay: z.boolean(),
   latest_property_interval_seconds: z.coerce.number().int().min(3).max(30),
-  knowledge_page_size: z.coerce.number().int().refine((value) => [6, 9, 12].includes(value), "每頁篇數只能是 6、9 或 12")
-});
+  knowledge_page_size: z.coerce.number().int().refine((value) => [6, 9, 12].includes(value), "每頁篇數只能是 6、9 或 12"),
+  home_social_image_url: z.string().url().startsWith("https://").nullable(),
+  home_social_image_path: z.string().regex(/^home-social\/home-og-[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89aAbB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}\.jpg$/).nullable()
+}).refine((value) => Boolean(value.home_social_image_url) === Boolean(value.home_social_image_path), "分享圖片網址與路徑必須同時設定");
 
 export function siteDisplaySettingsFromFormData(formData: FormData) {
   return {
@@ -30,7 +34,9 @@ export function siteDisplaySettingsFromFormData(formData: FormData) {
     latest_property_limit: formData.get("latest_property_limit"),
     latest_property_autoplay: formData.get("latest_property_autoplay") === "on",
     latest_property_interval_seconds: formData.get("latest_property_interval_seconds"),
-    knowledge_page_size: formData.get("knowledge_page_size")
+    knowledge_page_size: formData.get("knowledge_page_size"),
+    home_social_image_url: String(formData.get("home_social_image_url") || "").trim() || null,
+    home_social_image_path: String(formData.get("home_social_image_path") || "").trim() || null
   };
 }
 
