@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import { MarkdownContent } from "@/components/home/markdown-content";
+import { DeliveredImage } from "@/components/media/delivered-image";
 import { toggleReminder } from "@/lib/home-cms/reminder-accordion";
 import type { SitePage } from "@/lib/home-cms/types";
 
@@ -41,7 +42,7 @@ export function MobileReminderAccordion({ pages }: { pages: ReminderPage[] }) {
               <b>{isOpen ? "收合" : "展開"}</b>
             </button>
             <div className="article-body" id={panelId}>
-              {page.media_public_url ? <figure className="cms-reminder-cover"><img src={page.media_public_url} alt={page.title} loading="lazy" /></figure> : null}
+              {page.media_public_url ? <figure className="cms-reminder-cover"><DeliveredImage sourceUrl={page.media_public_url} tier="detail" sizes="(max-width: 900px) calc(100vw - 100px), 1px" alt={page.title} loading="lazy" /></figure> : null}
               <MarkdownContent value={page.markdown_content} />
             </div>
           </article>

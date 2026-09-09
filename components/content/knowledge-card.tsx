@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { DeliveredImage } from "@/components/media/delivered-image";
 import { formatKnowledgeReadingTime } from "@/lib/content/reading-time";
 import type { ContentItem } from "@/lib/content/types";
 
@@ -18,7 +19,14 @@ export function KnowledgeCard({ item }: { item: ContentItem }) {
   return (
     <article className="card knowledge-card">
       {item.cover_image_url ? (
-        <img className={`knowledge-card-image is-${imageFit}`} src={item.cover_image_url} alt={item.title} loading="lazy" />
+        <DeliveredImage
+          className={`knowledge-card-image is-${imageFit}`}
+          sourceUrl={item.cover_image_url}
+          tier="card"
+          sizes="(max-width: 760px) calc(100vw - 36px), (max-width: 1040px) calc((100vw - 54px) / 2), 360px"
+          alt={item.title}
+          loading="lazy"
+        />
       ) : null}
       <div className="card-body">
         <p className="knowledge-meta">

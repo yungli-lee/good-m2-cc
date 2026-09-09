@@ -1069,7 +1069,7 @@ h3 {
 }
 
 .life-note-card-content h3,
-.life-note-card-content p {
+.life-note-card-content > p {
   margin: 0;
 }
 
@@ -1083,7 +1083,7 @@ h3 {
   line-height: 1.35;
 }
 
-.life-note-card-content p {
+.life-note-card-content > p {
   display: -webkit-box;
   overflow: hidden;
   color: var(--muted);

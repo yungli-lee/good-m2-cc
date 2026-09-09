@@ -27,6 +27,8 @@ assert.match(styles, /\.life-note-mobile-grid\s*{\s*display:\s*none;/, "mobile a
 assert.match(styles, /@media \(max-width: 900px\)[\s\S]*?\.life-note-desktop-grid\s*{\s*display:\s*none;/, "desktop cards must be hidden at the existing mobile breakpoint");
 assert.match(styles, /@media \(max-width: 900px\)[\s\S]*?\.life-note-mobile-grid\s*{\s*display:\s*grid;/, "mobile accordion must be restored at the existing breakpoint");
 assert.match(styles, /\.life-note-card-image[\s\S]*?aspect-ratio:\s*16 \/ 9;/, "desktop media ratio must remain consistent");
+assert.match(styles, /\.life-note-card-content\s*>\s*p\s*{[\s\S]*?-webkit-line-clamp:\s*2;/, "only the direct subtitle may be line-clamped");
+assert.doesNotMatch(styles, /\.life-note-card-content\s+p\s*{[\s\S]*?-webkit-line-clamp:\s*2;/, "desktop reminder markdown paragraphs must not be clipped");
 
 assert.match(script, /document\.querySelectorAll\("\.article-card(?::not\(\[data-react-managed\]\))?"\)/, "legacy mobile accordion binding must remain intact");
 assert.doesNotMatch(script, /life-note-card/, "desktop card links must not receive accordion handlers");
