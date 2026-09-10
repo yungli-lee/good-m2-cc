@@ -12,7 +12,7 @@ export function PropertyCard({ property }: { property: Property }) {
   return (
     <article className="card">
       {cover ? (
-        <PropertyCoverImage className="property-image" src={getMediaImageUrl(cover)} alt={cover.alt_text || property.title} />
+        <PropertyCoverImage className="property-image" sizes="(max-width: 760px) calc(100vw - 34px), (max-width: 1152px) calc((100vw - 68px) / 3 - 2px), 360px" src={getMediaImageUrl(cover)} alt={cover.alt_text || property.title} />
       ) : (
         <div className="property-image" role="img" aria-label={`${property.title} 尚未設定封面照片`} />
       )}

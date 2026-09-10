@@ -1,7 +1,7 @@
 export const mediaImageWidths = [384, 640, 960, 1280, 1600, 2048, 2560] as const;
 
 export type MediaImageWidth = (typeof mediaImageWidths)[number];
-export type MediaDeliveryTier = "card" | "detail" | "fullscreen" | "original";
+export type MediaDeliveryTier = "card" | "property-card" | "hero" | "detail" | "fullscreen" | "original";
 export type MediaDeliveryProvider = "supabase" | "external" | "unknown";
 
 export type MediaTierPolicy = {
@@ -16,6 +16,18 @@ export const mediaTierPolicies: Readonly<Record<MediaDeliveryTier, MediaTierPoli
     widths: [384, 640, 960],
     defaultWidth: 640,
     quality: 75,
+    format: "auto"
+  },
+  "property-card": {
+    widths: [384, 640, 960],
+    defaultWidth: 640,
+    quality: 80,
+    format: "auto"
+  },
+  hero: {
+    widths: [960, 1280, 1600, 2048],
+    defaultWidth: 1600,
+    quality: 86,
     format: "auto"
   },
   detail: {

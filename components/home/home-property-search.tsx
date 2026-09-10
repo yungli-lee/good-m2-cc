@@ -42,7 +42,7 @@ export function HomePropertyCard({ property }: { property: HomeProperty }) {
   const coverUrl = media?.media_type === "video" ? media.thumbnail_url || "" : media?.url || "";
   return (
     <article className="property-discovery-card">
-      {coverUrl ? <PropertyCoverImage className="property-card-image" fallbackClassName="property-card-placeholder" src={coverUrl} alt={media?.alt_text || property.title} /> : <div className="property-card-placeholder" role="img" aria-label={`${property.title} 尚未設定封面照片`} />}
+      {coverUrl ? <PropertyCoverImage className="property-card-image" fallbackClassName="property-card-placeholder" sizes="(max-width: 900px) calc(max(280px, 82vw) - 2px), (max-width: 1100px) calc((90vw - 16px) / 2 - 2px), (max-width: 1312px) calc((90vw - 32px) / 3 - 2px), 381px" src={coverUrl} alt={media?.alt_text || property.title} /> : <div className="property-card-placeholder" role="img" aria-label={`${property.title} 尚未設定封面照片`} />}
       <div className="property-discovery-body">
         <h3>{property.title}</h3>
         <p><strong>{price(property.price)}</strong></p>
