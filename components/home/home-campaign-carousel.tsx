@@ -1,6 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { DeliveredImage } from "@/components/media/delivered-image";
+import { shouldLoadHeroImage, shouldTransformHeroImage } from "@/lib/media/home-carousel-image";
 import { VideoLightbox } from "@/components/media/video-lightbox";
 import { activateHomeCarouselVideo, deactivateHomeCarouselVideo, isActiveHomeCarouselVideoFailure } from "@/lib/media/home-carousel-video";
 import { homeSlideDurationMs } from "@/lib/media/playback";
@@ -83,7 +85,11 @@ export function HomeCampaignCarousel({ campaigns }: { campaigns: Campaign[] }) {
                 onError={(event) => failVideo(index, event.currentTarget)}
                 onStalled={(event) => failVideo(index, event.currentTarget)}
                 onAbort={(event) => failVideo(index, event.currentTarget)}
-              /> : video ? <div className="home-video-fallback"><img src={poster} alt={alt} onError={(event) => { event.currentTarget.hidden = true; }} /><span>影片暫時無法播放</span></div> : <img src={src} alt={alt} />}
+              /> : video ? <div className="home-video-fallback"><img src={poster} alt={alt} onError={(event) => { event.currentTarget.hidden = true; }} /><span>影片暫時無法播放</span></div> : shouldLoadHeroImage(index, active, campaigns.length) ? (
+                shouldTransformHeroImage(src, campaign.media_assets?.file_size)
+                  ? <DeliveredImage sourceUrl={src} tier="hero" sizes="100vw" alt={alt} loading="eager" fetchPriority={index === active ? "high" : "low"} />
+                  : <img src={src} alt={alt} loading="eager" fetchPriority={index === active ? "high" : "low"} />
+              ) : null}
               {video ? <button className="home-video-full-button" type="button" onClick={() => setLightbox(campaign)}>▶ 播放完整版</button> : null}
             </div>
             <div className="hero-copy">
