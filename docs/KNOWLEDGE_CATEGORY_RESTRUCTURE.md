@@ -4,7 +4,7 @@
 
 Only taxonomy, category selectors/filtering and nine exact-slug article assignments change. No articles are created or published. Article slugs, canonical URLs, bodies, titles, summaries, images, SEO fields and publication dates are protected by the migration assertion. Production migration is **pending human Preview acceptance**, not executed.
 
-Audit: Production public API shows 39 public articles. An authenticated read-only SQL query also includes archived/soft-deleted records: 64 total, 39 active/public, no drafts. RLS hides nonpublic records from anonymous callers; anonymous counts alone were not used to retire categories.
+Audit: September 20 Production public API shows 42 public articles. Three new loan articles appeared since the September 16 audit (home-loan-ltv, bank-appraisal-lower-than-price, central-bank-housing-loan-20260918); their categories normalize from loan to mortgage without changing their content. The September 16 authenticated read-only SQL audit included archived/soft-deleted records: 64 total, 39 active/public, no drafts. That historical all-record count is not a current total. RLS hides nonpublic records from anonymous callers; anonymous counts alone were not used to retire categories.
 
 Categories are `public.content_categories`, keyed by UUID, unique `(content_type, slug)`, with a text slug check, sort_order and deleted_at. `content_items.category_id` is a nullable FK (`ON DELETE SET NULL`); category identity is not an enum. Uncategorized is SQL NULL. No new enum, constraint, permission or RLS policy is needed.
 
@@ -14,27 +14,29 @@ Admin create/edit both use `listKnowledgeCategories` and the shared KnowledgeFor
 
 ## Counts
 
-Production **before → projected after migration**; these are not claims that Production was modified. Total includes soft-deleted records; public excludes them.
+Production **before → projected after migration**; these are not claims that Production was modified. Public counts exclude soft-deleted records.
 
-| Category | Public before | Public after | Total before | Total after |
-|---|---:|---:|---:|---:|
-| 買屋指南 buying | 18 | 10 | 29 | 21 |
-| 賣屋指南 selling | 6 | 5 | 16 | 15 |
-| 貸款 mortgage | 0 | 2 | 0 | 2 |
-| 稅務 tax | 2 | 2 | 2 | 2 |
-| 交易安全 transaction-safety | 0 | 3 | 0 | 3 |
-| 土地建地 land-building | 0 | 4 | 0 | 4 |
-| 農地 farmland | 7 | 7 | 8 | 8 |
-| 農舍 farmhouse | 1 | 1 | 1 | 1 |
-| 工業地廠房 industrial-property | 0 | 0 | 0 | 0 |
-| 繼承贈與 inheritance-gift | 5 | 5 | 5 | 5 |
-| 法規 legal | 0 | 0 | 0 | 0 |
-| 彰化市場 changhua-market | 0 | 0 | 0 | 0 |
-| 常見問題 faq | 0 | 0 | 0 | 0 |
-| 未分類 NULL | 0 | 0 | 3 | 3 |
-| Total | 39 | 39 | 64 | 64 |
+| Category | Public before (September 20) | Projected public after |
+|---|---:|---:|
+| 買屋指南 buying | 18 | 10 |
+| 賣屋指南 selling | 6 | 5 |
+| 貸款 mortgage | 3 | 5 |
+| 稅務 tax | 2 | 2 |
+| 交易安全 transaction-safety | 0 | 3 |
+| 土地建地 land-building | 0 | 4 |
+| 農地 farmland | 7 | 7 |
+| 農舍 farmhouse | 1 | 1 |
+| 工業地廠房 industrial-property | 0 | 0 |
+| 繼承贈與 inheritance-gift | 5 | 5 |
+| 法規 legal | 0 | 0 |
+| 彰化市場 changhua-market | 0 | 0 |
+| 常見問題 faq | 0 | 0 |
+| 未分類 NULL | 0 | 0 |
+| Total | 42 | 42 |
 
-No articles need migration recommendations from legal/changhua-market/faq: all are empty, including deleted records. Their rows remain available to historical query links; unused legacy categories disappear from selectors. If any legacy category gains references before deployment, admin keeps it visible. Uncategorized's three deleted article references remain untouched.
+September 16 all-record counts (including soft-deleted): buying 29, selling 16, farmland 8, tax 2, farmhouse 1, inheritance-gift 5, uncategorized 3, all others 0. Re-audit all-record counts before Production execution; the application always retains referenced legacy categories in admin.
+
+At the September 16 authenticated audit, no articles needed migration recommendations from legal/changhua-market/faq: all were empty, including deleted records. Their rows remain available to historical query links; unused legacy categories disappear from selectors. If any legacy category gains references before deployment, admin keeps it visible. Uncategorized's three deleted article references remain untouched.
 
 ## Exact article identities
 
