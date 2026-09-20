@@ -1,3 +1,4 @@
+import { canonicalKnowledgeCategory, isPublicKnowledgeCategory, knowledgeCategoryOrder, knowledgeCategorySlugs } from "./knowledge-categories";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import type { ContentCategory, ContentItem, ContentStatus, ContentTag } from "@/lib/content/types";
 
@@ -160,14 +161,13 @@ export async function listKnowledgeItems(options: AdminKnowledgeListOptions = {}
     const { data: category } = await supabase
       .from("content_categories")
       .select("id")
-      .eq("slug", categorySlug)
+      .in("slug", knowledgeCategorySlugs(categorySlug))
       .or("content_type.is.null,content_type.eq.knowledge")
-      .is("deleted_at", null)
-      .maybeSingle();
-    if (!category) {
+      .is("deleted_at", null);
+    if (!category?.length) {
       return { data: [] as ContentItem[], error: null, count: 0, page, pageSize, totalPages: 0 };
     }
-    query = query.eq("category_id", category.id as string);
+    query = query.in("category_id", category.map(item => item.id as string));
   }
 
   if (term) {
@@ -205,18 +205,38 @@ export async function getKnowledgeItem(id: string) {
   return { data: data as ContentItem | null, error };
 }
 
-export async function listKnowledgeCategories() {
+export async function listKnowledgeCategories(options: { publicOnly?: boolean } = {}) {
   const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase
     .from("content_categories")
-    .select("id,content_type,name,slug,description,sort_order,deleted_at")
+    .select("id,content_type,name,slug,description,sort_order,deleted_at,content_items(count)")
     .or("content_type.is.null,content_type.eq.knowledge")
     .is("deleted_at", null)
     .order("sort_order", { ascending: true })
     .order("name", { ascending: true });
 
   if (error) console.error("knowledge_categories_failed", { code: error.code, message: error.message });
-  return (data || []) as ContentCategory[];
+  const categories = (data || []) as (ContentCategory & { content_items: { count: number }[] })[];
+  const visible = await Promise.all(categories.map(async category => {
+    if (options.publicOnly) {
+      if (!isPublicKnowledgeCategory(category.slug)) return null;
+      // Explicit predicates prevent logged-in staff RLS from exposing empty/draft-only categories.
+      const { count, error: countError } = await supabase.from("content_items")
+        .select("id", { count: "exact", head: true })
+        .eq("category_id", category.id).eq("content_type", "knowledge")
+        .eq("status", "published").eq("noindex", false)
+        .not("published_at", "is", null).is("deleted_at", null)
+        .or("legal_status.is.null,legal_status.eq.current");
+      if (countError) throw countError;
+      if (!count) return null;
+    } else if (!isPublicKnowledgeCategory(category.slug) && !category.content_items.some(item => item.count > 0)) {
+      // Retain any legacy category still referenced, including soft-deleted articles.
+      return null;
+    }
+    return { ...category, slug: canonicalKnowledgeCategory(category.slug) };
+  }));
+  return visible.filter((item): item is NonNullable<typeof item> => item !== null)
+    .sort((a, b) => knowledgeCategoryOrder(a.slug) - knowledgeCategoryOrder(b.slug) || a.sort_order - b.sort_order);
 }
 
 export async function listContentTags() {
@@ -242,28 +262,27 @@ export async function listPublicKnowledgeItems(options: number | PublicKnowledge
   const q = normalizePublicSearchTerm(optionInput.q);
   const categorySlug = normalizePublicSlug(optionInput.category);
 
-  let categoryId: string | null = null;
+  let categoryIds: string[] = [];
   if (categorySlug) {
     const { data: category, error: categoryError } = await supabase
       .from("content_categories")
       .select("id")
-      .eq("slug", categorySlug)
+      .in("slug", knowledgeCategorySlugs(categorySlug))
       .or("content_type.is.null,content_type.eq.knowledge")
-      .is("deleted_at", null)
-      .maybeSingle();
+      .is("deleted_at", null);
 
     if (categoryError) {
       console.error("public_knowledge_category_failed", { code: categoryError.code, message: categoryError.message });
       return { data: [] as ContentItem[], error: categoryError, count: 0, page, pageSize, totalPages: 0 };
     }
-    if (!category) return { data: [] as ContentItem[], error: null, count: 0, page, pageSize, totalPages: 0 };
-    categoryId = category.id as string;
+    if (!category?.length) return { data: [] as ContentItem[], error: null, count: 0, page, pageSize, totalPages: 0 };
+    categoryIds = category.map(item => item.id as string);
   }
 
   const searchIds = await publicKnowledgeSearchIds(supabase, q);
   let query = publicKnowledgeQuery(supabase, { count: "exact" });
 
-  if (categoryId) query = query.eq("category_id", categoryId);
+  if (categoryIds.length) query = query.in("category_id", categoryIds);
   if (q) {
     const filters = [
       `title.ilike.%${q}%`,
