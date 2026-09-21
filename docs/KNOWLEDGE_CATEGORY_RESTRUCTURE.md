@@ -60,7 +60,7 @@ The migration matches the existing unique `(content_type=knowledge, slug)` key, 
 - Existing category IDs are retained on rename. If canonical and legacy rows already coexist, references move to canonical and only the now-unreferenced legacy row is soft-retired. No category row is deleted.
 - legal/changhua-market/faq links retain a valid empty filtered response rather than changing to unrelated content. Unknown categories continue to show an empty result. Article URLs remain unchanged.
 - Frontend selector only shows the ten target categories with eligible public articles. Uncategorized never appears. Industrial property is created for admin and automatically becomes visible after an eligible article is assigned/published in future work.
-- Mobile tabs are a single nonshrinking, horizontally scrollable row contained within the viewport.
+- On narrow screens, public category shortcuts remain fully accessible and stack vertically as full-width tap targets. Only categories with eligible published articles are shown. The category dropdown and selected-state highlighting remain available; desktop shortcuts retain their inline/wrapped layout.
 
 Run `supabase/migrations/202609160101_knowledge_category_restructure.sql` on staging first. It is transactional, locks the two relevant tables, upserts only taxonomy, updates only category_id for exact-slug moves, then compares all article fields except category_id/updated_at. Any protected-field difference aborts the transaction. Missing staging articles remain missing; the script never seeds production content into staging. Re-running is safe. Take an external category_id mapping backup before the eventual Production release; no Production execution is authorized before human Preview approval.
 
@@ -76,6 +76,10 @@ PASS: frozen install, full TypeScript, ESLint, pnpm test (including taxonomy/que
 - Public: 全部 then populated target categories in order; no 未分類 or empty industrial category.
 - Filters + search + pagination work together; clearing filters works.
 - Legacy buying-guide/selling-guide/loan query links resolve to canonical categories retaining search/page.
-- Mobile tabs scroll horizontally without wrapping, squeezing or page overflow.
+- Mobile shortcuts stack vertically with easy tap targets, no hidden categories or page-level horizontal overflow. Check dropdown usability, selected-state highlighting and updated results after filtering.
 - Existing article URLs, content and image behavior stay unchanged.
 - Approve Preview before merging or any Production migration/deployment.
+
+## Accepted mobile UX
+
+The original horizontal-scroll requirement was superseded by human acceptance of vertical stacking. A late PR-specific nowrap/overflow override conflicted with the existing mobile full-width button rule; it has been removed. No taxonomy, query, migration or article-data changes accompany this UX adjustment. Existing query tests cover eligible-category visibility, canonical order, admin preservation and filtering; they do not require a horizontal row. Verify viewport-dependent accessibility and overflow in the fresh Preview.

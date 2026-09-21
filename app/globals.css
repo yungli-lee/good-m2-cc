@@ -3033,18 +3033,3 @@ td {
   .analytics-insight-card dl { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .analytics-inquiry-mobile dl { grid-template-columns: 1fr; }
 }
-
-/* Knowledge categories keep a single scrollable row on narrow screens. */
-@media (max-width: 760px) {
-  .knowledge-category-tabs {
-    display: flex;
-    flex-wrap: nowrap;
-    max-width: 100%;
-    overflow-x: auto;
-    padding-bottom: 8px;
-  }
-  .knowledge-category-tabs .button {
-    flex: 0 0 auto;
-    white-space: nowrap;
-  }
-}
