@@ -83,3 +83,5 @@ PASS: frozen install, full TypeScript, ESLint, pnpm test (including taxonomy/que
 ## Accepted mobile UX
 
 The original horizontal-scroll requirement was superseded by human acceptance of vertical stacking. A late PR-specific nowrap/overflow override conflicted with the existing mobile full-width button rule; it has been removed. No taxonomy, query, migration or article-data changes accompany this UX adjustment. Existing query tests cover eligible-category visibility, canonical order, admin preservation and filtering; they do not require a horizontal row. Verify viewport-dependent accessibility and overflow in the fresh Preview.
+
+Live UX validation also found that client-side shortcut navigation updated results/highlighting while retaining the uncontrolled dropdown’s previous selection. The public search form now remounts when URL search/category changes, keeping its defaults aligned with the displayed results. Query semantics and redirects remain unchanged. Regression scenario: select buying + test, submit, click selling, confirm dropdown/highlight/results all say selling, then clear filters.

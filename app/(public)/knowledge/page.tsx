@@ -71,7 +71,7 @@ export default async function KnowledgeIndexPage({ searchParams }: Props) {
       </section>
       <section className="section knowledge-index-section">
         <div className="container">
-          <form className="knowledge-listing-tools" action="/knowledge">
+          <form key={JSON.stringify([q, category])} className="knowledge-listing-tools" action="/knowledge">
             <label className="field knowledge-search-field">
               <span>搜尋知識庫</span>
               <input className="input" type="search" name="q" defaultValue={q} placeholder="輸入關鍵字、分類或標籤" />
