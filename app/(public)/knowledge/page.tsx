@@ -1,3 +1,5 @@
+import { permanentRedirect } from "next/navigation";
+import { canonicalKnowledgeCategory } from "@/lib/content/knowledge-categories";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { KnowledgeCard } from "@/components/content/knowledge-card";
@@ -40,6 +42,10 @@ export default async function KnowledgeIndexPage({ searchParams }: Props) {
   const q = String(params.q || "").trim().slice(0, 80);
   const category = String(params.category || "").trim().toLowerCase();
   const page = normalizePage(params.page);
+  const canonicalCategory = canonicalKnowledgeCategory(category);
+  if (canonicalCategory !== category) {
+    permanentRedirect(knowledgeHref({ q, category: canonicalCategory, page }));
+  }
   const displaySettings = await getSiteDisplaySettings().catch(() => defaultSiteDisplaySettings);
   const pageSize = displaySettings.knowledge_page_size;
   const [
@@ -47,7 +53,7 @@ export default async function KnowledgeIndexPage({ searchParams }: Props) {
     categories
   ] = await Promise.all([
     listPublicKnowledgeItems({ q, category, page, pageSize }),
-    listKnowledgeCategories()
+    listKnowledgeCategories({ publicOnly: true })
   ]);
   const hasFilters = Boolean(q || category);
   const currentCategory = categories.find((item) => item.slug === category);
@@ -65,7 +71,7 @@ export default async function KnowledgeIndexPage({ searchParams }: Props) {
       </section>
       <section className="section knowledge-index-section">
         <div className="container">
-          <form className="knowledge-listing-tools" action="/knowledge">
+          <form key={JSON.stringify([q, category])} className="knowledge-listing-tools" action="/knowledge">
             <label className="field knowledge-search-field">
               <span>搜尋知識庫</span>
               <input className="input" type="search" name="q" defaultValue={q} placeholder="輸入關鍵字、分類或標籤" />
