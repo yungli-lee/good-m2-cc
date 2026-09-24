@@ -147,16 +147,14 @@ export default async function PropertyDetailPage({ params }: Props) {
     </aside>
   );
 
+  const highlightsText = (property.highlights || []).join("\n");
+
   const renderPropertyCopy = () => (
     <>
-      {property.highlights?.length ? (
+      {highlightsText.trim() ? (
         <section className="property-copy-section">
           <h2>物件特色</h2>
-          <ul>
-            {property.highlights.map((item) => (
-              <li key={item}>{item}</li>
-            ))}
-          </ul>
+          <p style={{ whiteSpace: "pre-wrap", lineHeight: 1.9 }}>{highlightsText}</p>
         </section>
       ) : null}
       {property.description?.trim() ? (
@@ -185,7 +183,7 @@ export default async function PropertyDetailPage({ params }: Props) {
             {renderPropertySummary(true)}
           </div>
         </section>
-        {(property.highlights?.length || property.description?.trim()) ? <section className="section">
+        {(highlightsText.trim() || property.description?.trim()) ? <section className="section">
           <div className="container">
             {renderPropertyCopy()}
           </div>

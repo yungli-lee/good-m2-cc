@@ -274,10 +274,8 @@ export function normalizePropertyValues(values: PropertyFormValues) {
 }
 
 export function highlightsToArray(value?: string) {
-  return (value || "")
-    .split(/[,，、\n]/)
-    .map((item) => item.trim())
-    .filter(Boolean);
+  const normalized = (value || "").replace(/\r\n?/g, "\n");
+  return normalized ? normalized.split("\n") : [];
 }
 
 export function emptyToNull<T>(value: T | "") {

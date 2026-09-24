@@ -17,7 +17,7 @@ assert.match(page, /display="cover"/, "the first mobile media block renders only
 assert.match(page, /display="details"/, "remaining media renders after summary and copy");
 assert.match(page, /renderPropertySummary\(false\)/, "mobile summary excludes company information");
 assert.match(page, /renderPropertySummary\(true\)/, "desktop summary keeps company information in its existing card");
-assert.match(page, /property\.highlights\?\.length \?/, "missing highlights omit their section");
+assert.match(page, /highlightsText\.trim\(\) \?/, "missing highlights omit their section");
 assert.match(page, /property\.description\?\.trim\(\) \?/, "missing descriptions omit their section");
 assert.doesNotMatch(page, /物件特色整理中|詳細介紹整理中/, "empty copy does not create placeholder blocks");
 
