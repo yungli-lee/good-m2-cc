@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { DeliveredImage } from "@/components/media/delivered-image";
+import { propertyFullscreenSizes } from "@/components/media/property-detail-image";
 import type { PropertyMedia } from "@/lib/properties/types";
 
 type Props = {
@@ -61,7 +63,7 @@ export function ImageLightbox({ images, activeIndex, title, onChange, onClose }:
         if (event.target === event.currentTarget) onClose();
       }}>
         <button ref={closeRef} className="image-lightbox-close" type="button" onClick={onClose} aria-label="關閉照片預覽">×</button>
-        <img src={image.url} alt={image.alt_text || title} />
+        <DeliveredImage key={image.id} sourceUrl={image.url} tier="fullscreen" sizes={propertyFullscreenSizes} alt={image.alt_text || title} />
         {images.length > 1 ? (
           <>
             <button className="image-lightbox-nav is-previous" type="button" onClick={() => onChange(previous)} aria-label="上一張照片">‹</button>
