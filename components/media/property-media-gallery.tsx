@@ -3,6 +3,7 @@
 import { useCallback, useState } from "react";
 import type { PropertyMedia } from "@/lib/properties/types";
 import { resolvePropertyGallery } from "@/lib/properties/media-gallery";
+import { PropertyDetailImage } from "@/components/media/property-detail-image";
 import { ImageLightbox } from "@/components/media/image-lightbox";
 import { VideoLightbox } from "@/components/media/video-lightbox";
 import { trackEvent } from "@/lib/analytics/client";
@@ -57,7 +58,7 @@ export function PropertyMediaGallery({
         <PropertyVideoPoster item={cover} title={title} onPlay={() => openVideo(cover)} main />
       ) : cover ? (
         <button className="gallery-main-button" type="button" onClick={() => openImage(cover)} aria-label={`放大照片：${cover.alt_text || title}`}>
-          <img className="gallery-main" src={cover.url} alt={cover.alt_text || title} />
+          <PropertyDetailImage key={cover.id} sourceUrl={cover.url} alt={cover.alt_text || title} main />
         </button>
       ) : <div className="gallery-main" role="img" aria-label={`${title} 尚未設定封面照片`} />)}
       {display !== "cover" && detailMedia.length ? <div className="media-grid">
@@ -65,7 +66,7 @@ export function PropertyMediaGallery({
           <PropertyVideoPoster key={item.id} item={item} title={title} onPlay={() => openVideo(item)} />
         ) : (
           <button key={item.id} className="property-image-button" type="button" onClick={() => openImage(item)} aria-label={`放大照片：${item.alt_text || title}`}>
-            <img className="property-image" src={item.url} alt={item.alt_text || title} loading="lazy" />
+            <PropertyDetailImage key={item.id} sourceUrl={item.url} alt={item.alt_text || title} />
           </button>
         ))}
       </div> : null}
