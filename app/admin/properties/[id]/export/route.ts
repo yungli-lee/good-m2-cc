@@ -34,7 +34,7 @@ export async function GET(_request: Request, { params }: Props) {
   if (!data) return apiError("Not found", 404);
 
   const property = data as Property;
-  const workbook = buildPropertyExportXlsx(property);
+  const workbook = await buildPropertyExportXlsx(property);
   return new NextResponse(workbook, {
     headers: {
       "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
