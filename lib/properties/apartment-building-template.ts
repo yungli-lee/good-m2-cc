@@ -3,11 +3,12 @@ import { apartmentBuildingTemplateChunk1 } from "./apartment-building-template-c
 import { apartmentBuildingTemplateChunk2 } from "./apartment-building-template-chunk2.ts";
 import { apartmentBuildingTemplateChunk3 } from "./apartment-building-template-chunk3.ts";
 
-const templateBase64 =
-  apartmentBuildingTemplateChunk0 +
-  apartmentBuildingTemplateChunk1 +
-  apartmentBuildingTemplateChunk2 +
-  apartmentBuildingTemplateChunk3;
+const templateBase64Chunks = [
+  apartmentBuildingTemplateChunk0,
+  apartmentBuildingTemplateChunk1,
+  apartmentBuildingTemplateChunk2,
+  apartmentBuildingTemplateChunk3
+] as const;
 
 function decodeBase64(value: string) {
   const binary = atob(value);
@@ -16,6 +17,23 @@ function decodeBase64(value: string) {
     bytes[index] = binary.charCodeAt(index);
   }
   return bytes;
+}
+
+function concatBytes(parts: Uint8Array[]) {
+  const length = parts.reduce((total, part) => total + part.length, 0);
+  const output = new Uint8Array(length);
+  let offset = 0;
+  for (const part of parts) {
+    output.set(part, offset);
+    offset += part.length;
+  }
+  return output;
+}
+
+function decodeTemplateZip() {
+  // Each source chunk was base64-encoded independently, so padding may appear
+  // at the end of an intermediate chunk. Decode them separately before joining.
+  return concatBytes(templateBase64Chunks.map(decodeBase64));
 }
 
 function uint16(bytes: Uint8Array, offset: number) {
@@ -76,7 +94,7 @@ async function inflateRaw(bytes: Uint8Array, name: string) {
 }
 
 export async function getApartmentBuildingTemplateFiles() {
-  const zip = decodeBase64(templateBase64);
+  const zip = decodeTemplateZip();
   const decoder = new TextDecoder();
   const files: Array<{ name: string; content: Uint8Array }> = [];
   let offset = 0;
