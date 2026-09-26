@@ -1,10 +1,24 @@
-import { apartmentBuildingTemplateChunk0 } from "./apartment-building-template-chunk0.ts";
+import { apartmentBuildingTemplateChunk0a } from "./apartment-building-template-chunk0a.ts";
+import { apartmentBuildingTemplateChunk0b } from "./apartment-building-template-chunk0b.ts";
+import { apartmentBuildingTemplateChunk0c } from "./apartment-building-template-chunk0c.ts";
+import { apartmentBuildingTemplateChunk0d } from "./apartment-building-template-chunk0d.ts";
+import { apartmentBuildingTemplateChunk0e } from "./apartment-building-template-chunk0e.ts";
+import { apartmentBuildingTemplateChunk0f } from "./apartment-building-template-chunk0f.ts";
+import { apartmentBuildingTemplateChunk0g } from "./apartment-building-template-chunk0g.ts";
+import { apartmentBuildingTemplateChunk0h } from "./apartment-building-template-chunk0h.ts";
 import { apartmentBuildingTemplateChunk1 } from "./apartment-building-template-chunk1.ts";
 import { apartmentBuildingTemplateChunk2 } from "./apartment-building-template-chunk2.ts";
 import { apartmentBuildingTemplateChunk3 } from "./apartment-building-template-chunk3.ts";
 
 const templateBase64Chunks = [
-  apartmentBuildingTemplateChunk0,
+  apartmentBuildingTemplateChunk0a,
+  apartmentBuildingTemplateChunk0b,
+  apartmentBuildingTemplateChunk0c,
+  apartmentBuildingTemplateChunk0d,
+  apartmentBuildingTemplateChunk0e,
+  apartmentBuildingTemplateChunk0f,
+  apartmentBuildingTemplateChunk0g,
+  apartmentBuildingTemplateChunk0h,
   apartmentBuildingTemplateChunk1,
   apartmentBuildingTemplateChunk2,
   apartmentBuildingTemplateChunk3
