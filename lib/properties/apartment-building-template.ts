@@ -32,7 +32,12 @@ function uint32(bytes: Uint8Array, offset: number) {
 }
 
 async function inflateRaw(bytes: Uint8Array) {
-  const stream = new Blob([bytes]).stream().pipeThrough(new DecompressionStream("deflate-raw"));
+  // Keep the ZIP inflater Web/Edge-runtime native. Copy into an ArrayBuffer-backed
+  // view so TypeScript/Next does not infer SharedArrayBuffer for BlobPart.
+  const copy = Uint8Array.from(bytes);
+  const stream = new Blob([copy.buffer]).stream().pipeThrough(
+    new DecompressionStream("deflate-raw")
+  );
   return new Uint8Array(await new Response(stream).arrayBuffer());
 }
 
