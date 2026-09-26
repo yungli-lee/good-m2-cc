@@ -3,6 +3,7 @@ import { getCoverMedia, getMediaImageUrl } from "@/lib/properties/types";
 import { resolvePropertySeo } from "@/lib/properties/seo";
 import type { AdminRole } from "@/lib/auth";
 import { PropertyBusinessFields } from "./property-business-fields";
+import { PropertyApartmentBuildingFields } from "./property-apartment-building-fields";
 
 const typeOptions = [
   ["building_land", "建地"],
@@ -150,6 +151,7 @@ export function PropertyForm({
           ))}
         </select>
       </div>
+      <PropertyApartmentBuildingFields property={property} />
       <div className="field">
         <label htmlFor="sort_order">排序</label>
         <input className="input" id="sort_order" name="sort_order" type="number" defaultValue={property?.sort_order ?? 1000} />
