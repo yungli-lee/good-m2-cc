@@ -8,7 +8,7 @@ const parkingAccess = ["坡道", "升降"];
 const parkingArrangement = ["無車位", "固定車位", "車位另租", "抽籤決定", "先到先停", "排隊等候"];
 const managementTypes = ["保全公司", "管理員(警衛)", "守望亭", "固定駐警", "巡守人員", "保全設施"];
 const exteriorMaterials = ["洗石子", "馬賽克", "方塊磚", "二丁掛", "玻璃帷幕", "花崗石", "原木", "其他"];
-const buildingStructures = ["磚造", "加強磚造", "鋼筋混凝土RC", "鋼骨SC或鋼骨混凝土", "石材", "鋼骨鋼筋混凝土SRC", "其他建材"];
+const buildingStructures = ["磚造", "加強磚造", "鋼筋混凝土RC", "鋼骨SC或鋼骨混泥土", "石材", "鋼骨鋼筋混凝土SRC", "其他建材"];
 const facilities = ["會議室", "獨立會客室", "閱覽室", "放映廳", "空中花園", "電腦室", "健身房", "游泳池", "兒童遊戲區", "健康步道", "圖書館", "三溫暖(SPA)", "KTV室"];
 
 function Checks({ name, options, values }: { name: string; options: string[]; values?: string[] | null }) {
