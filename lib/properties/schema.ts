@@ -124,7 +124,7 @@ export const propertySchema = z.object({
   has_courtyard: optionalBoolean,
   is_corner_unit: optionalBoolean,
   exterior_materials: z.array(z.enum(["洗石子", "馬賽克", "方塊磚", "二丁掛", "玻璃帷幕", "花崗石", "原木", "其他"])).default([]),
-  building_structures: z.array(z.enum(["磚造", "加強磚造", "鋼筋混凝土RC", "鋼骨SC或鋼骨混凝土", "石材", "鋼骨鋼筋混凝土SRC", "其他建材"])).default([]),
+  building_structures: z.array(z.enum(["磚造", "加強磚造", "鋼筋混凝土RC", "鋼骨SC或鋼骨混泥土", "石材", "鋼骨鋼筋混凝土SRC", "其他建材"])).default([]),
   public_facilities: z.array(z.enum(["會議室", "獨立會客室", "閱覽室", "放映廳", "空中花園", "電腦室", "健身房", "游泳池", "兒童遊戲區", "健康步道", "圖書館", "三溫暖(SPA)", "KTV室"])).default([]),
   public_facility_floor_notes: z.string().trim().max(500).optional().or(z.literal("")),
   showing_key_available: optionalBoolean,
