@@ -49,47 +49,203 @@ function uint32(bytes: Uint8Array, offset: number) {
   ) >>> 0;
 }
 
-const templateAdler32: Record<string, number> = {
-  "_rels/.rels": 2318847329,
-  "docProps/core.xml": 2982699524,
-  "docProps/app.xml": 3872476334,
-  "xl/workbook.xml": 4007165964,
-  "xl/_rels/workbook.xml.rels": 836629690,
-  "xl/theme/theme1.xml": 2979143658,
-  "xl/worksheets/sheet1.xml": 3401624949,
-  "xl/worksheets/_rels/sheet1.xml.rels": 2728158157,
-  "xl/drawings/drawing1.xml": 7647079,
-  "xl/drawings/_rels/drawing1.xml.rels": 2786496719,
-  "xl/sharedStrings.xml": 1955212279,
-  "xl/styles.xml": 3741732527,
-  "xl/media/image1.jpeg": 2781203206,
-  "xl/media/image2.jpeg": 1691061980,
-  "[Content_Types].xml": 450222396
+type Huffman = {
+  byLength: Array<Map<number, number> | undefined>;
+  maxLength: number;
 };
 
-function writeUint32BE(bytes: Uint8Array, offset: number, value: number) {
-  bytes[offset] = (value >>> 24) & 0xff;
-  bytes[offset + 1] = (value >>> 16) & 0xff;
-  bytes[offset + 2] = (value >>> 8) & 0xff;
-  bytes[offset + 3] = value & 0xff;
+class DeflateBitReader {
+  private bitOffset = 0;
+
+  constructor(private readonly bytes: Uint8Array) {}
+
+  readBits(count: number) {
+    let value = 0;
+    for (let bit = 0; bit < count; bit += 1) {
+      const byteIndex = this.bitOffset >>> 3;
+      if (byteIndex >= this.bytes.length) throw new Error("Unexpected end of DEFLATE stream");
+      value |= ((this.bytes[byteIndex] >>> (this.bitOffset & 7)) & 1) << bit;
+      this.bitOffset += 1;
+    }
+    return value >>> 0;
+  }
+
+  alignByte() {
+    this.bitOffset = (this.bitOffset + 7) & ~7;
+  }
 }
 
-async function inflateRaw(bytes: Uint8Array, name: string) {
-  const adler = templateAdler32[name];
-  if (adler == null) throw new Error(`Apartment building template checksum missing: ${name}`);
+function reverseBits(value: number, length: number) {
+  let reversed = 0;
+  for (let index = 0; index < length; index += 1) {
+    reversed = (reversed << 1) | ((value >>> index) & 1);
+  }
+  return reversed >>> 0;
+}
 
-  // ZIP stores raw DEFLATE. Cloudflare's Edge runtime accepts zlib-wrapped
-  // "deflate", so add a standard zlib header and the entry's Adler-32 trailer.
-  const wrapped = new Uint8Array(bytes.length + 6);
-  wrapped[0] = 0x78;
-  wrapped[1] = 0x9c;
-  wrapped.set(bytes, 2);
-  writeUint32BE(wrapped, bytes.length + 2, adler);
+function buildHuffman(lengths: number[]): Huffman {
+  const maxLength = Math.max(0, ...lengths);
+  const counts = new Array(maxLength + 1).fill(0);
+  for (const length of lengths) if (length > 0) counts[length] += 1;
 
-  const stream = new Blob([wrapped.buffer]).stream().pipeThrough(
-    new DecompressionStream("deflate")
-  );
-  return new Uint8Array(await new Response(stream).arrayBuffer());
+  const nextCode = new Array(maxLength + 1).fill(0);
+  let code = 0;
+  for (let bits = 1; bits <= maxLength; bits += 1) {
+    code = (code + (counts[bits - 1] || 0)) << 1;
+    nextCode[bits] = code;
+  }
+
+  const byLength: Array<Map<number, number> | undefined> = new Array(maxLength + 1);
+  lengths.forEach((length, symbol) => {
+    if (!length) return;
+    const canonical = nextCode[length]++;
+    const reversed = reverseBits(canonical, length);
+    const table = byLength[length] || new Map<number, number>();
+    table.set(reversed, symbol);
+    byLength[length] = table;
+  });
+
+  return { byLength, maxLength };
+}
+
+function decodeHuffman(reader: DeflateBitReader, tree: Huffman) {
+  let code = 0;
+  for (let length = 1; length <= tree.maxLength; length += 1) {
+    code |= reader.readBits(1) << (length - 1);
+    const symbol = tree.byLength[length]?.get(code);
+    if (symbol != null) return symbol;
+  }
+  throw new Error("Invalid Huffman code in DEFLATE stream");
+}
+
+const lengthBase = [
+  3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 15, 17, 19, 23, 27, 31,
+  35, 43, 51, 59, 67, 83, 99, 115, 131, 163, 195, 227, 258
+];
+const lengthExtra = [
+  0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2,
+  3, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 0
+];
+const distanceBase = [
+  1, 2, 3, 4, 5, 7, 9, 13, 17, 25, 33, 49, 65, 97, 129, 193,
+  257, 385, 513, 769, 1025, 1537, 2049, 3073, 4097, 6145, 8193,
+  12289, 16385, 24577
+];
+const distanceExtra = [
+  0, 0, 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6,
+  7, 7, 8, 8, 9, 9, 10, 10, 11, 11, 12, 12, 13, 13
+];
+
+function fixedTrees() {
+  const literalLengths = new Array(288).fill(0);
+  for (let symbol = 0; symbol <= 143; symbol += 1) literalLengths[symbol] = 8;
+  for (let symbol = 144; symbol <= 255; symbol += 1) literalLengths[symbol] = 9;
+  for (let symbol = 256; symbol <= 279; symbol += 1) literalLengths[symbol] = 7;
+  for (let symbol = 280; symbol <= 287; symbol += 1) literalLengths[symbol] = 8;
+  return {
+    literal: buildHuffman(literalLengths),
+    distance: buildHuffman(new Array(32).fill(5))
+  };
+}
+
+function dynamicTrees(reader: DeflateBitReader) {
+  const literalCount = reader.readBits(5) + 257;
+  const distanceCount = reader.readBits(5) + 1;
+  const codeLengthCount = reader.readBits(4) + 4;
+  const order = [16, 17, 18, 0, 8, 7, 9, 6, 10, 5, 11, 4, 12, 3, 13, 2, 14, 1, 15];
+
+  const codeLengths = new Array(19).fill(0);
+  for (let index = 0; index < codeLengthCount; index += 1) {
+    codeLengths[order[index]] = reader.readBits(3);
+  }
+
+  const codeTree = buildHuffman(codeLengths);
+  const lengths: number[] = [];
+  const total = literalCount + distanceCount;
+
+  while (lengths.length < total) {
+    const symbol = decodeHuffman(reader, codeTree);
+    if (symbol <= 15) {
+      lengths.push(symbol);
+      continue;
+    }
+
+    if (symbol === 16) {
+      if (!lengths.length) throw new Error("Invalid DEFLATE repeat code");
+      const repeat = reader.readBits(2) + 3;
+      const previous = lengths[lengths.length - 1];
+      for (let index = 0; index < repeat; index += 1) lengths.push(previous);
+      continue;
+    }
+
+    if (symbol === 17) {
+      const repeat = reader.readBits(3) + 3;
+      for (let index = 0; index < repeat; index += 1) lengths.push(0);
+      continue;
+    }
+
+    if (symbol === 18) {
+      const repeat = reader.readBits(7) + 11;
+      for (let index = 0; index < repeat; index += 1) lengths.push(0);
+      continue;
+    }
+
+    throw new Error("Invalid DEFLATE code-length symbol");
+  }
+
+  return {
+    literal: buildHuffman(lengths.slice(0, literalCount)),
+    distance: buildHuffman(lengths.slice(literalCount, total))
+  };
+}
+
+function inflateRaw(bytes: Uint8Array) {
+  const reader = new DeflateBitReader(bytes);
+  const output: number[] = [];
+  let isFinal = false;
+
+  while (!isFinal) {
+    isFinal = reader.readBits(1) === 1;
+    const blockType = reader.readBits(2);
+
+    if (blockType === 0) {
+      reader.alignByte();
+      const length = reader.readBits(16);
+      const inverted = reader.readBits(16);
+      if (((length ^ 0xffff) & 0xffff) !== inverted) {
+        throw new Error("Invalid uncompressed DEFLATE block length");
+      }
+      for (let index = 0; index < length; index += 1) output.push(reader.readBits(8));
+      continue;
+    }
+
+    if (blockType === 3) throw new Error("Reserved DEFLATE block type");
+
+    const trees = blockType === 1 ? fixedTrees() : dynamicTrees(reader);
+
+    while (true) {
+      const symbol = decodeHuffman(reader, trees.literal);
+      if (symbol < 256) {
+        output.push(symbol);
+        continue;
+      }
+      if (symbol === 256) break;
+      if (symbol < 257 || symbol > 285) throw new Error("Invalid DEFLATE length symbol");
+
+      const lengthIndex = symbol - 257;
+      const length = lengthBase[lengthIndex] + reader.readBits(lengthExtra[lengthIndex]);
+      const distanceSymbol = decodeHuffman(reader, trees.distance);
+      if (distanceSymbol > 29) throw new Error("Invalid DEFLATE distance symbol");
+      const distance = distanceBase[distanceSymbol] + reader.readBits(distanceExtra[distanceSymbol]);
+      if (distance <= 0 || distance > output.length) throw new Error("Invalid DEFLATE back-reference");
+
+      for (let index = 0; index < length; index += 1) {
+        output.push(output[output.length - distance]);
+      }
+    }
+  }
+
+  return Uint8Array.from(output);
 }
 
 export async function getApartmentBuildingTemplateFiles() {
@@ -116,7 +272,7 @@ export async function getApartmentBuildingTemplateFiles() {
     const compressed = zip.slice(dataStart, dataEnd);
     const content =
       method === 0 ? compressed :
-      method === 8 ? await inflateRaw(compressed, name) :
+      method === 8 ? inflateRaw(compressed) :
       (() => { throw new Error(`Unsupported ZIP compression method ${method}`); })();
 
     files.push({ name, content });
