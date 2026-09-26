@@ -1,4 +1,5 @@
 import { getPropertyExportTemplateFiles } from "./export-template.ts";
+import { getApartmentBuildingTemplateFiles } from "./apartment-building-template.ts";
 import type { Property } from "./types";
 
 type CellValue = string | number | null | undefined;
@@ -319,7 +320,139 @@ function buildSheetFromTemplate(property: Property, sheetXml: string) {
   );
 }
 
-export function buildPropertyExportXlsx(property: Property) {
+function checkedOptions(selected: string[] | null | undefined, options: string[]) {
+  const values = new Set(selected || []);
+  return options.map((option) => `${values.has(option) ? "■" : "□"}${option}`).join(" ");
+}
+
+function apartmentBuildingTypeLine(property: Property) {
+  const selected =
+    property.property_type === "apartment" ? "無電梯公寓" :
+    property.building_subtype === "huaxia" ? "華廈" :
+    property.building_subtype === "highrise" ? "大樓" : "";
+  return checkedOptions(selected ? [selected] : [], ["無電梯公寓", "華廈", "大樓"]);
+}
+
+function apartmentBuildingValues(property: Property) {
+  const notes = property.address_private || "";
+  const fullAddress = extractInternalValue(notes, "完整地址") || property.address_public || "";
+  const mainPlusAux =
+    property.main_building_area_ping != null || property.auxiliary_building_area_ping != null
+      ? (Number(property.main_building_area_ping || 0) + Number(property.auxiliary_building_area_ping || 0)).toLocaleString("zh-TW", { maximumFractionDigits: 3 })
+      : "";
+  const ownerParts = [
+    property.owner_name || "",
+    property.owner_age != null ? `${property.owner_age}歲` : "",
+    property.owner_gender || "",
+    property.owner_occupation || ""
+  ].filter(Boolean);
+
+  const facilityCells: Record<string, string> = {
+    B44: "會議室",
+    C44: "獨立會客室",
+    D44: "閱覽室",
+    E44: "放映廳",
+    F44: "空中花園",
+    G44: "電腦室",
+    A47: "健身房",
+    B47: "游泳池",
+    C47: "兒童遊戲區",
+    D47: "健康步",
+    E47: "圖書館",
+    F47: "三溫暖(SPA)",
+    G47: "KTV室"
+  };
+  const selectedFacilities = new Set(property.public_facilities || []);
+  if (selectedFacilities.has("健康步道")) selectedFacilities.add("健康步");
+  const facilityValues = Object.fromEntries(
+    Object.entries(facilityCells).map(([ref, label]) => [ref, `${selectedFacilities.has(label) ? "■" : "□"}${label}`])
+  );
+
+  return {
+    A6: property.listing_type === "一般委託" ? "■一般簽" : "□一般簽",
+    A7: property.listing_type === "專任" ? "■專簽" : "□專簽",
+    A8: property.listing_type === "口頭" ? "■口頭約" : "□口頭約",
+    C11: property.listing_no || "",
+    I11: rocDateRange(property.listing_start_date, property.listing_end_date),
+    L11: `簽約日：${rocDate(property.contract_signed_date)}`,
+    C12: property.title,
+    I12: checkedOptions(property.sale_motivation, ["換屋", "工作", "就學", "家庭組成改變", "移民", "資金運用", "其他"]),
+    C13: property.price == null ? "" : `${property.price}萬`,
+    I13: property.showing_key_available == null ? "KEY□有□無" : property.showing_key_available ? "KEY■有□無" : "KEY□有■無",
+    C14: property.floor_price || extractInternalValue(notes, "底價"),
+    I14: property.developer_names || extractInternalValue(notes, "開發"),
+    C15: fullAddress,
+    I15: property.showing_instructions || "",
+    I16: checkedOptions(property.current_condition_type, ["空屋", "自用", "出租", "結構體", "自住", "其他"]),
+    C17: ownerParts.join("　"),
+    I17: rocDate(property.completion_date || extractInternalValue(notes, "完工日")),
+    C19: formatPing(property.land_area_ping),
+    H19: property.layout || "",
+    H20: property.orientation || "",
+    D21: [
+      property.main_building_area_ping == null ? "" : `主建 ${formatPing(property.main_building_area_ping)}`,
+      property.auxiliary_building_area_ping == null ? "" : `附建 ${formatPing(property.auxiliary_building_area_ping)}`
+    ].filter(Boolean).join(" / "),
+    C22: mainPlusAux ? `${mainPlusAux} 坪` : "",
+    H21: checkedOptions(property.current_usage, ["住宅", "店面", "辦公", "住辦", "住店", "車位", "廠房", "土地", "倉庫", "其他"]),
+    H22: apartmentBuildingTypeLine(property),
+    J22: property.above_ground_floors == null ? "" : String(property.above_ground_floors),
+    L22: property.basement_floors == null ? "" : String(property.basement_floors),
+    C23: formatPing(property.shared_area_ping),
+    H23: checkedOptions(property.parking_space_features, ["平面", "機械", "上層", "下層"]),
+    C24: formatPing(property.parking_area_ping),
+    H24: checkedOptions(property.parking_access_types, ["坡道", "升降"]),
+    C25: formatPing(property.building_area_ping),
+    H25: property.parking_floor || "",
+    J25: checkedOptions(property.parking_arrangement, ["無車位", "固定車位", "車位另租", "抽籤決定", "先到先停", "排隊等候"]),
+    C26: formatPing(property.addition_area_ping),
+    H26: property.parking_space_no || "",
+    C27: checkedOptions(property.management_types, ["保全公司", "管理員(警衛)", "守望亭", "固定駐警", "巡守人員", "保全設施"]),
+    H27: property.management_fee == null ? "" : `${property.management_fee}元`,
+    J27: checkedOptions(property.management_fee_payment ? [property.management_fee_payment] : [], ["月繳", "雙月繳", "季繳", "年繳", "一次繳"]),
+    H28: property.cleaning_fee == null ? "" : String(property.cleaning_fee),
+    C30: property.road_width == null ? "" : `${property.road_width}米`,
+    F30: property.elementary_school_district || "",
+    C31: property.market_area || "",
+    F31: property.junior_high_school_district || "",
+    C32: property.park_green_space || "",
+    F32: property.medical_facility || "",
+    C33: property.nearby_train_station || "",
+    F33: property.nearby_bus_stop || "",
+    C34: property.community_name || "",
+    C35: property.total_units == null ? "" : String(property.total_units),
+    C36: property.elevator_count == null ? "" : String(property.elevator_count),
+    F36: property.units_per_floor == null ? "" : String(property.units_per_floor),
+    C37: property.mortgage_setting_amount == null ? "" : String(property.mortgage_setting_amount),
+    C38: property.has_courtyard == null ? "□有" : property.has_courtyard ? "■有" : "□有",
+    F38: property.is_corner_unit == null ? "□是" : property.is_corner_unit ? "■是" : "□是",
+    C39: checkedOptions(property.exterior_materials, ["洗石子", "馬賽克", "方塊磚", "二丁掛", "玻璃帷幕", "花崗石", "原木", "其他"]),
+    C41: checkedOptions(property.building_structures, ["磚造", "加強磚造", "鋼筋混凝土RC", "鋼骨SC或鋼骨混泥土", "石材", "鋼骨鋼筋混凝土SRC", "其他建材"]),
+    A46: property.public_facility_floor_notes ? `樓層：${property.public_facility_floor_notes}` : "樓層",
+    I48: property.showing_meeting_location || "",
+    ...facilityValues
+  } satisfies Record<string, CellValue>;
+}
+
+function buildApartmentBuildingSheet(property: Property, sheetXml: string) {
+  return Object.entries(apartmentBuildingValues(property)).reduce(
+    (xmlText, [ref, value]) => replaceCell(xmlText, ref, value),
+    sheetXml
+  );
+}
+
+export async function buildPropertyExportXlsx(property: Property) {
+  if (property.property_type === "apartment" || property.property_type === "building") {
+    const templateFiles = await getApartmentBuildingTemplateFiles();
+    const files = templateFiles.map((file) => {
+      if (file.name === "xl/worksheets/sheet1.xml") {
+        return { name: file.name, content: buildApartmentBuildingSheet(property, decodeText(file.content)) };
+      }
+      return file;
+    });
+    return makeZip(files);
+  }
+
   const files = getPropertyExportTemplateFiles(property.property_type).map((file) => {
     const content = decodeBase64(file.base64);
     if (file.name === "xl/worksheets/sheet1.xml") {
