@@ -9,6 +9,21 @@ const optionalNumber = z.preprocess(
   z.coerce.number().nonnegative().optional()
 );
 
+const optionalInteger = z.preprocess(
+  (value) => value === "" || value == null ? undefined : value,
+  z.coerce.number().int().nonnegative().optional()
+);
+
+const optionalBoolean = z.preprocess(
+  (value) => {
+    if (value === "" || value == null) return undefined;
+    if (value === true || value === "true") return true;
+    if (value === false || value === "false") return false;
+    return value;
+  },
+  z.boolean().optional()
+);
+
 function normalizeDateInput(value: string) {
   const trimmed = value.trim();
   if (!trimmed) return "";
@@ -79,6 +94,43 @@ export const propertySchema = z.object({
   age: optionalNumber,
   orientation: z.string().trim().max(40).optional().or(z.literal("")),
   floor: z.string().trim().max(40).optional().or(z.literal("")),
+  building_subtype: z.enum(["huaxia", "highrise", ""]).optional(),
+  main_building_area_ping: optionalNumber,
+  auxiliary_building_area_ping: optionalNumber,
+  shared_area_ping: optionalNumber,
+  parking_area_ping: optionalNumber,
+  addition_area_ping: optionalNumber,
+  above_ground_floors: optionalInteger,
+  basement_floors: optionalInteger,
+  parking_space_features: z.array(z.enum(["平面", "機械", "上層", "下層"])).default([]),
+  parking_access_types: z.array(z.enum(["坡道", "升降"])).default([]),
+  parking_floor: z.string().trim().max(40).optional().or(z.literal("")),
+  parking_space_no: z.string().trim().max(80).optional().or(z.literal("")),
+  parking_arrangement: z.array(z.enum(["無車位", "固定車位", "車位另租", "抽籤決定", "先到先停", "排隊等候"])).default([]),
+  management_types: z.array(z.enum(["保全公司", "管理員(警衛)", "守望亭", "固定駐警", "巡守人員", "保全設施"])).default([]),
+  management_fee: optionalNumber,
+  management_fee_payment: z.enum(["月繳", "雙月繳", "季繳", "年繳", "一次繳", ""]).optional(),
+  cleaning_fee: optionalNumber,
+  market_area: z.string().trim().max(200).optional().or(z.literal("")),
+  park_green_space: z.string().trim().max(200).optional().or(z.literal("")),
+  medical_facility: z.string().trim().max(200).optional().or(z.literal("")),
+  nearby_train_station: z.string().trim().max(200).optional().or(z.literal("")),
+  nearby_bus_stop: z.string().trim().max(200).optional().or(z.literal("")),
+  community_name: z.string().trim().max(200).optional().or(z.literal("")),
+  total_units: optionalInteger,
+  elevator_count: optionalInteger,
+  units_per_floor: optionalInteger,
+  mortgage_setting_amount: optionalNumber,
+  has_courtyard: optionalBoolean,
+  is_corner_unit: optionalBoolean,
+  exterior_materials: z.array(z.enum(["洗石子", "馬賽克", "方塊磚", "二丁掛", "玻璃帷幕", "花崗石", "原木", "其他"])).default([]),
+  building_structures: z.array(z.enum(["磚造", "加強磚造", "鋼筋混凝土RC", "鋼骨SC或鋼骨混凝土", "石材", "鋼骨鋼筋混凝土SRC", "其他建材"])).default([]),
+  public_facilities: z.array(z.enum(["會議室", "獨立會客室", "閱覽室", "放映廳", "空中花園", "電腦室", "健身房", "游泳池", "兒童遊戲區", "健康步道", "圖書館", "三溫暖(SPA)", "KTV室"])).default([]),
+  public_facility_floor_notes: z.string().trim().max(500).optional().or(z.literal("")),
+  showing_key_available: optionalBoolean,
+  owner_age: optionalInteger,
+  owner_gender: z.enum(["男", "女", ""]).optional(),
+  owner_occupation: z.string().trim().max(160).optional().or(z.literal("")),
   property_type: z.enum(["townhouse", "apartment", "building", "land", "farmland", "building_land", "industrial_land", "farmhouse", "storefront", "factory", "other"]),
   highlights: z.string().trim().max(500).optional().or(z.literal("")),
   description: z.string().trim().max(8000).optional().or(z.literal("")),
@@ -160,6 +212,43 @@ export type PropertyFormValues = {
   age: string;
   orientation: string;
   floor: string;
+  building_subtype: string;
+  main_building_area_ping: string;
+  auxiliary_building_area_ping: string;
+  shared_area_ping: string;
+  parking_area_ping: string;
+  addition_area_ping: string;
+  above_ground_floors: string;
+  basement_floors: string;
+  parking_space_features: string[];
+  parking_access_types: string[];
+  parking_floor: string;
+  parking_space_no: string;
+  parking_arrangement: string[];
+  management_types: string[];
+  management_fee: string;
+  management_fee_payment: string;
+  cleaning_fee: string;
+  market_area: string;
+  park_green_space: string;
+  medical_facility: string;
+  nearby_train_station: string;
+  nearby_bus_stop: string;
+  community_name: string;
+  total_units: string;
+  elevator_count: string;
+  units_per_floor: string;
+  mortgage_setting_amount: string;
+  has_courtyard: string;
+  is_corner_unit: string;
+  exterior_materials: string[];
+  building_structures: string[];
+  public_facilities: string[];
+  public_facility_floor_notes: string;
+  showing_key_available: string;
+  owner_age: string;
+  owner_gender: string;
+  owner_occupation: string;
   property_type: string;
   highlights: string;
   description: string;
@@ -234,6 +323,43 @@ export function propertyValuesFromFormData(formData: FormData): PropertyFormValu
     age: String(formData.get("age") || ""),
     orientation: String(formData.get("orientation") || ""),
     floor: String(formData.get("floor") || ""),
+    building_subtype: String(formData.get("building_subtype") || ""),
+    main_building_area_ping: String(formData.get("main_building_area_ping") || ""),
+    auxiliary_building_area_ping: String(formData.get("auxiliary_building_area_ping") || ""),
+    shared_area_ping: String(formData.get("shared_area_ping") || ""),
+    parking_area_ping: String(formData.get("parking_area_ping") || ""),
+    addition_area_ping: String(formData.get("addition_area_ping") || ""),
+    above_ground_floors: String(formData.get("above_ground_floors") || ""),
+    basement_floors: String(formData.get("basement_floors") || ""),
+    parking_space_features: formData.getAll("parking_space_features").map(String).filter(Boolean),
+    parking_access_types: formData.getAll("parking_access_types").map(String).filter(Boolean),
+    parking_floor: String(formData.get("parking_floor") || ""),
+    parking_space_no: String(formData.get("parking_space_no") || ""),
+    parking_arrangement: formData.getAll("parking_arrangement").map(String).filter(Boolean),
+    management_types: formData.getAll("management_types").map(String).filter(Boolean),
+    management_fee: String(formData.get("management_fee") || ""),
+    management_fee_payment: String(formData.get("management_fee_payment") || ""),
+    cleaning_fee: String(formData.get("cleaning_fee") || ""),
+    market_area: String(formData.get("market_area") || ""),
+    park_green_space: String(formData.get("park_green_space") || ""),
+    medical_facility: String(formData.get("medical_facility") || ""),
+    nearby_train_station: String(formData.get("nearby_train_station") || ""),
+    nearby_bus_stop: String(formData.get("nearby_bus_stop") || ""),
+    community_name: String(formData.get("community_name") || ""),
+    total_units: String(formData.get("total_units") || ""),
+    elevator_count: String(formData.get("elevator_count") || ""),
+    units_per_floor: String(formData.get("units_per_floor") || ""),
+    mortgage_setting_amount: String(formData.get("mortgage_setting_amount") || ""),
+    has_courtyard: String(formData.get("has_courtyard") || ""),
+    is_corner_unit: String(formData.get("is_corner_unit") || ""),
+    exterior_materials: formData.getAll("exterior_materials").map(String).filter(Boolean),
+    building_structures: formData.getAll("building_structures").map(String).filter(Boolean),
+    public_facilities: formData.getAll("public_facilities").map(String).filter(Boolean),
+    public_facility_floor_notes: String(formData.get("public_facility_floor_notes") || ""),
+    showing_key_available: String(formData.get("showing_key_available") || ""),
+    owner_age: String(formData.get("owner_age") || ""),
+    owner_gender: String(formData.get("owner_gender") || ""),
+    owner_occupation: String(formData.get("owner_occupation") || ""),
     property_type: String(formData.get("property_type") || "townhouse"),
     highlights: String(formData.get("highlights") || ""),
     description: String(formData.get("description") || ""),
@@ -324,6 +450,43 @@ export function toPropertyPayload(input: PropertyFormInput) {
     age: input.age ?? null,
     orientation: emptyToNull(input.orientation || ""),
     floor: emptyToNull(input.floor || ""),
+    building_subtype: emptyToNull(input.building_subtype || ""),
+    main_building_area_ping: input.main_building_area_ping ?? null,
+    auxiliary_building_area_ping: input.auxiliary_building_area_ping ?? null,
+    shared_area_ping: input.shared_area_ping ?? null,
+    parking_area_ping: input.parking_area_ping ?? null,
+    addition_area_ping: input.addition_area_ping ?? null,
+    above_ground_floors: input.above_ground_floors ?? null,
+    basement_floors: input.basement_floors ?? null,
+    parking_space_features: input.parking_space_features,
+    parking_access_types: input.parking_access_types,
+    parking_floor: emptyToNull(input.parking_floor || ""),
+    parking_space_no: emptyToNull(input.parking_space_no || ""),
+    parking_arrangement: input.parking_arrangement,
+    management_types: input.management_types,
+    management_fee: input.management_fee ?? null,
+    management_fee_payment: emptyToNull(input.management_fee_payment || ""),
+    cleaning_fee: input.cleaning_fee ?? null,
+    market_area: emptyToNull(input.market_area || ""),
+    park_green_space: emptyToNull(input.park_green_space || ""),
+    medical_facility: emptyToNull(input.medical_facility || ""),
+    nearby_train_station: emptyToNull(input.nearby_train_station || ""),
+    nearby_bus_stop: emptyToNull(input.nearby_bus_stop || ""),
+    community_name: emptyToNull(input.community_name || ""),
+    total_units: input.total_units ?? null,
+    elevator_count: input.elevator_count ?? null,
+    units_per_floor: input.units_per_floor ?? null,
+    mortgage_setting_amount: input.mortgage_setting_amount ?? null,
+    has_courtyard: input.has_courtyard ?? null,
+    is_corner_unit: input.is_corner_unit ?? null,
+    exterior_materials: input.exterior_materials,
+    building_structures: input.building_structures,
+    public_facilities: input.public_facilities,
+    public_facility_floor_notes: emptyToNull(input.public_facility_floor_notes || ""),
+    showing_key_available: input.showing_key_available ?? null,
+    owner_age: input.owner_age ?? null,
+    owner_gender: emptyToNull(input.owner_gender || ""),
+    owner_occupation: emptyToNull(input.owner_occupation || ""),
     highlights: highlightsToArray(input.highlights),
     description: emptyToNull(input.description || ""),
     seo_title: emptyToNull(input.seo_title || ""),
