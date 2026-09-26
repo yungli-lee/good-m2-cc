@@ -357,12 +357,13 @@ function apartmentBuildingValues(property: Property) {
     A47: "健身房",
     B47: "游泳池",
     C47: "兒童遊戲區",
-    D47: "健康步道",
+    D47: "健康步",
     E47: "圖書館",
     F47: "三溫暖(SPA)",
     G47: "KTV室"
   };
   const selectedFacilities = new Set(property.public_facilities || []);
+  if (selectedFacilities.has("健康步道")) selectedFacilities.add("健康步");
   const facilityValues = Object.fromEntries(
     Object.entries(facilityCells).map(([ref, label]) => [ref, `${selectedFacilities.has(label) ? "■" : "□"}${label}`])
   );
@@ -426,7 +427,7 @@ function apartmentBuildingValues(property: Property) {
     C38: property.has_courtyard == null ? "□有" : property.has_courtyard ? "■有" : "□有",
     F38: property.is_corner_unit == null ? "□是" : property.is_corner_unit ? "■是" : "□是",
     C39: checkedOptions(property.exterior_materials, ["洗石子", "馬賽克", "方塊磚", "二丁掛", "玻璃帷幕", "花崗石", "原木", "其他"]),
-    C41: checkedOptions(property.building_structures, ["磚造", "加強磚造", "鋼筋混凝土RC", "鋼骨SC或鋼骨混凝土", "石材", "鋼骨鋼筋混凝土SRC", "其他建材"]),
+    C41: checkedOptions(property.building_structures, ["磚造", "加強磚造", "鋼筋混凝土RC", "鋼骨SC或鋼骨混泥土", "石材", "鋼骨鋼筋混凝土SRC", "其他建材"]),
     A46: property.public_facility_floor_notes ? `樓層：${property.public_facility_floor_notes}` : "樓層",
     I48: property.showing_meeting_location || "",
     ...facilityValues
