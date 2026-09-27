@@ -169,8 +169,23 @@ export default async function PropertyDetailPage({ params }: Props) {
 
   const isApartmentBuilding = property.property_type === "apartment" || property.property_type === "building";
   const buildingFacts = isApartmentBuilding ? [
+    ["型態", publicBuildingTypeLabel(property)],
+    ["社區／大樓", property.community_name || ""],
+    ["所在樓層", property.floor || ""],
+    ["地上樓層", formatPublicNumber(property.above_ground_floors, " 樓")],
+    ["地下樓層", formatPublicNumber(property.basement_floors, " 樓")],
+    ["總建坪", formatPublicPing(property.building_area_ping) || ""],
     ["主建物", formatPublicPing(property.main_building_area_ping) || ""],
     ["附屬建物", formatPublicPing(property.auxiliary_building_area_ping) || ""],
+    ["公設", formatPublicPing(property.shared_area_ping) || ""],
+    ["車位坪數", formatPublicPing(property.parking_area_ping) || ""],
+    ["格局", property.layout || ""],
+    ["座向", property.orientation || ""],
+    ["現況用途", joinPublicValues(property.current_usage)],
+    ["完工日期", property.completion_date || ""],
+    ["總戶數", formatPublicNumber(property.total_units, " 戶")],
+    ["電梯數", formatPublicNumber(property.elevator_count, " 部")],
+    ["每層戶數", formatPublicNumber(property.units_per_floor, " 戶")],
     ["車位方式", joinPublicValues(property.parking_arrangement)],
     ["管理費", property.management_fee == null ? "" : `${formatPublicNumber(property.management_fee)} 元`]
   ].filter(([, value]) => Boolean(value)) : [];
