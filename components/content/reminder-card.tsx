@@ -23,7 +23,7 @@ export function ReminderCard({ page }: { page: Reminder }) {
         <p className="eyebrow">阿勇生活小提醒</p>
         <h3>{page.title}</h3>
         {page.subtitle ? <p className="muted property-retention-reminder-summary">{page.subtitle}</p> : null}
-        <Link className="button ghost" href={`/${page.page_key}`}>看小提醒</Link>
+        <Link className="button ghost" href={`/reminders/${page.page_key}`}>看小提醒</Link>
       </div>
     </article>
   );
