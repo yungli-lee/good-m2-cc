@@ -3,11 +3,16 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getPublicCompanySettings } from "@/lib/company-settings";
 import { formatPublicPing, formatPrice, isLandProperty, propertyTypeLabel } from "@/lib/format";
-import { getPublishedPropertyBySlug, getPublicPropertyAvailability } from "@/lib/properties/queries";
+import { getPublishedPropertyBySlug, getPublicPropertyAvailability, listRelatedPublishedProperties } from "@/lib/properties/queries";
 import { resolvePropertySeo } from "@/lib/properties/seo";
 import type { Property } from "@/lib/properties/types";
 import { PropertyMediaGallery } from "@/components/media/property-media-gallery";
 import { PropertyViewTracker } from "@/components/analytics/content-trackers";
+import { PropertyCard } from "@/components/properties/property-card";
+import { KnowledgeCard } from "@/components/content/knowledge-card";
+import { ReminderCard } from "@/components/content/reminder-card";
+import { listRelatedKnowledgeForProperty } from "@/lib/content/queries";
+import { listPublishedReminderPages } from "@/lib/home-cms/queries";
 
 export const runtime = "edge";
 
@@ -91,6 +96,12 @@ export default async function PropertyDetailPage({ params }: Props) {
     ["LINE", companySettings.line_url]
   ].filter(([, href]) => href);
   const media = property.property_media?.filter((item) => !item.deleted_at) || [];
+
+  const [relatedProperties, relatedKnowledge, reminderPages] = await Promise.all([
+    listRelatedPublishedProperties(property, 3),
+    listRelatedKnowledgeForProperty(property.property_type, 3),
+    listPublishedReminderPages(3)
+  ]);
 
   const renderCompanyInfo = () => (
     <section className="company-info-panel" aria-label="公司資訊">
@@ -229,6 +240,67 @@ export default async function PropertyDetailPage({ params }: Props) {
     </>
   );
 
+  const renderRetentionModules = (idPrefix: string) => (
+    <div className="property-retention">
+      {relatedProperties.length ? (
+        <section className="property-retention-section" aria-labelledby={`${idPrefix}-related-properties-heading`}>
+          <div className="property-retention-heading">
+            <p className="eyebrow">Keep Exploring</p>
+            <h2 id={`${idPrefix}-related-properties-heading`}>你可能也會喜歡</h2>
+            <p className="muted">依地區、類型與價格條件，挑幾件可以一起比較的物件。</p>
+          </div>
+          <div className="grid property-retention-grid">
+            {relatedProperties.map((item) => <PropertyCard key={item.id} property={item} />)}
+          </div>
+          <div className="property-retention-more">
+            <Link className="button ghost" href="/properties">看更多物件</Link>
+          </div>
+        </section>
+      ) : null}
+
+      {relatedKnowledge.length ? (
+        <section className="property-retention-section" aria-labelledby={`${idPrefix}-related-knowledge-heading`}>
+          <div className="property-retention-heading">
+            <p className="eyebrow">延伸閱讀</p>
+            <h2 id={`${idPrefix}-related-knowledge-heading`}>買屋前可以先看看</h2>
+            <p className="muted">看屋之外，也把貸款、交易安全與相關不動產知識先掌握起來。</p>
+          </div>
+          <div className="grid property-retention-grid">
+            {relatedKnowledge.map((item) => <KnowledgeCard key={item.id} item={item} />)}
+          </div>
+          <div className="property-retention-more">
+            <Link className="button ghost" href="/knowledge">前往知識庫</Link>
+          </div>
+        </section>
+      ) : null}
+
+      {reminderPages.length ? (
+        <section className="property-retention-section" aria-labelledby={`${idPrefix}-life-reminders-heading`}>
+          <div className="property-retention-heading">
+            <p className="eyebrow">Life Notes</p>
+            <h2 id={`${idPrefix}-life-reminders-heading`}>阿勇生活小提醒</h2>
+            <p className="muted">房子的事之外，也整理一些居家生活中真正用得到的小提醒。</p>
+          </div>
+          <div className="grid property-retention-grid">
+            {reminderPages.map((page) => <ReminderCard key={page.id} page={page} />)}
+          </div>
+        </section>
+      ) : null}
+
+      <section className="property-retention-cta">
+        <div>
+          <p className="eyebrow">想再多了解一點？</p>
+          <h2>看中哪一間，阿勇再幫你把重點說清楚。</h2>
+          <p>價格、屋況、帶看安排或其他物件，都可以直接問。</p>
+        </div>
+        <div className="actions">
+          {companySettings.line_url ? <a className="button" href={companySettings.line_url} target="_blank" rel="noreferrer">LINE 阿勇諮詢</a> : null}
+          <Link className="button secondary" href="/#service-form">填寫服務表單</Link>
+        </div>
+      </section>
+    </div>
+  );
+
   return (
     <main data-property-id={property.id}>
       <PropertyViewTracker propertyId={property.id} properties={{
@@ -256,6 +328,11 @@ export default async function PropertyDetailPage({ params }: Props) {
             {renderPropertyCopy()}
           </div>
         </section> : null}
+        <section className="section property-retention-shell">
+          <div className="container">
+            {renderRetentionModules("desktop")}
+          </div>
+        </section>
       </div>
 
       <section className="section property-detail-mobile" aria-label="物件詳細資料">
@@ -276,6 +353,9 @@ export default async function PropertyDetailPage({ params }: Props) {
           </div>
           <div data-mobile-section="media">
             <PropertyMediaGallery media={media} title={property.title} propertyId={property.id} display="details" />
+          </div>
+          <div data-mobile-section="retention">
+            {renderRetentionModules("mobile")}
           </div>
           <div data-mobile-section="company" className="card property-detail-mobile-company">
             <div className="card-body">
