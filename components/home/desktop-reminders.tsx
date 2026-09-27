@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { useRef, useState } from "react";
-import { MarkdownContent } from "@/components/home/markdown-content";
 import { DeliveredImage } from "@/components/media/delivered-image";
 import type { SitePage } from "@/lib/home-cms/types";
 
@@ -24,7 +23,7 @@ export function DesktopReminders({ pages }: { pages: Reminder[] }) {
       <Link className="life-note-card-cover-link" href={`/reminders/${page.page_key}`} aria-label={`閱讀：${page.title}`}>
         {page.media_public_url ? <DeliveredImage className="life-note-card-image" sourceUrl={page.media_public_url} tier="card" sizes="(min-width: 901px) calc(45vw - 20px), 1px" alt={page.title} loading="lazy" /> : <div className="life-note-card-image life-note-card-placeholder" aria-hidden="true"><span>Life Notes</span></div>}
       </Link>
-      <div className="life-note-card-content"><h3><Link href={`/reminders/${page.page_key}`}>{page.title}</Link></h3>{page.subtitle ? <p>{page.subtitle}</p> : null}<div className="life-note-card-body"><MarkdownContent value={page.markdown_content} /></div><Link className="button ghost life-note-read-more" href={`/reminders/${page.page_key}`}>閱讀完整內容</Link></div>
+      <div className="life-note-card-content"><h3><Link href={`/reminders/${page.page_key}`}>{page.title}</Link></h3>{page.subtitle ? <p>{page.subtitle}</p> : null}<Link className="button ghost life-note-read-more" href={`/reminders/${page.page_key}`}>閱讀全文</Link></div>
     </article>)}</div>
     {pages.length > 4 ? <div className="reminder-more-actions" ref={actionsRef}>{visibleCount < pages.length ? <button className="button" type="button" onClick={() => setVisibleCount((count) => Math.min(count + 4, pages.length))}>顯示更多</button> : <button className="button ghost" type="button" onClick={collapseReminders}>收合提醒</button>}</div> : null}
   </>;
