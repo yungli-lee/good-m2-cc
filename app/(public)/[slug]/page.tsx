@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { MarkdownContent } from "@/components/home/markdown-content";
 import { getPublicCompanySettings } from "@/lib/company-settings";
 import { getPublishedSitePageBySlug } from "@/lib/home-cms/queries";
@@ -60,6 +60,7 @@ export default async function PublicSitePage({ params }: Props) {
 
   const { data: page, error } = await getPublishedSitePageBySlug(slug);
   if (error || !page) notFound();
+  if (page.page_type === "reminder") redirect(`/reminders/${page.page_key}`);
 
   const image = pageImage(page);
 
