@@ -169,6 +169,25 @@ export async function getLatestPublishedProperties(limit = 12) {
     .limit(limit);
 }
 
+export async function listRetentionPublishedProperties(limit = 3) {
+  const supabase = await createSupabaseServerClient();
+  const query = publishedPropertiesQuery(supabase, featuredPropertySelect);
+  const { data, error } = await query
+    .order("sort_order", { referencedTable: "property_media", ascending: true })
+    .order("created_at", { referencedTable: "property_media", ascending: true })
+    .order("id", { referencedTable: "property_media", ascending: true })
+    .order("is_featured", { ascending: false })
+    .order("published_at", { ascending: false })
+    .order("updated_at", { ascending: false })
+    .limit(Math.max(0, limit));
+
+  if (error) {
+    console.error("retention_properties_failed", { code: error.code, message: error.message });
+    return [] as Property[];
+  }
+  return (data || []) as unknown as Property[];
+}
+
 export async function getPublishedPropertyBySlug(slug: string) {
   const supabase = await createSupabaseServerClient();
   const query = publishedPropertiesQuery(supabase, publicPropertySelect);
