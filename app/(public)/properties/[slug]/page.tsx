@@ -240,13 +240,13 @@ export default async function PropertyDetailPage({ params }: Props) {
     </>
   );
 
-  const renderRetentionModules = () => (
+  const renderRetentionModules = (idPrefix: string) => (
     <div className="property-retention">
       {relatedProperties.length ? (
-        <section className="property-retention-section" aria-labelledby="related-properties-heading">
+        <section className="property-retention-section" aria-labelledby={`${idPrefix}-related-properties-heading`}>
           <div className="property-retention-heading">
             <p className="eyebrow">Keep Exploring</p>
-            <h2 id="related-properties-heading">你可能也會喜歡</h2>
+            <h2 id={`${idPrefix}-related-properties-heading`}>你可能也會喜歡</h2>
             <p className="muted">依地區、類型與價格條件，挑幾件可以一起比較的物件。</p>
           </div>
           <div className="grid property-retention-grid">
@@ -259,10 +259,10 @@ export default async function PropertyDetailPage({ params }: Props) {
       ) : null}
 
       {relatedKnowledge.length ? (
-        <section className="property-retention-section" aria-labelledby="related-knowledge-heading">
+        <section className="property-retention-section" aria-labelledby={`${idPrefix}-related-knowledge-heading`}>
           <div className="property-retention-heading">
             <p className="eyebrow">延伸閱讀</p>
-            <h2 id="related-knowledge-heading">買屋前可以先看看</h2>
+            <h2 id={`${idPrefix}-related-knowledge-heading`}>買屋前可以先看看</h2>
             <p className="muted">看屋之外，也把貸款、交易安全與相關不動產知識先掌握起來。</p>
           </div>
           <div className="grid property-retention-grid">
@@ -275,10 +275,10 @@ export default async function PropertyDetailPage({ params }: Props) {
       ) : null}
 
       {reminderPages.length ? (
-        <section className="property-retention-section" aria-labelledby="life-reminders-heading">
+        <section className="property-retention-section" aria-labelledby={`${idPrefix}-life-reminders-heading`}>
           <div className="property-retention-heading">
             <p className="eyebrow">Life Notes</p>
-            <h2 id="life-reminders-heading">阿勇生活小提醒</h2>
+            <h2 id={`${idPrefix}-life-reminders-heading`}>阿勇生活小提醒</h2>
             <p className="muted">房子的事之外，也整理一些居家生活中真正用得到的小提醒。</p>
           </div>
           <div className="grid property-retention-grid">
@@ -318,7 +318,7 @@ export default async function PropertyDetailPage({ params }: Props) {
         </section> : null}
         <section className="section property-retention-shell">
           <div className="container">
-            {renderRetentionModules()}
+            {renderRetentionModules("desktop")}
           </div>
         </section>
       </div>
@@ -343,7 +343,7 @@ export default async function PropertyDetailPage({ params }: Props) {
             <PropertyMediaGallery media={media} title={property.title} propertyId={property.id} display="details" />
           </div>
           <div data-mobile-section="retention">
-            {renderRetentionModules()}
+            {renderRetentionModules("mobile")}
           </div>
           <div data-mobile-section="company" className="card property-detail-mobile-company">
             <div className="card-body">
