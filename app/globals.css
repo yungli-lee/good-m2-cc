@@ -1127,6 +1127,27 @@ td {
   margin-top: 14px;
 }
 
+.property-retention-reminder-link,
+.property-retention-reminder-title-link {
+  color: inherit;
+  text-decoration: none;
+}
+
+.property-retention-reminder-title-link:hover,
+.property-retention-reminder-title-link:focus-visible {
+  color: #9a6a1f;
+}
+
+.life-note-mobile-actions {
+  display: flex;
+  justify-content: flex-end;
+  padding: 0 14px 12px;
+}
+
+.life-note-mobile-actions .button {
+  width: 100%;
+}
+
 .reminder-detail-header {
   margin-top: 24px;
 }
