@@ -240,6 +240,55 @@ export default async function PropertyDetailPage({ params }: Props) {
     </>
   );
 
+  const renderRetentionModules = () => (
+    <div className="property-retention">
+      {relatedProperties.length ? (
+        <section className="property-retention-section" aria-labelledby="related-properties-heading">
+          <div className="property-retention-heading">
+            <p className="eyebrow">Keep Exploring</p>
+            <h2 id="related-properties-heading">你可能也會喜歡</h2>
+            <p className="muted">依地區、類型與價格條件，挑幾件可以一起比較的物件。</p>
+          </div>
+          <div className="grid property-retention-grid">
+            {relatedProperties.map((item) => <PropertyCard key={item.id} property={item} />)}
+          </div>
+          <div className="property-retention-more">
+            <Link className="button ghost" href="/properties">看更多物件</Link>
+          </div>
+        </section>
+      ) : null}
+
+      {relatedKnowledge.length ? (
+        <section className="property-retention-section" aria-labelledby="related-knowledge-heading">
+          <div className="property-retention-heading">
+            <p className="eyebrow">延伸閱讀</p>
+            <h2 id="related-knowledge-heading">買屋前可以先看看</h2>
+            <p className="muted">看屋之外，也把貸款、交易安全與相關不動產知識先掌握起來。</p>
+          </div>
+          <div className="grid property-retention-grid">
+            {relatedKnowledge.map((item) => <KnowledgeCard key={item.id} item={item} />)}
+          </div>
+          <div className="property-retention-more">
+            <Link className="button ghost" href="/knowledge">前往知識庫</Link>
+          </div>
+        </section>
+      ) : null}
+
+      {reminderPages.length ? (
+        <section className="property-retention-section" aria-labelledby="life-reminders-heading">
+          <div className="property-retention-heading">
+            <p className="eyebrow">Life Notes</p>
+            <h2 id="life-reminders-heading">阿勇生活小提醒</h2>
+            <p className="muted">房子的事之外，也整理一些居家生活中真正用得到的小提醒。</p>
+          </div>
+          <div className="grid property-retention-grid">
+            {reminderPages.map((page) => <ReminderCard key={page.id} page={page} />)}
+          </div>
+        </section>
+      ) : null}
+    </div>
+  );
+
   return (
     <main data-property-id={property.id}>
       <PropertyViewTracker propertyId={property.id} properties={{
