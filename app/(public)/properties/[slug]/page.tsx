@@ -3,11 +3,16 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getPublicCompanySettings } from "@/lib/company-settings";
 import { formatPublicPing, formatPrice, isLandProperty, propertyTypeLabel } from "@/lib/format";
-import { getPublishedPropertyBySlug, getPublicPropertyAvailability } from "@/lib/properties/queries";
+import { getPublishedPropertyBySlug, getPublicPropertyAvailability, listRelatedPublishedProperties } from "@/lib/properties/queries";
 import { resolvePropertySeo } from "@/lib/properties/seo";
 import type { Property } from "@/lib/properties/types";
 import { PropertyMediaGallery } from "@/components/media/property-media-gallery";
 import { PropertyViewTracker } from "@/components/analytics/content-trackers";
+import { PropertyCard } from "@/components/properties/property-card";
+import { KnowledgeCard } from "@/components/content/knowledge-card";
+import { ReminderCard } from "@/components/content/reminder-card";
+import { listRelatedKnowledgeForProperty } from "@/lib/content/queries";
+import { listPublishedReminderPages } from "@/lib/home-cms/queries";
 
 export const runtime = "edge";
 
@@ -91,6 +96,12 @@ export default async function PropertyDetailPage({ params }: Props) {
     ["LINE", companySettings.line_url]
   ].filter(([, href]) => href);
   const media = property.property_media?.filter((item) => !item.deleted_at) || [];
+
+  const [relatedProperties, relatedKnowledge, reminderPages] = await Promise.all([
+    listRelatedPublishedProperties(property, 3),
+    listRelatedKnowledgeForProperty(property.property_type, 3),
+    listPublishedReminderPages(3)
+  ]);
 
   const renderCompanyInfo = () => (
     <section className="company-info-panel" aria-label="公司資訊">
