@@ -17,6 +17,25 @@ type Props = {
 
 export const dynamic = "force-dynamic";
 
+function publicBuildingTypeLabel(property: Property) {
+  if (property.property_type === "apartment") return "無電梯公寓";
+  if (property.property_type === "building") {
+    if (property.building_subtype === "huaxia") return "華廈";
+    if (property.building_subtype === "highrise") return "大樓";
+  }
+  return propertyTypeLabel(property.property_type);
+}
+
+function formatPublicNumber(value?: number | null, suffix = "") {
+  if (value == null) return "";
+  return `${Number(value).toLocaleString("zh-TW", { maximumFractionDigits: 3 })}${suffix}`;
+}
+
+function joinPublicValues(values?: string[] | null) {
+  return (values || []).filter(Boolean).join("、");
+}
+
+
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const [{ data }, company, availabilityResult] = await Promise.all([
@@ -128,7 +147,7 @@ export default async function PropertyDetailPage({ params }: Props) {
         <h1 style={{ marginTop: 0 }}>{property.title}</h1>
         <div className="price">{formatPrice(property.price)}</div>
         <p>{property.address_public || "地址洽詢"}</p>
-        <p>類型：{propertyTypeLabel(property.property_type)}</p>
+        <p>類型：{publicBuildingTypeLabel(property)}</p>
         {formatPublicPing(property.land_area_ping) ? <p>土地：{formatPublicPing(property.land_area_ping)}</p> : null}
         {formatPublicPing(property.building_area_ping) ? <p>建物：{formatPublicPing(property.building_area_ping)}</p> : null}
         {!isLandProperty(property.property_type) && property.layout ? <p>格局：{property.layout}</p> : null}
@@ -146,6 +165,112 @@ export default async function PropertyDetailPage({ params }: Props) {
       </div>
     </aside>
   );
+
+
+  const isApartmentBuilding = property.property_type === "apartment" || property.property_type === "building";
+  const buildingFacts = isApartmentBuilding ? [
+    ["型態", publicBuildingTypeLabel(property)],
+    ["社區／大樓", property.community_name || ""],
+    ["所在樓層", property.floor || ""],
+    ["地上樓層", formatPublicNumber(property.above_ground_floors, " 樓")],
+    ["地下樓層", formatPublicNumber(property.basement_floors, " 樓")],
+    ["總建坪", formatPublicPing(property.building_area_ping) || ""],
+    ["主建物", formatPublicPing(property.main_building_area_ping) || ""],
+    ["附屬建物", formatPublicPing(property.auxiliary_building_area_ping) || ""],
+    ["公設", formatPublicPing(property.shared_area_ping) || ""],
+    ["車位坪數", formatPublicPing(property.parking_area_ping) || ""],
+    ["加建", formatPublicPing(property.addition_area_ping) || ""],
+    ["格局", property.layout || ""],
+    ["座向", property.orientation || ""],
+    ["現況用途", joinPublicValues(property.current_usage)],
+    ["完工日期", property.completion_date || ""],
+    ["總戶數", formatPublicNumber(property.total_units, " 戶")],
+    ["電梯數", formatPublicNumber(property.elevator_count, " 部")],
+    ["每層戶數", formatPublicNumber(property.units_per_floor, " 戶")]
+  ].filter(([, value]) => Boolean(value)) : [];
+
+  const parkingManagementFacts = isApartmentBuilding ? [
+    ["車位型式", joinPublicValues(property.parking_space_features)],
+    ["車道", joinPublicValues(property.parking_access_types)],
+    ["車位樓層", property.parking_floor || ""],
+    ["車位編號", property.parking_space_no || ""],
+    ["車位方式", joinPublicValues(property.parking_arrangement)],
+    ["管理方式", joinPublicValues(property.management_types)],
+    ["管理費", property.management_fee == null ? "" : `${formatPublicNumber(property.management_fee)} 元`],
+    ["繳費方式", property.management_fee_payment || ""],
+    ["清潔費", property.cleaning_fee == null ? "" : `${formatPublicNumber(property.cleaning_fee)} 元`]
+  ].filter(([, value]) => Boolean(value)) : [];
+
+  const neighborhoodFacts = isApartmentBuilding ? [
+    ["路寬", property.road_width == null ? "" : `${formatPublicNumber(property.road_width)} 米`],
+    ["國小學區", property.elementary_school_district || ""],
+    ["國中學區", property.junior_high_school_district || ""],
+    ["市場商圈", property.market_area || ""],
+    ["公園／綠地", property.park_green_space || ""],
+    ["醫療機構", property.medical_facility || ""],
+    ["鄰近火車站", property.nearby_train_station || ""],
+    ["鄰近公車站", property.nearby_bus_stop || ""],
+    ["中庭", property.has_courtyard == null ? "" : property.has_courtyard ? "有" : "無"],
+    ["邊間", property.is_corner_unit == null ? "" : property.is_corner_unit ? "是" : "否"],
+    ["外牆材質", joinPublicValues(property.exterior_materials)],
+    ["建物結構", joinPublicValues(property.building_structures)]
+  ].filter(([, value]) => Boolean(value)) : [];
+
+  const publicFacilities = isApartmentBuilding ? joinPublicValues(property.public_facilities) : "";
+
+  const renderBuildingDetails = () => {
+    if (!isApartmentBuilding || (!buildingFacts.length && !parkingManagementFacts.length && !neighborhoodFacts.length && !publicFacilities)) return null;
+
+    const renderFacts = (facts: string[][]) => (
+      <dl className="property-facts-grid">
+        {facts.map(([label, value]) => (
+          <div key={label}>
+            <dt>{label}</dt>
+            <dd>{value}</dd>
+          </div>
+        ))}
+      </dl>
+    );
+
+    return (
+      <section className="property-building-details" aria-label="公寓華廈大樓詳細資料">
+        <div className="property-building-details-header">
+          <p className="eyebrow">Building Details</p>
+          <h2>建物與社區資訊</h2>
+          <p className="muted">有填寫的資料才顯示，方便快速掌握公寓、華廈與大樓的重要條件。</p>
+        </div>
+
+        {buildingFacts.length ? (
+          <div className="property-building-detail-group">
+            <h3>建物基本資料</h3>
+            {renderFacts(buildingFacts as string[][])}
+          </div>
+        ) : null}
+
+        {parkingManagementFacts.length ? (
+          <div className="property-building-detail-group">
+            <h3>車位與管理</h3>
+            {renderFacts(parkingManagementFacts as string[][])}
+          </div>
+        ) : null}
+
+        {neighborhoodFacts.length ? (
+          <div className="property-building-detail-group">
+            <h3>社區與周邊</h3>
+            {renderFacts(neighborhoodFacts as string[][])}
+          </div>
+        ) : null}
+
+        {publicFacilities ? (
+          <div className="property-building-detail-group">
+            <h3>公共設施</h3>
+            <p className="property-building-facilities">{publicFacilities}</p>
+            {property.public_facility_floor_notes ? <p className="muted">設施樓層：{property.public_facility_floor_notes}</p> : null}
+          </div>
+        ) : null}
+      </section>
+    );
+  };
 
   const highlightsText = (property.highlights || []).join("\n");
 
@@ -183,6 +308,11 @@ export default async function PropertyDetailPage({ params }: Props) {
             {renderPropertySummary(true)}
           </div>
         </section>
+        {isApartmentBuilding ? <section className="section property-building-details-section">
+          <div className="container">
+            {renderBuildingDetails()}
+          </div>
+        </section> : null}
         {(highlightsText.trim() || property.description?.trim()) ? <section className="section">
           <div className="container">
             {renderPropertyCopy()}
@@ -198,6 +328,11 @@ export default async function PropertyDetailPage({ params }: Props) {
           <div data-mobile-section="summary">
             {renderPropertySummary(false)}
           </div>
+          {isApartmentBuilding ? (
+            <div data-mobile-section="building-details">
+              {renderBuildingDetails()}
+            </div>
+          ) : null}
           <div data-mobile-section="copy" className="property-detail-mobile-copy">
             {renderPropertyCopy()}
           </div>
