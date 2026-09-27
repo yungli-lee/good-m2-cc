@@ -286,6 +286,18 @@ export default async function PropertyDetailPage({ params }: Props) {
           </div>
         </section>
       ) : null}
+
+      <section className="property-retention-cta">
+        <div>
+          <p className="eyebrow">想再多了解一點？</p>
+          <h2>看中哪一間，阿勇再幫你把重點說清楚。</h2>
+          <p>價格、屋況、帶看安排或其他物件，都可以直接問。</p>
+        </div>
+        <div className="actions">
+          {companySettings.line_url ? <a className="button" href={companySettings.line_url} target="_blank" rel="noreferrer">LINE 阿勇諮詢</a> : null}
+          <Link className="button secondary" href="/#service-form">填寫服務表單</Link>
+        </div>
+      </section>
     </div>
   );
 
