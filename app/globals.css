@@ -1054,12 +1054,11 @@ td {
 .property-facts-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 1px;
   margin: 0;
   overflow: hidden;
   border: 1px solid rgba(16, 35, 67, 0.1);
   border-radius: 8px;
-  background: rgba(16, 35, 67, 0.08);
+  background: #fff;
 }
 
 .property-facts-grid > div {
@@ -1067,7 +1066,13 @@ td {
   gap: 3px;
   min-width: 0;
   padding: 12px 14px;
+  border-right: 1px solid rgba(16, 35, 67, 0.1);
+  border-bottom: 1px solid rgba(16, 35, 67, 0.1);
   background: #fff;
+}
+
+.property-facts-grid > div:nth-child(3n) {
+  border-right: 0;
 }
 
 .property-facts-grid dt {
