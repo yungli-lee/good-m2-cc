@@ -323,3 +323,51 @@ export async function getPublicKnowledgeBySlug(slug: string) {
   if (error) console.error("public_knowledge_item_failed", { code: error.code, message: error.message });
   return { data: data as unknown as ContentItem | null, error };
 }
+
+function knowledgeCategoryPriorityForProperty(propertyType: string) {
+  switch (propertyType) {
+    case "land":
+    case "building_land":
+      return ["land-building", "tax", "transaction-safety", "buying"];
+    case "farmland":
+      return ["farmland", "tax", "transaction-safety", "land-building"];
+    case "farmhouse":
+      return ["farmhouse", "farmland", "tax", "transaction-safety"];
+    case "factory":
+    case "industrial_land":
+      return ["industrial-property", "land-building", "transaction-safety", "tax"];
+    case "apartment":
+    case "building":
+    case "townhouse":
+    case "storefront":
+      return ["buying", "mortgage", "transaction-safety", "tax"];
+    default:
+      return ["buying", "transaction-safety", "mortgage", "tax"];
+  }
+}
+
+export async function listRelatedKnowledgeForProperty(propertyType: string, limit = 3) {
+  const supabase = await createSupabaseServerClient();
+  const { data, error } = await publicKnowledgeQuery(supabase)
+    .order("published_at", { ascending: false })
+    .order("updated_at", { ascending: false })
+    .limit(30);
+
+  if (error) {
+    console.error("related_knowledge_failed", { code: error.code, message: error.message, propertyType });
+    return [] as ContentItem[];
+  }
+
+  const priorities = knowledgeCategoryPriorityForProperty(propertyType);
+  return ((data || []) as unknown as ContentItem[])
+    .map((item, index) => {
+      const category = item.content_categories?.slug || "";
+      const categoryIndex = priorities.indexOf(category);
+      const categoryScore = categoryIndex < 0 ? 0 : (priorities.length - categoryIndex) * 100;
+      const featuredScore = item.is_featured ? 15 : 0;
+      return { item, score: categoryScore + featuredScore - index };
+    })
+    .sort((left, right) => right.score - left.score)
+    .slice(0, Math.max(0, limit))
+    .map(({ item }) => item);
+}
