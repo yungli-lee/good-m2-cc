@@ -103,6 +103,46 @@ export async function listPublishedReminderPages(limit = 3) {
   return ((data || []) as SitePage[]).map((page) => withPublicUrl(supabase, page));
 }
 
+export async function getPublishedReminderBySlug(slug: string) {
+  const supabase = await createSupabaseServerClient();
+  const { data, error } = await supabase
+    .from("site_pages")
+    .select(sitePageSelect)
+    .eq("page_type", "reminder")
+    .eq("page_key", slug)
+    .eq("status", "published")
+    .is("archived_at", null)
+    .maybeSingle();
+
+  if (error) {
+    console.error("published_reminder_failed", { code: error.code, message: error.message, slug });
+    return { data: null as (SitePage & { media_public_url: string | null }) | null, error };
+  }
+
+  return { data: data ? withPublicUrl(supabase, data as SitePage) : null, error: null };
+}
+
+export async function listRelatedPublishedReminderPages(currentPageKey: string, limit = 3) {
+  const supabase = await createSupabaseServerClient();
+  const { data, error } = await supabase
+    .from("site_pages")
+    .select(sitePageSelect)
+    .eq("page_type", "reminder")
+    .eq("status", "published")
+    .is("archived_at", null)
+    .neq("page_key", currentPageKey)
+    .order("published_at", { ascending: false, nullsFirst: false })
+    .order("updated_at", { ascending: false })
+    .limit(Math.max(0, limit));
+
+  if (error) {
+    console.error("related_reminder_pages_failed", { code: error.code, message: error.message, currentPageKey });
+    return [] as Array<SitePage & { media_public_url: string | null }>;
+  }
+
+  return ((data || []) as SitePage[]).map((page) => withPublicUrl(supabase, page));
+}
+
 /** @deprecated Choose a placement-specific query. */
 export const listPublishedSitePages = listHomepageSitePages;
 

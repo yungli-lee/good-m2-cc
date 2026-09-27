@@ -4,10 +4,13 @@ import Link from "next/link";
 import { KnowledgeViewTracker } from "@/components/analytics/content-trackers";
 import { DeliveredImage } from "@/components/media/delivered-image";
 import { notFound } from "next/navigation";
-import { getPublicKnowledgeBySlug } from "@/lib/content/queries";
+import { getPublicKnowledgeBySlug, listRelatedKnowledgeItems } from "@/lib/content/queries";
 import { getPublicCompanySettings } from "@/lib/company-settings";
 import { formatKnowledgeReadingTime } from "@/lib/content/reading-time";
 import type { ContentItem } from "@/lib/content/types";
+import { ContentRetention } from "@/components/content/content-retention";
+import { listPublishedReminderPages } from "@/lib/home-cms/queries";
+import { listRetentionPublishedProperties } from "@/lib/properties/queries";
 
 export const runtime = "edge";
 export const dynamic = "force-dynamic";
@@ -316,6 +319,11 @@ export default async function KnowledgeDetailPage({ params }: Props) {
     .map((block) => ({ id: block.id, text: block.text, level: block.level }));
   const shareText = encodeURIComponent(item.title);
   const shareUrl = encodeURIComponent(articleUrl);
+  const [relatedKnowledge, reminders, properties] = await Promise.all([
+    listRelatedKnowledgeItems(item, 3),
+    listPublishedReminderPages(3),
+    listRetentionPublishedProperties(3)
+  ]);
 
   return (
     <main>
@@ -383,6 +391,15 @@ export default async function KnowledgeDetailPage({ params }: Props) {
           </div>
         </div>
       </article>
+
+      <ContentRetention
+        knowledge={relatedKnowledge}
+        reminders={reminders}
+        properties={properties}
+        knowledgeTitle="相關知識文章"
+        reminderTitle="阿勇生活小提醒"
+        propertyTitle="看完知識，也可以看看物件"
+      />
     </main>
   );
 }

@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRef, useState } from "react";
 import { MarkdownContent } from "@/components/home/markdown-content";
 import { DeliveredImage } from "@/components/media/delivered-image";
@@ -41,6 +42,9 @@ export function MobileReminderAccordion({ pages }: { pages: ReminderPage[] }) {
               <span><strong>{page.title}</strong>{page.subtitle ? <small>{page.subtitle}</small> : null}</span>
               <b>{isOpen ? "收合" : "展開"}</b>
             </button>
+            <div className="life-note-mobile-actions">
+              <Link className="button ghost life-note-read-more" href={`/reminders/${page.page_key}`}>閱讀全文</Link>
+            </div>
             <div className="article-body" id={panelId}>
               {page.media_public_url ? <figure className="cms-reminder-cover"><DeliveredImage sourceUrl={page.media_public_url} tier="detail" sizes="(max-width: 900px) calc(100vw - 100px), 1px" alt={page.title} loading="lazy" /></figure> : null}
               <MarkdownContent value={page.markdown_content} />

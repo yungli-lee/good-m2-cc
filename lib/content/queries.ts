@@ -324,6 +324,50 @@ export async function getPublicKnowledgeBySlug(slug: string) {
   return { data: data as unknown as ContentItem | null, error };
 }
 
+export async function listRelatedKnowledgeItems(
+  current: Pick<ContentItem, "id" | "category_id">,
+  limit = 3
+) {
+  const supabase = await createSupabaseServerClient();
+  const { data, error } = await publicKnowledgeQuery(supabase)
+    .neq("id", current.id)
+    .order("published_at", { ascending: false })
+    .order("updated_at", { ascending: false })
+    .limit(30);
+
+  if (error) {
+    console.error("related_knowledge_items_failed", { code: error.code, message: error.message, currentId: current.id });
+    return [] as ContentItem[];
+  }
+
+  return ((data || []) as unknown as ContentItem[])
+    .map((item, index) => ({
+      item,
+      score: (current.category_id && item.category_id === current.category_id ? 100 : 0)
+        + (item.is_featured ? 15 : 0)
+        - index
+    }))
+    .sort((left, right) => right.score - left.score)
+    .slice(0, Math.max(0, limit))
+    .map(({ item }) => item);
+}
+
+export async function listKnowledgeRecommendations(limit = 3) {
+  const supabase = await createSupabaseServerClient();
+  const { data, error } = await publicKnowledgeQuery(supabase)
+    .order("is_featured", { ascending: false })
+    .order("published_at", { ascending: false })
+    .order("updated_at", { ascending: false })
+    .limit(Math.max(0, limit));
+
+  if (error) {
+    console.error("knowledge_recommendations_failed", { code: error.code, message: error.message });
+    return [] as ContentItem[];
+  }
+
+  return (data || []) as unknown as ContentItem[];
+}
+
 function knowledgeCategoryPriorityForProperty(propertyType: string) {
   switch (propertyType) {
     case "land":

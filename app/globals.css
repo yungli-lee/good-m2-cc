@@ -1097,6 +1097,61 @@ td {
 .property-retention-shell {
   padding-top: 0;
 }
+.content-retention-shell {
+  padding-top: 12px;
+  border-top: 1px solid rgba(16, 35, 67, 0.08);
+}
+
+.content-retention {
+  display: grid;
+  gap: 56px;
+}
+
+.life-note-card-cover-link {
+  display: block;
+  color: inherit;
+  text-decoration: none;
+}
+
+.life-note-card-content h3 a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.life-note-card-content h3 a:hover,
+.life-note-card-content h3 a:focus-visible {
+  color: #9a6a1f;
+}
+
+.life-note-read-more {
+  margin-top: 14px;
+}
+
+.property-retention-reminder-link,
+.property-retention-reminder-title-link {
+  color: inherit;
+  text-decoration: none;
+}
+
+.property-retention-reminder-title-link:hover,
+.property-retention-reminder-title-link:focus-visible {
+  color: #9a6a1f;
+}
+
+.life-note-mobile-actions {
+  display: flex;
+  justify-content: flex-end;
+  padding: 0 14px 12px;
+}
+
+.life-note-mobile-actions .button {
+  width: 100%;
+}
+
+.reminder-detail-header {
+  margin-top: 24px;
+}
+
 
 .property-retention {
   display: grid;
