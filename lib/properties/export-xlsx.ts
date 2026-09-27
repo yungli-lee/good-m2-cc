@@ -389,10 +389,8 @@ function apartmentBuildingValues(property: Property) {
     C19: formatPing(property.land_area_ping),
     H19: property.layout || "",
     H20: property.orientation || "",
-    D21: [
-      property.main_building_area_ping == null ? "" : `主建 ${formatPing(property.main_building_area_ping)}`,
-      property.auxiliary_building_area_ping == null ? "" : `附建 ${formatPing(property.auxiliary_building_area_ping)}`
-    ].filter(Boolean).join(" / "),
+    C21: formatPing(property.main_building_area_ping),
+    D21: formatPing(property.auxiliary_building_area_ping),
     C22: mainPlusAux ? `${mainPlusAux} 坪` : "",
     H21: checkedOptions(property.current_usage, ["住宅", "店面", "辦公", "住辦", "住店", "車位", "廠房", "土地", "倉庫", "其他"]),
     H22: apartmentBuildingTypeLine(property),
@@ -420,6 +418,7 @@ function apartmentBuildingValues(property: Property) {
     C33: property.nearby_train_station || "",
     F33: property.nearby_bus_stop || "",
     C34: property.community_name || "",
+    H30: listHighlights(property.highlights),
     C35: property.total_units == null ? "" : String(property.total_units),
     C36: property.elevator_count == null ? "" : String(property.elevator_count),
     F36: property.units_per_floor == null ? "" : String(property.units_per_floor),
