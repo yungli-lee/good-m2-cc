@@ -82,6 +82,27 @@ export function listPublicPageSitePages() {
   return listPublishedSitePagesByPlacement("show_as_page");
 }
 
+export async function listPublishedReminderPages(limit = 3) {
+  const supabase = await createSupabaseServerClient();
+  const { data, error } = await supabase
+    .from("site_pages")
+    .select(sitePageSelect)
+    .eq("page_type", "reminder")
+    .eq("status", "published")
+    .is("archived_at", null)
+    .eq("show_as_page", true)
+    .order("published_at", { ascending: false, nullsFirst: false })
+    .order("updated_at", { ascending: false })
+    .limit(Math.max(0, limit));
+
+  if (error) {
+    console.error("published_reminder_pages_failed", { code: error.code, message: error.message });
+    return [] as Array<SitePage & { media_public_url: string | null }>;
+  }
+
+  return ((data || []) as SitePage[]).map((page) => withPublicUrl(supabase, page));
+}
+
 /** @deprecated Choose a placement-specific query. */
 export const listPublishedSitePages = listHomepageSitePages;
 
