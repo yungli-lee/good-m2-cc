@@ -316,6 +316,11 @@ export default async function PropertyDetailPage({ params }: Props) {
             {renderPropertyCopy()}
           </div>
         </section> : null}
+        <section className="section property-retention-shell">
+          <div className="container">
+            {renderRetentionModules()}
+          </div>
+        </section>
       </div>
 
       <section className="section property-detail-mobile" aria-label="物件詳細資料">
@@ -336,6 +341,9 @@ export default async function PropertyDetailPage({ params }: Props) {
           </div>
           <div data-mobile-section="media">
             <PropertyMediaGallery media={media} title={property.title} propertyId={property.id} display="details" />
+          </div>
+          <div data-mobile-section="retention">
+            {renderRetentionModules()}
           </div>
           <div data-mobile-section="company" className="card property-detail-mobile-company">
             <div className="card-body">
