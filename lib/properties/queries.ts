@@ -1,4 +1,5 @@
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import type { Property } from "@/lib/properties/types";
 import {
   escapePropertySearchTerm,
   parsePropertySearch,
@@ -177,6 +178,47 @@ export async function getPublishedPropertyBySlug(slug: string) {
     .order("id", { referencedTable: "property_media", ascending: true })
     .eq("slug", slug)
     .maybeSingle();
+}
+
+export async function listRelatedPublishedProperties(
+  property: Pick<Property, "id" | "property_type" | "city" | "district" | "price">,
+  limit = 3
+) {
+  const supabase = await createSupabaseServerClient();
+  const { data, error } = await publishedPropertiesQuery(supabase, publicPropertySelect)
+    .neq("id", property.id)
+    .order("published_at", { ascending: false })
+    .order("updated_at", { ascending: false })
+    .limit(36);
+
+  if (error) {
+    console.error("related_properties_failed", { code: error.code, message: error.message, propertyId: property.id });
+    return [] as Property[];
+  }
+
+  const currentPrice = property.price == null ? null : Number(property.price);
+  return ((data || []) as unknown as Property[])
+    .map((candidate) => {
+      let score = 0;
+      if (property.district && candidate.district === property.district) score += 100;
+      else if (property.city && candidate.city === property.city) score += 55;
+      if (candidate.property_type === property.property_type) score += 45;
+
+      if (currentPrice && candidate.price != null) {
+        const difference = Math.abs(Number(candidate.price) - currentPrice) / currentPrice;
+        score += Math.max(0, 35 - Math.round(difference * 70));
+      }
+
+      return { candidate, score };
+    })
+    .sort((left, right) =>
+      right.score - left.score ||
+      String(right.candidate.published_at || right.candidate.updated_at).localeCompare(
+        String(left.candidate.published_at || left.candidate.updated_at)
+      )
+    )
+    .slice(0, Math.max(0, limit))
+    .map(({ candidate }) => candidate);
 }
 
 export async function getPublicPropertyAvailability(slug: string) {
