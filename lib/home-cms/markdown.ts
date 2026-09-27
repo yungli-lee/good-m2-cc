@@ -49,13 +49,16 @@ export function markdownToHtml(markdown?: string | null) {
   let paragraph: string[] = [];
   const flushParagraph = () => { if (paragraph.length) blocks.push(`<p>${paragraph.map(inlineMarkdown).join("<br>")}</p>`); paragraph = []; };
   const flushList = () => {
-    if (list.length && listType) blocks.push(`<${listType}>${list.map((item) => `<li>${inlineMarkdown(item)}</li>`).join("")}</${listType}>`);
+    if (list.length && listType) blocks.push(`<${listType}>${list.map((item) => `<li>${item.split("\n").map(inlineMarkdown).join("<br>")}</li>`).join("")}</${listType}>`);
     list = [];
     listType = null;
   };
   for (const rawLine of lines) {
     const line = rawLine.trim();
-    if (!line) { flushParagraph(); flushList(); continue; }
+    if (!line) {
+      flushParagraph();
+      continue;
+    }
     if (line.startsWith("### ")) { flushParagraph(); flushList(); blocks.push(`<h3>${inlineMarkdown(line.slice(4))}</h3>`); continue; }
     if (line.startsWith("## ")) { flushParagraph(); flushList(); blocks.push(`<h2>${inlineMarkdown(line.slice(3))}</h2>`); continue; }
     if (line.startsWith("- ") || line.startsWith("* ")) {
@@ -73,6 +76,12 @@ export function markdownToHtml(markdown?: string | null) {
       list.push(orderedItem[1]);
       continue;
     }
+    if (listType && /^\s{2,}\S/.test(rawLine) && list.length) {
+      list[list.length - 1] += "\n" + line;
+      continue;
+    }
+    if (listType) flushList();
+
     const image = line.match(/^!\[([^\]]*)\]\(([^)\s]+)\)$/);
     if (image) {
       flushParagraph(); flushList();
