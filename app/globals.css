@@ -1014,6 +1014,82 @@ td {
   margin-top: 32px;
 }
 
+.property-building-details-section {
+  padding-top: 0;
+}
+
+.property-building-details {
+  display: grid;
+  gap: 22px;
+  padding: 24px;
+  border: 1px solid rgba(16, 35, 67, 0.12);
+  border-radius: 10px;
+  background: #fff;
+}
+
+.property-building-details-header {
+  display: grid;
+  gap: 6px;
+}
+
+.property-building-details-header h2,
+.property-building-detail-group h3 {
+  margin: 0;
+}
+
+.property-building-details-header p {
+  margin: 0;
+}
+
+.property-building-detail-group {
+  display: grid;
+  gap: 12px;
+}
+
+.property-building-detail-group + .property-building-detail-group {
+  padding-top: 18px;
+  border-top: 1px solid rgba(16, 35, 67, 0.1);
+}
+
+.property-facts-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1px;
+  margin: 0;
+  overflow: hidden;
+  border: 1px solid rgba(16, 35, 67, 0.1);
+  border-radius: 8px;
+  background: rgba(16, 35, 67, 0.08);
+}
+
+.property-facts-grid > div {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+  padding: 12px 14px;
+  background: #fff;
+}
+
+.property-facts-grid dt {
+  color: #64708a;
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.property-facts-grid dd {
+  margin: 0;
+  color: #17233f;
+  font-weight: 800;
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+}
+
+.property-building-facilities {
+  margin: 0;
+  line-height: 1.8;
+}
+
+
 .gallery {
   display: grid;
   gap: 12px;
@@ -2469,6 +2545,19 @@ td {
     margin-top: 0;
     padding-top: 0;
     border-top: 0;
+  }
+
+  .property-building-details {
+    gap: 18px;
+    padding: 18px 14px;
+  }
+
+  .property-facts-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .property-facts-grid > div {
+    padding: 11px 12px;
   }
 
   .contact-page-grid {
