@@ -1,4 +1,5 @@
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { collectionTypes, type CollectionFilters } from "./collection-link";
 import type { Property } from "@/lib/properties/types";
 import {
   escapePropertySearchTerm,
@@ -245,7 +246,7 @@ export async function getPublicPropertyAvailability(slug: string) {
   return supabase.rpc("get_public_property_availability", { requested_slug: slug }).maybeSingle();
 }
 
-export async function searchPublishedProperties(input = "", limit = 24) {
+export async function searchPublishedProperties(input = "", limit = 24, filters?: CollectionFilters) {
   const { keywords, propertyTypes, typeKeyword, price, priceMode } = parsePropertySearch(input);
 
   const supabase = await createSupabaseServerClient();
@@ -256,7 +257,11 @@ export async function searchPublishedProperties(input = "", limit = 24) {
     .order("id", { referencedTable: "property_media", ascending: true })
     .order("published_at", { ascending: false })
     .order("updated_at", { ascending: false })
-    .limit(Math.min(Math.max(limit * 4, 48), 192));
+    .limit(Math.min(Math.max(limit * 4, 48), filters ? 1000 : 192));
+
+  if (filters?.city) searchQuery = searchQuery.eq("city", filters.city);
+  if (filters?.districts.length) searchQuery = searchQuery.in("district", filters.districts);
+  if (filters?.type) searchQuery = searchQuery.in("property_type", [...collectionTypes[filters.type].values]);
 
   if (price) {
     if (priceMode === "below") searchQuery = searchQuery.lte("price", price);
@@ -266,7 +271,7 @@ export async function searchPublishedProperties(input = "", limit = 24) {
 
   if (propertyTypes.length && typeKeyword) {
     const typeFilters = propertyTypes.map((type) => `property_type.eq.${type}`);
-    searchQuery = searchQuery.or([
+    searchQuery = filters ? searchQuery.in("property_type", propertyTypes) : searchQuery.or([
       ...typeFilters,
       `title.ilike.%${typeKeyword}%`,
       `address_public.ilike.%${typeKeyword}%`,

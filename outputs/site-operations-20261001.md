@@ -34,3 +34,13 @@ Baseline: main 496f508 (PR #25). This is a source review and tested implementati
 - Visit an actual archived/sold URL and a genuinely nonexistent URL; verify recommendations, reason preservation and 404 distinction.
 - Use a distinct test UTM link, navigate to a property, open gallery and click LINE; verify attributed rows in analytics dashboard. A LINE click measures intent, not a completed chat.
 - CMS team biography content and contacts embedded in editorial body/images remain editorial content. This PR centralizes system-generated identity/contact outputs; it does not automatically rewrite CMS body copy or redesign the settings schema.
+
+## Shareable property collections (follow-up)
+
+- /properties accepts q, repeated district values, city and type. GET forms persist filters in the URL, so reloads, Facebook and LINE recipients receive the same selection criteria.
+- Quick links: 鹿港農地, 鹿港住宅, 福興, 秀水. Residential means townhouse/apartment/building; districts are OR within the selected set, combined with type/keyword/price constraints.
+- Server-side public listing queries keep existing published/deleted privacy filters; strict category filtering prevents land described as residential from appearing as a residential listing.
+- Copy/share controls; clipboard denial exposes a selectable link fallback. Homepage uses the successfully submitted search, not subsequent unsent input. Full collection reads up to the existing database 1000-row boundary; homepage remains a preview of the results.
+- Social metadata includes the criteria-specific title/description/OG URL and existing CMS home social image. Query pages use noindex/follow and canonical /properties.
+- Roundtrip, multiple district deduplication, invalid type, Chinese query, residential parsing, existing search/card/media/area navigation/social regressions; typecheck/lint/build pass.
+- New deployment must be smoke-tested before marking collection links live on good.m2.cc. End-to-end clipboard interactions remain to be verified in a browser.

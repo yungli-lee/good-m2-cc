@@ -1,3 +1,4 @@
+import { collectionFilters } from "@/lib/properties/collection-link";
 import { NextResponse } from "next/server";
 import {
   getFeaturedPublishedProperties,
@@ -35,7 +36,7 @@ export async function GET(request: Request) {
       mode === "featured"
         ? await getFeaturedPublishedProperties(limit)
         : mode === "search"
-          ? await searchPublishedProperties(q, limit)
+          ? await searchPublishedProperties(q, limit, collectionFilters({ q, city: url.searchParams.get("city") || undefined, district: url.searchParams.getAll("district"), type: url.searchParams.get("type") || undefined }))
           : await getLatestPublishedProperties(limit);
 
     if (result.error) {

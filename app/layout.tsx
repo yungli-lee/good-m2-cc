@@ -1,6 +1,7 @@
 import { HomeHashScroll } from "@/components/layout/home-hash-scroll";
 import { AnalyticsProvider } from "@/components/analytics/analytics-provider";
 import "./globals.css";
+import "./collection.css";
 import type { Metadata } from "next";
 import { siteOrigin } from "@/lib/home-cms/routing";
 

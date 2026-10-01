@@ -85,6 +85,12 @@ export function parsePropertySearch(input = ""): ParsedPropertySearch {
     residual = residual.replaceAll(keyword, " ");
   }
 
+  if (!propertyTypes.length && residual.includes("住宅")) {
+    propertyTypes = ["townhouse", "apartment", "building"];
+    typeKeyword = "住宅";
+    residual = residual.replaceAll("住宅", " ");
+  }
+
   if (!propertyTypes.length && residual.includes("土地")) {
     propertyTypes = ["farmland", "building_land", "industrial_land"];
     typeKeyword = "土地";
