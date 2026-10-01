@@ -14,5 +14,5 @@ function score(voice: GuideVoice) {
   return (/^zh[-_]TW$/i.test(voice.lang) ? 20 : 0) + (/natural|online|neural|自然/i.test(voice.name) ? 10 : 0) + (!voice.localService ? 2 : 0);
 }
 export function guideSpeechText(text: string) {
-  return text.replace(/[「」★✅⭐]/g, "").replace(/；/g, "。").replace(/(\d+)房\s*(\d+)廳\s*(\d+)衛/g, "$1 房，$2 廳，$3 衛").replace(/…/g, "。");
+  return text.replace(/[「」★✅⭐]/g, "").replace(/(\d),(?=\d)/g, "$1").replace(/；/g, "。").replace(/格局\s*(\d+)\s*[/／]\s*(\d+)\s*[/／]\s*(\d+)/g, "格局 $1 房，$2 廳，$3 衛").replace(/(\d+)房\s*(\d+)廳\s*(\d+)衛/g, "$1 房，$2 廳，$3 衛").replace(/…/g, "。");
 }

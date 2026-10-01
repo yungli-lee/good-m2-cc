@@ -31,4 +31,5 @@ assert.equal(selectGuideVoice([femaleVoice, maleVoice], "amei")?.voiceURI, "fema
 assert.equal(selectGuideVoice([femaleVoice], "ayong"), undefined);
 assert.equal(selectGuideVoice([], "amei"), undefined);
 assert.match(guideSpeechText("格局4房2廳3衛；土地23坪。"), /4 房，2 廳，3 衛。土地/);
+assert.equal(guideSpeechText("開價 1,280 萬元。格局 4/3/4。"), "開價 1280 萬元。格局 4 房，3 廳，4 衛。");
 console.log("Guide voice: distinct known male/female routing, missing male fallback and natural punctuation PASS");

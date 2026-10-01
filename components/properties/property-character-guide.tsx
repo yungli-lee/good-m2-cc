@@ -56,7 +56,7 @@ export function PropertyCharacterGuide({ scripts, lineUrl, related }: Props) {
     stopSpeech(); setOpen(false);
     // The floating launcher unmounts while open; the page trigger always remains.
     const target = triggerRef.current?.isConnected ? triggerRef.current : invitationRef.current;
-    target?.focus();
+    target?.focus({ preventScroll: true });
   }
   function show(event: React.MouseEvent<HTMLButtonElement>) {
     triggerRef.current = event.currentTarget;
@@ -66,7 +66,7 @@ export function PropertyCharacterGuide({ scripts, lineUrl, related }: Props) {
   }
   function dismiss() {
     stopSpeech(); setOpen(false); setHidden(true);
-    invitationRef.current?.focus();
+    invitationRef.current?.focus({ preventScroll: true });
     try { sessionStorage.setItem(hiddenKey, "1"); } catch { /* Optional preference. */ }
   }
   function speak() {
