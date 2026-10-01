@@ -33,7 +33,7 @@ export type ParsedPropertySearch = {
 function normalizeSearchInput(value: string) {
   return value
     .normalize("NFKC")
-    .replace(/[，、；;｜|]+/g, " ")
+    .replace(/[,+，、；;｜|＋]+/g, " ")
     .replace(/\s+/g, " ")
     .trim();
 }
@@ -74,26 +74,26 @@ export function propertySearchKeywordVariants(keyword: string) {
 
 export function parsePropertySearch(input = ""): ParsedPropertySearch {
   let residual = normalizeSearchInput(input);
-  let propertyTypes: string[] = [];
+  const propertyTypes: string[] = [];
   let typeKeyword = "";
 
   for (const [keyword, value] of propertyTypeKeywords) {
-    if (!propertyTypes.length && residual.includes(keyword)) {
-      propertyTypes = [value];
-      typeKeyword = keyword;
+    if (residual.includes(keyword)) {
+      propertyTypes.push(value);
+      typeKeyword ||= keyword;
     }
     residual = residual.replaceAll(keyword, " ");
   }
 
-  if (!propertyTypes.length && residual.includes("住宅")) {
-    propertyTypes = ["townhouse", "apartment", "building"];
-    typeKeyword = "住宅";
+  if (residual.includes("住宅")) {
+    propertyTypes.push("townhouse", "apartment", "building");
+    typeKeyword ||= "住宅";
     residual = residual.replaceAll("住宅", " ");
   }
 
-  if (!propertyTypes.length && residual.includes("土地")) {
-    propertyTypes = ["farmland", "building_land", "industrial_land"];
-    typeKeyword = "土地";
+  if (residual.includes("土地")) {
+    propertyTypes.push("farmland", "building_land", "industrial_land");
+    typeKeyword ||= "土地";
     residual = residual.replaceAll("土地", " ");
   }
 
@@ -121,7 +121,14 @@ export function parsePropertySearch(input = ""): ParsedPropertySearch {
     .filter(Boolean)
     .flatMap(splitCompactLocationKeyword);
 
-  return { keywords, propertyTypes, typeKeyword, price, priceMode };
+  return { keywords, propertyTypes: [...new Set(propertyTypes)], typeKeyword, price, priceMode };
+}
+
+// Locations are alternatives; roads, layouts and other requirements remain cumulative.
+export function propertySearchKeywordGroups(keywords: string[]): string[][] {
+  const locations = keywords.filter(keyword => districtAliases.includes(keyword));
+  if (locations.length < 2) return keywords.map(keyword => [keyword]);
+  return [locations, ...keywords.filter(keyword => !districtAliases.includes(keyword)).map(keyword => [keyword])];
 }
 
 function text(value: unknown) {

@@ -39,7 +39,8 @@ export default async function PropertiesPage({ searchParams }: Props) {
     <section className="hero-lite"><div className="container">
       <h1>{label}</h1><p>一次比較適合的物件，再由阿勇與阿美為你詳細介紹。</p>
       <form key={collectionHref(filters)} action="/properties" method="get" className="collection-search-form">
-        <label>搜尋條件<input className="input" name="q" type="search" defaultValue={filters.q} maxLength={200} placeholder="鹿港農地、鹿港住宅、800萬以下…" /></label>
+        <label>搜尋條件<input className="input" name="q" type="search" defaultValue={filters.q} maxLength={200} placeholder="例如：福興＋秀水 農地 1000萬以下" /></label>
+        <p className="collection-search-help">多個地區可用 ＋、逗號或空格分隔，例如「福興＋秀水 農地」；類型與預算會一起篩選。</p>
         {filters.city ? <input name="city" type="hidden" value={filters.city} /> : null}
         <label>物件類型<select className="select" name="type" defaultValue={filters.type}><option value="">全部類型</option>{Object.entries(collectionTypes).map(([value, option]) => <option key={value} value={value}>{option.label}</option>)}</select></label>
         <details><summary>選擇地區（可複選）{filters.districts.length ? `：${filters.districts.join("、")}` : ""}</summary><fieldset className="collection-districts"><legend>包含任一勾選地區的物件</legend>{collectionDistricts.map(d => <label key={d}><input type="checkbox" name="district" value={d} defaultChecked={filters.districts.includes(d)} />{d}</label>)}</fieldset></details>

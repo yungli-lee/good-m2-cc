@@ -5,6 +5,7 @@ import {
   escapePropertySearchTerm,
   parsePropertySearch,
   propertySearchKeywordVariants,
+  propertySearchKeywordGroups,
   rankPropertySearchResults
 } from "@/lib/properties/search";
 
@@ -279,8 +280,8 @@ export async function searchPublishedProperties(input = "", limit = 24, filters?
     ].join(","));
   }
 
-  for (const keyword of keywords) {
-    const variants = propertySearchKeywordVariants(keyword);
+  for (const group of propertySearchKeywordGroups(keywords)) {
+    const variants = group.flatMap(propertySearchKeywordVariants);
     searchQuery = searchQuery.or(
       variants.flatMap((variant) => [
         `title.ilike.%${variant}%`,
