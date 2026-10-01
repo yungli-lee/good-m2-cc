@@ -31,7 +31,10 @@ export async function trackEvent(eventName: AnalyticsEventRequest["event_name"],
     const body = JSON.stringify(payload);
     let accepted = false;
     if (navigator.sendBeacon) accepted = navigator.sendBeacon("/api/analytics/events", new Blob([body], { type: "application/json" }));
-    if (!accepted) await fetch("/api/analytics/events", { method: "POST", headers: { "content-type": "application/json" }, body, keepalive: true });
+    if (!accepted) {
+      const response = await fetch("/api/analytics/events", { method: "POST", headers: { "content-type": "application/json" }, body, keepalive: true });
+      if (!response.ok) return false;
+    }
     if (options.dedupeKey) sent.add(options.dedupeKey);
     return true;
   } catch { return false; }

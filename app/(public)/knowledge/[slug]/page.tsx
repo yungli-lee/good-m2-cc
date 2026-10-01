@@ -1,3 +1,4 @@
+import { StructuredData } from "@/components/content/structured-data";
 import type { Metadata } from "next";
 import type React from "react";
 import Link from "next/link";
@@ -20,7 +21,7 @@ type Props = {
 };
 
 const siteOrigin = "https://good.m2.cc";
-const lineUrl = "https://line.me/ti/p/abQv5LYzzE";
+
 
 type ArticleBlock =
   | { type: "heading"; level: 1 | 2 | 3; text: string; id: string }
@@ -296,8 +297,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       siteName: company.brand_name,
       description,
       images: item.og_image_url || item.cover_image_url ? [item.og_image_url || item.cover_image_url || ""] : undefined,
+      url: canonical,
       type: "article"
     },
+    twitter: { card: "summary_large_image", title, description, images: item.og_image_url || item.cover_image_url ? [item.og_image_url || item.cover_image_url || ""] : undefined },
     alternates: { canonical }
   };
 }
@@ -308,6 +311,8 @@ export default async function KnowledgeDetailPage({ params }: Props) {
   if (error || !data) notFound();
 
   const item = data as ContentItem;
+  const company = await getPublicCompanySettings();
+  const lineUrl = company.line_url || "/contact";
   const category = item.content_categories?.name || "不動產知識";
   const publishedDate = formatDate(item.published_at);
   const reviewedDate = formatDate(item.last_reviewed_at);
@@ -327,6 +332,7 @@ export default async function KnowledgeDetailPage({ params }: Props) {
 
   return (
     <main>
+      <StructuredData data={{ "@context": "https://schema.org", "@graph": [{ "@type": "Article", headline: item.title, description: knowledgeDescription(item), mainEntityOfPage: articleUrl, datePublished: item.published_at || undefined, dateModified: item.updated_at || item.published_at || undefined, image: item.og_image_url || item.cover_image_url || undefined, publisher: { "@type": "Organization", name: company.brand_name, url: "https://good.m2.cc" } }, { "@type": "BreadcrumbList", itemListElement: [{ "@type": "ListItem", position: 1, name: "首頁", item: "https://good.m2.cc" }, { "@type": "ListItem", position: 2, name: "知識庫", item: "https://good.m2.cc/knowledge" }, { "@type": "ListItem", position: 3, name: item.title, item: articleUrl }] }] }} />
       <KnowledgeViewTracker articleId={item.id} slug={item.slug} category={category} />
       <article className="section">
         <div className="container knowledge-detail-shell">

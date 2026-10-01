@@ -1,6 +1,6 @@
 import type { MetadataRoute } from "next";
 import { listPublicKnowledgeItems } from "@/lib/content/queries";
-import { listPublicPageSitePages } from "@/lib/home-cms/queries";
+import { listPublicPageSitePages, listPublishedReminderPages } from "@/lib/home-cms/queries";
 import { isReservedSitePageSlug, siteOrigin } from "@/lib/home-cms/routing";
 import { listPublishedProperties } from "@/lib/properties/queries";
 import { listPublicAreaPages } from "@/lib/areas-cms";
@@ -10,11 +10,12 @@ export const dynamic = "force-dynamic";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const origin = siteOrigin();
-  const [propertyResult, knowledgeResult, sitePages, areaPages] = await Promise.all([
+  const [propertyResult, knowledgeResult, sitePages, areaPages, reminders] = await Promise.all([
     listPublishedProperties(),
     listPublicKnowledgeItems({ page: 1, pageSize: 1000 }),
     listPublicPageSitePages(),
-    listPublicAreaPages()
+    listPublicAreaPages(),
+    listPublishedReminderPages(1000)
   ]);
 
   const properties = (propertyResult.data || []).map((property) => ({
@@ -42,6 +43,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${origin}/areas` },
     ...areaPages.map((area) => ({ url: `${origin}/areas/${area.slug}` })),
     { url: `${origin}/calculator` },
+    { url: `${origin}/calculator/mortgage` },
+    { url: `${origin}/calculator/purchase-cost` },
+    { url: `${origin}/calculators/owner-net-all-in` },
+    ...reminders.map((page) => ({ url: `${origin}/reminders/${page.page_key}`, lastModified: page.updated_at || page.published_at || undefined })),
     ...contact,
     ...properties,
     ...knowledge,

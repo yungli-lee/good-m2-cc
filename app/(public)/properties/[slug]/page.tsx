@@ -3,11 +3,14 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getPublicCompanySettings } from "@/lib/company-settings";
 import { formatPublicPing, formatPrice, isLandProperty, propertyTypeLabel } from "@/lib/format";
-import { getPublishedPropertyBySlug, getPublicPropertyAvailability, listRelatedPublishedProperties } from "@/lib/properties/queries";
+import { getPublishedPropertyBySlug, getPublicPropertyAvailability, listRelatedPublishedProperties, listRetentionPublishedProperties } from "@/lib/properties/queries";
 import { resolvePropertySeo } from "@/lib/properties/seo";
 import type { Property } from "@/lib/properties/types";
 import { PropertyMediaGallery } from "@/components/media/property-media-gallery";
 import { PropertyViewTracker } from "@/components/analytics/content-trackers";
+import { StructuredData } from "@/components/content/structured-data";
+import { ContentRetention } from "@/components/content/content-retention";
+import { siteOrigin } from "@/lib/home-cms/routing";
 import { PropertyCard } from "@/components/properties/property-card";
 import { KnowledgeCard } from "@/components/content/knowledge-card";
 import { ReminderCard } from "@/components/content/reminder-card";
@@ -53,10 +56,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     title: `此物件已下架｜${company.brand_name}`,
     description: "此物件資訊已停止公開，歡迎查看其他物件或聯絡阿勇。",
     robots: { index: false, follow: true },
+    alternates: { canonical: `${siteOrigin()}/properties/${encodeURIComponent(slug)}` },
     openGraph: { title: `此物件已下架｜${company.brand_name}`, description: "此物件資訊已停止公開，歡迎查看其他物件或聯絡阿勇。", siteName: company.brand_name }
   };
   if (!property) return { title: `物件不存在｜${company.brand_name}` };
-  const seo = resolvePropertySeo(property);
+  const seo = resolvePropertySeo(property, company.brand_name);
   return {
     title: seo.title,
     description: seo.description,
@@ -64,8 +68,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       title: seo.ogTitle,
       siteName: company.brand_name,
       description: seo.ogDescription,
+      url: seo.canonical,
       images: seo.ogImage ? [seo.ogImage] : undefined
     },
+    twitter: { card: "summary_large_image", title: seo.title, description: seo.description, images: seo.ogImage ? [seo.ogImage] : undefined },
     alternates: { canonical: seo.canonical }
   };
 }
@@ -77,12 +83,14 @@ export default async function PropertyDetailPage({ params }: Props) {
   ]);
   if ((error || !data) && availabilityResult.data) {
     const unavailable = availabilityResult.data as { unavailable_reason?: string | null; status?: string };
-    return <main className="property-unavailable-page"><section className="section"><div className="container property-unavailable-card">
-      <p className="eyebrow">Property Update</p><h1>此物件已下架</h1>
+    const matched = unavailable.unavailable_reason === "已成交";
+    const [properties, knowledge] = await Promise.all([listRetentionPublishedProperties(3), listRelatedKnowledgeForProperty("", 3)]);
+    return <main className="property-unavailable-page" data-analytics-location="unavailable"><section className="section"><div className="container property-unavailable-card">
+      <p className="eyebrow">Property Update</p><h1>{matched ? "啊！本件已經配對成功 ❤️" : "此物件已下架"}</h1>
       <p className="property-unavailable-reason">下架原因：{unavailable.unavailable_reason || (unavailable.status === "expired" ? "委託到期" : "已停止公開")}</p>
-      <p>物件資訊已停止公開。歡迎查看其他公開物件，或把您的找房需求告訴阿勇。</p>
+      <p>這一件先告一段落，找房的旅程繼續！看看下列在售物件，阿勇與阿美可以為你詳細介紹。</p>
       <div className="actions"><Link className="button" href="/properties">查看其他物件</Link><Link className="button ghost" href="/areas">依地區找房</Link>{companySettings.line_url ? <a className="button ghost" href={companySettings.line_url}>LINE 阿勇諮詢</a> : null}</div>
-    </div></section></main>;
+    </div></section><ContentRetention propertiesFirst properties={properties} knowledge={knowledge} reminders={[]} propertyTitle="我推薦下列在售物件" knowledgeTitle="找房之前，這些知識也用得上" /></main>;
   }
   if (error || !data) notFound();
 
@@ -165,7 +173,7 @@ export default async function PropertyDetailPage({ params }: Props) {
         <p>屋齡：{property.age == null ? "-" : `${property.age} 年`}</p>
         <p>座向：{property.orientation || "-"}</p>
         <div className="actions">
-          <a className="button" href="https://line.me/ti/p/abQv5LYzzE" target="_blank" rel="noreferrer">
+          <a className="button" href={companySettings.line_url || "/contact"} data-contact-person="阿勇" target="_blank" rel="noreferrer">
             Line 阿勇諮詢
           </a>
           <Link className="button secondary" href="/#service-form">
@@ -303,11 +311,12 @@ export default async function PropertyDetailPage({ params }: Props) {
 
   return (
     <main data-property-id={property.id}>
+      <StructuredData data={{ "@context": "https://schema.org", "@type": "BreadcrumbList", itemListElement: [{ "@type": "ListItem", position: 1, name: "首頁", item: siteOrigin() }, { "@type": "ListItem", position: 2, name: "物件", item: `${siteOrigin()}/properties` }, { "@type": "ListItem", position: 3, name: property.title, item: resolvePropertySeo(property, companySettings.brand_name).canonical }] }} />
       <PropertyViewTracker propertyId={property.id} properties={{
         property_title: property.title,
         property_category: property.property_type || null,
-        city: null,
-        district: null,
+        city: property.city || null,
+        district: property.district || null,
         price: property.price == null ? null : Number(property.price),
         listing_status: property.status || null
       }} />

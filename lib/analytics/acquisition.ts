@@ -34,6 +34,7 @@ export function sourceFromLocation(url: URL, referrer: string | null): Acquisiti
     else if (/line\./.test(host)) { source = "line"; medium = "social"; }
     else { source = "referral"; medium = "referral"; }
   }
+  if (!utmSource && source === "direct" && url.searchParams.has("fbclid")) { source = "facebook"; medium = "social"; }
   return {
     source,
     medium,

@@ -37,6 +37,6 @@ export function PropertyDetailImage({ sourceUrl, alt, main = false }: { sourceUr
   const className = main ? "gallery-main" : "property-image";
   return visible ? (
     <DeliveredImage sourceUrl={sourceUrl} tier="detail" sizes={main ? propertyDetailCoverSizes : propertyDetailGridSizes}
-      className={className} alt={alt} loading={main ? "eager" : "lazy"} decoding="async" />
+      className={className} alt={alt} loading={main ? "eager" : "lazy"} fetchPriority={main ? "high" : "auto"} decoding="async" />
   ) : <span ref={placeholder} className={className} aria-hidden="true" data-deferred-image />;
 }

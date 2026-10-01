@@ -55,6 +55,9 @@ assert.equal(analyticsEventRequestSchema.safeParse({ ...base, environment: "prod
 assert.equal(analyticsEventRequestSchema.safeParse({ ...base, event_properties: { ...base.event_properties, nested: { email: "private@example.com" } } }).success, false, "nested sensitive key rejects");
 assert.equal(analyticsEventRequestSchema.safeParse({ ...base, event_properties: { ...base.event_properties, unknown: true } }).success, false, "unknown event property rejects");
 
+assert.equal(sourceFromLocation(new URL("https://good.m2.cc/properties/test?fbclid=example"), null).source, "facebook", "FB in-app links retain source even without a referrer");
+assert.equal(sourceFromLocation(new URL("https://good.m2.cc/properties/test?fbclid=example&utm_source=newsletter"), null).source, "newsletter", "explicit UTM takes precedence over fbclid");
+
 const event = (id: string, source: string | null, session: string, time: string) => ({ id, event_id: id, session_id: session, property_id: null, utm_source: source, utm_medium: null, utm_campaign: null, occurred_at: time });
 const direct = event("550e8400-e29b-41d4-a716-446655440010", "direct", "s2", "2026-08-02T00:00:00Z");
 const fb = event("550e8400-e29b-41d4-a716-446655440011", "facebook", "s1", "2026-08-01T00:00:00Z");

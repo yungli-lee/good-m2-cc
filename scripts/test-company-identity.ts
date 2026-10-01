@@ -72,7 +72,7 @@ assert.match(brandMigration, /notify pgrst, 'reload schema'/);
 assert.match(taglineMigration, /add column if not exists brand_tagline/);
 assert.match(taglineMigration, /彰化房地產資訊與服務/);
 
-assert.match(home, /title: company\.brand_name/);
+assert.match(home, /const homeTitle = `\$\{company\.brand_name\}｜\$\{company\.brand_tagline\}`/);
 assert.match(home, /siteName: company\.brand_name/);
 
 console.log("company identity mapping tests passed");

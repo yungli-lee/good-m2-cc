@@ -14,6 +14,8 @@ declare global {
 }
 
 function locationName(element: Element) {
+  const explicit = element.closest<HTMLElement>("[data-analytics-location]")?.dataset.analyticsLocation;
+  if (explicit) return explicit;
   if (element.closest("header")) return "header";
   if (element.closest("footer")) return "footer";
   if (element.classList.contains("floating-line")) return "floating";
@@ -40,8 +42,8 @@ export function AnalyticsProvider() {
       const anchor = (event.target as Element | null)?.closest("a[href]");
       if (!anchor) return;
       const href = anchor.getAttribute("href") || "";
-      const properties = { contact_person: null, cta_location: locationName(anchor) };
-      if (/line\.me|lin.ee/.test(href)) void trackConversionClick("click_line", properties, anchor.closest<HTMLElement>("[data-property-id]")?.dataset.propertyId);
+      const properties = { contact_person: anchor.getAttribute("data-contact-person") || null, cta_location: locationName(anchor) };
+      if (/line\.me|lin.ee/.test(href) && !/lineit\/share|lineit\.line\.me\/share/.test(href)) void trackConversionClick("click_line", properties, anchor.closest<HTMLElement>("[data-property-id]")?.dataset.propertyId);
       if (href.startsWith("tel:")) void trackConversionClick("click_phone", properties, anchor.closest<HTMLElement>("[data-property-id]")?.dataset.propertyId);
       if (/google\.[^/]+\/maps|maps\.app\.goo\.gl/.test(href)) void trackEvent("open_map", { propertyId: anchor.closest<HTMLElement>("[data-property-id]")?.dataset.propertyId, properties: { map_provider: "google", cta_location: locationName(anchor) } });
       const propertyId = anchor.closest<HTMLElement>("[data-property-id]")?.dataset.propertyId;
