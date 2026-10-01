@@ -3,6 +3,7 @@ import { listPublicKnowledgeItems } from "@/lib/content/queries";
 import { listPublicPageSitePages, listPublishedReminderPages } from "@/lib/home-cms/queries";
 import { isReservedSitePageSlug, siteOrigin } from "@/lib/home-cms/routing";
 import { listPublishedProperties } from "@/lib/properties/queries";
+import { listPublishedPropertyCollectionLinks } from "@/lib/property-collections/queries";
 import { listPublicAreaPages } from "@/lib/areas-cms";
 
 export const runtime = "edge";
@@ -10,12 +11,13 @@ export const dynamic = "force-dynamic";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const origin = siteOrigin();
-  const [propertyResult, knowledgeResult, sitePages, areaPages, reminders] = await Promise.all([
+  const [propertyResult, knowledgeResult, sitePages, areaPages, reminders, collections] = await Promise.all([
     listPublishedProperties(),
     listPublicKnowledgeItems({ page: 1, pageSize: 1000 }),
     listPublicPageSitePages(),
     listPublicAreaPages(),
-    listPublishedReminderPages(1000)
+    listPublishedReminderPages(1000),
+    listPublishedPropertyCollectionLinks()
   ]);
 
   const properties = (propertyResult.data || []).map((property) => ({
@@ -47,6 +49,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${origin}/calculator/purchase-cost` },
     { url: `${origin}/calculators/owner-net-all-in` },
     ...reminders.map((page) => ({ url: `${origin}/reminders/${page.page_key}`, lastModified: page.updated_at || page.published_at || undefined })),
+    ...collections.map(collection => ({ url: `${origin}/collections/${collection.slug}`, lastModified: collection.updated_at })),
     ...contact,
     ...properties,
     ...knowledge,

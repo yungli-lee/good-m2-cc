@@ -5,6 +5,7 @@ export const reservedSitePageSlugs = [
   "contact",
   "knowledge",
   "properties",
+  "collections",
   "robots.txt",
   "sitemap.xml",
   "_next"

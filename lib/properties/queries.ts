@@ -264,6 +264,9 @@ export async function searchPublishedProperties(input = "", limit = 24, filters?
   if (filters?.districts.length) searchQuery = searchQuery.in("district", filters.districts);
   if (filters?.type) searchQuery = searchQuery.in("property_type", [...collectionTypes[filters.type].values]);
 
+  if (filters?.minPrice !== undefined) searchQuery = searchQuery.gte("price", filters.minPrice);
+  if (filters?.maxPrice !== undefined) searchQuery = searchQuery.lte("price", filters.maxPrice);
+
   if (price) {
     if (priceMode === "below") searchQuery = searchQuery.lte("price", price);
     else if (priceMode === "above") searchQuery = searchQuery.gte("price", price);

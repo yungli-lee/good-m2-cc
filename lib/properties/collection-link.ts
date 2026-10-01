@@ -12,11 +12,19 @@ export const collectionTypes = {
   industrial_land: { label: "工業用地", values: ["industrial_land"] }
 } as const;
 export type CollectionSearchParams = Record<string, string | string[] | undefined>;
-export type CollectionFilters = { q: string; city: string; districts: string[]; type: keyof typeof collectionTypes | "" };
+export type CollectionFilters = { q: string; city: string; districts: string[]; type: keyof typeof collectionTypes | ""; minPrice?: number; maxPrice?: number };
 const first = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v) || "";
+function priceValue(value: string | string[] | undefined) {
+  const raw = first(value).trim();
+  if (!raw) return undefined;
+  const number = Number(raw);
+  return Number.isFinite(number) && number >= 0 && number <= 100000000 ? number : undefined;
+}
 export function collectionFilters(input: CollectionSearchParams): CollectionFilters {
   const requested = Array.isArray(input.district) ? input.district : input.district ? [input.district] : [];
   return {
+    ...(priceValue(input.price_min) !== undefined ? { minPrice: priceValue(input.price_min) } : {}),
+    ...(priceValue(input.price_max) !== undefined ? { maxPrice: priceValue(input.price_max) } : {}),
     q: first(input.q).trim().slice(0, 200),
     city: first(input.city).trim().slice(0, 80),
     districts: collectionDistricts.filter(d => requested.includes(d)),
@@ -29,8 +37,10 @@ export function collectionHref(filters: CollectionFilters) {
   if (filters.city) params.set("city", filters.city);
   for (const district of filters.districts) params.append("district", district);
   if (filters.type) params.set("type", filters.type);
+  if (filters.minPrice !== undefined) params.set("price_min", String(filters.minPrice));
+  if (filters.maxPrice !== undefined) params.set("price_max", String(filters.maxPrice));
   return `/properties${params.size ? `?${params}` : ""}`;
 }
 export function collectionLabel(filters: CollectionFilters) {
-  return [filters.q, filters.districts.map(d => d.replace(/[鄉鎮]$/, "")).join("、") || filters.city, filters.type ? collectionTypes[filters.type].label : ""].filter(Boolean).join("｜") || "全部在售物件";
+  return [filters.q, filters.districts.map(d => d.replace(/[鄉鎮]$/, "")).join("、") || filters.city, filters.type ? collectionTypes[filters.type].label : "", filters.minPrice !== undefined && filters.maxPrice !== undefined ? `${filters.minPrice}～${filters.maxPrice}萬` : filters.maxPrice !== undefined ? `${filters.maxPrice}萬以下` : filters.minPrice !== undefined ? `${filters.minPrice}萬以上` : ""].filter(Boolean).join("｜") || "全部在售物件";
 }

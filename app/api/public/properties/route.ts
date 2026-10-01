@@ -36,7 +36,7 @@ export async function GET(request: Request) {
       mode === "featured"
         ? await getFeaturedPublishedProperties(limit)
         : mode === "search"
-          ? await searchPublishedProperties(q, limit, collectionFilters({ q, city: url.searchParams.get("city") || undefined, district: url.searchParams.getAll("district"), type: url.searchParams.get("type") || undefined }))
+          ? await searchPublishedProperties(q, limit, collectionFilters({ q, city: url.searchParams.get("city") || undefined, district: url.searchParams.getAll("district"), type: url.searchParams.get("type") || undefined, price_min: url.searchParams.get("price_min") || undefined, price_max: url.searchParams.get("price_max") || undefined }))
           : await getLatestPublishedProperties(limit);
 
     if (result.error) {
