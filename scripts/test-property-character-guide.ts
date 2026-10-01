@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { buildPropertyGuide, type GuideProperty } from "../lib/properties/character-guide.ts";
-import { guideSpeechText, selectGuideVoice } from "../lib/properties/guide-voice.ts";
+import { guideSpeechText, guideVoicesForRole, selectGuideVoice } from "../lib/properties/guide-voice.ts";
 
 const base: GuideProperty = { title: "鹿港測試透天", city: "彰化縣", district: "鹿港鎮", price: 1280, land_area_ping: 23.567, building_area_ping: 48, layout: "4房2廳3衛", age: 0, orientation: "坐東朝西", property_type: "townhouse", highlights: ["前院停車", " ", "近公園"] };
 const scripts = buildPropertyGuide({ ...base, owner_phone: "PRIVATE-PHONE", floor_price: "PRIVATE-PRICE" } as GuideProperty, "透天住宅");
@@ -33,3 +33,14 @@ assert.equal(selectGuideVoice([], "amei"), undefined);
 assert.match(guideSpeechText("格局4房2廳3衛；土地23坪。"), /4 房，2 廳，3 衛。土地/);
 assert.equal(guideSpeechText("開價 1,280 萬元。格局 4/3/4。"), "開價 1280 萬元。格局 4 房，3 廳，4 衛。");
 console.log("Guide voice: distinct known male/female routing, missing male fallback and natural punctuation PASS");
+
+const google = { ...femaleVoice, name: "Google 國語（臺灣）", voiceURI: "google" };
+const grandpa = { ...maleVoice, name: "Grandpa（中文（台灣））", voiceURI: "grandpa", localService: true };
+const grandma = { ...femaleVoice, name: "Grandma（中文（台灣））", voiceURI: "grandma" };
+const mixed = [femaleVoice, maleVoice, google, grandpa, grandma, { ...femaleVoice, name: "Unknown", voiceURI: "unknown" }];
+assert.equal(selectGuideVoice(mixed, "amei")?.voiceURI, "google");
+assert.equal(selectGuideVoice(mixed, "ayong")?.voiceURI, "grandpa");
+assert.deepEqual(guideVoicesForRole(mixed, "ayong").map(v => v.voiceURI).sort(), ["grandpa", "male"]);
+assert.deepEqual(guideVoicesForRole(mixed, "amei").map(v => v.voiceURI).sort(), ["female", "google", "grandma"]);
+assert.equal(selectGuideVoice([{ ...google, lang: "zh-CN" }, google], "amei")?.lang, "zh-TW");
+console.log("Role-only menus and Taiwan Google/Grandpa defaults PASS");

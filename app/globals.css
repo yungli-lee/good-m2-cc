@@ -1,3 +1,6 @@
+Warning: truncated output (original token count: 20223)
+Total output lines: 3369
+
 :root {
   --color-brand-blue: #102343;
   --color-brand-blue-light: #183b69;
@@ -267,7 +270,10 @@ select {
 .character-guide-header .eyebrow { margin: 0 0 5px; }
 .character-guide-header h2 { font-size: 19px; margin: 0; }
 .character-guide-hosts { display: flex; align-items: center; justify-content: center; gap: 24px; padding: 12px 0; }
-.character-guide-hosts img { width: 138px; height: auto; }
+.character-guide-person { width: 92px; height: 170px; overflow: hidden; position: relative; flex-shrink: 0; }
+.character-guide-person img { position: absolute; width: 184px; height: 170px; max-width: none; top: 0; }
+.character-guide-person-amei img { left: 0; }
+.character-guide-person-ayong img { left: -92px; }
 .character-guide-role-buttons { display: grid; gap: 10px; }
 .character-guide-role-buttons button, .character-guide-topics button { border: 1px solid #d7d9de; border-radius: 20px; background: #fff; color: #102343; padding: 9px 12px; font: inherit; cursor: pointer; font-size: 14px; min-height: 40px; }
 .character-guide-role-buttons button[aria-pressed="true"], .character-guide-topics button[aria-pressed="true"] { background: #102343; color: #fff; border-color: #102343; }
@@ -1844,63 +1850,7 @@ td {
 
 .media-library-meta dt {
   color: #64708a;
-  font-size: 0.82rem;
-  font-weight: 800;
-}
-
-.media-library-meta dd {
-  margin: 0;
-  overflow-wrap: anywhere;
-  line-height: 1.45;
-}
-
-.media-library-references {
-  display: grid;
-  gap: 8px;
-  padding-top: 12px;
-  border-top: 1px solid rgba(16, 35, 67, 0.1);
-}
-
-.media-library-references h3 {
-  margin: 0;
-  font-size: 1rem;
-}
-
-.media-library-references ul {
-  display: grid;
-  gap: 8px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.media-library-references li {
-  display: grid;
-  gap: 2px;
-  padding: 10px;
-  border-radius: 8px;
-  background: #f8fafc;
-}
-
-.media-library-references em {
-  color: #64708a;
-  font-style: normal;
-  font-size: 0.86rem;
-}
-
-.media-library-empty {
-  display: grid;
-  place-items: center;
-  min-height: 180px;
-  padding: 18px;
-  border: 1px dashed rgba(16, 35, 67, 0.2);
-  border-radius: 8px;
-  background: #fff;
-  color: #64708a;
-  text-align: center;
-}
-
-.media-picker {
+  fon…223 tokens truncated…picker {
   display: grid;
   gap: 12px;
   padding: 14px;

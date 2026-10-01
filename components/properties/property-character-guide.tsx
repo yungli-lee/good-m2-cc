@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useId, useRef, useState } from "react";
 import type { GuideRole, GuideScripts, GuideTopic } from "@/lib/properties/character-guide";
-import { guideSpeechText, selectGuideVoice } from "@/lib/properties/guide-voice";
+import { guideSpeechText, guideVoicesForRole, selectGuideVoice } from "@/lib/properties/guide-voice";
 
 type Props = { scripts: GuideScripts; lineUrl: string; related: Array<{ slug: string; title: string }> };
 const roles: Record<GuideRole, string> = { ayong: "阿勇", amei: "阿美" };
@@ -27,6 +27,8 @@ export function PropertyCharacterGuide({ scripts, lineUrl, related }: Props) {
   const panelId = useId();
   const headingId = useId();
   const text = scripts[role][topic];
+  const roleVoices = guideVoicesForRole(voices, role);
+  const defaultVoice = selectGuideVoice(voices, role);
 
   useEffect(() => {
     setCanSpeak("speechSynthesis" in window && "SpeechSynthesisUtterance" in window);
@@ -75,8 +77,8 @@ export function PropertyCharacterGuide({ scripts, lineUrl, related }: Props) {
     try {
       const available = window.speechSynthesis.getVoices();
       const choice = voiceChoices[role];
-      const voice = choice ? available.find(item => item.voiceURI === choice) : selectGuideVoice(available, role);
-      if (!voice) { setSpeechMessage(role === "ayong" ? "本裝置未提供可辨識的中文男聲，可從語音選擇指定聲音，或先看文字介紹。" : "本裝置尚未提供中文語音，請先閱讀文字介紹。"); return; }
+      const voice = choice ? guideVoicesForRole(available, role).find(item => item.voiceURI === choice) : selectGuideVoice(available, role);
+      if (!voice) { setSpeechMessage(role === "ayong" ? "本裝置未提供可辨識的中文男聲，請先閱讀文字介紹。" : "本裝置尚未提供中文語音，請先閱讀文字介紹。"); return; }
       const utterance = new SpeechSynthesisUtterance(guideSpeechText(text));
       utterance.lang = "zh-TW";
       utterance.voice = voice;
@@ -108,13 +110,13 @@ export function PropertyCharacterGuide({ scripts, lineUrl, related }: Props) {
         <button ref={closeRef} type="button" className="character-guide-close" aria-label="關閉物件介紹" onClick={close}>×</button>
       </div>
       <div className="character-guide-hosts">
-        <img src="/images/guides/ayong-amei.webp" alt="穿西裝的 Q 版阿美與阿勇，微笑歡迎你" width={720} height={665} />
+        <div className={`character-guide-person character-guide-person-${role}`}><img src="/images/guides/ayong-amei.webp" alt={`Q 版${roles[role]}，微笑為你介紹`} width={720} height={665} /></div>
         <div className="character-guide-role-buttons">{(Object.keys(roles) as GuideRole[]).map(item => <button type="button" key={item} aria-pressed={role === item} onClick={() => { stopSpeech(); setRole(item); }}>{roles[item]}介紹</button>)}</div>
       </div>
       <div className="character-guide-topics" aria-label="選擇介紹內容">{(Object.keys(topics) as GuideTopic[]).map(item => <button type="button" key={item} aria-pressed={topic === item} onClick={() => { stopSpeech(); setTopic(item); }}>{topics[item]}</button>)}</div>
       <div className="character-guide-bubble" aria-live="polite"><strong>{roles[role]}說：</strong><p>{text}</p></div>
       {canSpeak ? <>
-        {voices.length ? <label className="character-guide-voice">{roles[role]}的語音<select value={voiceChoices[role] || ""} onChange={event => { stopSpeech(); setVoiceChoices(previous => ({ ...previous, [role]: event.target.value })); }}><option value="">自動選擇{role === "ayong" ? "男聲" : "女聲"}</option>{voices.map(voice => <option key={voice.voiceURI} value={voice.voiceURI}>{voice.name}（{voice.lang}）</option>)}</select></label> : null}
+        {roleVoices.length ? <label className="character-guide-voice">{roles[role]}的語音<select value={voiceChoices[role] || defaultVoice?.voiceURI || ""} onChange={event => { stopSpeech(); setVoiceChoices(previous => ({ ...previous, [role]: event.target.value })); }}>{roleVoices.map(voice => <option key={voice.voiceURI} value={voice.voiceURI}>{voice.name}（{voice.lang}）</option>)}</select></label> : null}
         <button type="button" className="button ghost character-guide-speech" onClick={speak}>{speaking ? "停止語音" : "聽語音介紹"}</button>
       </> : null}
       {speechMessage ? <p role="status" className="muted">{speechMessage}</p> : null}
