@@ -10,21 +10,25 @@ import { resolveHomeSocialImage } from "@/lib/home-social-metadata";
 import { getCachedHomeSocialImageUrl } from "@/lib/home-social-settings";
 import { getSupabaseEnv } from "@/lib/supabase/env";
 
+import { siteOrigin } from "@/lib/home-cms/routing";
+import { StructuredData } from "@/components/content/structured-data";
+
 export const dynamic = "force-dynamic";
 export const runtime = "edge";
 
-const homeTitle = "阿勇不動產顧問｜彰化房地產資訊與服務";
 const homeDescription = "提供彰化地區房屋、土地、農地與廠房資訊，專業、用心、誠信協助您安心買賣。";
-const homeUrl = "https://good.m2.cc/";
 
 export async function generateMetadata(): Promise<Metadata> {
+  const company = await getPublicCompanySettings();
+  const homeTitle = `${company.brand_name}｜${company.brand_tagline}`;
+  const homeUrl = `${siteOrigin()}/`;
   const homeSocialImage = await resolveHomeSocialImage({
     load: getCachedHomeSocialImageUrl,
     supabaseOrigin: getSupabaseEnv().url
   });
   return {
     title: homeTitle,
-    applicationName: "阿勇不動產顧問",
+    applicationName: company.brand_name,
     description: homeDescription,
     alternates: { canonical: homeUrl },
     openGraph: {
@@ -33,7 +37,7 @@ export async function generateMetadata(): Promise<Metadata> {
       url: homeUrl,
       type: "website",
       locale: "zh_TW",
-      siteName: "阿勇不動產顧問",
+      siteName: company.brand_name,
       images: [{
         url: homeSocialImage,
         width: 1200,
@@ -74,6 +78,7 @@ export default async function HomePage() {
 
   return (
     <>
+      <StructuredData data={{ "@context": "https://schema.org", "@type": "RealEstateAgent", "@id": `${siteOrigin()}/#business`, name: company.brand_name, legalName: company.company_name, url: siteOrigin(), logo: company.brand_logo_url || company.logo_url, telephone: company.company_phone || undefined, email: company.company_email || undefined, sameAs: [company.facebook_url, company.instagram_url, company.youtube_url].filter(Boolean), areaServed: "彰化縣" }} />
       <link rel="stylesheet" href="/legacy-static/styles.css" />
       <HomeRenderer campaigns={campaigns} pages={pages} company={company} navigation={navigation} featuredProperties={featuredProperties} latestProperties={latestProperties} knowledge={knowledge} displaySettings={settings} />
     </>

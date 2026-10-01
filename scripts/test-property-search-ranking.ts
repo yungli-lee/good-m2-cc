@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { parsePropertySearch, propertySearchKeywordVariants, rankPropertySearchResults } from "../lib/properties/search.ts";
+import { parsePropertySearch, propertySearchKeywordGroups, propertySearchKeywordVariants, rankPropertySearchResults } from "../lib/properties/search.ts";
 
 const parsed = parsePropertySearch("鹿港 1000萬以下 農地");
 assert.deepEqual(parsed, {
@@ -50,3 +50,13 @@ const typeFallbackResults = rankPropertySearchResults([
 assert.equal(typeFallbackResults[0].title, "950坪大面寬農地");
 
 console.log("property search ranking tests passed");
+
+for (const query of ["福興＋秀水", "福興+秀水", "福興,秀水", "福興、秀水", "福興 秀水"]) {
+  assert.deepEqual(propertySearchKeywordGroups(parsePropertySearch(query).keywords), [["福興", "秀水"]]);
+}
+const multiple = parsePropertySearch("福興＋秀水 農地＋建地 1000萬以下 三房");
+assert.deepEqual(multiple.propertyTypes, ["farmland", "building_land"]);
+assert.equal(multiple.price, 1000);
+assert.equal(multiple.priceMode, "below");
+assert.deepEqual(propertySearchKeywordGroups(multiple.keywords), [["福興", "秀水"], ["三房"]]);
+assert.deepEqual(propertySearchKeywordGroups(parsePropertySearch("鹿港 中山路").keywords), [["鹿港"], ["中山路"]]);

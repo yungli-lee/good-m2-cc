@@ -79,7 +79,8 @@ assert.equal(shouldTransformHeroImage(url.replace("jpeg", "svg"), 2_000_000), fa
 assert.equal(shouldTransformHeroImage(url.replace("jpeg", "mp4"), 2_000_000), false);
 const { HomeCampaignCarousel } = loadSource(resolve("components/home/home-campaign-carousel"));
 const campaigns = Array.from({length:6}, (_,i) => ({id:String(i),title:`slide-${i}`,media_public_url:url.replace("photo",`hero-${i}`),media_assets:{media_type:"image",file_size:2_000_000}}));
-const hero = renderToStaticMarkup(createElement(HomeCampaignCarousel, { campaigns }));
+const hero = renderToStaticMarkup(createElement(HomeCampaignCarousel, { campaigns, lineUrl: "https://lin.ee/cms-contact" }));
+assert.match(hero, /href="https:\/\/lin.ee\/cms-contact"/, "Hero fallback CTA uses CMS contact");
 assert.equal((hero.match(/<img\b/g) || []).length, 2);
 assert.match(hero, /hero-0\.jpeg/); assert.match(hero, /hero-1\.jpeg/);
 assert.doesNotMatch(hero, /hero-[2-5]\.jpeg/);

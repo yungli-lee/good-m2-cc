@@ -1,6 +1,8 @@
 "use client";
 
 import Link from "next/link";
+import { CollectionShare } from "@/components/properties/collection-share";
+import { collectionFilters, collectionHref } from "@/lib/properties/collection-link";
 import { useState } from "react";
 import { trackEvent } from "@/lib/analytics/client";
 import { PropertyCoverImage } from "@/components/media/property-cover-image";
@@ -56,6 +58,7 @@ export function HomePropertyCard({ property }: { property: HomeProperty }) {
 }
 
 export function HomePropertySearch({ lineUrl }: { lineUrl: string }) {
+  const [searchedQuery, setSearchedQuery] = useState("");
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<HomeProperty[] | null>(null);
   const [pending, setPending] = useState(false);
@@ -71,6 +74,7 @@ export function HomePropertySearch({ lineUrl }: { lineUrl: string }) {
       const response = await fetch(`/api/public/properties?${params}`);
       const body = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error("搜尋暫時無法使用，請稍後再試。");
+      setSearchedQuery(query.trim());
       setResults(Array.isArray(body.data) ? body.data : []);
       void trackEvent("search_property", { properties: { query: query.trim() || null, district: null, category: null, price_min: null, price_max: null, result_count: Array.isArray(body.data) ? body.data.length : 0 } });
     } catch (reason) {
@@ -90,7 +94,8 @@ export function HomePropertySearch({ lineUrl }: { lineUrl: string }) {
       </form>
       {error ? <p className="notice" role="alert">{error}</p> : null}
       {results ? <div className="property-search-results">
-        <div className="property-search-heading"><h3>搜尋結果</h3><Link className="button ghost" href="/properties">查看所有物件</Link></div>
+        <div className="property-search-heading"><h3>搜尋結果</h3><Link className="button ghost" href={collectionHref(collectionFilters({ q: searchedQuery }))}>開啟完整搜尋結果</Link></div>
+        <CollectionShare href={collectionHref(collectionFilters({ q: searchedQuery }))} title={searchedQuery || "全部在售物件"} />
         {results.length ? <div className="property-carousel"><div className="property-card-track">{results.map((item) => <HomePropertyCard property={item} key={item.id} />)}</div></div> : <div className="property-empty-cta"><p>目前沒有符合條件的公開物件，可以直接把需求傳給阿勇協助留意。</p>{lineUrl ? <a className="button primary" href={lineUrl}>Line 阿勇諮詢</a> : null}</div>}
       </div> : null}
     </section>

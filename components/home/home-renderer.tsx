@@ -58,7 +58,7 @@ export function HomeRenderer({ campaigns, pages, company, navigation, featuredPr
       stableKey: section.key,
       sortOrder,
       node: section.key === "hero" && campaigns.length
-        ? <HomeCampaignCarousel campaigns={campaigns} />
+        ? <HomeCampaignCarousel campaigns={campaigns} lineUrl={company.line_url} />
         : section.key === "featured-properties"
           ? <HomePropertyCollection kind="featured" properties={featuredProperties} autoplay={displaySettings.featured_property_autoplay} intervalSeconds={displaySettings.featured_property_interval_seconds} />
           : section.key === "property-search"

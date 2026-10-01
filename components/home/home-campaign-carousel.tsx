@@ -11,7 +11,7 @@ import type { HomeCampaign } from "@/lib/home-cms/types";
 
 type Campaign = HomeCampaign & { media_public_url?: string | null };
 
-export function HomeCampaignCarousel({ campaigns }: { campaigns: Campaign[] }) {
+export function HomeCampaignCarousel({ campaigns, lineUrl }: { campaigns: Campaign[]; lineUrl: string }) {
   const [active, setActive] = useState(0);
   const [failed, setFailed] = useState<Record<number, boolean>>({});
   const [lightbox, setLightbox] = useState<Campaign | null>(null);
@@ -98,7 +98,7 @@ export function HomeCampaignCarousel({ campaigns }: { campaigns: Campaign[] }) {
               {campaign.subtitle ? <p>{campaign.subtitle}</p> : null}
               {campaign.body ? <p>{campaign.body}</p> : null}
               <div className="hero-actions">
-                <a className="button primary" href={campaign.cta_href || "https://line.me/ti/p/abQv5LYzzE"}>{campaign.cta_label || "Line 阿勇諮詢"}</a>
+                <a className="button primary" href={campaign.cta_href || lineUrl || "/contact"}>{campaign.cta_label || "Line 阿勇諮詢"}</a>
                 {campaign.secondary_cta_label && campaign.secondary_cta_href ? <a className="button" href={campaign.secondary_cta_href}>{campaign.secondary_cta_label}</a> : null}
               </div>
             </div>

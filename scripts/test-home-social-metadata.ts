@@ -9,9 +9,7 @@ const page = readFileSync(resolve(root, "app/page.tsx"), "utf8");
 const imagePath = resolve(root, "public/images/social/home-og.jpg");
 const image = readFileSync(imagePath);
 
-const title = "阿勇不動產顧問｜彰化房地產資訊與服務";
 const description = "提供彰化地區房屋、土地、農地與廠房資訊，專業、用心、誠信協助您安心買賣。";
-const url = "https://good.m2.cc/";
 const imageUrl = "https://good.m2.cc/images/social/home-og.jpg";
 const supabaseOrigin = "https://project-ref.supabase.co";
 const uuid = "550e8400-e29b-41d4-a716-446655440000";
@@ -24,12 +22,14 @@ async function resolved(value: unknown) {
 }
 
 assert.match(page, /export async function generateMetadata\(\): Promise<Metadata>/, "homepage metadata must be server-generated");
-for (const value of [title, description, url]) assert.ok(page.includes(JSON.stringify(value)), `homepage metadata must include ${value}`);
+for (const value of [description]) assert.ok(page.includes(JSON.stringify(value)), `homepage metadata must include ${value}`);
 assert.match(page, /resolveHomeSocialImage/);
 assert.match(page, /getCachedHomeSocialImageUrl/);
 assert.match(page, /type:\s*"website"/);
 assert.match(page, /locale:\s*"zh_TW"/);
-assert.match(page, /siteName:\s*"阿勇不動產顧問"/);
+assert.match(page, /siteName:\s*company\.brand_name/);
+assert.match(page, /const homeTitle = `\$\{company\.brand_name\}｜\$\{company\.brand_tagline\}`/);
+assert.match(page, /const homeUrl = `\$\{siteOrigin\(\)\}\/`/);
 assert.match(page, /card:\s*"summary_large_image"/);
 assert.match(page, /width:\s*1200/);
 assert.match(page, /height:\s*630/);

@@ -16,7 +16,8 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     title: `不動產知識庫｜${company.brand_name}`,
     description: "整理買屋、賣屋、稅務、貸款、農地農舍與法規等不動產知識。",
-    openGraph: { siteName: company.brand_name }
+    alternates: { canonical: "/knowledge" },
+    openGraph: { siteName: company.brand_name, url: "/knowledge" }
   };
 }
 
