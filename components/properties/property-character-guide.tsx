@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useId, useRef, useState } from "react";
 import type { GuideRole, GuideScripts, GuideTopic } from "@/lib/properties/character-guide";
+import { guideSpeechText, selectGuideVoice } from "@/lib/properties/guide-voice";
 
 type Props = { scripts: GuideScripts; lineUrl: string; related: Array<{ slug: string; title: string }> };
 const roles: Record<GuideRole, string> = { ayong: "阿勇", amei: "阿美" };
@@ -12,12 +13,15 @@ const hiddenKey = "yongmei-guide-hidden";
 export function PropertyCharacterGuide({ scripts, lineUrl, related }: Props) {
   const [open, setOpen] = useState(false);
   const [hidden, setHidden] = useState(false);
-  const [role, setRole] = useState<GuideRole>("ayong");
+  const [role, setRole] = useState<GuideRole>("amei");
   const [topic, setTopic] = useState<GuideTopic>("overview");
   const [canSpeak, setCanSpeak] = useState(false);
   const [speaking, setSpeaking] = useState(false);
   const [speechMessage, setSpeechMessage] = useState("");
+  const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
+  const [voiceChoices, setVoiceChoices] = useState<Partial<Record<GuideRole, string>>>({});
   const triggerRef = useRef<HTMLButtonElement | null>(null);
+  const invitationRef = useRef<HTMLButtonElement | null>(null);
   const closeRef = useRef<HTMLButtonElement | null>(null);
   const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
   const panelId = useId();
@@ -26,11 +30,14 @@ export function PropertyCharacterGuide({ scripts, lineUrl, related }: Props) {
 
   useEffect(() => {
     setCanSpeak("speechSynthesis" in window && "SpeechSynthesisUtterance" in window);
+    const loadVoices = () => setVoices(window.speechSynthesis?.getVoices().filter(voice => /^zh(?:[-_]|$)/i.test(voice.lang)) || []);
+    loadVoices();
+    window.speechSynthesis?.addEventListener("voiceschanged", loadVoices);
     try { setHidden(sessionStorage.getItem(hiddenKey) === "1"); } catch { /* Storage can be disabled. */ }
     const stop = () => { if (utteranceRef.current) window.speechSynthesis?.cancel(); };
     const visibility = () => { if (document.hidden) { stop(); setSpeaking(false); } };
     document.addEventListener("visibilitychange", visibility);
-    return () => { stop(); document.removeEventListener("visibilitychange", visibility); };
+    return () => { stop(); document.removeEventListener("visibilitychange", visibility); window.speechSynthesis?.removeEventListener("voiceschanged", loadVoices); };
   }, []);
 
   useEffect(() => { if (open) closeRef.current?.focus(); }, [open]);
@@ -45,7 +52,12 @@ export function PropertyCharacterGuide({ scripts, lineUrl, related }: Props) {
     setSpeaking(false);
     setSpeechMessage("");
   }
-  function close() { stopSpeech(); setOpen(false); triggerRef.current?.focus(); }
+  function close() {
+    stopSpeech(); setOpen(false);
+    // The floating launcher unmounts while open; the page trigger always remains.
+    const target = triggerRef.current?.isConnected ? triggerRef.current : invitationRef.current;
+    target?.focus();
+  }
   function show(event: React.MouseEvent<HTMLButtonElement>) {
     triggerRef.current = event.currentTarget;
     setHidden(false);
@@ -54,18 +66,22 @@ export function PropertyCharacterGuide({ scripts, lineUrl, related }: Props) {
   }
   function dismiss() {
     stopSpeech(); setOpen(false); setHidden(true);
+    invitationRef.current?.focus();
     try { sessionStorage.setItem(hiddenKey, "1"); } catch { /* Optional preference. */ }
   }
   function speak() {
     if (speaking) { stopSpeech(); return; }
     stopSpeech();
     try {
-      const utterance = new SpeechSynthesisUtterance(text);
+      const available = window.speechSynthesis.getVoices();
+      const choice = voiceChoices[role];
+      const voice = choice ? available.find(item => item.voiceURI === choice) : selectGuideVoice(available, role);
+      if (!voice) { setSpeechMessage(role === "ayong" ? "本裝置未提供可辨識的中文男聲，可從語音選擇指定聲音，或先看文字介紹。" : "本裝置尚未提供中文語音，請先閱讀文字介紹。"); return; }
+      const utterance = new SpeechSynthesisUtterance(guideSpeechText(text));
       utterance.lang = "zh-TW";
-      const voices = window.speechSynthesis.getVoices();
-      const voice = voices.find(item => /^zh[-_]TW$/i.test(item.lang)) || voices.find(item => /^zh/i.test(item.lang));
-      if (voice) utterance.voice = voice;
-      utterance.rate = 0.95;
+      utterance.voice = voice;
+      utterance.lang = voice.lang;
+      utterance.rate = 1;
       utterance.onend = () => { setSpeaking(false); utteranceRef.current = null; };
       utterance.onerror = () => { setSpeaking(false); utteranceRef.current = null; setSpeechMessage("目前無法播放語音，請先閱讀文字介紹。"); };
       utteranceRef.current = utterance;
@@ -77,7 +93,7 @@ export function PropertyCharacterGuide({ scripts, lineUrl, related }: Props) {
   return <>
     <div className="container character-guide-invitation">
       <span>想快速了解這一件？</span>
-      <button type="button" className="button ghost" aria-expanded={open} aria-controls={panelId} onClick={show}>請阿勇、阿美介紹</button>
+      <button ref={invitationRef} type="button" className="button ghost" aria-expanded={open} aria-controls={panelId} onClick={show}>請阿勇、阿美介紹</button>
     </div>
     {!hidden && !open ? <div className="character-guide-launcher">
       <button type="button" className="character-guide-hide" aria-label="隱藏角色小幫手" onClick={dismiss}>×</button>
@@ -97,7 +113,10 @@ export function PropertyCharacterGuide({ scripts, lineUrl, related }: Props) {
       </div>
       <div className="character-guide-topics" aria-label="選擇介紹內容">{(Object.keys(topics) as GuideTopic[]).map(item => <button type="button" key={item} aria-pressed={topic === item} onClick={() => { stopSpeech(); setTopic(item); }}>{topics[item]}</button>)}</div>
       <div className="character-guide-bubble" aria-live="polite"><strong>{roles[role]}說：</strong><p>{text}</p></div>
-      {canSpeak ? <button type="button" className="button ghost character-guide-speech" onClick={speak}>{speaking ? "停止語音" : "聽語音介紹"}</button> : null}
+      {canSpeak ? <>
+        {voices.length ? <label className="character-guide-voice">{roles[role]}的語音<select value={voiceChoices[role] || ""} onChange={event => { stopSpeech(); setVoiceChoices(previous => ({ ...previous, [role]: event.target.value })); }}><option value="">自動選擇{role === "ayong" ? "男聲" : "女聲"}</option>{voices.map(voice => <option key={voice.voiceURI} value={voice.voiceURI}>{voice.name}（{voice.lang}）</option>)}</select></label> : null}
+        <button type="button" className="button ghost character-guide-speech" onClick={speak}>{speaking ? "停止語音" : "聽語音介紹"}</button>
+      </> : null}
       {speechMessage ? <p role="status" className="muted">{speechMessage}</p> : null}
       <p className="character-guide-note">依本頁公開資料整理。{canSpeak ? "語音由裝置朗讀。" : ""}</p>
       {related.length ? <div className="character-guide-related"><h3>也可以一起比較</h3>{related.map(item => <Link key={item.slug} href={`/properties/${encodeURIComponent(item.slug)}`} onClick={stopSpeech}>{item.title} <span aria-hidden="true">→</span></Link>)}</div> : null}

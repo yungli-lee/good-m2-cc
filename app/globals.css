@@ -275,6 +275,8 @@ select {
 .character-guide-bubble { margin: 16px 0 12px; padding: 18px; background: #f5eddb; border-radius: 3px 18px 18px 18px; line-height: 1.85; overflow-wrap: anywhere; }
 .character-guide-bubble p { margin: 8px 0 0; }
 .character-guide-speech { font-size: 14px; }
+.character-guide-voice { display: grid; gap: 6px; font-size: 13px; margin-bottom: 12px; color: #526078; }
+.character-guide-voice select { width: 100%; min-width: 0; border: 1px solid #d7d9de; border-radius: 8px; padding: 9px; background: #fff; color: #102343; }
 .character-guide-note { color: #647087; font-size: 12px; margin: 12px 0; }
 .character-guide-related { border-top: 1px solid #e2d9c8; padding-top: 12px; }
 .character-guide-related h3 { font-size: 15px; margin: 0 0 6px; }
