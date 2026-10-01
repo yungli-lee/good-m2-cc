@@ -10,6 +10,8 @@ import { PropertyMediaGallery } from "@/components/media/property-media-gallery"
 import { PropertyViewTracker } from "@/components/analytics/content-trackers";
 import { StructuredData } from "@/components/content/structured-data";
 import { ContentRetention } from "@/components/content/content-retention";
+import { PropertyCharacterGuide } from "@/components/properties/property-character-guide";
+import { buildPropertyGuide } from "@/lib/properties/character-guide";
 import { siteOrigin } from "@/lib/home-cms/routing";
 import { PropertyCard } from "@/components/properties/property-card";
 import { KnowledgeCard } from "@/components/content/knowledge-card";
@@ -85,10 +87,12 @@ export default async function PropertyDetailPage({ params }: Props) {
     const unavailable = availabilityResult.data as { unavailable_reason?: string | null; status?: string };
     const matched = unavailable.unavailable_reason === "已成交";
     const [properties, knowledge] = await Promise.all([listRetentionPublishedProperties(3), listRelatedKnowledgeForProperty("", 3)]);
-    return <main className="property-unavailable-page" data-analytics-location="unavailable"><section className="section"><div className="container property-unavailable-card">
+    return <main className="property-unavailable-page" data-analytics-location="unavailable"><section className="section"><div className="container property-unavailable-card character-unavailable-card">
+      <img className="character-unavailable-team" src="/images/guides/ayong-amei.webp" alt="Q 版阿勇與阿美微笑陪你繼續找房" width={720} height={665} decoding="async" />
       <p className="eyebrow">Property Update</p><h1>{matched ? "啊！本件已經配對成功 ❤️" : "此物件已下架"}</h1>
       <p className="property-unavailable-reason">下架原因：{unavailable.unavailable_reason || (unavailable.status === "expired" ? "委託到期" : "已停止公開")}</p>
-      <p>這一件先告一段落，找房的旅程繼續！看看下列在售物件，阿勇與阿美可以為你詳細介紹。</p>
+      <p className="character-unavailable-greeting">{matched ? "阿美：替這一件找到新主人啦！" : "阿美：這一件目前先休息一下。"}<br />阿勇：別急，我們再陪你看看其他好物件！</p>
+      <p>看看下列在售物件，阿勇與阿美可以為你詳細介紹；也可以先逛逛知識庫。</p>
       <div className="actions"><Link className="button" href="/properties">查看其他物件</Link><Link className="button ghost" href="/areas">依地區找房</Link>{companySettings.line_url ? <a className="button ghost" href={companySettings.line_url}>LINE 阿勇諮詢</a> : null}</div>
     </div></section><ContentRetention propertiesFirst properties={properties} knowledge={knowledge} reminders={[]} propertyTitle="我推薦下列在售物件" knowledgeTitle="找房之前，這些知識也用得上" /></main>;
   }
@@ -320,6 +324,7 @@ export default async function PropertyDetailPage({ params }: Props) {
         price: property.price == null ? null : Number(property.price),
         listing_status: property.status || null
       }} />
+      <PropertyCharacterGuide scripts={buildPropertyGuide(property, publicBuildingTypeLabel(property))} lineUrl={companySettings.line_url || "/contact"} related={relatedProperties.map(item => ({ slug: item.slug, title: item.title }))} />
       <div className="property-detail-desktop">
         <section className="section">
           <div className="container detail-layout">
