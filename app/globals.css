@@ -3399,3 +3399,20 @@ td {
   .concierge-message { padding: 12px; }
   .concierge-launcher { left: 10px; bottom: 12px; max-width: 44vw; padding: 10px 12px; }
 }
+
+/* Keep the guide focused on one primary action. */
+.concierge-role-switch { display: inline-flex; gap: 4px; padding: 4px; border: 1px solid #ddd5c4; border-radius: 30px; background: #fffdf7; }
+.concierge-role-switch button { border: 0; border-radius: 24px; padding: 8px 14px; background: transparent; color: #58657b; cursor: pointer; }
+.concierge-role-switch button.selected { background: #102343; color: #fff; }
+.concierge-shortcuts { display: flex; flex-wrap: wrap; gap: 10px; margin: 24px 0 16px; }
+.concierge-quiet { border: 1px solid #ddd5c4; border-radius: 24px; padding: 8px 14px; background: #fffdf7; color: #102343; cursor: pointer; font: inherit; }
+.concierge-quiet:disabled { opacity: .5; cursor: wait; }
+.concierge-role-switch button:focus-visible, .concierge-quiet:focus-visible { outline: 2px solid #102343; outline-offset: 3px; }
+.concierge-conversation.is-empty { display: none; }
+.concierge-compose { padding: 20px; background: #fffdf7; border: 1px solid #ddd5c4; border-radius: 18px; }
+.concierge-compose textarea { width: 100%; box-sizing: border-box; }
+.concierge-handoff { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 0; border: 0; margin-top: 16px; font-size: 14px; }
+.concierge-handoff .concierge-quiet { border: 0; background: transparent; padding-left: 0; text-decoration: underline; text-underline-offset: 4px; }
+.concierge-privacy { margin-top: 18px; font-size: 13px; }
+.concierge-privacy summary { cursor: pointer; }
+@media (max-width: 640px) { .concierge-compose { padding: 14px; } .concierge-shortcuts { gap: 6px; } .concierge-quiet { font-size: 14px; } }
