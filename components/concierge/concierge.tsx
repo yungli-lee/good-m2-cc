@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import { chatContact, redactChatContact } from "@/lib/concierge/contact";
 import Script from "next/script";
 import { useEffect, useRef, useState } from "react";
 import { needsSchema, needsSummary, type Needs } from "@/lib/concierge/schema";
@@ -18,6 +19,10 @@ export function Concierge({ aiEnabled, siteKey }: { aiEnabled: boolean; siteKey:
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [showLead, setShowLead] = useState(false);
+  const [contactName, setContactName] = useState("");
+  const [contactPhone, setContactPhone] = useState("");
+  const [leadVersion, setLeadVersion] = useState(0);
+  const leadSection = useRef<HTMLElement>(null);
   const [summary, setSummary] = useState("");
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
@@ -51,17 +56,26 @@ export function Concierge({ aiEnabled, siteKey }: { aiEnabled: boolean; siteKey:
     return () => { if (widgetId.current) turnstile()?.remove(widgetId.current); widgetId.current = null; setToken(""); };
   }, [showLead, siteKey, widgetReady]);
   async function ask(text: string) {
-    if (busy || !text.trim()) return;
+    if (busy || sending || !text.trim()) return;
     stop(); setError(""); setBusy(true); setInput("");
-    const history = messages.slice(-10).map(m => ({ role: m.role, text: m.text }));
+    const contact = chatContact(text);
+    const updatedMessages: Message[] = [...messages, { role: "user", text }];
+    const history = messages.slice(-10).map(m => ({ role: m.role, text: redactChatContact(m.text) }));
     setMessages(m => [...m, { role: "user", text }]);
     try {
       const response = await fetch("/api/public/concierge", { method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ role, message: text, history, needs }), signal: AbortSignal.timeout(55000) });
+        body: JSON.stringify({ role, message: redactChatContact(text), history, needs }), signal: AbortSignal.timeout(55000) });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "暫時無法回答，請稍後重試");
+      if (contact.phone) {
+        setContactPhone(contact.phone); if (contact.name) setContactName(contact.name);
+        openLead(data.needs, updatedMessages);
+      }
       setNeeds(data.needs); setMessages(m => [...m, { role: "assistant", text: data.answer, reply: data, character: role }]);
-    } catch (e) { setError(e instanceof Error ? e.message : "暫時無法回答"); }
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "暫時無法回答");
+      if (contact.phone) { setContactPhone(contact.phone); if (contact.name) setContactName(contact.name); openLead(needs, updatedMessages); }
+    }
     finally { setBusy(false); }
   }
   async function play(reply: Reply) {
@@ -79,12 +93,13 @@ export function Concierge({ aiEnabled, siteKey }: { aiEnabled: boolean; siteKey:
       await audio.current.play();
     } catch { if (current === generation.current) { stop(); setError("語音暫時無法播放，請閱讀文字回答；較早的回答請重新詢問"); } }
   }
-  function openLead() {
+  function openLead(currentNeeds = needs, currentMessages = messages) {
     stop(); setLeadError(""); setSent(false);
-    const turns = messages.filter(m => m.role === "user").slice(-4).map(m => m.text).join("\n");
-    setSummary(`${needsSummary(needs)}\n客人補充：\n${turns || "請補充需求"}${clicked.current.length ? `\n點閱物件：${clicked.current.map(p => `${p.title} /properties/${p.slug}`).join("；")}` : ""}`.slice(0, 900));
-    setShowLead(true);
+    const turns = currentMessages.filter(m => m.role === "user").slice(-4).map(m => m.text).join("\n");
+    setSummary(`${needsSummary(currentNeeds)}\n客人補充：\n${turns || "請補充需求"}${clicked.current.length ? `\n點閱物件：${clicked.current.map(p => `${p.title} /properties/${p.slug}`).join("；")}` : ""}`.slice(0, 900));
+    setLeadVersion(v => v + 1); setShowLead(true);
   }
+  useEffect(() => { if (showLead) leadSection.current?.scrollIntoView({ behavior: "smooth", block: "start" }); }, [showLead, leadVersion]);
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault(); if (sending || sent) return;
     const form = event.currentTarget;
@@ -114,8 +129,8 @@ export function Concierge({ aiEnabled, siteKey }: { aiEnabled: boolean; siteKey:
     <div className="concierge-heading"><div className={`character-guide-person character-guide-person-${role}`} aria-hidden="true"><img src="/images/guides/ayong-amei.webp" alt="" width="184" height="170" /></div>
       <div><p className="eyebrow">陪你一起找房</p><h1>阿勇、阿美需求導覽</h1><p>{aiEnabled ? "AI 導覽助理，依網站公開資料協助你。" : "目前為需求導覽模式，可整理條件、搜尋物件與留下需求。"}</p>
         <div className="concierge-actions">{(["amei", "ayong"] as const).map(value => <button key={value} type="button" aria-pressed={role === value} className={`button ${role === value ? "primary" : ""}`} onClick={() => { stop(); setRole(value); }}>{value === "amei" ? "阿美" : "阿勇"}帶你找</button>)}</div></div></div>
-    <p className="concierge-privacy">聊天請先描述需求，不用提供電話或完整門牌。{aiEnabled ? "文字問題會交由 AI 服務處理；聯絡資料在確認送出表單後才存入後台。" : "聯絡資料在確認送出表單後才存入後台。"}</p>
-    <div className="concierge-actions">{["我想找鹿港住宅", "我有物件想委託出售", "我想找租屋", "買房貸款要注意什麼？"].map(text => <button className="button" type="button" key={text} disabled={busy} onClick={() => void ask(text)}>{text}</button>)}<button className="button" disabled={busy} onClick={() => { stop(); setMessages([]); setNeeds(needsSchema.parse({})); clicked.current = []; setShowLead(false); setError(""); }}>重新開始</button></div>
+    <p className="concierge-privacy">先描述需求，不用提供完整門牌。若在聊天留下手機，會帶入聯絡表單，由你確認後才送出。{aiEnabled ? "文字問題會交由 AI 服務處理；聯絡資料在確認送出表單後才存入後台。" : "聯絡資料在確認送出表單後才存入後台。"}</p>
+    <div className="concierge-actions">{["我想找鹿港住宅", "我有物件想委託出售", "我想找租屋", "買房貸款要注意什麼？"].map(text => <button className="button" type="button" key={text} disabled={busy} onClick={() => void ask(text)}>{text}</button>)}<button className="button" disabled={busy} onClick={() => { stop(); setMessages([]); setNeeds(needsSchema.parse({})); clicked.current = []; setShowLead(false); setContactName(""); setContactPhone(""); setSummary(""); setSent(false); setError(""); }}>重新開始</button></div>
     <div className="concierge-conversation" role="log" aria-label="需求導覽對話" aria-live="polite">
       {!messages.length && <p>想找房、找土地，還是有物件想委託？告訴我地區、預算與必要條件，我陪你一起找。</p>}
       {messages.map((m, index) => <article className={`concierge-message ${m.role}`} key={index}>
@@ -129,14 +144,14 @@ export function Concierge({ aiEnabled, siteKey }: { aiEnabled: boolean; siteKey:
     </div>
     {error && <p role="alert">{error}</p>}
     <form className="concierge-compose" onSubmit={e => { e.preventDefault(); void ask(input); }}><label htmlFor="concierge-input">告訴我你的需求</label><textarea id="concierge-input" value={input} onChange={e => setInput(e.target.value)} maxLength={500} rows={3} placeholder="例如：鹿港或福興，800萬以下的住宅，需要孝親房" required disabled={busy} /><button className="button primary" disabled={busy}>{busy ? "整理中…" : "送出提問"}</button></form>
-    <div className="concierge-handoff"><p>想請阿勇、阿美接續介紹？先確認需求，再留下聯絡方式。</p><button className="button primary" type="button" disabled={busy} onClick={openLead}>整理需求並請真人接洽</button></div>
-    {showLead && <section className="concierge-lead" aria-labelledby="concierge-lead-title"><h2 id="concierge-lead-title">確認需求與聯絡方式</h2><form onSubmit={submit} data-form-type={`concierge-${needs.intent}`} data-form-location="guide">
+    <div className="concierge-handoff"><p>想請阿勇、阿美接續介紹？先確認需求，再留下聯絡方式。</p><button className="button primary" type="button" disabled={busy} onClick={() => openLead()}>整理需求並請真人接洽</button></div>
+    {showLead && <section ref={leadSection} className="concierge-lead" aria-labelledby="concierge-lead-title"><h2 id="concierge-lead-title">確認需求與聯絡方式</h2><p>請確認這是你本人的聯絡資料。尚未送出；確認並同意後，才會通知阿勇、阿美。</p><form key={leadVersion} onSubmit={submit} data-form-type={`concierge-${needs.intent}`} data-form-location="guide">
       <label>需求摘要（可以修改）<textarea rows={6} value={summary} onChange={e => setSummary(e.target.value)} minLength={10} maxLength={900} required disabled={sent || sending} /></label>
-      <div className="form-grid"><label>稱呼<input name="name" autoComplete="name" minLength={2} maxLength={20} required disabled={sent || sending} /></label><label>手機<input name="phone" type="tel" autoComplete="tel" pattern="09[0-9]{8}" placeholder="09xxxxxxxx" required disabled={sent || sending} /></label><label>方便聯絡時間<input name="contact_time" maxLength={60} placeholder="例如：平日晚上" disabled={sent || sending} /></label></div>
+      <div className="form-grid"><label>稱呼<input name="name" value={contactName} onChange={e => setContactName(e.target.value)} autoComplete="name" minLength={2} maxLength={20} required disabled={sent || sending} /></label><label>手機<input name="phone" value={contactPhone} onChange={e => setContactPhone(e.target.value)} type="tel" autoComplete="tel" pattern="09[0-9]{8}" placeholder="09xxxxxxxx" required disabled={sent || sending} /></label><label>方便聯絡時間<input name="contact_time" maxLength={60} placeholder="例如：平日晚上" disabled={sent || sending} /></label></div>
       <label className="concierge-honeypot" aria-hidden="true">Website<input name="website" tabIndex={-1} autoComplete="off" /></label>
       <label className="consent-check"><input name="consent" type="checkbox" required disabled={sent || sending} /><span>我同意勇美為聯絡與服務需求使用以上資料，交由阿勇、阿美接洽。</span></label>
       {siteKey && <div ref={widget} />}{leadError && <p role={sent ? "status" : "alert"}>{leadError}</p>}
-      <div className="concierge-actions"><button className="button primary" disabled={sending || sent || Boolean(siteKey && !token)}>{sent ? "已送出" : sending ? "送出中…" : "確認並送出需求"}</button><button className="button" type="button" onClick={() => setShowLead(false)}>收起表單</button></div>
+      <div className="concierge-actions"><button className="button primary" disabled={sending || sent || Boolean(siteKey && !token)}>{sent ? "已送出" : sending ? "送出中…" : `請${role === "amei" ? "阿美" : "阿勇"}聯絡我`}</button><button className="button" type="button" onClick={() => setShowLead(false)}>收起表單</button></div>
     </form></section>}
   </div>;
 }

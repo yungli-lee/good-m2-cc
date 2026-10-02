@@ -54,6 +54,16 @@ function request(message, extra = {}, origin) { return new Request('https://exam
   assert.deepEqual(knowledgeQueries, ['點交', '交屋', '過戶']);
   assert.equal(body.mode, 'ai'); assert.equal(body.properties.length, 0);
   assert.ok(!JSON.stringify(body).includes('SECRET'));
+  const contact = compile('lib/concierge/contact.ts', {});
+  assert.equal(contact.chatContact('我叫王小明，手機0938-137-177').phone, '0938137177');
+  assert.equal(contact.chatContact('我叫王小明，手機0938-137-177').name, '王小明');
+  assert.equal(contact.chatContact('我是賣方').name, '');
+  assert.equal(contact.redactChatContact('我是賣方'), '我是賣方');
+  assert.ok(!contact.redactChatContact('我叫王小明 0938137177').includes('王小明'));
+  assert.ok(!contact.redactChatContact('我叫王小明 0938137177').includes('0938137177'));
+  modelOutputs = [schema.needsSchema.parse({intent:'question'}), {answer:'請自行找賣方協商'}];
+  response = await route.POST(request('價格可以再低一點嗎')); body = await response.json();
+  assert.ok(body.answer.includes('交給阿勇、阿美')); assert.ok(!body.answer.includes('自行'));
   let notifications = 0, saves = 0;
   const inquiry = compile('app/api/public/inquiries/route.ts', {
     'next/server': { NextResponse: { json: (body, options) => Response.json(body, options) } },
