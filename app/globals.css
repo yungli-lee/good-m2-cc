@@ -3420,3 +3420,5 @@ td {
 .concierge-property { display: flex; flex-direction: column; gap: 8px; }
 .concierge-property > a { flex: 1; }
 .concierge-property > button { align-self: flex-start; }
+
+.concierge-focus { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; margin-top: 16px; padding: 12px 16px; border-left: 3px solid #ca9a3c; border-radius: 8px; background: #f5edda; font-size: 14px; }

@@ -89,7 +89,10 @@ function request(message, extra = {}, origin) { return new Request('https://exam
   const dialog = compile('lib/concierge/dialog.ts', {});
   assert.equal(dialog.referencedSlug('第二間',[{slug:'a',title:'甲'},{slug:'b',title:'乙'}],''),'b');
   assert.equal(dialog.referencedSlug('這間',[{slug:'a',title:'甲'},{slug:'b',title:'乙'}],''),'');
-  assert.equal(dialog.dialogAction('改找鹿港住宅'),'search');
+  assert.equal(dialog.dialogAction('改找鹿港住宅',true),'search');
+  assert.equal(dialog.dialogAction('好，週末方便',true),'property');
+  assert.equal(dialog.dialogAction('有車位嗎',true),'property');
+  assert.equal(dialog.dialogAction('想找鹿港住宅',true),'search');
   let notifications = 0, saves = 0;
   const inquiry = compile('app/api/public/inquiries/route.ts', {
     'next/server': { NextResponse: { json: (body, options) => Response.json(body, options) } },

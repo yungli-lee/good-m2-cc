@@ -33,7 +33,7 @@ export async function POST(request: Request) {
     if (!parsed.success) return json({ error: "請簡短描述您的需求" }, 422);
     const input = parsed.data;
     const safeMessage = redactContact(input.message);
-    const action = dialogAction(safeMessage);
+    const action = dialogAction(safeMessage, Boolean(input.focusedSlug));
     const negotiation = action === "offer";
     const followup = action !== "search";
     const candidateResults = followup ? await Promise.all(input.candidateSlugs.map(slug => getPublishedPropertyBySlug(slug))) : [];
