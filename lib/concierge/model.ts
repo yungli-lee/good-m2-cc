@@ -12,7 +12,7 @@ export async function modelJson(instructions: string, input: unknown) {
   const response = await fetch("https://api.openai.com/v1/responses", {
     method: "POST", signal: AbortSignal.timeout(20000),
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${key}` },
-    body: JSON.stringify({ model, store: false, instructions, input: JSON.stringify(input), max_output_tokens: 900,
+    body: JSON.stringify({ model, store: false, instructions, input: `請依指示輸出 JSON。以下為需求資料：\n${JSON.stringify(input)}`, max_output_tokens: 900,
       text: { format: { type: "json_object" } } })
   });
   if (!response.ok) {
