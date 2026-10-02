@@ -11,7 +11,7 @@ type Reply = { viewingTime?: string; focusedProperty?: Card | null; action?: str
 type Message = { role: "user" | "assistant"; text: string; reply?: Reply; character?: "amei" | "ayong" };
 type Turnstile = { render(element: HTMLElement, options: Record<string, unknown>): string; remove(id: string): void; reset(id: string): void };
 function turnstile() { return (window as unknown as { turnstile?: Turnstile }).turnstile; }
-export function Concierge({ aiEnabled, siteKey }: { aiEnabled: boolean; siteKey: string }) {
+export function Concierge({ aiEnabled, siteKey, phone, lineUrl }: { aiEnabled: boolean; siteKey: string; phone: string; lineUrl: string }) {
   const [role, setRole] = useState<"amei" | "ayong">("amei");
   const [needs, setNeeds] = useState<Needs>(() => needsSchema.parse({}));
   const [messages, setMessages] = useState<Message[]>([]);
@@ -123,7 +123,7 @@ export function Concierge({ aiEnabled, siteKey }: { aiEnabled: boolean; siteKey:
       if (!response.ok || !result.ok) throw new Error(Object.values(result.field_errors || {}).join("；") || result.error || "送出失敗，請重試");
       setSent(true);
       void trackEvent("submit_inquiry", { properties: { form_type: `concierge-${needs.intent}`, form_location: "guide" } });
-      setLeadError(result.email_sent ? "需求已送出，並已寄出通知；阿勇、阿美會再與你聯繫。" : "需求已成功存入後台；通知暫時未寄出，你也可以使用網站 LINE 諮詢。");
+      setLeadError(result.email_sent ? `需求已送出，並已寄出通知；阿勇${phone ? `（${phone}）` : ""}、阿美會再與你聯繫。` : "需求已成功存入後台；通知暫時未寄出，你也可以使用網站 LINE 諮詢。");
     } catch (e) {
       setLeadError(e instanceof Error ? e.message : "送出失敗，請重試");
       if (widgetId.current) turnstile()?.reset(widgetId.current); setToken("");
@@ -150,7 +150,8 @@ export function Concierge({ aiEnabled, siteKey }: { aiEnabled: boolean; siteKey:
     </div>
     {error && <p role="alert">{error}</p>}
     <form className="concierge-compose" onSubmit={e => { e.preventDefault(); void ask(input); }}><label htmlFor="concierge-input">告訴我你的需求</label><textarea id="concierge-input" value={input} onChange={e => setInput(e.target.value)} maxLength={500} rows={2} placeholder="例如：鹿港或福興，800萬以下的住宅，需要孝親房" required disabled={busy} /><button className="button primary" disabled={busy}>{busy ? "整理中…" : "送出提問"}</button></form>
-    <div className="concierge-handoff"><span>想直接聊聊？</span><button className="concierge-quiet" type="button" disabled={busy || sending} onClick={() => openLead()}>請阿勇／阿美聯絡我 →</button></div>
+    <div className="concierge-direct-contact"><p>不想留下資料？可以直接打電話或加 LINE。</p><div className="concierge-actions">{phone && <a className="button" href={`tel:${phone.replace(/[^\d+]/g, "")}`} data-contact-person="阿勇" data-cta-location="concierge_direct">阿勇 {phone} · 撥打電話</a>}{lineUrl && <a className="button" href={lineUrl} target="_blank" rel="noopener noreferrer" data-contact-person="阿勇" data-cta-location="concierge_direct">加 LINE 諮詢 ↗</a>}</div></div>
+    <div className="concierge-handoff"><span>想請我們回電？</span><button className="concierge-quiet" type="button" disabled={busy || sending} onClick={() => openLead()}>請阿勇／阿美聯絡我 →</button></div>
     <details className="concierge-privacy"><summary>隱私與聯絡說明</summary><p className="concierge-privacy">先描述需求，不用提供完整門牌。若在聊天留下手機，會帶入聯絡表單，由你確認後才送出。{aiEnabled ? "文字問題會交由 AI 服務處理；聯絡資料在確認送出表單後才存入後台。" : "聯絡資料在確認送出表單後才存入後台。"}</p></details>
     {showLead && <section ref={leadSection} className="concierge-lead" aria-labelledby="concierge-lead-title"><h2 id="concierge-lead-title">確認需求與聯絡方式</h2><p>請確認這是你本人的聯絡資料。尚未送出；確認並同意後，才會通知阿勇、阿美。</p><form key={leadVersion} onSubmit={submit} data-form-type={`concierge-${needs.intent}`} data-form-location="guide">
       <label>需求摘要（可以修改）<textarea rows={6} value={summary} onChange={e => setSummary(e.target.value)} minLength={10} maxLength={900} required disabled={sent || sending} /></label>
