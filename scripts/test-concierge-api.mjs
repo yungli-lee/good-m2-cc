@@ -13,6 +13,7 @@ function compile(path, modules) {
 const schema = compile('lib/concierge/schema.ts', { '../properties/collection-link.ts': compile('lib/properties/collection-link.ts', {}) });
 let enabled = false, queryFails = false, emptyResults = false, calls = 0;
 let modelOutputs = [];
+let expectedMaxPrice = 800;
 const knowledgeQueries = [];
 const knowledgeHelpers = compile('lib/concierge/knowledge.ts', {});
 assert.deepEqual(Array.from(knowledgeHelpers.knowledgeTerms('買房之後要注意什麼')), ['點交', '交屋', '過戶']);
@@ -24,7 +25,7 @@ const route = compile('app/api/public/concierge/route.ts', {
   '@/lib/concierge/model': { conciergeEnv: () => ({ key: enabled ? 'mock' : '' }), modelJson: async () => { if (!modelOutputs.length) throw new Error('provider down'); return modelOutputs.shift(); } },
   '@/lib/concierge/limit': { takeConciergeSlot: () => () => {} },
   '@/lib/properties/collection-link': compile('lib/properties/collection-link.ts', {}),
-  '@/lib/properties/queries': { searchPublishedProperties: async (_, __, filters) => { calls++; assert.equal(filters.maxPrice, 800); return { error: queryFails ? {} : null, data: emptyResults ? [] : [{ id: 'public-id', slug: 'public-slug', title: '公開物件', price: 688, district: '鹿港鎮', description: '公開描述', private_owner: 'DO NOT EXPOSE', bottom_price: 500 }] }; } },
+  '@/lib/properties/queries': { searchPublishedProperties: async (_, __, filters) => { calls++; assert.equal(filters.maxPrice, expectedMaxPrice); return { error: queryFails ? {} : null, data: emptyResults ? [] : [{ id: 'public-id', slug: 'public-slug', title: '公開物件', price: 688, district: '鹿港鎮', description: '公開描述', private_owner: 'DO NOT EXPOSE', bottom_price: 500 }] }; } },
   '@/lib/content/queries': { listPublicKnowledgeItems: async ({q}) => { knowledgeQueries.push(q); return { data: [{title: q + '重點', slug: q, summary: '摘要', body: '公開正文', private_notes: 'SECRET'}], error: null }; } },
   '@/lib/properties/guide-speech-env': { getGuideSpeechEnv: () => ({ enabled: false }) },
   '@/lib/concierge/audio-token': { signReply: async () => 'mock-token' }
@@ -61,9 +62,15 @@ function request(message, extra = {}, origin) { return new Request('https://exam
   assert.equal(contact.redactChatContact('我是賣方'), '我是賣方');
   assert.ok(!contact.redactChatContact('我叫王小明 0938137177').includes('王小明'));
   assert.ok(!contact.redactChatContact('我叫王小明 0938137177').includes('0938137177'));
+  expectedMaxPrice = undefined;
   modelOutputs = [schema.needsSchema.parse({intent:'question'}), {answer:'請自行找賣方協商'}];
   response = await route.POST(request('價格可以再低一點嗎')); body = await response.json();
   assert.ok(body.answer.includes('交給阿勇、阿美')); assert.ok(!body.answer.includes('自行'));
+  const previousSearch = schema.needsSchema.parse({ intent: 'buy', districts: ['鹿港鎮'] });
+  modelOutputs = [schema.needsSchema.parse({intent:'buy', districts:['鹿港鎮'], maxPrice:2000, mustHave:'民族路'}), {answer:'改找2000萬以下物件'}];
+  response = await route.POST(request('鹿港民族路這一間，開價2500萬好貴喔\n2000萬有機會嗎', { needs: previousSearch })); body = await response.json();
+  assert.equal(body.needs.maxPrice, null); assert.equal(body.needs.mustHave, '');
+  assert.ok(body.answer.includes('交給阿勇、阿美')); assert.ok(!body.answer.includes('改找'));
   let notifications = 0, saves = 0;
   const inquiry = compile('app/api/public/inquiries/route.ts', {
     'next/server': { NextResponse: { json: (body, options) => Response.json(body, options) } },

@@ -32,6 +32,7 @@ export async function POST(request: Request) {
     if (!parsed.success) return json({ error: "請簡短描述您的需求" }, 422);
     const input = parsed.data;
     const safeMessage = redactContact(input.message);
+    const negotiation = /議價|降價|殺價|便宜|好貴|太貴|價格.*(?:低|談)|(?:低|便宜).*一點|出價|(?:萬|元).{0,12}(?:有機會|可以嗎|可不可以|能不能|願意|會賣|能買|成交)/.test(safeMessage);
     const history = input.history.map(m => ({ ...m, text: redactContact(m.text) }));
     let needs = inferNeeds(safeMessage, input.needs);
     let mode = "guided";
@@ -44,6 +45,8 @@ export async function POST(request: Request) {
         mode = "ai";
       } catch (error) { logFallback("plan", error); mode = "guided"; }
     }
+    // An offer on the current property is not a new search budget.
+    if (negotiation) needs = input.needs;
     const filters = needsFilters(needs);
     const buying = needs.intent === "buy";
     const query = buying ? await searchPublishedProperties("", 24, filters) : null;
@@ -71,8 +74,8 @@ export async function POST(request: Request) {
         answer = z.object({ answer: z.string().trim().min(1).max(1200) }).parse(output).answer;
       } catch (error) { logFallback("answer", error); mode = "guided"; }
     }
-    if (/議價|降價|殺價|便宜|價格.*(?:低|談)|(?:低|便宜).*一點|出價/.test(safeMessage)) {
-      answer = "價格方面，交給阿勇、阿美為您努力爭取理想條件；能否調整仍需了解屋主意願。您希望出價多少？請留下需求與聯絡方式，確認「請阿勇／阿美聯絡我」後，我們會接續協助洽談。";
+    if (negotiation) {
+      answer = "價格方面，交給阿勇、阿美為您努力爭取理想條件；能否調整仍需了解屋主意願。我可以先幫您整理出價想法與需求。請留下需求與聯絡方式，確認「請阿勇／阿美聯絡我」後，我們會接續協助洽談。";
     }
     // Restrict text links; real navigation is rendered exclusively from queried cards.
     answer = answer.replace(/https?:\/\/\S+|\[[^\]]*\]\([^)]*\)/g, "（請使用下方資料連結）");
