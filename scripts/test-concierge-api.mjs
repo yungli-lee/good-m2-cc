@@ -58,7 +58,11 @@ function request(message, extra = {}, origin) { return new Request('https://exam
   const contact = compile('lib/concierge/contact.ts', {});
   assert.equal(contact.chatContact('我叫王小明，手機0938-137-177').phone, '0938137177');
   assert.equal(contact.chatContact('我叫王小明，手機0938-137-177').name, '王小明');
+  assert.equal(contact.chatContact('我姓陳，電話0955555555').name, '陳');
   assert.equal(contact.chatContact('我是賣方').name, '');
+  assert.ok(!contact.redactChatContact('我姓陳，電話0955555555').includes('陳'));
+  const inquirySchema = compile('lib/inquiries/schema.ts', {});
+  assert.ok(inquirySchema.inquirySchema.safeParse({name:'陳',phone:'0955555555',message:'測試需求，請協助找物件',consent:true}).success);
   assert.equal(contact.redactChatContact('我是賣方'), '我是賣方');
   assert.ok(!contact.redactChatContact('我叫王小明 0938137177').includes('王小明'));
   assert.ok(!contact.redactChatContact('我叫王小明 0938137177').includes('0938137177'));
