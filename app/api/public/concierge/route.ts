@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { chatSchema, inferNeeds, needsFilters, needsSchema, needsSummary, redactContact } from "@/lib/concierge/schema";
+import { knowledgeTerms, knowledgeExcerpt } from "@/lib/concierge/knowledge";
 import { conciergeEnv, modelJson } from "@/lib/concierge/model";
 import { takeConciergeSlot } from "@/lib/concierge/limit";
 import { collectionHref } from "@/lib/properties/collection-link";
@@ -52,16 +53,21 @@ export async function POST(request: Request) {
       district: p.district, layout: p.layout, land: p.land_area_ping, building: p.building_area_ping,
       highlights: Array.isArray(p.highlights) ? p.highlights.slice(0, 3) : [], description: (p.description || "").slice(0, 600) }));
     const needsReview = Boolean(needs.mustHave && properties.length);
-    const knowledgeTerm = ["貸款", "稅", "斡旋", "點交", "委託", "買房", "農地"].find(term => safeMessage.includes(term));
-    const knowledgeResult = knowledgeTerm ? await listPublicKnowledgeItems({ q: knowledgeTerm, pageSize: 3 }) : null;
-    const knowledge = (knowledgeResult?.data || []).map(k => ({ title: k.title, slug: k.slug, summary: (k.summary || "").slice(0, 400) }));
+    const terms = knowledgeTerms(safeMessage);
+    const knowledgeResults = await Promise.all(terms.map(q => listPublicKnowledgeItems({ q, pageSize: 6 })));
+    const ranked = knowledgeResults.flatMap(result => result.data || [])
+      .filter((item, index, all) => all.findIndex(other => other.slug === item.slug) === index)
+      .map(item => ({ item, score: terms.reduce((score, term, index) => score + (item.title.includes(term) ? (terms.length - index) * 10 : 0), 0) }))
+      .sort((a, b) => b.score - a.score).slice(0, 3);
+    const knowledge = ranked.map(({ item: k }) => ({ title: k.title, slug: k.slug, summary: (k.summary || "").slice(0, 400) }));
+    const knowledgeEvidence = ranked.map(({ item: k }) => ({ title: k.title, summary: k.summary, excerpt: knowledgeExcerpt(k.body) }));
     let answer = buying ? `${properties.length ? "依目前條件找到以下在售物件。" : "目前沒有找到符合地區、類型與預算的在售物件。"}${needsReview ? "孝親房、電梯等必要條件仍需逐件確認，以下是基本條件候選，不能視為完全符合。" : ""} ${!needs.districts.length ? "你希望找哪個地區？" : needs.maxPrice === null ? "預算大約多少萬元？" : !needs.type ? "偏好住宅、土地，還是其他類型？" : "可以再告訴我房數、車位或其他必要條件。"}也可以留下需求，請阿勇、阿美接續協助。`
       : needs.intent === "sell" || needs.intent === "let" ? "可以，我先幫你整理委託需求。請告訴我物件所在地區、類型、約略坪數，以及想出售或出租。先不用提供完整門牌。確認摘要後可留下聯絡方式，由阿勇、阿美親自了解與評估。"
       : needs.intent === "rent" ? "我先幫你記下承租需求；目前這裡的物件推薦以出售物件為主，不會把售價當租金。請告訴我地區、每月租金預算及必要條件，再留下需求請阿勇、阿美協助。"
       : "我可以帶你看網站的相關知識；涉及個別稅額、貸款成數或法律判斷，請由阿勇、阿美確認你的實際情況。也可以把問題留在需求摘要中。";
     if (mode === "ai") {
       try {
-        const output = await modelJson(`${system} 你扮演${input.role === "amei" ? "阿美" : "阿勇"}的Q版助理。依提供資料回答客人，最多300字，補問一個最必要條件。物件只可引用提供的公開資料；必要條件未經查核必須說待確認。知識回答只依knowledge摘要，不足時交真人。租金不可用售價推測。輸出 {"answer":"..."}，不要輸出連結或聯絡電話。`, { message: safeMessage, history, needs, properties: properties.slice(0, 6), knowledge });
+        const output = await modelJson(`${system} 你扮演${input.role === "amei" ? "阿美" : "阿勇"}的Q版助理。依提供資料回答客人，最多300字，補問一個最必要條件。物件只可引用提供的公開資料；必要條件未經查核必須說待確認。先直接回答本次問題，再補問。區分買房前與買房後：問買房之後時，聚焦交屋點交、設備檢查、費用結清及帳戶過戶，不能拿成交行情比較代替回答。知識回答只依knowledge內的公開摘要與正文節錄，不足時明說網站資料不足並交真人；不能用不相關文章湊答案。農保田只是需求稱呼，未逐件確認前不得稱任何物件符合農保、可投保、合法用途、適合耕作或保證長期置產；必須說候選土地與客人資格均待專業確認。不得因坪數大就推論符合農保。不要宣稱所有候選完全符合必要條件。租金不可用售價推測。輸出 {"answer":"..."}，不要輸出連結或聯絡電話。`, { message: safeMessage, history, needs, properties: properties.slice(0, 6), knowledge: knowledgeEvidence });
         answer = z.object({ answer: z.string().trim().min(1).max(1200) }).parse(output).answer;
       } catch (error) { logFallback("answer", error); mode = "guided"; }
     }
@@ -70,7 +76,7 @@ export async function POST(request: Request) {
     const speech = getGuideSpeechEnv();
     const audioToken = speech.enabled ? await signReply({ text: answer, role: input.role, expires: Date.now() + 600000 }, speech.key) : null;
     return json({ answer, audioToken, mode, needs, summary: needsSummary(needs), properties: properties.slice(0, 6), knowledge,
-      searchHref: buying ? collectionHref(filters) : null, needsReview, knowledgeUnavailable: Boolean(knowledgeResult?.error) });
+      searchHref: buying ? collectionHref(filters) : null, needsReview, knowledgeUnavailable: knowledgeResults.some(result => Boolean(result.error)) });
   } catch { return json({ error: "暫時無法整理需求，請稍後再試" }, 503); }
   finally { release(); }
 }

@@ -13,14 +13,19 @@ function compile(path, modules) {
 const schema = compile('lib/concierge/schema.ts', { '../properties/collection-link.ts': compile('lib/properties/collection-link.ts', {}) });
 let enabled = false, queryFails = false, emptyResults = false, calls = 0;
 let modelOutputs = [];
+const knowledgeQueries = [];
+const knowledgeHelpers = compile('lib/concierge/knowledge.ts', {});
+assert.deepEqual(Array.from(knowledgeHelpers.knowledgeTerms('買房之後要注意什麼')), ['點交', '交屋', '過戶']);
+assert.deepEqual(Array.from(knowledgeHelpers.knowledgeTerms('你可以幫我找到農保田嗎')), ['農保', '農地']);
 const route = compile('app/api/public/concierge/route.ts', {
   'next/server': { NextResponse: { json: (body, options) => Response.json(body, options) } },
   '@/lib/concierge/schema': schema,
+  '@/lib/concierge/knowledge': knowledgeHelpers,
   '@/lib/concierge/model': { conciergeEnv: () => ({ key: enabled ? 'mock' : '' }), modelJson: async () => { if (!modelOutputs.length) throw new Error('provider down'); return modelOutputs.shift(); } },
   '@/lib/concierge/limit': { takeConciergeSlot: () => () => {} },
   '@/lib/properties/collection-link': compile('lib/properties/collection-link.ts', {}),
   '@/lib/properties/queries': { searchPublishedProperties: async (_, __, filters) => { calls++; assert.equal(filters.maxPrice, 800); return { error: queryFails ? {} : null, data: emptyResults ? [] : [{ id: 'public-id', slug: 'public-slug', title: '公開物件', price: 688, district: '鹿港鎮', description: '公開描述', private_owner: 'DO NOT EXPOSE', bottom_price: 500 }] }; } },
-  '@/lib/content/queries': { listPublicKnowledgeItems: async () => ({ data: [], error: null }) },
+  '@/lib/content/queries': { listPublicKnowledgeItems: async ({q}) => { knowledgeQueries.push(q); return { data: [{title: q + '重點', slug: q, summary: '摘要', body: '公開正文', private_notes: 'SECRET'}], error: null }; } },
   '@/lib/properties/guide-speech-env': { getGuideSpeechEnv: () => ({ enabled: false }) },
   '@/lib/concierge/audio-token': { signReply: async () => 'mock-token' }
 });
@@ -43,6 +48,12 @@ function request(message, extra = {}, origin) { return new Request('https://exam
   modelOutputs = [schema.inferNeeds('鹿港800萬以下住宅', schema.needsSchema.parse({})), { answer: '可查看 https://invented.example/secret' }];
   response = await route.POST(request('鹿港800萬以下住宅')); body = await response.json();
   assert.equal(body.mode, 'ai'); assert.ok(!body.answer.includes('invented.example')); assert.equal(body.properties[0].slug, 'public-slug');
+  modelOutputs = [schema.needsSchema.parse({intent:'question'}), {answer:'交屋後請確認設備及過戶。'}];
+  knowledgeQueries.length = 0;
+  response = await route.POST(request('買房之後要注意什麼')); body = await response.json();
+  assert.deepEqual(knowledgeQueries, ['點交', '交屋', '過戶']);
+  assert.equal(body.mode, 'ai'); assert.equal(body.properties.length, 0);
+  assert.ok(!JSON.stringify(body).includes('SECRET'));
   let notifications = 0, saves = 0;
   const inquiry = compile('app/api/public/inquiries/route.ts', {
     'next/server': { NextResponse: { json: (body, options) => Response.json(body, options) } },
