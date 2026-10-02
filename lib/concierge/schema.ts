@@ -26,17 +26,18 @@ export function redactContact(text: string) {
 export function inferNeeds(message: string, previous: Needs): Needs {
   const text = message.normalize("NFKC");
   const found = collectionDistricts.filter(d => text.includes(d.replace(/[鄉鎮市]$/, "")) && !(d === "彰化市" && text.includes("彰化縣") && !text.includes("彰化市")));
-  const intent = /出租|招租/.test(text) ? "let" : /委託|出售|賣屋|賣房|賣地/.test(text) ? "sell" : /租屋|租房|承租/.test(text) ? "rent" : /貸款|稅|流程|斡旋/.test(text) ? "question" : previous.intent;
+  const intent = /出租|招租/.test(text) ? "let" : /委託|出售|賣屋|賣房|賣地/.test(text) ? "sell" : /租屋|租房|承租/.test(text) ? "rent" : /貸款|稅|流程|斡旋/.test(text) ? "question" : /想買|買屋|買房|買地|找.*(?:住宅|房|地|物件)/.test(text) ? "buy" : previous.intent;
+  const base = intent === previous.intent ? previous : needsSchema.parse({ intent });
   const types: Array<[string, string]> = [["工業用地", "industrial_land"], ["農地", "farmland"], ["建地", "building_land"], ["農舍", "farmhouse"], ["透天", "townhouse"], ["公寓", "apartment"], ["華廈", "building"], ["大樓", "building"], ["店面", "storefront"], ["廠房", "factory"], ["住宅", "residential"]];
-  const type = types.find(([word]) => text.includes(word))?.[1] ?? previous.type;
+  const type = types.find(([word]) => text.includes(word))?.[1] ?? base.type;
   const range = text.match(/(\d+(?:\.\d+)?)\s*(?:萬)?\s*[~～至到-]\s*(\d+(?:\.\d+)?)\s*萬/);
   const below = text.match(/(\d+(?:\.\d+)?)\s*萬\s*(?:以內|以下|內)/) || text.match(/(?:預算|最多|上限)\s*(\d+(?:\.\d+)?)\s*萬/);
   const above = text.match(/(\d+(?:\.\d+)?)\s*萬\s*(?:以上|起)/);
   const important = ["孝親房", "電梯", "車位", "平面車位", "無障礙", "近學校"].filter(v => text.includes(v));
-  return needsSchema.parse({ ...previous, intent, districts: found.length ? found : previous.districts, type,
-    minPrice: range ? Number(range[1]) : above ? Number(above[1]) : previous.minPrice,
-    maxPrice: range ? Number(range[2]) : below ? Number(below[1]) : previous.maxPrice,
-    mustHave: [...new Set([...previous.mustHave.split("、").filter(Boolean), ...important])].join("、").slice(0, 160) });
+  return needsSchema.parse({ ...base, intent, districts: found.length ? found : base.districts, type,
+    minPrice: range ? Number(range[1]) : above ? Number(above[1]) : base.minPrice,
+    maxPrice: range ? Number(range[2]) : below ? Number(below[1]) : base.maxPrice,
+    mustHave: [...new Set([...base.mustHave.split("、").filter(Boolean), ...important])].join("、").slice(0, 160) });
 }
 export function needsSummary(n: Needs) {
   const intent = { buy: "找物件", sell: "委託出售", rent: "承租需求", let: "委託出租", question: "購屋諮詢" }[n.intent];

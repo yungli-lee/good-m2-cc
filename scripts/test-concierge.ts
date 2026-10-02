@@ -13,6 +13,8 @@ assert.equal(second.maxPrice, 800);
 assert.deepEqual(second.districts, first.districts);
 assert.equal(second.mustHave, "孝親房、電梯、車位");
 assert.equal(inferNeeds("我想委託出售秀水透天", first).intent, "sell");
+assert.equal(inferNeeds("我想委託出售秀水透天", first).maxPrice, null);
+assert.equal(inferNeeds("我想找鹿港住宅", { ...empty, intent: "question" }).intent, "buy");
 assert.equal(inferNeeds("想租屋", empty).intent, "rent");
 assert.equal(inferNeeds("委託出租", empty).intent, "let");
 assert.equal(inferNeeds("貸款怎麼辦", empty).intent, "question");

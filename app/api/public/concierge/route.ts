@@ -29,7 +29,7 @@ export async function POST(request: Request) {
     let mode = "guided";
     if (conciergeEnv().key) {
       try {
-        const plan = await modelJson(`${system} 從對話整理完整需求。輸出 intent(buy/sell/rent/let/question), districts(彰化縣完整鄉鎮市名陣列), type(residential/farmland/building_land/townhouse/apartment/building/storefront/farmhouse/factory/industrial_land或空字串), minPrice/maxPrice(萬元或null), mustHave(必要條件)。未改動條件沿用 previous；明確取消則移除。只提取客人明說的條件。`, { message: safeMessage, history, previous: input.needs });
+        const plan = await modelJson(`${system} 從對話整理完整需求。輸出 intent(buy/sell/rent/let/question), districts(彰化縣完整鄉鎮市名陣列), type(residential/farmland/building_land/townhouse/apartment/building/storefront/farmhouse/factory/industrial_land或空字串), minPrice/maxPrice(萬元或null), mustHave(必要條件)。未改動條件沿用 previous；明確取消則移除；服務類型變更時清除未再明確提供的原條件。只提取客人明說的條件。`, { message: safeMessage, history, previous: input.needs });
         const valid = needsSchema.safeParse(plan);
         if (!valid.success) throw new Error("invalid_plan");
         needs = valid.data;
