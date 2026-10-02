@@ -57,7 +57,8 @@
     "test:property-detail-media": "node --experimental-strip-types --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/test-property-detail-media.ts",
     "test:property-collection-link": "node --experimental-strip-types --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/test-property-collection-link.ts",
     "test:property-collections": "node --experimental-strip-types --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/test-property-collections.ts",
-    "test:property-character-guide": "node --experimental-strip-types --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/test-property-character-guide.ts"
+    "test:property-character-guide": "node --experimental-strip-types --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/test-property-character-guide.ts",
+    "test:concierge": "node --experimental-strip-types --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/test-concierge.ts && node scripts/test-concierge-api.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.6.1",

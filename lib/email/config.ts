@@ -1,3 +1,4 @@
+import { getRequestContext } from "@/lib/supabase/env";
 export type EmailConfig = {
   provider: "Resend";
   apiKey: string | null;
@@ -10,7 +11,8 @@ export type EmailConfig = {
 };
 
 function envValue(name: string) {
-  const value = process.env[name];
+  const env = getRequestContext()?.env as Record<string, string | undefined> | undefined;
+  const value = process.env[name] || env?.[name];
   return value && value.trim() ? value.trim() : null;
 }
 

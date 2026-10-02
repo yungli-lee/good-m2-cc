@@ -1,3 +1,4 @@
+import { ConciergeLauncher } from "@/components/concierge/launcher";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { SiteHeader } from "@/components/layout/site-header";
 import { getPublicCompanySettings } from "@/lib/company-settings";
@@ -11,6 +12,7 @@ export default async function PublicLayout({ children }: { children: React.React
     <>
       <SiteHeader settings={settings} navigation={navigation} />
       {children}
+      <ConciergeLauncher />
       <SiteFooter settings={settings} navigation={navigation} />
     </>
   );
