@@ -18,7 +18,7 @@ export function HomeFooter({ company, navigation }: { company: CompanySettings; 
           <strong>讓我們協助您安心成家・投資增值</strong>
         </div>
       </footer>
-      {company.line_url ? <a className="floating-line" href={company.line_url}>Line 諮詢</a> : null}
+      <div className="home-contact-launchers" aria-label="找物件與聯絡"><Link className="home-concierge-launcher" href="/guide">阿勇阿美陪你找物件</Link>{company.line_url ? <a className="floating-line" href={company.line_url}>Line 諮詢</a> : null}</div>
     </>
   );
 }
