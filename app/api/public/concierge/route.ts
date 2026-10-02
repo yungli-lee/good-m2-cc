@@ -44,7 +44,7 @@ export async function POST(request: Request) {
     const properties = (query?.data || []).map(p => ({ id: p.id, slug: p.slug, title: p.title, price: p.price,
       district: p.district, layout: p.layout, land: p.land_area_ping, building: p.building_area_ping,
       highlights: Array.isArray(p.highlights) ? p.highlights.slice(0, 3) : [], description: (p.description || "").slice(0, 600) }));
-    const needsReview = Boolean(needs.mustHave);
+    const needsReview = Boolean(needs.mustHave && properties.length);
     const knowledgeTerm = ["貸款", "稅", "斡旋", "點交", "委託", "買房", "農地"].find(term => safeMessage.includes(term));
     const knowledgeResult = knowledgeTerm ? await listPublicKnowledgeItems({ q: knowledgeTerm, pageSize: 3 }) : null;
     const knowledge = (knowledgeResult?.data || []).map(k => ({ title: k.title, slug: k.slug, summary: (k.summary || "").slice(0, 400) }));
