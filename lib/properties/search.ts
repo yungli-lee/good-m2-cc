@@ -86,7 +86,7 @@ export function parsePropertySearch(input = ""): ParsedPropertySearch {
   }
 
   if (residual.includes("住宅")) {
-    propertyTypes.push("townhouse", "apartment", "building");
+    propertyTypes.push("townhouse", "apartment", "building", "storefront");
     typeKeyword ||= "住宅";
     residual = residual.replaceAll("住宅", " ");
   }
