@@ -15,7 +15,15 @@ export async function modelJson(instructions: string, input: unknown) {
     body: JSON.stringify({ model, store: false, instructions, input: JSON.stringify(input), max_output_tokens: 900,
       text: { format: { type: "json_object" } } })
   });
-  if (!response.ok) throw new Error("model_unavailable");
+  if (!response.ok) {
+    // Only log known provider codes, never its message, request content or credentials.
+    const failure = await response.json().catch(() => null);
+    const known = ["insufficient_quota", "invalid_api_key", "rate_limit_exceeded", "model_not_found", "permission_denied", "invalid_request_error"];
+    const candidate = failure?.error?.code || failure?.error?.type;
+    const code = known.includes(candidate) ? candidate : "unknown";
+    console.warn("concierge_model_http", { status: response.status, code });
+    throw new Error("model_unavailable");
+  }
   const data = await response.json();
   if (data.status !== "completed") throw new Error("model_incomplete");
   const text = (data.output || []).flatMap((item: { content?: Array<{ type: string; text?: string }> }) => item.content || [])
