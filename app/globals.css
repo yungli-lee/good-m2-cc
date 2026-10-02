@@ -3367,3 +3367,35 @@ td {
   .analytics-insight-card dl { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .analytics-inquiry-mobile dl { grid-template-columns: 1fr; }
 }
+
+/* Public guided search and confirmed inquiry handoff */
+.concierge { max-width: 940px; margin: auto; }
+.concierge-heading { display: flex; align-items: center; gap: 24px; }
+.concierge-heading h1 { font-size: clamp(24px, 4vw, 36px); }
+.concierge-heading .character-guide-person { flex-shrink: 0; }
+.concierge-actions { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
+.concierge-privacy { color: #58657b; font-size: 14px; }
+.concierge-conversation { margin: 20px 0; padding: 16px; max-height: 620px; overflow-y: auto; border: 1px solid #ddd5c4; border-radius: 18px; background: #fffdf7; }
+.concierge-message { padding: 16px; background: #f5edda; border-radius: 14px; margin-bottom: 16px; overflow-wrap: anywhere; }
+.concierge-message.user { background: #e8edf5; margin-left: 12%; }
+.concierge-message p { white-space: pre-wrap; }
+.concierge-message small { display: block; line-height: 1.7; }
+.concierge-cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin: 14px 0; }
+.concierge-cards a { display: flex; flex-direction: column; gap: 6px; padding: 14px; background: #fff; border: 1px solid #ded8cc; border-radius: 12px; color: #102343; }
+.concierge-compose, .concierge-lead form { display: grid; gap: 12px; }
+.concierge-compose label, .concierge-lead label { display: grid; gap: 6px; }
+.concierge textarea, .concierge input:not([type="checkbox"]) { width: 100%; border: 1px solid #c8cfd8; border-radius: 8px; padding: 10px; background: #fff; color: #102343; font: inherit; }
+.concierge-compose button { justify-self: start; }
+.concierge-handoff, .concierge-lead { padding: 20px; border: 1px solid #dbc69a; border-radius: 14px; margin-top: 24px; }
+.concierge-lead .consent-check { display: flex; align-items: flex-start; gap: 10px; }
+.concierge-honeypot { position: absolute; left: -10000px; }
+.concierge-launcher { position: fixed; left: 18px; bottom: 18px; z-index: 35; padding: 12px 18px; border-radius: 24px; background: #102343; color: #fff; box-shadow: 0 4px 18px #10234333; font-size: 14px; }
+@media (max-width: 600px) {
+  .concierge-heading { gap: 10px; align-items: flex-start; }
+  .concierge-heading .character-guide-person { width: 74px; height: 136px; }
+  .concierge-heading .character-guide-person img { width: 148px; height: 136px; }
+  .concierge-heading .character-guide-person-ayong img { left: -74px; }
+  .concierge-cards { grid-template-columns: 1fr; }
+  .concierge-message { padding: 12px; }
+  .concierge-launcher { left: 10px; bottom: 12px; max-width: 44vw; padding: 10px 12px; }
+}

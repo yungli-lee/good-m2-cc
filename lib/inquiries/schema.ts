@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 export const inquirySchema = z.object({
+  consent: z.boolean().optional(),
   form_type: z.string().trim().min(1).max(50).default("service-form"),
   name: z.string().trim().min(2, "請輸入正確姓名").max(20, "請輸入正確姓名").refine((value) => !/^\d+$/.test(value) && /[\p{L}\p{N}]/u.test(value), "請輸入正確姓名"),
   phone: z.string().trim().regex(/^09\d{8}$/, "請輸入正確手機號碼"),

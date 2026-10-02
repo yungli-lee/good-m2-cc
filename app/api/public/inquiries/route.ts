@@ -4,7 +4,7 @@ import { sendInquiryNotification } from "@/lib/email/inquiry";
 import { inquirySchema } from "@/lib/inquiries/schema";
 import { getRequestMeta } from "@/lib/security/request";
 import { createSupabaseAdminClient } from "@/lib/supabase/server";
-import { getSupabaseEnv } from "@/lib/supabase/env";
+import { getRequestContext, getSupabaseEnv } from "@/lib/supabase/env";
 import { attributeInquiry } from "@/lib/analytics/lead-attribution";
 
 export const runtime = "edge";
@@ -44,7 +44,8 @@ function validationFieldErrors(issues: Array<{ path: Array<string | number>; mes
 }
 
 async function verifyTurnstile(token?: string) {
-  const secret = process.env.TURNSTILE_SECRET_KEY;
+  const env = getRequestContext()?.env as Record<string, string | undefined> | undefined;
+  const secret = process.env.TURNSTILE_SECRET_KEY || env?.TURNSTILE_SECRET_KEY;
   if (!secret) return { ok: true, skipped: true };
   if (!token) return { ok: false, skipped: false };
 
@@ -70,6 +71,7 @@ export async function POST(request: Request) {
     }
 
     const input = parsed.data;
+    if (input.form_type.startsWith("concierge-") && input.consent !== true) return jsonError("consent_required", 422, "請先同意聯絡與服務需求使用資料");
     console.info("[public_inquiries_validate_ok]", { form_type: input.form_type, has_property_id: Boolean(input.property_id) });
     const { ipHash, userAgent } = await getRequestMeta();
 
