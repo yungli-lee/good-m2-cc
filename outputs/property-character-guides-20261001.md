@@ -31,3 +31,12 @@
 - 角色切換以既有透明雙人素材分別顯示單人，保留原人物比例。
 - 裝置若提供 Neural/Online/Natural 男聲會列入選單；尚未串接雲端語音服務，不能保證裝置朗讀自然度。
 - typecheck、lint、角色語音分流與預設選聲測試通過。
+
+## 2026-10-02 AI 臺灣語音預設
+- 雲端語音：阿勇 zh-TW-YunJheNeural、阿美 zh-TW-HsiaoChenNeural；其餘裝置聲音保留同一性別備選。
+- Cloudflare Pages Preview/Production 分別設定 server-only AZURE_SPEECH_KEY（加密 secret）與 AZURE_SPEECH_REGION（Speech 資源區域）。不可使用 NEXT_PUBLIC_，不可將 key 放 repo。
+- 缺設定時保留原裝置朗讀，未假裝 AI 已啟用。設定存在時伺服器傳布林值啟用預設 AI 選項。
+- API 只接受公開在售物件 slug/角色/主題，不接受任意文字與任意 voice；每次先查公開狀態，再由同一份公開腳本產生 SSML。特殊字元 escape、15 秒超時、上游錯誤清理、8 個同時工作限制。
+- Cloudflare edge audio cache 以腳本雜湊為 key、7 天；價格/介紹異動立即新 hash，已下架每次查詢不允許取出舊音檔。瀏覽器 no-store。並行同文請求合併。
+- 切角色/主題/聲音/關閉/隱藏/離頁會停止音訊；舊播放 promise 不覆蓋新角色狀態。
+- 尚無 Azure 設定，真實合成播放驗證待設定後完成；未部署正式站。

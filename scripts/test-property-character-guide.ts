@@ -1,3 +1,4 @@
+import { guideSsml, guideAiVoices } from "../lib/properties/guide-speech.ts";
 import assert from "node:assert/strict";
 import { buildPropertyGuide, type GuideProperty } from "../lib/properties/character-guide.ts";
 import { guideSpeechText, guideVoicesForRole, selectGuideVoice } from "../lib/properties/guide-voice.ts";
@@ -44,3 +45,9 @@ assert.deepEqual(guideVoicesForRole(mixed, "ayong").map(v => v.voiceURI).sort(),
 assert.deepEqual(guideVoicesForRole(mixed, "amei").map(v => v.voiceURI).sort(), ["female", "google", "grandma"]);
 assert.equal(selectGuideVoice([{ ...google, lang: "zh-CN" }, google], "amei")?.lang, "zh-TW");
 console.log("Role-only menus and Taiwan Google/Grandpa defaults PASS");
+
+assert.equal(guideAiVoices.ayong, "zh-TW-YunJheNeural");
+assert.equal(guideAiVoices.amei, "zh-TW-HsiaoChenNeural");
+assert.match(guideSsml("A & B <tag>", "amei"), /A &amp; B &lt;tag&gt;/);
+assert.doesNotMatch(guideSsml("<voice name=\"injected\">", "ayong"), /<voice name="injected"/);
+console.log("AI defaults and SSML injection exclusion PASS");

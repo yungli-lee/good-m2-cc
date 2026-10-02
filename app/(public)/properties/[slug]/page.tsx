@@ -11,6 +11,7 @@ import { PropertyViewTracker } from "@/components/analytics/content-trackers";
 import { StructuredData } from "@/components/content/structured-data";
 import { ContentRetention } from "@/components/content/content-retention";
 import { PropertyCharacterGuide } from "@/components/properties/property-character-guide";
+import { getGuideSpeechEnv } from "@/lib/properties/guide-speech-env";
 import { buildPropertyGuide } from "@/lib/properties/character-guide";
 import { siteOrigin } from "@/lib/home-cms/routing";
 import { PropertyCard } from "@/components/properties/property-card";
@@ -324,7 +325,7 @@ export default async function PropertyDetailPage({ params }: Props) {
         price: property.price == null ? null : Number(property.price),
         listing_status: property.status || null
       }} />
-      <PropertyCharacterGuide scripts={buildPropertyGuide(property, publicBuildingTypeLabel(property))} lineUrl={companySettings.line_url || "/contact"} related={relatedProperties.map(item => ({ slug: item.slug, title: item.title }))} />
+      <PropertyCharacterGuide slug={property.slug} aiSpeechEnabled={getGuideSpeechEnv().enabled} scripts={buildPropertyGuide(property, publicBuildingTypeLabel(property))} lineUrl={companySettings.line_url || "/contact"} related={relatedProperties.map(item => ({ slug: item.slug, title: item.title }))} />
       <div className="property-detail-desktop">
         <section className="section">
           <div className="container detail-layout">

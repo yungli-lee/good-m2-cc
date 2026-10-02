@@ -5,12 +5,12 @@ import { useEffect, useId, useRef, useState } from "react";
 import type { GuideRole, GuideScripts, GuideTopic } from "@/lib/properties/character-guide";
 import { guideSpeechText, guideVoicesForRole, selectGuideVoice } from "@/lib/properties/guide-voice";
 
-type Props = { scripts: GuideScripts; lineUrl: string; related: Array<{ slug: string; title: string }> };
+type Props = { slug: string; aiSpeechEnabled: boolean; scripts: GuideScripts; lineUrl: string; related: Array<{ slug: string; title: string }> };
 const roles: Record<GuideRole, string> = { ayong: "阿勇", amei: "阿美" };
 const topics: Record<GuideTopic, string> = { overview: "先聽重點", details: "面積與格局", highlights: "推薦特色" };
 const hiddenKey = "yongmei-guide-hidden";
 
-export function PropertyCharacterGuide({ scripts, lineUrl, related }: Props) {
+export function PropertyCharacterGuide({ slug, aiSpeechEnabled, scripts, lineUrl, related }: Props) {
   const [open, setOpen] = useState(false);
   const [hidden, setHidden] = useState(false);
   const [role, setRole] = useState<GuideRole>("amei");
@@ -20,6 +20,8 @@ export function PropertyCharacterGuide({ scripts, lineUrl, related }: Props) {
   const [speechMessage, setSpeechMessage] = useState("");
   const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
   const [voiceChoices, setVoiceChoices] = useState<Partial<Record<GuideRole, string>>>({});
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const playbackRef = useRef(0);
   const triggerRef = useRef<HTMLButtonElement | null>(null);
   const invitationRef = useRef<HTMLButtonElement | null>(null);
   const closeRef = useRef<HTMLButtonElement | null>(null);
@@ -29,6 +31,7 @@ export function PropertyCharacterGuide({ scripts, lineUrl, related }: Props) {
   const text = scripts[role][topic];
   const roleVoices = guideVoicesForRole(voices, role);
   const defaultVoice = selectGuideVoice(voices, role);
+  const selectedVoice = voiceChoices[role] || (aiSpeechEnabled ? "azure-ai" : defaultVoice?.voiceURI || "");
 
   useEffect(() => {
     setCanSpeak("speechSynthesis" in window && "SpeechSynthesisUtterance" in window);
@@ -36,7 +39,7 @@ export function PropertyCharacterGuide({ scripts, lineUrl, related }: Props) {
     loadVoices();
     window.speechSynthesis?.addEventListener("voiceschanged", loadVoices);
     try { setHidden(sessionStorage.getItem(hiddenKey) === "1"); } catch { /* Storage can be disabled. */ }
-    const stop = () => { if (utteranceRef.current) window.speechSynthesis?.cancel(); };
+    const stop = () => { playbackRef.current++; audioRef.current?.pause(); audioRef.current = null; if (utteranceRef.current) window.speechSynthesis?.cancel(); };
     const visibility = () => { if (document.hidden) { stop(); setSpeaking(false); } };
     document.addEventListener("visibilitychange", visibility);
     return () => { stop(); document.removeEventListener("visibilitychange", visibility); window.speechSynthesis?.removeEventListener("voiceschanged", loadVoices); };
@@ -45,6 +48,8 @@ export function PropertyCharacterGuide({ scripts, lineUrl, related }: Props) {
   useEffect(() => { if (open) closeRef.current?.focus(); }, [open]);
 
   function stopSpeech() {
+    playbackRef.current++;
+    if (audioRef.current) { audioRef.current.onended = null; audioRef.current.onerror = null; audioRef.current.pause(); audioRef.current.removeAttribute("src"); audioRef.current.load(); audioRef.current = null; }
     if (utteranceRef.current) {
       utteranceRef.current.onend = null;
       utteranceRef.current.onerror = null;
@@ -71,12 +76,22 @@ export function PropertyCharacterGuide({ scripts, lineUrl, related }: Props) {
     invitationRef.current?.focus({ preventScroll: true });
     try { sessionStorage.setItem(hiddenKey, "1"); } catch { /* Optional preference. */ }
   }
-  function speak() {
+  async function speak() {
     if (speaking) { stopSpeech(); return; }
     stopSpeech();
+    const generation = playbackRef.current;
     try {
+      if (selectedVoice === "azure-ai") {
+        const player = new Audio(`/api/public/property-guide-audio?${new URLSearchParams({ slug, role, topic })}`);
+        audioRef.current = player;
+        player.onended = () => { if (generation === playbackRef.current) { setSpeaking(false); audioRef.current = null; } };
+        player.onerror = () => { if (generation === playbackRef.current) { setSpeaking(false); audioRef.current = null; setSpeechMessage("AI 語音暫時無法播放，請從選單改選備選語音。"); } };
+        setSpeaking(true);
+        await player.play();
+        return;
+      }
       const available = window.speechSynthesis.getVoices();
-      const choice = voiceChoices[role];
+      const choice = selectedVoice;
       const voice = choice ? guideVoicesForRole(available, role).find(item => item.voiceURI === choice) : selectGuideVoice(available, role);
       if (!voice) { setSpeechMessage(role === "ayong" ? "本裝置未提供可辨識的中文男聲，請先閱讀文字介紹。" : "本裝置尚未提供中文語音，請先閱讀文字介紹。"); return; }
       const utterance = new SpeechSynthesisUtterance(guideSpeechText(text));
@@ -89,7 +104,7 @@ export function PropertyCharacterGuide({ scripts, lineUrl, related }: Props) {
       utteranceRef.current = utterance;
       setSpeaking(true);
       window.speechSynthesis.speak(utterance);
-    } catch { setSpeaking(false); setSpeechMessage("目前無法播放語音，請先閱讀文字介紹。"); }
+    } catch { if (generation !== playbackRef.current) return; setSpeaking(false); setSpeechMessage(selectedVoice === "azure-ai" ? "AI 語音暫時無法播放，請從選單改選備選語音。" : "目前無法播放語音，請先閱讀文字介紹。"); }
   }
 
   return <>
@@ -115,12 +130,12 @@ export function PropertyCharacterGuide({ scripts, lineUrl, related }: Props) {
       </div>
       <div className="character-guide-topics" aria-label="選擇介紹內容">{(Object.keys(topics) as GuideTopic[]).map(item => <button type="button" key={item} aria-pressed={topic === item} onClick={() => { stopSpeech(); setTopic(item); }}>{topics[item]}</button>)}</div>
       <div className="character-guide-bubble" aria-live="polite"><strong>{roles[role]}說：</strong><p>{text}</p></div>
-      {canSpeak ? <>
-        {roleVoices.length ? <label className="character-guide-voice">{roles[role]}的語音<select value={voiceChoices[role] || defaultVoice?.voiceURI || ""} onChange={event => { stopSpeech(); setVoiceChoices(previous => ({ ...previous, [role]: event.target.value })); }}>{roleVoices.map(voice => <option key={voice.voiceURI} value={voice.voiceURI}>{voice.name}（{voice.lang}）</option>)}</select></label> : null}
+      {canSpeak || aiSpeechEnabled ? <>
+        {roleVoices.length || aiSpeechEnabled ? <label className="character-guide-voice">{roles[role]}的語音<select value={selectedVoice} onChange={event => { stopSpeech(); setVoiceChoices(previous => ({ ...previous, [role]: event.target.value })); }}>{aiSpeechEnabled ? <option value="azure-ai">{role === "ayong" ? "YunJhe" : "HsiaoChen"} · AI 臺灣{role === "ayong" ? "男聲" : "女聲"}（預設）</option> : null}{roleVoices.map(voice => <option key={voice.voiceURI} value={voice.voiceURI}>{voice.name}（{voice.lang}）· 備選</option>)}</select></label> : null}
         <button type="button" className="button ghost character-guide-speech" onClick={speak}>{speaking ? "停止語音" : "聽語音介紹"}</button>
       </> : null}
       {speechMessage ? <p role="status" className="muted">{speechMessage}</p> : null}
-      <p className="character-guide-note">依本頁公開資料整理。{canSpeak ? "語音由裝置朗讀。" : ""}</p>
+      <p className="character-guide-note">依本頁公開資料整理。{aiSpeechEnabled ? "預設使用 AI 臺灣語音，備選由裝置朗讀。" : canSpeak ? "語音由裝置朗讀。" : ""}</p>
       {related.length ? <div className="character-guide-related"><h3>也可以一起比較</h3>{related.map(item => <Link key={item.slug} href={`/properties/${encodeURIComponent(item.slug)}`} onClick={stopSpeech}>{item.title} <span aria-hidden="true">→</span></Link>)}</div> : null}
       <div className="actions character-guide-actions"><a className="button" href={lineUrl || "/contact"} data-contact-person="阿勇" data-analytics-location="character-guide" onClick={stopSpeech} target="_blank" rel="noreferrer">LINE 詢問這一件</a><Link className="button ghost" href="/properties" onClick={stopSpeech}>看更多物件</Link></div>
     </aside> : null}
