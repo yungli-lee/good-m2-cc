@@ -22,6 +22,7 @@ const route = compile('app/api/public/concierge/route.ts', {
   'next/server': { NextResponse: { json: (body, options) => Response.json(body, options) } },
   '@/lib/concierge/schema': schema,
   '@/lib/concierge/dialog': compile('lib/concierge/dialog.ts', {}),
+  '@/lib/concierge/viewing': compile('lib/concierge/viewing.ts', {}),
   '@/lib/concierge/knowledge': knowledgeHelpers,
   '@/lib/concierge/model': { conciergeEnv: () => ({ key: enabled ? 'mock' : '' }), modelJson: async () => { if (!modelOutputs.length) throw new Error('provider down'); return modelOutputs.shift(); } },
   '@/lib/concierge/limit': { takeConciergeSlot: () => () => {} },
@@ -81,11 +82,20 @@ function request(message, extra = {}, origin) { return new Request('https://exam
   modelOutputs = [schema.needsSchema.parse({intent:'buy',maxPrice:1100}), {answer:'請重新提供預算與坪數'}];
   response = await route.POST(request('好，這一間1100萬，可以看看嗎', {needs:remembered,candidateSlugs:['selected-home']})); body = await response.json();
   assert.equal(body.focusedProperty.slug,'selected-home'); assert.equal(body.needs.maxPrice,1280);
-  assert.ok(body.answer.includes('1100')); assert.ok(body.answer.includes('週末')); assert.ok(!body.answer.includes('坪數'));
+  assert.ok(body.answer.includes('1100')); assert.ok(body.answer.includes('哪一天')); assert.ok(!body.answer.includes('坪數'));
   assert.equal(body.properties[0].price,1410);
   modelOutputs = [schema.needsSchema.parse({intent:'buy',maxPrice:1100}), {answer:'我猜1280萬'}];
   response = await route.POST(request('這一間價格多少', {needs:remembered,focusedSlug:body.focusedProperty.slug})); body = await response.json();
   assert.ok(body.answer.includes('1,410')); assert.ok(!body.answer.includes('1280'));
+  modelOutputs = [remembered, {answer:'平日還是週末？'}];
+  response = await route.POST(request('明天可以約看嗎', {needs:remembered,focusedSlug:'selected-home'})); body = await response.json();
+  assert.equal(body.viewingTime,'明天'); assert.ok(!body.answer.includes('平日還是週末')); assert.ok(body.answer.includes('上午'));
+  modelOutputs = [remembered, {answer:'平日還是週末？'}];
+  response = await route.POST(request('就說明天了還問平日還是週末', {needs:remembered,focusedSlug:'selected-home',viewingTime:body.viewingTime})); body = await response.json();
+  assert.equal(body.viewingTime,'明天'); assert.ok(!body.answer.includes('平日還是週末'));
+  modelOutputs = [remembered, {answer:'上午還是下午？'}];
+  response = await route.POST(request('下午2點', {needs:remembered,focusedSlug:'selected-home',viewingTime:body.viewingTime})); body = await response.json();
+  assert.equal(body.viewingTime,'明天下午2點'); assert.ok(!body.answer.includes('方便呢')); assert.ok(body.answer.includes('尚未完成預約'));
   const dialog = compile('lib/concierge/dialog.ts', {});
   assert.equal(dialog.referencedSlug('第二間',[{slug:'a',title:'甲'},{slug:'b',title:'乙'}],''),'b');
   assert.equal(dialog.referencedSlug('這間',[{slug:'a',title:'甲'},{slug:'b',title:'乙'}],''),'');

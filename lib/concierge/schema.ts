@@ -16,6 +16,7 @@ export const chatSchema = z.object({
   history: z.array(z.object({ role: z.enum(["user", "assistant"]), text: z.string().max(1200) })).max(10).default([]),
   needs: needsSchema.default({}),
   focusedSlug: z.string().max(200).default(""),
+  viewingTime: z.string().max(80).default(""),
   candidateSlugs: z.array(z.string().max(200)).max(6).default([])
 });
 export function needsFilters(needs: Needs): CollectionFilters {

@@ -7,7 +7,7 @@ import { needsSchema, needsSummary, type Needs } from "@/lib/concierge/schema";
 import { getClientAnalyticsIdentity, trackEvent } from "@/lib/analytics/client";
 
 type Card = { id: string; slug: string; title: string; price: number | null; district: string | null; layout: string | null };
-type Reply = { focusedProperty?: Card | null; action?: string; answer: string; mode: string; needs: Needs; summary: string; properties: Card[]; knowledge: { title: string; slug: string; summary: string }[]; searchHref: string | null; needsReview: boolean; audioToken: string | null };
+type Reply = { viewingTime?: string; focusedProperty?: Card | null; action?: string; answer: string; mode: string; needs: Needs; summary: string; properties: Card[]; knowledge: { title: string; slug: string; summary: string }[]; searchHref: string | null; needsReview: boolean; audioToken: string | null };
 type Message = { role: "user" | "assistant"; text: string; reply?: Reply; character?: "amei" | "ayong" };
 type Turnstile = { render(element: HTMLElement, options: Record<string, unknown>): string; remove(id: string): void; reset(id: string): void };
 function turnstile() { return (window as unknown as { turnstile?: Turnstile }).turnstile; }
@@ -17,6 +17,7 @@ export function Concierge({ aiEnabled, siteKey }: { aiEnabled: boolean; siteKey:
   const [messages, setMessages] = useState<Message[]>([]);
   const [focusedProperty, setFocusedProperty] = useState<Card | null>(null);
   const candidates = useRef<Card[]>([]);
+  const [viewingTime, setViewingTime] = useState("");
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -66,14 +67,14 @@ export function Concierge({ aiEnabled, siteKey }: { aiEnabled: boolean; siteKey:
     setMessages(m => [...m, { role: "user", text }]);
     try {
       const response = await fetch("/api/public/concierge", { method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ role, message: redactChatContact(text), history, needs, focusedSlug: selected?.slug || "", candidateSlugs: candidates.current.map(p => p.slug) }), signal: AbortSignal.timeout(55000) });
+        body: JSON.stringify({ role, message: redactChatContact(text), history, needs, focusedSlug: selected?.slug || "", viewingTime, candidateSlugs: candidates.current.map(p => p.slug) }), signal: AbortSignal.timeout(55000) });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "暫時無法回答，請稍後重試");
       if (contact.phone) {
         setContactPhone(contact.phone); if (contact.name) setContactName(contact.name);
-        openLead(data.needs, updatedMessages);
+        openLead(data.needs, updatedMessages, data.viewingTime || "");
       }
-      setFocusedProperty(data.focusedProperty || null);
+      setFocusedProperty(data.focusedProperty || null); setViewingTime(data.viewingTime || "");
       if (data.action === "search") candidates.current = data.properties;
       setNeeds(data.needs); setMessages(m => [...m, { role: "assistant", text: data.answer, reply: data, character: role }]);
     } catch (e) {
@@ -97,10 +98,10 @@ export function Concierge({ aiEnabled, siteKey }: { aiEnabled: boolean; siteKey:
       await audio.current.play();
     } catch { if (current === generation.current) { stop(); setError("語音暫時無法播放，請閱讀文字回答；較早的回答請重新詢問"); } }
   }
-  function openLead(currentNeeds = needs, currentMessages = messages) {
+  function openLead(currentNeeds = needs, currentMessages = messages, currentViewingTime = viewingTime) {
     stop(); setLeadError(""); setSent(false);
     const turns = currentMessages.filter(m => m.role === "user").slice(-4).map(m => m.text).join("\n");
-    setSummary(`${needsSummary(currentNeeds)}${focusedProperty ? `\n詢問物件：${focusedProperty.title} /properties/${focusedProperty.slug}` : ""}\n客人補充：\n${turns || "請補充需求"}${clicked.current.length ? `\n點閱物件：${clicked.current.map(p => `${p.title} /properties/${p.slug}`).join("；")}` : ""}`.slice(0, 900));
+    setSummary(`${needsSummary(currentNeeds)}${focusedProperty ? `\n詢問物件：${focusedProperty.title} /properties/${focusedProperty.slug}` : ""}${currentViewingTime ? `\n希望看屋時間：${currentViewingTime}（待真人確認）` : ""}\n客人補充：\n${turns || "請補充需求"}${clicked.current.length ? `\n點閱物件：${clicked.current.map(p => `${p.title} /properties/${p.slug}`).join("；")}` : ""}`.slice(0, 900));
     setLeadVersion(v => v + 1); setShowLead(true);
   }
   useEffect(() => { if (showLead) leadSection.current?.scrollIntoView({ behavior: "smooth", block: "start" }); }, [showLead, leadVersion]);
@@ -134,7 +135,7 @@ export function Concierge({ aiEnabled, siteKey }: { aiEnabled: boolean; siteKey:
     <div className="concierge-heading"><div className={`character-guide-person character-guide-person-${role}`} aria-hidden="true"><img src="/images/guides/ayong-amei.webp" alt="" width="184" height="170" /></div>
       <div><p className="eyebrow">陪你一起找房</p><h1>你想找什麼物件？</h1><p>{aiEnabled ? "告訴我地區、預算與需求，阿美、阿勇陪你找。" : "目前為需求導覽模式，可整理條件、搜尋物件與留下需求。"}</p>
         <div className="concierge-role-switch" aria-label="選擇導覽角色">{(["amei", "ayong"] as const).map(value => <button key={value} type="button" aria-pressed={role === value} className={role === value ? "selected" : ""} onClick={() => { stop(); setRole(value); }}>{value === "amei" ? "阿美" : "阿勇"}帶你找</button>)}</div></div></div>
-    <div className="concierge-shortcuts">{!messages.length && ["我想找鹿港住宅", "我有物件想委託出售", "我想找租屋"].map(text => <button className="concierge-quiet" type="button" key={text} disabled={busy} onClick={() => void ask(text)}>{text}</button>)}{messages.length > 0 && <button className="concierge-quiet" disabled={busy || sending} onClick={() => { stop(); setMessages([]); setFocusedProperty(null); candidates.current = []; setNeeds(needsSchema.parse({})); clicked.current = []; setShowLead(false); setContactName(""); setContactPhone(""); setSummary(""); setSent(false); setError(""); }}>重新開始</button>}</div>
+    <div className="concierge-shortcuts">{!messages.length && ["我想找鹿港住宅", "我有物件想委託出售", "我想找租屋"].map(text => <button className="concierge-quiet" type="button" key={text} disabled={busy} onClick={() => void ask(text)}>{text}</button>)}{messages.length > 0 && <button className="concierge-quiet" disabled={busy || sending} onClick={() => { stop(); setMessages([]); setViewingTime(""); setFocusedProperty(null); candidates.current = []; setNeeds(needsSchema.parse({})); clicked.current = []; setShowLead(false); setContactName(""); setContactPhone(""); setSummary(""); setSent(false); setError(""); }}>重新開始</button>}</div>
     {focusedProperty && <div className="concierge-focus"><span>正在聊：<strong>{focusedProperty.title}</strong></span><button className="concierge-quiet" type="button" disabled={busy || sending} onClick={() => { setFocusedProperty(null); void ask("重新找物件", null); }}>重新找物件</button></div>}
     <div className={`concierge-conversation ${!messages.length && !busy ? "is-empty" : ""}`} role="log" aria-label="需求導覽對話" aria-live="polite">
       {!messages.length && <p>想找房、找土地，還是有物件想委託？告訴我地區、預算與必要條件，我陪你一起找。</p>}
