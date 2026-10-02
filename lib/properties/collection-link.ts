@@ -1,6 +1,6 @@
 export const collectionDistricts = ["彰化市", "員林市", "鹿港鎮", "和美鎮", "北斗鎮", "溪湖鎮", "田中鎮", "二林鎮", "線西鄉", "伸港鄉", "福興鄉", "秀水鄉", "花壇鄉", "芬園鄉", "大村鄉", "埔鹽鄉", "埔心鄉", "永靖鄉", "社頭鄉", "二水鄉", "田尾鄉", "埤頭鄉", "芳苑鄉", "大城鄉", "竹塘鄉", "溪州鄉"];
 export const collectionTypes = {
-  residential: { label: "住宅", values: ["townhouse", "apartment", "building"] },
+  residential: { label: "住宅", values: ["townhouse", "apartment", "building", "storefront"] },
   farmland: { label: "農地", values: ["farmland"] },
   building_land: { label: "建地", values: ["building_land"] },
   townhouse: { label: "透天", values: ["townhouse"] },

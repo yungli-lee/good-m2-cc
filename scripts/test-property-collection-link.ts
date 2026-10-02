@@ -15,6 +15,8 @@ assert.deepEqual(collectionFilters({ district: url.searchParams.getAll("district
 assert.equal(collectionFilters({ type: "__proto__" }).type, "", "untrusted types must not enter query builder");
 assert.equal(collectionFilters({ q: "a".repeat(300) }).q.length, 200);
 assert.deepEqual(parsePropertySearch("鹿港住宅").propertyTypes, [...collectionTypes.residential.values]);
+assert.ok(collectionTypes.residential.values.includes("storefront"));
+assert.ok(!collectionTypes.residential.values.some(v => ["farmland", "building_land", "industrial_land"].includes(v)));
 assert.deepEqual(parsePropertySearch("鹿港住宅").keywords, ["鹿港"]);
 assert.deepEqual(parsePropertySearch("鹿港農地").propertyTypes, ["farmland"]);
 assert.equal(collectionHref(collectionFilters({})), "/properties");
