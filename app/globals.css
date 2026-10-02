@@ -3416,3 +3416,7 @@ td {
 .concierge-privacy { margin-top: 18px; font-size: 13px; }
 .concierge-privacy summary { cursor: pointer; }
 @media (max-width: 640px) { .concierge-compose { padding: 14px; } .concierge-shortcuts { gap: 6px; } .concierge-quiet { font-size: 14px; } }
+
+.concierge-property { display: flex; flex-direction: column; gap: 8px; }
+.concierge-property > a { flex: 1; }
+.concierge-property > button { align-self: flex-start; }

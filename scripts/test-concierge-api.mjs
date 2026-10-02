@@ -21,11 +21,12 @@ assert.deepEqual(Array.from(knowledgeHelpers.knowledgeTerms('你可以幫我找�
 const route = compile('app/api/public/concierge/route.ts', {
   'next/server': { NextResponse: { json: (body, options) => Response.json(body, options) } },
   '@/lib/concierge/schema': schema,
+  '@/lib/concierge/dialog': compile('lib/concierge/dialog.ts', {}),
   '@/lib/concierge/knowledge': knowledgeHelpers,
   '@/lib/concierge/model': { conciergeEnv: () => ({ key: enabled ? 'mock' : '' }), modelJson: async () => { if (!modelOutputs.length) throw new Error('provider down'); return modelOutputs.shift(); } },
   '@/lib/concierge/limit': { takeConciergeSlot: () => () => {} },
   '@/lib/properties/collection-link': compile('lib/properties/collection-link.ts', {}),
-  '@/lib/properties/queries': { searchPublishedProperties: async (_, __, filters) => { calls++; assert.equal(filters.maxPrice, expectedMaxPrice); return { error: queryFails ? {} : null, data: emptyResults ? [] : [{ id: 'public-id', slug: 'public-slug', title: '公開物件', price: 688, district: '鹿港鎮', description: '公開描述', private_owner: 'DO NOT EXPOSE', bottom_price: 500 }] }; } },
+  '@/lib/properties/queries': { getPublishedPropertyBySlug: async slug => ({error:null,data:slug==='selected-home' ? {id:'public-id',slug,title:'秀水輕屋齡美墅',price:1410,district:'秀水鄉',layout:'4房3廳4衛'} : null}), searchPublishedProperties: async (_, __, filters) => { calls++; assert.equal(filters.maxPrice, expectedMaxPrice); return { error: queryFails ? {} : null, data: emptyResults ? [] : [{ id: 'public-id', slug: 'public-slug', title: '公開物件', price: 688, district: '鹿港鎮', description: '公開描述', private_owner: 'DO NOT EXPOSE', bottom_price: 500 }] }; } },
   '@/lib/content/queries': { listPublicKnowledgeItems: async ({q}) => { knowledgeQueries.push(q); return { data: [{title: q + '重點', slug: q, summary: '摘要', body: '公開正文', private_notes: 'SECRET'}], error: null }; } },
   '@/lib/properties/guide-speech-env': { getGuideSpeechEnv: () => ({ enabled: false }) },
   '@/lib/concierge/audio-token': { signReply: async () => 'mock-token' }
@@ -75,6 +76,20 @@ function request(message, extra = {}, origin) { return new Request('https://exam
   response = await route.POST(request('鹿港民族路這一間，開價2500萬好貴喔\n2000萬有機會嗎', { needs: previousSearch })); body = await response.json();
   assert.equal(body.needs.maxPrice, null); assert.equal(body.needs.mustHave, '');
   assert.ok(body.answer.includes('交給阿勇、阿美')); assert.ok(!body.answer.includes('改找'));
+  const remembered = schema.needsSchema.parse({intent:'buy',districts:['秀水鄉'],type:'townhouse',maxPrice:1280});
+  expectedMaxPrice = 1280;
+  modelOutputs = [schema.needsSchema.parse({intent:'buy',maxPrice:1100}), {answer:'請重新提供預算與坪數'}];
+  response = await route.POST(request('好，這一間1100萬，可以看看嗎', {needs:remembered,candidateSlugs:['selected-home']})); body = await response.json();
+  assert.equal(body.focusedProperty.slug,'selected-home'); assert.equal(body.needs.maxPrice,1280);
+  assert.ok(body.answer.includes('1100')); assert.ok(body.answer.includes('週末')); assert.ok(!body.answer.includes('坪數'));
+  assert.equal(body.properties[0].price,1410);
+  modelOutputs = [schema.needsSchema.parse({intent:'buy',maxPrice:1100}), {answer:'我猜1280萬'}];
+  response = await route.POST(request('這一間價格多少', {needs:remembered,focusedSlug:body.focusedProperty.slug})); body = await response.json();
+  assert.ok(body.answer.includes('1,410')); assert.ok(!body.answer.includes('1280'));
+  const dialog = compile('lib/concierge/dialog.ts', {});
+  assert.equal(dialog.referencedSlug('第二間',[{slug:'a',title:'甲'},{slug:'b',title:'乙'}],''),'b');
+  assert.equal(dialog.referencedSlug('這間',[{slug:'a',title:'甲'},{slug:'b',title:'乙'}],''),'');
+  assert.equal(dialog.dialogAction('改找鹿港住宅'),'search');
   let notifications = 0, saves = 0;
   const inquiry = compile('app/api/public/inquiries/route.ts', {
     'next/server': { NextResponse: { json: (body, options) => Response.json(body, options) } },

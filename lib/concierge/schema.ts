@@ -14,7 +14,9 @@ export const chatSchema = z.object({
   role: z.enum(["amei", "ayong"]).default("amei"),
   message: z.string().trim().min(1).max(500),
   history: z.array(z.object({ role: z.enum(["user", "assistant"]), text: z.string().max(1200) })).max(10).default([]),
-  needs: needsSchema.default({})
+  needs: needsSchema.default({}),
+  focusedSlug: z.string().max(200).default(""),
+  candidateSlugs: z.array(z.string().max(200)).max(6).default([])
 });
 export function needsFilters(needs: Needs): CollectionFilters {
   return { q: "", city: "", districts: needs.districts, type: needs.type as CollectionFilters["type"],

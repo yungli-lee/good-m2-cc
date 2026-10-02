@@ -1,11 +1,12 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { chatSchema, inferNeeds, needsFilters, needsSchema, needsSummary, redactContact } from "@/lib/concierge/schema";
+import { dialogAction, referencedSlug } from "@/lib/concierge/dialog";
 import { knowledgeTerms, knowledgeExcerpt } from "@/lib/concierge/knowledge";
 import { conciergeEnv, modelJson } from "@/lib/concierge/model";
 import { takeConciergeSlot } from "@/lib/concierge/limit";
 import { collectionHref } from "@/lib/properties/collection-link";
-import { searchPublishedProperties } from "@/lib/properties/queries";
+import { searchPublishedProperties, getPublishedPropertyBySlug } from "@/lib/properties/queries";
 import { listPublicKnowledgeItems } from "@/lib/content/queries";
 import { getGuideSpeechEnv } from "@/lib/properties/guide-speech-env";
 import { signReply } from "@/lib/concierge/audio-token";
@@ -32,7 +33,17 @@ export async function POST(request: Request) {
     if (!parsed.success) return json({ error: "請簡短描述您的需求" }, 422);
     const input = parsed.data;
     const safeMessage = redactContact(input.message);
-    const negotiation = /議價|降價|殺價|便宜|好貴|太貴|價格.*(?:低|談)|(?:低|便宜).*一點|出價|(?:萬|元).{0,12}(?:有機會|可以嗎|可不可以|能不能|願意|會賣|能買|成交)/.test(safeMessage);
+    const action = dialogAction(safeMessage);
+    const negotiation = action === "offer";
+    const followup = action !== "search";
+    const candidateResults = followup ? await Promise.all(input.candidateSlugs.map(slug => getPublishedPropertyBySlug(slug))) : [];
+    if (candidateResults.some(r => r.error)) return json({ error: "物件資料暫時讀取不到，請稍後再試" }, 503);
+    const candidates = candidateResults.flatMap(r => r.data ? [r.data] : []);
+    const focusedSlug = followup ? referencedSlug(safeMessage, candidates, input.focusedSlug) : "";
+    const focusResult = focusedSlug ? await getPublishedPropertyBySlug(focusedSlug) : null;
+    if (focusResult?.error) return json({ error: "物件資料暫時讀取不到，請稍後再試" }, 503);
+    const focused = focusResult?.data || null;
+
     const history = input.history.map(m => ({ ...m, text: redactContact(m.text) }));
     let needs = inferNeeds(safeMessage, input.needs);
     let mode = "guided";
@@ -46,13 +57,13 @@ export async function POST(request: Request) {
       } catch (error) { logFallback("plan", error); mode = "guided"; }
     }
     // An offer on the current property is not a new search budget.
-    if (negotiation) needs = input.needs;
+    if (followup) needs = input.needs;
     const filters = needsFilters(needs);
     const buying = needs.intent === "buy";
     const query = buying ? await searchPublishedProperties("", 24, filters) : null;
     if (query?.error) return json({ error: "物件資料暫時讀取不到，請稍後再試" }, 503);
     // Every card is from current public rows; no model-created property IDs or URLs.
-    const properties = (query?.data || []).map(p => ({ id: p.id, slug: p.slug, title: p.title, price: p.price,
+    const properties = (focused ? [focused] : query?.data || []).map(p => ({ id: p.id, slug: p.slug, title: p.title, price: p.price,
       district: p.district, layout: p.layout, land: p.land_area_ping, building: p.building_area_ping,
       highlights: Array.isArray(p.highlights) ? p.highlights.slice(0, 3) : [], description: (p.description || "").slice(0, 600) }));
     const needsReview = Boolean(needs.mustHave && properties.length);
@@ -70,18 +81,28 @@ export async function POST(request: Request) {
       : "我可以帶你看網站的相關知識；涉及個別稅額、貸款成數或法律判斷，請由阿勇、阿美確認你的實際情況。也可以把問題留在需求摘要中。";
     if (mode === "ai") {
       try {
-        const output = await modelJson(`${system} 你扮演${input.role === "amei" ? "阿美" : "阿勇"}的Q版助理。依提供資料回答客人，最多300字，補問一個最必要條件。物件只可引用提供的公開資料；必要條件未經查核必須說待確認。先直接回答本次問題，再補問。區分買房前與買房後：問買房之後時，聚焦交屋點交、設備檢查、費用結清及帳戶過戶，不能拿成交行情比較代替回答。知識回答只依knowledge內的公開摘要與正文節錄，不足時明說網站資料不足並交真人；不能用不相關文章湊答案。農保田只是需求稱呼，未逐件確認前不得稱任何物件符合農保、可投保、合法用途、適合耕作或保證長期置產；必須說候選土地與客人資格均待專業確認。不得因坪數大就推論符合農保。不要宣稱所有候選完全符合必要條件。租金不可用售價推測。輸出 {"answer":"..."}，不要輸出連結或聯絡電話。`, { message: safeMessage, history, needs, properties: properties.slice(0, 6), knowledge: knowledgeEvidence });
+        const output = await modelJson(`${system} 你扮演${input.role === "amei" ? "阿美" : "阿勇"}的Q版助理。依提供資料回答客人，最多180字。只在需要時補問一個問題，不要每次重複問預算、坪數。客人提到的價格不能改寫成另一個數字，也不能猜測價格差異原因。看屋要求應接續安排需求，不得宣稱已預約成功。物件只可引用提供的公開資料；必要條件未經查核必須說待確認。先直接回答本次問題，再補問。區分買房前與買房後：問買房之後時，聚焦交屋點交、設備檢查、費用結清及帳戶過戶，不能拿成交行情比較代替回答。知識回答只依knowledge內的公開摘要與正文節錄，不足時明說網站資料不足並交真人；不能用不相關文章湊答案。農保田只是需求稱呼，未逐件確認前不得稱任何物件符合農保、可投保、合法用途、適合耕作或保證長期置產；必須說候選土地與客人資格均待專業確認。不得因坪數大就推論符合農保。不要宣稱所有候選完全符合必要條件。租金不可用售價推測。輸出 {"answer":"..."}，不要輸出連結或聯絡電話。`, { message: safeMessage, history, action, focusedProperty: focused ? properties[0] : null, needs, properties: properties.slice(0, 6), knowledge: knowledgeEvidence });
         answer = z.object({ answer: z.string().trim().min(1).max(1200) }).parse(output).answer;
       } catch (error) { logFallback("answer", error); mode = "guided"; }
     }
-    if (negotiation) {
-      answer = "價格方面，交給阿勇、阿美為您努力爭取理想條件；能否調整仍需了解屋主意願。我可以先幫您整理出價想法與需求。請留下需求與聯絡方式，確認「請阿勇／阿美聯絡我」後，我們會接續協助洽談。";
+    const speaker = input.role === "amei" ? "阿美" : "阿勇";
+    const offer = [...safeMessage.matchAll(/(\d[\d,]*(?:\.\d+)?)\s*萬/g)].at(-1)?.[1];
+    if (action === "viewing") {
+      answer = `${focused ? `您想看的是「${focused.title}」。` : "可以協助整理看屋需求。"}${offer ? `您提出的 ${offer} 萬元，我也會記在需求中，交由阿勇、阿美了解屋主意願並協助洽談。` : ""}${!focused ? "請先告訴我是列表中的哪一間物件。" : "您平日還是週末方便看屋？"}確認需求與聯絡方式後，由${speaker}與您聯繫確認時間；目前尚未完成預約。`;
+    } else if (negotiation) {
+      answer = `${focused ? `關於「${focused.title}」，` : "價格方面，"}交給阿勇、阿美為您努力爭取理想條件；${offer ? `您提出的 ${offer} 萬元能否成交，` : "能否調整，"}仍需了解屋主意願。請確認需求與聯絡方式，按「請${speaker}聯絡我」後，我們會接續協助洽談。`;
+    } else if (action === "property" && focused && /價格|多少|開價/.test(safeMessage)) {
+      answer = `「${focused.title}」目前網站公開開價為${focused.price === null ? "洽詢價" : `${focused.price.toLocaleString()} 萬元`}。價格方面可以交由阿勇、阿美協助洽談，實際條件需與屋主確認。`;
+    } else if (action === "property" && !focused) {
+      answer = "您想了解哪一間？可以按物件旁的「詢問這間」，或告訴我是第幾間，我再針對該物件回答。";
+    } else if (action === "contact") {
+      answer = `我可以先幫您整理需求與聯絡資料；請檢查下方表單並同意聯絡，按「請${speaker}聯絡我」後才會送出。目前尚未通知真人。`;
     }
     // Restrict text links; real navigation is rendered exclusively from queried cards.
     answer = answer.replace(/https?:\/\/\S+|\[[^\]]*\]\([^)]*\)/g, "（請使用下方資料連結）");
     const speech = getGuideSpeechEnv();
     const audioToken = speech.enabled ? await signReply({ text: answer, role: input.role, expires: Date.now() + 600000 }, speech.key) : null;
-    return json({ answer, audioToken, mode, needs, summary: needsSummary(needs), properties: properties.slice(0, 6), knowledge,
+    return json({ answer, audioToken, mode, focusedProperty: focused ? properties[0] : null, action, needs, summary: needsSummary(needs), properties: properties.slice(0, 6), knowledge,
       searchHref: buying ? collectionHref(filters) : null, needsReview, knowledgeUnavailable: knowledgeResults.some(result => Boolean(result.error)) });
   } catch { return json({ error: "暫時無法整理需求，請稍後再試" }, 503); }
   finally { release(); }
