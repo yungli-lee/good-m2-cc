@@ -6,6 +6,7 @@ export const conciergeIntentSchema = z.enum([
   "property_question",
   "compare",
   "reject_property",
+  "reconsider_property",
   "viewing",
   "offer",
   "contact",
