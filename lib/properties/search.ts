@@ -68,8 +68,13 @@ const chineseDigits: Record<string, string> = {
 };
 
 export function propertySearchKeywordVariants(keyword: string) {
+  const aliases: Record<string, string[]> = {
+    商辦: ["商辦", "辦公"],
+    辦公室: ["辦公室", "辦公"],
+    商業辦公: ["商業辦公", "商辦", "辦公"]
+  };
   const numericLayout = keyword.replace(/^([一二兩三四五六七八九十])(?=房|廳|衛)/, (digit) => chineseDigits[digit] || digit);
-  return numericLayout === keyword ? [keyword] : [keyword, numericLayout];
+  return [...new Set([...(aliases[keyword] || [keyword]), ...(numericLayout === keyword ? [] : [numericLayout])])];
 }
 
 export function parsePropertySearch(input = ""): ParsedPropertySearch {
