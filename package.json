@@ -59,7 +59,7 @@
     "test:property-collections": "node --experimental-strip-types --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/test-property-collections.ts",
     "test:property-character-guide": "node --experimental-strip-types --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/test-property-character-guide.ts",
     "test:concierge": "node --experimental-strip-types --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/test-concierge.ts && node scripts/test-concierge-api.mjs",
-    "test:inquiry-line": "node --experimental-strip-types --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/test-inquiry-line-notification.ts"
+    "test:inquiry-line": "node --experimental-strip-types --experimental-specifier-resolution=node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/test-inquiry-line-notification.ts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.6.1",
