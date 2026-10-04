@@ -83,6 +83,8 @@ const featuredPropertySelect = `
   building_area_ping,
   layout,
   property_type,
+  building_subtype,
+  current_usage,
   highlights,
   description,
   status,
