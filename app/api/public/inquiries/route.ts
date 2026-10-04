@@ -14,7 +14,7 @@ type FieldErrorKey = "name" | "phone" | "email" | "message";
 
 const fieldErrorMessages: Record<FieldErrorKey, string> = {
   name: "請輸入正確姓名",
-  phone: "請輸入正確手機號碼",
+  phone: "請輸入正確聯絡電話",
   email: "請輸入正確 Email",
   message: "請簡單描述您的需求，至少 10 個字"
 };
