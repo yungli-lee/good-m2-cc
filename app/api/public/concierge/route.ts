@@ -63,18 +63,22 @@ export async function POST(request: Request) {
         mode = "ai";
       } catch (error) { logFallback("plan", error); }
     }
-    if (plannedIntent === "reject_property") needs = baselineNeeds;
-    const action = actionFromConciergeIntent(plannedIntent);
+    if (plannedIntent === "reject_property" || plannedIntent === "reconsider_property") needs = baselineNeeds;
+    const latestRejectedSlug = previousState.rejectedSlugs.at(-1) || "";
+    const reconsiderDirectSlug = plannedIntent === "reconsider_property" && !searchQuery ? latestRejectedSlug : "";
+    const action = reconsiderDirectSlug ? "property" : actionFromConciergeIntent(plannedIntent);
     const requestedTime = readViewingTime(safeMessage, input.viewingTime);
     const viewingFollowup = action === "viewing" || (Boolean(input.viewingTime) && action === "property" && requestedTime !== input.viewingTime) || (Boolean(input.viewingTime) && action === "property" && /明天|後天|今天|週末|平日/.test(safeMessage));
     const preferredTime = action === "search" ? "" : requestedTime;
     const negotiation = action === "offer";
     const followup = action !== "search";
-    const effectiveCandidateSlugs = input.candidateSlugs.length ? input.candidateSlugs : previousState.consideringSlugs;
+    const effectiveCandidateSlugs = reconsiderDirectSlug
+      ? [reconsiderDirectSlug, ...previousState.consideringSlugs.filter(slug => slug !== reconsiderDirectSlug)]
+      : (input.candidateSlugs.length ? input.candidateSlugs : previousState.consideringSlugs);
     const candidateResults = followup ? await Promise.all(effectiveCandidateSlugs.map(slug => getPublishedPropertyBySlug(slug))) : [];
     if (candidateResults.some(r => r.error)) return json({ error: "物件資料暫時讀取不到，請稍後再試" }, 503);
     const candidates = candidateResults.flatMap(r => r.data ? [r.data] : []);
-    const focusedSlug = followup ? referencedSlug(safeMessage, candidates, effectiveFocusedSlug) : "";
+    const focusedSlug = reconsiderDirectSlug || (followup ? referencedSlug(safeMessage, candidates, effectiveFocusedSlug) : "");
     const focusResult = focusedSlug ? await getPublishedPropertyBySlug(focusedSlug) : null;
     if (focusResult?.error) return json({ error: "物件資料暫時讀取不到，請稍後再試" }, 503);
     const focused = focusResult?.data || null;
@@ -83,7 +87,8 @@ export async function POST(request: Request) {
     const query = buying ? await searchPublishedProperties(searchQuery, 24, filters) : null;
     if (query?.error) return json({ error: "物件資料暫時讀取不到，請稍後再試" }, 503);
     // Every card is from current public rows; no model-created property IDs or URLs.
-    const rejectedSet = new Set(previousState.rejectedSlugs);
+    const rejectedSet = new Set(plannedIntent === "reconsider_property" && searchQuery ? [] : previousState.rejectedSlugs);
+    if (reconsiderDirectSlug) rejectedSet.delete(reconsiderDirectSlug);
     if (rejectedFocusedProperty && effectiveFocusedSlug) rejectedSet.add(effectiveFocusedSlug);
     for (const slug of input.rejectedSlugs) rejectedSet.add(slug);
     const searchRows = (query?.data || []).filter(p => !rejectedSet.has(p.slug));
@@ -105,7 +110,7 @@ export async function POST(request: Request) {
       : "我可以帶你看網站的相關知識；涉及個別稅額、貸款成數或法律判斷，請由阿勇、阿美確認你的實際情況。也可以把問題留在需求摘要中。";
     if (mode === "ai") {
       try {
-        const output = await modelJson(`${system} 你扮演${input.role === "amei" ? "阿美" : "阿勇"}的Q版助理。依提供資料回答客人，最多180字。properties 是本次最多六件推薦，不是全部搜尋件數，不得說全區只有這幾件；以「本次先推薦」描述。住宅搜尋包含店面／店住候選，店面是否適合居住與合法用途須由真人確認，不可直接保證能住。只在需要時補問一個問題，不要每次重複問預算、坪數。客人提到的價格不能改寫成另一個數字，也不能猜測價格差異原因。只有 action=viewing（客人已明確提出看屋／帶看／時間）時，才可以主動詢問看屋日期或時段；action=search 或 action=property 時不得主動催促、詢問「哪一天看屋」或「什麼時段看屋」，先回答問題即可。看屋要求應接續安排需求，不得宣稱已預約成功。物件只可引用提供的公開資料；若問住宅／商辦／辦公用途，只能依 currentUsage、buildingSubtype、propertyType 與公開描述回答；若資料不足要明說待確認，不得自己推論用途。必要條件未經查核必須說待確認。先直接回答本次問題，再補問。區分買房前與買房後：問買房之後時，聚焦交屋點交、設備檢查、費用結清及帳戶過戶，不能拿成交行情比較代替回答。知識回答只依knowledge內的公開摘要與正文節錄，不足時明說網站資料不足並交真人；不能用不相關文章湊答案。農保田只是需求稱呼，未逐件確認前不得稱任何物件符合農保、可投保、合法用途、適合耕作或保證長期置產；必須說候選土地與客人資格均待專業確認。不得因坪數大就推論符合農保。不要宣稱所有候選完全符合必要條件。租金不可用售價推測。輸出 {"answer":"..."}，不要輸出連結或聯絡電話。`, { message: safeMessage, history, action, viewingTime: preferredTime, focusedProperty: focused ? properties[0] : null, needs, properties: properties.slice(0, 6), knowledge: knowledgeEvidence });
+        const output = await modelJson(`${system} 你扮演${input.role === "amei" ? "阿美" : "阿勇"}的Q版助理。依提供資料回答客人，最多180字。properties 是本次最多六件推薦，不是全部搜尋件數，不得說全區只有這幾件；以「本次先推薦」描述。住宅搜尋包含店面／店住候選，店面是否適合居住與合法用途須由真人確認，不可直接保證能住。只在需要時補問一個問題，不要每次重複問預算、坪數。客人提到的價格不能改寫成另一個數字，也不能猜測價格差異原因。只有 action=viewing（客人已明確提出看屋／帶看／時間）時，才可以主動詢問看屋日期或時段；action=search 或 action=property 時不得主動催促、詢問「哪一天看屋」或「什麼時段看屋」，先回答問題即可。看屋要求應接續安排需求，不得宣稱已預約成功。物件只可引用提供的公開資料；若問住宅／商辦／辦公用途，只能依 currentUsage、buildingSubtype、propertyType 與公開描述回答；若資料不足要明說待確認，不得自己推論用途。必要條件未經查核必須說待確認。先直接回答本次問題，再補問。區分買房前與買房後：問買房之後時，聚焦交屋點交、設備檢查、費用結清及帳戶過戶，不能拿成交行情比較代替回答。知識回答只依knowledge內的公開摘要與正文節錄，不足時明說網站資料不足並交真人；不能用不相關文章湊答案。農保田只是需求稱呼，未逐件確認前不得稱任何物件符合農保、可投保、合法用途、適合耕作或保證長期置產；必須說候選土地與客人資格均待專業確認。不得因坪數大就推論符合農保。不要宣稱所有候選完全符合必要條件。租金不可用售價推測。輸出 {"answer":"..."}，不要輸出連結或聯絡電話。`, { message: safeMessage, history, action, intent: plannedIntent, viewingTime: preferredTime, focusedProperty: focused ? properties[0] : null, needs, properties: properties.slice(0, 6), knowledge: knowledgeEvidence });
         answer = z.object({ answer: z.string().trim().min(1).max(1200) }).parse(output).answer;
       } catch (error) { logFallback("answer", error); mode = "guided"; }
     }
@@ -137,6 +142,7 @@ export async function POST(request: Request) {
       focusedSlug: focused?.slug || (action === "search" ? null : effectiveFocusedSlug || null),
       candidateSlugs: properties.slice(0, 6).map(property => property.slug),
       rejectedSlug: rejectedFocusedProperty ? effectiveFocusedSlug : null,
+      revivedSlug: plannedIntent === "reconsider_property" ? (focused?.slug || properties[0]?.slug || null) : null,
       viewingDeclined
     });
     await saveConciergeSession(sessionId, nextState);
