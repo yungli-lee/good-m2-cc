@@ -1,4 +1,4 @@
-import { getRequestContext } from "@/lib/supabase/env";
+import { getRequestContext } from "../supabase/env.ts";
 
 export type LineMessagingConfig = {
   channelAccessToken: string | null;
