@@ -4,7 +4,7 @@ import { collectionFilters, collectionHref, collectionLabel } from "../lib/prope
 
 function form(overrides: Record<string, string> = {}) {
   const data = new FormData();
-  for (const [key, value] of Object.entries({ slug: "lukang-2000", title: "鹿港・福興・秀水｜2000萬內精選", description: "阿勇與阿美為你介紹", status: "draft", price_max: "2000", property_type: "residential", ...overrides })) data.set(key, value);
+  for (const [key, value] of Object.entries({ slug: "lukang-2000", title: "鹿港・福興・秀水｜2000萬內精選", description: "阿勇與阿美為你介紹", selection_mode: "filters", status: "draft", price_max: "2000", property_type: "residential", ...overrides })) data.set(key, value);
   for (const district of ["鹿港鎮", "福興鄉", "秀水鄉"]) data.append("district", district);
   return data;
 }
@@ -21,6 +21,14 @@ assert.deepEqual(restored, filters);
 assert.ok(collectionLabel(restored).includes("2000萬以下"));
 const invalidCases: Array<Record<string, string>> = [{ price_min: "3000", price_max: "2000" }, { price_max: "NaN" }, { price_min: "-1" }, { price_max: "Infinity" }, { property_type: "__proto__" }, { slug: "../admin" }, { slug: "bad_slug" }, { title: " " }, { status: "deleted" }, { cover_storage_path: "https://evil.example/image.jpg" }];
 for (const overrides of invalidCases) assert.equal(parseCollectionForm(form(overrides)).success, false, JSON.stringify(overrides));
+const manual = form({ selection_mode: "manual", price_max: "", property_type: "" });
+manual.append("property_id", "17150148-ce7f-44f9-b738-0bef58d4d9d9");
+manual.append("property_id", "2074ce69-1065-4623-bb99-1cbf31246432");
+assert.ok(parseCollectionForm(manual).success);
+const manualEmpty = form({ selection_mode: "manual", price_max: "", property_type: "" });
+assert.equal(parseCollectionForm(manualEmpty).success, false);
+const manualBadId = form({ selection_mode: "manual", price_max: "", property_type: "" }); manualBadId.append("property_id", "not-a-uuid");
+assert.equal(parseCollectionForm(manualBadId).success, false);
 const invalidDistrict = form(); invalidDistrict.append("district", "無效地區");
 assert.equal(parseCollectionForm(invalidDistrict).success, false);
 const saved = parseCollectionForm(form({ slug: "attacker-new-slug" }), "original-slug");
@@ -32,4 +40,4 @@ assert.equal(propertyCollectionCoverUrl(cover, "http://example.supabase.co"), nu
 assert.equal(propertyCollectionHref("lukang-2000"), "/collections/lukang-2000");
 assert.deepEqual(collectionFilters({ price_max: "2000", price_min: "500" }), { q: "", city: "", districts: [], type: "", minPrice: 500, maxPrice: 2000 });
 assert.equal(collectionFilters({ price_max: "Infinity" }).maxPrice, undefined);
-console.log("Property collections: validation, immutable links, filter roundtrip and safe covers PASS");
+console.log("Property collections: validation, manual selection, immutable links, filter roundtrip and safe covers PASS");
