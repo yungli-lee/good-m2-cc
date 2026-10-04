@@ -35,6 +35,7 @@ export async function POST(request: Request) {
     const input = parsed.data;
     const safeMessage = redactContact(input.message);
     const action = dialogAction(safeMessage, Boolean(input.focusedSlug));
+    const rejectedFocusedProperty = Boolean(input.focusedSlug && /不要這[間件]|這[間件房子].{0,8}不要|不喜歡這[間件]|太舊.{0,5}不要/.test(safeMessage));
     const requestedTime = readViewingTime(safeMessage, input.viewingTime);
     const viewingFollowup = action === "viewing" || (Boolean(input.viewingTime) && action === "property" && requestedTime !== input.viewingTime) || (Boolean(input.viewingTime) && action === "property" && /明天|後天|今天|週末|平日/.test(safeMessage));
     const preferredTime = action === "search" ? "" : requestedTime;
@@ -67,7 +68,8 @@ export async function POST(request: Request) {
     const query = buying ? await searchPublishedProperties("", 24, filters) : null;
     if (query?.error) return json({ error: "物件資料暫時讀取不到，請稍後再試" }, 503);
     // Every card is from current public rows; no model-created property IDs or URLs.
-    const properties = (focused ? [focused] : query?.data || []).map(p => ({ id: p.id, slug: p.slug, title: p.title, price: p.price,
+    const searchRows = rejectedFocusedProperty ? (query?.data || []).filter(p => p.slug !== input.focusedSlug) : (query?.data || []);
+    const properties = (focused ? [focused] : searchRows).map(p => ({ id: p.id, slug: p.slug, title: p.title, price: p.price,
       district: p.district, layout: p.layout, propertyType: p.property_type, land: p.land_area_ping, building: p.building_area_ping,
       highlights: Array.isArray(p.highlights) ? p.highlights.slice(0, 3) : [], description: (p.description || "").slice(0, 600) }));
     const needsReview = Boolean(needs.mustHave && properties.length);
