@@ -7,6 +7,7 @@ const plannerSchema = z.object({
   intent: z.enum(["search", "property_question", "compare", "reject_property", "viewing", "offer", "contact", "general"]),
   rejectCurrent: z.boolean(),
   viewingDeclined: z.boolean(),
+  searchQuery: z.string().trim().max(80).default(""),
   requirements: needsSchema
 });
 
@@ -23,6 +24,7 @@ export async function planConciergeTurn(input: {
     + " intent 只能是 search/property_question/compare/reject_property/viewing/offer/contact/general。"
     + " rejectCurrent 表示客人是否淘汰目前物件。像『不要了』『換別間』『下一間』『這間不喜歡』『太舊不要』『剛才淘汰的不要再給我』，若目前有物件，必須視為 rejectCurrent=true 且 intent=reject_property。"
     + " viewingDeclined 表示客人明確說先不要帶看、不急著看、暫時不用。"
+    + " searchQuery 是本輪要搜尋的簡短物件關鍵字；例如客人說商辦、辦公室、民族路、某社區或特定案名時，填最精簡關鍵字；沒有特定關鍵字就填空字串。"
     + " requirements 只能保存長期找房條件：intent、districts、type、minPrice、maxPrice、mustHave。"
     + " 淘汰／排除／換一間等流程指令不是 mustHave，不得寫入 requirements。"
     + " 如果只是淘汰或換物件、沒有新增搜尋條件，requirements 必須完整沿用 previousRequirements。"
