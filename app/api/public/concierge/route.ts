@@ -2,7 +2,10 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { chatSchema, inferNeeds, needsFilters, needsSchema, needsSummary, redactContact } from "@/lib/concierge/schema";
 import { viewingTime as readViewingTime } from "@/lib/concierge/viewing";
-import { dialogAction, referencedSlug } from "@/lib/concierge/dialog";
+import { dialogAction, isPropertyRejection, referencedSlug } from "@/lib/concierge/dialog";
+import { advanceConciergeState, intentFromAction } from "@/lib/concierge/state-engine";
+import { emptyConciergeState } from "@/lib/concierge/state";
+import { loadConciergeSession, saveConciergeSession } from "@/lib/concierge/session-store";
 import { knowledgeTerms, knowledgeExcerpt } from "@/lib/concierge/knowledge";
 import { conciergeEnv, modelJson } from "@/lib/concierge/model";
 import { takeConciergeSlot } from "@/lib/concierge/limit";
@@ -33,9 +36,15 @@ export async function POST(request: Request) {
     const parsed = chatSchema.safeParse(JSON.parse(raw));
     if (!parsed.success) return json({ error: "請簡短描述您的需求" }, 422);
     const input = parsed.data;
+    const cookieSessionId = request.headers.get("cookie")?.match(/(?:^|;\s*)concierge_session=([0-9a-f-]{36})/i)?.[1] || "";
+    const sessionId = input.sessionId || cookieSessionId || crypto.randomUUID();
+    const previousState = sessionId
+      ? await loadConciergeSession(sessionId, input.needs)
+      : emptyConciergeState(input.needs);
     const safeMessage = redactContact(input.message);
-    const action = dialogAction(safeMessage, Boolean(input.focusedSlug));
-    const rejectedFocusedProperty = Boolean(input.focusedSlug && /不要這[間件]|這[間件房子].{0,8}不要|不喜歡這[間件]|太舊.{0,5}不要/.test(safeMessage));
+    const effectiveFocusedSlug = effectiveFocusedSlug || previousState.focusedSlug || "";
+    const action = dialogAction(safeMessage, Boolean(effectiveFocusedSlug));
+    const rejectedFocusedProperty = Boolean(effectiveFocusedSlug && isPropertyRejection(safeMessage));
     const requestedTime = readViewingTime(safeMessage, input.viewingTime);
     const viewingFollowup = action === "viewing" || (Boolean(input.viewingTime) && action === "property" && requestedTime !== input.viewingTime) || (Boolean(input.viewingTime) && action === "property" && /明天|後天|今天|週末|平日/.test(safeMessage));
     const preferredTime = action === "search" ? "" : requestedTime;
@@ -44,13 +53,14 @@ export async function POST(request: Request) {
     const candidateResults = followup ? await Promise.all(input.candidateSlugs.map(slug => getPublishedPropertyBySlug(slug))) : [];
     if (candidateResults.some(r => r.error)) return json({ error: "物件資料暫時讀取不到，請稍後再試" }, 503);
     const candidates = candidateResults.flatMap(r => r.data ? [r.data] : []);
-    const focusedSlug = followup ? referencedSlug(safeMessage, candidates, input.focusedSlug) : "";
+    const focusedSlug = followup ? referencedSlug(safeMessage, candidates, effectiveFocusedSlug) : "";
     const focusResult = focusedSlug ? await getPublishedPropertyBySlug(focusedSlug) : null;
     if (focusResult?.error) return json({ error: "物件資料暫時讀取不到，請稍後再試" }, 503);
     const focused = focusResult?.data || null;
 
     const history = input.history.map(m => ({ ...m, text: redactContact(m.text) }));
-    let needs = inferNeeds(safeMessage, input.needs);
+    const baselineNeeds = previousState.turnCount ? previousState.requirements : input.needs;
+    let needs = inferNeeds(safeMessage, baselineNeeds);
     let mode = "guided";
     if (conciergeEnv().key) {
       try {
@@ -61,14 +71,18 @@ export async function POST(request: Request) {
         mode = "ai";
       } catch (error) { logFallback("plan", error); mode = "guided"; }
     }
-    // An offer on the current property is not a new search budget.
-    if (followup) needs = input.needs;
+    // Follow-up questions keep the accumulated requirements. A pure rejection
+    // means "find another one", not "forget what I was looking for".
+    if (followup || rejectedFocusedProperty) needs = baselineNeeds;
     const filters = needsFilters(needs);
     const buying = needs.intent === "buy";
     const query = buying ? await searchPublishedProperties("", 24, filters) : null;
     if (query?.error) return json({ error: "物件資料暫時讀取不到，請稍後再試" }, 503);
     // Every card is from current public rows; no model-created property IDs or URLs.
-    const searchRows = rejectedFocusedProperty ? (query?.data || []).filter(p => p.slug !== input.focusedSlug) : (query?.data || []);
+    const rejectedSet = new Set(previousState.rejectedSlugs);
+    if (rejectedFocusedProperty && effectiveFocusedSlug) rejectedSet.add(effectiveFocusedSlug);
+    for (const slug of input.rejectedSlugs) rejectedSet.add(slug);
+    const searchRows = (query?.data || []).filter(p => !rejectedSet.has(p.slug));
     const properties = (focused ? [focused] : searchRows).map(p => ({ id: p.id, slug: p.slug, title: p.title, price: p.price,
       district: p.district, layout: p.layout, propertyType: p.property_type, land: p.land_area_ping, building: p.building_area_ping,
       highlights: Array.isArray(p.highlights) ? p.highlights.slice(0, 3) : [], description: (p.description || "").slice(0, 600) }));
@@ -111,8 +125,22 @@ export async function POST(request: Request) {
     answer = answer.replace(/https?:\/\/\S+|\[[^\]]*\]\([^)]*\)/g, "（請使用下方資料連結）");
     const speech = getGuideSpeechEnv();
     const audioToken = speech.enabled ? await signReply({ text: answer, role: input.role, expires: Date.now() + 600000 }, speech.key) : null;
-    return json({ answer, audioToken, mode, viewingTime: preferredTime, focusedProperty: focused ? properties[0] : null, action, needs, summary: needsSummary(needs), properties: properties.slice(0, 6), knowledge,
+    const structuredIntent = intentFromAction(action, rejectedFocusedProperty);
+    const nextState = advanceConciergeState({
+      previous: previousState,
+      intent: structuredIntent,
+      needs,
+      focusedSlug: focused?.slug || (action === "search" ? null : effectiveFocusedSlug || null),
+      candidateSlugs: properties.slice(0, 6).map(property => property.slug),
+      rejectedSlug: rejectedFocusedProperty ? effectiveFocusedSlug : null,
+      viewingDeclined: /先看看|不用帶看|先不用|不急著看|暫時不用/.test(safeMessage)
+    });
+    await saveConciergeSession(sessionId, nextState);
+
+    const response = json({ answer, audioToken, mode, viewingTime: preferredTime, focusedProperty: focused ? properties[0] : null, action, intent: structuredIntent, state: nextState, needs, summary: needsSummary(needs), properties: properties.slice(0, 6), knowledge,
       searchHref: buying ? collectionHref(filters) : null, needsReview, knowledgeUnavailable: knowledgeResults.some(result => Boolean(result.error)) });
+    if (!cookieSessionId) response.headers.append("Set-Cookie", `concierge_session=${sessionId}; Path=/; Max-Age=2592000; HttpOnly; SameSite=Lax; Secure`);
+    return response;
   } catch { return json({ error: "暫時無法整理需求，請稍後再試" }, 503); }
   finally { release(); }
 }
