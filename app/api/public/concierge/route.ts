@@ -44,8 +44,25 @@ export async function POST(request: Request) {
       : emptyConciergeState(input.needs);
     const safeMessage = redactContact(input.message);
     const effectiveFocusedSlug = input.focusedSlug || previousState.focusedSlug || "";
-    const action = dialogAction(safeMessage, Boolean(effectiveFocusedSlug));
-    const rejectedFocusedProperty = Boolean(effectiveFocusedSlug && isPropertyRejection(safeMessage));
+    const history = input.history.map(m => ({ ...m, text: redactContact(m.text) }));
+    const baselineNeeds = previousState.turnCount ? previousState.requirements : input.needs;
+    let mode = "guided";
+    let plannedIntent = intentFromAction(dialogAction(safeMessage, Boolean(effectiveFocusedSlug)), Boolean(effectiveFocusedSlug && isPropertyRejection(safeMessage)));
+    let rejectedFocusedProperty = Boolean(effectiveFocusedSlug && isPropertyRejection(safeMessage));
+    let viewingDeclined = /先看看|不用帶看|先不用|不急著看|暫時不用/.test(safeMessage);
+    let needs = inferNeeds(safeMessage, baselineNeeds);
+    if (conciergeEnv().key) {
+      try {
+        const plan = await planConciergeTurn({ message: safeMessage, history, previousRequirements: baselineNeeds, previousState });
+        plannedIntent = plan.intent;
+        rejectedFocusedProperty = Boolean(effectiveFocusedSlug && (plan.rejectCurrent || plan.intent === "reject_property"));
+        viewingDeclined = plan.viewingDeclined;
+        needs = plan.requirements;
+        mode = "ai";
+      } catch (error) { logFallback("plan", error); }
+    }
+    if (plannedIntent === "reject_property") needs = baselineNeeds;
+    const action = actionFromConciergeIntent(plannedIntent);
     const requestedTime = readViewingTime(safeMessage, input.viewingTime);
     const viewingFollowup = action === "viewing" || (Boolean(input.viewingTime) && action === "property" && requestedTime !== input.viewingTime) || (Boolean(input.viewingTime) && action === "property" && /明天|後天|今天|週末|平日/.test(safeMessage));
     const preferredTime = action === "search" ? "" : requestedTime;
@@ -59,23 +76,6 @@ export async function POST(request: Request) {
     const focusResult = focusedSlug ? await getPublishedPropertyBySlug(focusedSlug) : null;
     if (focusResult?.error) return json({ error: "物件資料暫時讀取不到，請稍後再試" }, 503);
     const focused = focusResult?.data || null;
-
-    const history = input.history.map(m => ({ ...m, text: redactContact(m.text) }));
-    const baselineNeeds = previousState.turnCount ? previousState.requirements : input.needs;
-    let needs = inferNeeds(safeMessage, baselineNeeds);
-    let mode = "guided";
-    if (conciergeEnv().key) {
-      try {
-        const plan = await modelJson(`${system} 從對話整理完整需求。輸出 intent(buy/sell/rent/let/question), districts(彰化縣完整鄉鎮市名陣列), type(residential/farmland/building_land/townhouse/apartment/building/storefront/farmhouse/factory/industrial_land或空字串), minPrice/maxPrice(萬元或null), mustHave(必要條件)。未改動條件沿用 previous；明確取消則移除；服務類型變更時清除未再明確提供的原條件。只提取客人明說的條件。`, { message: safeMessage, history, previous: baselineNeeds });
-        const valid = needsSchema.safeParse(plan);
-        if (!valid.success) throw new Error("invalid_plan");
-        needs = valid.data;
-        mode = "ai";
-      } catch (error) { logFallback("plan", error); mode = "guided"; }
-    }
-    // Follow-up questions keep the accumulated requirements. A pure rejection
-    // means "find another one", not "forget what I was looking for".
-    if (followup || rejectedFocusedProperty) needs = baselineNeeds;
     const filters = needsFilters(needs);
     const buying = needs.intent === "buy";
     const query = buying ? await searchPublishedProperties("", 24, filters) : null;
@@ -127,7 +127,7 @@ export async function POST(request: Request) {
     answer = answer.replace(/https?:\/\/\S+|\[[^\]]*\]\([^)]*\)/g, "（請使用下方資料連結）");
     const speech = getGuideSpeechEnv();
     const audioToken = speech.enabled ? await signReply({ text: answer, role: input.role, expires: Date.now() + 600000 }, speech.key) : null;
-    const structuredIntent = intentFromAction(action, rejectedFocusedProperty);
+    const structuredIntent = plannedIntent;
     const nextState = advanceConciergeState({
       previous: previousState,
       intent: structuredIntent,
@@ -135,7 +135,7 @@ export async function POST(request: Request) {
       focusedSlug: focused?.slug || (action === "search" ? null : effectiveFocusedSlug || null),
       candidateSlugs: properties.slice(0, 6).map(property => property.slug),
       rejectedSlug: rejectedFocusedProperty ? effectiveFocusedSlug : null,
-      viewingDeclined: /先看看|不用帶看|先不用|不急著看|暫時不用/.test(safeMessage)
+      viewingDeclined
     });
     await saveConciergeSession(sessionId, nextState);
 
