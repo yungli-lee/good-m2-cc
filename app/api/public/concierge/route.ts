@@ -42,7 +42,7 @@ export async function POST(request: Request) {
       ? await loadConciergeSession(sessionId, input.needs)
       : emptyConciergeState(input.needs);
     const safeMessage = redactContact(input.message);
-    const effectiveFocusedSlug = effectiveFocusedSlug || previousState.focusedSlug || "";
+    const effectiveFocusedSlug = input.focusedSlug || previousState.focusedSlug || "";
     const action = dialogAction(safeMessage, Boolean(effectiveFocusedSlug));
     const rejectedFocusedProperty = Boolean(effectiveFocusedSlug && isPropertyRejection(safeMessage));
     const requestedTime = readViewingTime(safeMessage, input.viewingTime);
@@ -50,7 +50,8 @@ export async function POST(request: Request) {
     const preferredTime = action === "search" ? "" : requestedTime;
     const negotiation = action === "offer";
     const followup = action !== "search";
-    const candidateResults = followup ? await Promise.all(input.candidateSlugs.map(slug => getPublishedPropertyBySlug(slug))) : [];
+    const effectiveCandidateSlugs = input.candidateSlugs.length ? input.candidateSlugs : previousState.consideringSlugs;
+    const candidateResults = followup ? await Promise.all(effectiveCandidateSlugs.map(slug => getPublishedPropertyBySlug(slug))) : [];
     if (candidateResults.some(r => r.error)) return json({ error: "物件資料暫時讀取不到，請稍後再試" }, 503);
     const candidates = candidateResults.flatMap(r => r.data ? [r.data] : []);
     const focusedSlug = followup ? referencedSlug(safeMessage, candidates, effectiveFocusedSlug) : "";
@@ -64,7 +65,7 @@ export async function POST(request: Request) {
     let mode = "guided";
     if (conciergeEnv().key) {
       try {
-        const plan = await modelJson(`${system} 從對話整理完整需求。輸出 intent(buy/sell/rent/let/question), districts(彰化縣完整鄉鎮市名陣列), type(residential/farmland/building_land/townhouse/apartment/building/storefront/farmhouse/factory/industrial_land或空字串), minPrice/maxPrice(萬元或null), mustHave(必要條件)。未改動條件沿用 previous；明確取消則移除；服務類型變更時清除未再明確提供的原條件。只提取客人明說的條件。`, { message: safeMessage, history, previous: input.needs });
+        const plan = await modelJson(`${system} 從對話整理完整需求。輸出 intent(buy/sell/rent/let/question), districts(彰化縣完整鄉鎮市名陣列), type(residential/farmland/building_land/townhouse/apartment/building/storefront/farmhouse/factory/industrial_land或空字串), minPrice/maxPrice(萬元或null), mustHave(必要條件)。未改動條件沿用 previous；明確取消則移除；服務類型變更時清除未再明確提供的原條件。只提取客人明說的條件。`, { message: safeMessage, history, previous: baselineNeeds });
         const valid = needsSchema.safeParse(plan);
         if (!valid.success) throw new Error("invalid_plan");
         needs = valid.data;
