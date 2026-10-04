@@ -6,6 +6,7 @@ import { dialogAction, isPropertyRejection, referencedSlug } from "@/lib/concier
 import { advanceConciergeState, intentFromAction } from "@/lib/concierge/state-engine";
 import { emptyConciergeState } from "@/lib/concierge/state";
 import { loadConciergeSession, saveConciergeSession } from "@/lib/concierge/session-store";
+import { actionFromConciergeIntent, planConciergeTurn } from "@/lib/concierge/turn-planner";
 import { knowledgeTerms, knowledgeExcerpt } from "@/lib/concierge/knowledge";
 import { conciergeEnv, modelJson } from "@/lib/concierge/model";
 import { takeConciergeSlot } from "@/lib/concierge/limit";
