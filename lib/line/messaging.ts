@@ -1,4 +1,4 @@
-import { getLineMessagingConfig } from "./config";
+import { getLineMessagingConfig } from "./config.ts";
 
 export type LinePushResult = {
   ok: boolean;
