@@ -13,7 +13,7 @@ function PropertyVideoPoster({ item, title, onPlay, main = false }: { item: Prop
   return (
     <button className={`property-video-card${main ? " gallery-main-video" : ""}`} type="button" onClick={onPlay} aria-label={`播放完整版：${item.alt_text || title}`}>
       {posterFailed || !item.thumbnail_url
-        ? <span className="property-video-fallback">影片無法播放</span>
+        ? <span className="property-video-fallback">▶ 播放影片</span>
         : <img src={item.thumbnail_url} alt={item.alt_text || `${title} 影片 Poster`} loading="lazy" onError={() => setPosterFailed(true)} />}
       <span>▶ 播放完整版</span>
     </button>
