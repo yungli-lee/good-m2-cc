@@ -3,7 +3,7 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 import type { PropertyCollection } from "./core";
 
 // Shared public/admin data contains no actor IDs or internal customer information.
-export const collectionSelect = "id,slug,title,description,q,city,districts,property_type,price_min,price_max,cover_storage_path,status,created_at,updated_at";
+export const collectionSelect = "id,slug,title,description,selection_mode,selected_property_ids,q,city,districts,property_type,price_min,price_max,cover_storage_path,status,created_at,updated_at";
 export async function listAdminPropertyCollections() {
   const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase.from("property_collections").select(collectionSelect).order("updated_at", { ascending: false });
