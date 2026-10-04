@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { recordAuditLog } from "@/lib/audit/audit-log";
 import { sendInquiryNotification } from "@/lib/email/inquiry";
 import { inquirySchema } from "@/lib/inquiries/schema";
+import { sendInquiryLineNotification } from "@/lib/line/inquiry";
 import { getRequestMeta } from "@/lib/security/request";
 import { createSupabaseAdminClient } from "@/lib/supabase/server";
 import { getRequestContext, getSupabaseEnv } from "@/lib/supabase/env";
@@ -13,7 +14,7 @@ type FieldErrorKey = "name" | "phone" | "email" | "message";
 
 const fieldErrorMessages: Record<FieldErrorKey, string> = {
   name: "請輸入正確姓名",
-  phone: "請輸入正確手機號碼",
+  phone: "請輸入正確聯絡電話",
   email: "請輸入正確 Email",
   message: "請簡單描述您的需求，至少 10 個字"
 };
@@ -198,6 +199,20 @@ export async function POST(request: Request) {
     }
     console.info("[public_inquiries_insert_ok]", { inquiry_id: inquiry.id });
 
+    let propertySummary: { title: string | null; slug: string | null } | null = null;
+    if (input.property_id) {
+      const { data: property, error: propertyError } = await supabase
+        .from("properties")
+        .select("title,slug")
+        .eq("id", input.property_id)
+        .maybeSingle();
+      if (propertyError) {
+        console.error("[public_inquiries_property_lookup_failed]", safeErrorSummary(propertyError));
+      } else {
+        propertySummary = property;
+      }
+    }
+
     // Awaited on Edge so the request lifecycle is deterministic. Failures are
     // contained by the service and never change the successful inquiry result.
     const attribution = await attributeInquiry(supabase, inquiry);
@@ -291,7 +306,84 @@ export async function POST(request: Request) {
       });
     }
 
-    return NextResponse.json({ ok: true, inquiry_id: inquiry.id, attribution_status: attribution.status, email_sent: emailResult.ok });
+    let lineResult: Awaited<ReturnType<typeof sendInquiryLineNotification>>;
+    try {
+      console.info("[public_inquiries_line_start]", { inquiry_id: inquiry.id });
+      lineResult = await sendInquiryLineNotification({
+        id: inquiry.id,
+        formType: input.form_type,
+        name: input.name,
+        phone: input.phone,
+        email: input.email || null,
+        message: input.message,
+        propertyId: input.property_id || null,
+        propertyTitle: propertySummary?.title || null,
+        propertySlug: propertySummary?.slug || null,
+        sourcePage: input.source_page || null
+      });
+    } catch (lineError) {
+      lineResult = {
+        ok: false,
+        errorCode: "line_send_unhandled",
+        safeMessage: "Unhandled LINE send failure"
+      };
+      console.error("[inquiry_line_failed]", {
+        inquiry_id: inquiry.id,
+        error: safeErrorSummary(lineError)
+      });
+    }
+
+    if (lineResult.ok) {
+      console.info("[public_inquiries_line_ok]", {
+        inquiry_id: inquiry.id,
+        recipient_count: lineResult.recipientCount || 0
+      });
+    } else {
+      console.error("[inquiry_line_failed]", {
+        inquiry_id: inquiry.id,
+        code: lineResult.errorCode || null,
+        status: lineResult.status || null,
+        message: lineResult.safeMessage || "line_send_failed",
+        sent_count: lineResult.sentCount || 0,
+        recipient_count: lineResult.recipientCount || 0
+      });
+    }
+
+    try {
+      const action = lineResult.ok ? "inquiry_line_sent" : "inquiry_line_failed";
+      console.info("[public_inquiries_audit_start]", { action, inquiry_id: inquiry.id });
+      await recordAuditLog({
+        action,
+        resourceType: "inquiry",
+        resourceId: inquiry.id,
+        afterData: {
+          provider: "LINE Messaging API",
+          recipient_count: lineResult.recipientCount || 0,
+          sent_count: lineResult.sentCount || 0
+        },
+        result: lineResult.ok ? "success" : "failed",
+        reason: lineResult.ok ? null : lineResult.safeMessage || lineResult.errorCode || "line_send_failed",
+        metadata: {
+          status: lineResult.status || null,
+          error_code: lineResult.errorCode || null
+        }
+      });
+      console.info("[public_inquiries_audit_ok]", { action, inquiry_id: inquiry.id });
+    } catch (auditError) {
+      console.error("[public_inquiries_audit_failed]", {
+        action: lineResult.ok ? "inquiry_line_sent" : "inquiry_line_failed",
+        inquiry_id: inquiry.id,
+        error: safeErrorSummary(auditError)
+      });
+    }
+
+    return NextResponse.json({
+      ok: true,
+      inquiry_id: inquiry.id,
+      attribution_status: attribution.status,
+      email_sent: emailResult.ok,
+      line_sent: lineResult.ok
+    });
   } catch (error) {
     console.error("[public_inquiries_failed]", safeErrorSummary(error));
     return NextResponse.json({ ok: false, error: "送出失敗，請稍後再試。", code: "inquiry_failed" }, { status: 500 });
