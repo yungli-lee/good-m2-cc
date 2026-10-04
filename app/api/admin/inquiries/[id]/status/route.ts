@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { recordAuditLog } from "@/lib/audit/audit-log";
 import { requireApiRole, apiError } from "@/lib/auth-api";
 import { inquiryStatusSchema } from "@/lib/inquiries/schema";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -18,6 +19,7 @@ export async function PATCH(request: Request, { params }: Props) {
   if (!parsedParams.success) return apiError("Invalid request data", 422);
   const { id } = parsedParams.data;
   const supabase = await createSupabaseServerClient();
+  const { data: before } = await supabase.from("inquiries").select("*").eq("id", id).maybeSingle();
   const { data, error } = await supabase
     .from("inquiries")
     .update({ status: parsed.data, updated_by: auth.current!.user.id, updated_at: new Date().toISOString() })
@@ -25,5 +27,14 @@ export async function PATCH(request: Request, { params }: Props) {
     .select()
     .single();
   if (error) return apiError("Unable to update status", 500);
+  await recordAuditLog({
+    action: "inquiry_status_update",
+    resourceType: "inquiry",
+    resourceId: id,
+    beforeData: before,
+    afterData: data,
+    userId: auth.current!.user.id,
+    userEmail: auth.current!.user.email
+  });
   return NextResponse.json({ data });
 }

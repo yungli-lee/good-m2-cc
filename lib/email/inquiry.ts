@@ -3,6 +3,7 @@ import { sendEmail } from "./resend";
 
 type InquiryEmailInput = {
   id: string;
+  siteOrigin?: string | null;
   formType: string;
   name: string;
   phone: string;
@@ -30,7 +31,8 @@ export async function sendInquiryNotification(input: InquiryEmailInput) {
     };
   }
 
-  const adminUrl = config.siteUrl ? `${config.siteUrl.replace(/\/$/, "")}/admin/inquiries/${input.id}` : null;
+  const adminBaseUrl = input.siteOrigin || config.siteUrl;
+  const adminUrl = adminBaseUrl ? `${adminBaseUrl.replace(/\/$/, "")}/admin/inquiries/${input.id}` : null;
   const rows = [
     ["姓名", input.name],
     ["電話", input.phone],

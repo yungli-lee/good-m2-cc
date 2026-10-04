@@ -248,6 +248,7 @@ export async function POST(request: Request) {
       console.info("[public_inquiries_email_start]", { inquiry_id: inquiry.id });
       emailResult = await sendInquiryNotification({
         id: inquiry.id,
+        siteOrigin: new URL(request.url).origin,
         formType: input.form_type,
         name: input.name,
         phone: input.phone,
@@ -311,6 +312,7 @@ export async function POST(request: Request) {
       console.info("[public_inquiries_line_start]", { inquiry_id: inquiry.id });
       lineResult = await sendInquiryLineNotification({
         id: inquiry.id,
+        siteOrigin: new URL(request.url).origin,
         formType: input.form_type,
         name: input.name,
         phone: input.phone,

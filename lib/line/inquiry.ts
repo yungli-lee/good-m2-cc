@@ -3,6 +3,7 @@ import { pushLineText } from "./messaging.ts";
 
 export type InquiryLineInput = {
   id: string;
+  siteOrigin?: string | null;
   formType: string;
   name: string;
   phone: string;
@@ -16,8 +17,9 @@ export type InquiryLineInput = {
 
 export function formatInquiryLineMessage(input: InquiryLineInput) {
   const config = getLineMessagingConfig();
-  const adminUrl = config.siteUrl
-    ? `${config.siteUrl.replace(/\/$/, "")}/admin/inquiries/${input.id}`
+  const adminBaseUrl = input.siteOrigin || config.siteUrl;
+  const adminUrl = adminBaseUrl
+    ? `${adminBaseUrl.replace(/\/$/, "")}/admin/inquiries/${input.id}`
     : null;
   const property = input.propertyTitle
     ? `${input.propertyTitle}${input.propertySlug ? `（${input.propertySlug}）` : ""}`
