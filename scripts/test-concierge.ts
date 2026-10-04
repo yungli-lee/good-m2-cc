@@ -30,6 +30,8 @@ assert.equal(needsSchema.safeParse({ minPrice: 1000, maxPrice: 500 }).success, f
 assert.ok(!redactContact("電話0938137177，foo@example.com").includes("0938137177"));
 assert.ok(!redactContact("foo@example.com").includes("foo@example.com"));
 assert.equal(dialogAction("土地太小了，再看看別的物件", true), "search");
+assert.equal(dialogAction("這房子太舊了不要", true), "search");
+assert.equal(dialogAction("不要這間，換一間", true), "search");
 assert.equal(dialogAction("換一間看看", true), "search");
 assert.equal(dialogAction("後面有路嗎", true), "property");
 assert.equal(dialogAction("週日下午可以看屋嗎", true), "viewing");
