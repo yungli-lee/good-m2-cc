@@ -58,6 +58,17 @@ const declined = advanceConciergeState({
 });
 assert.equal(declined.viewingStage, "declined");
 
+const reconsidered = advanceConciergeState({
+  previous: rejected,
+  intent: "reconsider_property",
+  needs,
+  focusedSlug: "b",
+  revivedSlug: "b"
+});
+assert.equal(reconsidered.focusedSlug, "b");
+assert.ok(!reconsidered.rejectedSlugs.includes("b"));
+assert.ok(reconsidered.consideringSlugs.includes("b"));
+
 assert.equal(intentFromAction("search"), "search");
 assert.equal(intentFromAction("property"), "property_question");
 assert.equal(intentFromAction("property", true), "reject_property");
