@@ -1,5 +1,5 @@
-import { getLineMessagingConfig } from "./config";
-import { pushLineText } from "./messaging";
+import { getLineMessagingConfig } from "./config.ts";
+import { pushLineText } from "./messaging.ts";
 
 export type InquiryLineInput = {
   id: string;
