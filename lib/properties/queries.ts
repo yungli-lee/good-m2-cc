@@ -127,6 +127,42 @@ export async function listPublishedProperties() {
     .order("updated_at", { ascending: false });
 }
 
+export type PropertyCollectionOption = {
+  id: string;
+  slug: string;
+  title: string;
+  address_public: string | null;
+  district: string | null;
+  price: number | null;
+};
+
+export async function listPublishedPropertyOptions() {
+  const supabase = await createSupabaseServerClient();
+  const { data, error } = await supabase
+    .from("properties")
+    .select("id,slug,title,address_public,district,price")
+    .eq("status", "published")
+    .not("published_at", "is", null)
+    .is("deleted_at", null)
+    .order("district", { ascending: true })
+    .order("title", { ascending: true });
+  return { data: (data || []) as PropertyCollectionOption[], error };
+}
+
+export async function listPublishedPropertiesByIds(ids: string[]) {
+  if (!ids.length) return { data: [] as Property[], error: null };
+  const supabase = await createSupabaseServerClient();
+  const { data, error } = await publishedPropertiesQuery(supabase, publicPropertySelect)
+    .in("id", ids)
+    .order("sort_order", { referencedTable: "property_media", ascending: true })
+    .order("created_at", { referencedTable: "property_media", ascending: true })
+    .order("id", { referencedTable: "property_media", ascending: true });
+  if (error) return { data: null, error };
+  const order = new Map(ids.map((id, index) => [id, index]));
+  const sorted = ((data || []) as unknown as Property[]).sort((a, b) => (order.get(a.id) ?? 9999) - (order.get(b.id) ?? 9999));
+  return { data: sorted, error: null };
+}
+
 export async function listPublishedPropertiesByArea(city: string, district: string, limit = 12) {
   const supabase = await createSupabaseServerClient();
   return publishedPropertiesQuery(supabase, publicPropertySelect)
