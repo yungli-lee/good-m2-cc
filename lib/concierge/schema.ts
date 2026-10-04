@@ -17,7 +17,8 @@ export const chatSchema = z.object({
   needs: needsSchema.default({}),
   focusedSlug: z.string().max(200).default(""),
   viewingTime: z.string().max(80).default(""),
-  candidateSlugs: z.array(z.string().max(200)).max(6).default([])
+  candidateSlugs: z.array(z.string().max(200)).max(6).default([]),
+  rejectedSlugs: z.array(z.string().max(200)).max(24).default([])
 });
 export function needsFilters(needs: Needs): CollectionFilters {
   return { q: "", city: "", districts: needs.districts, type: needs.type as CollectionFilters["type"],
