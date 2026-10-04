@@ -5,7 +5,9 @@ const declineViewingPattern = /(?:先|暫時)?(?:不用|不要|不急|先看看|
 const propertyDepthPattern = /屋況|採光|停車|格局|房間|浴室|樓層|增建|漏水|屋齡|管理|附近|周邊|位置|地點|路寬|面寬|價格|議價|開價|租金|現況|裝潢|用途/;
 
 export function hasExplicitViewingIntent(text: string) {
-  return explicitViewingPattern.test(text.normalize("NFKC"));
+  const normalized = text.normalize("NFKC");
+  if (declineViewingPattern.test(normalized)) return false;
+  return explicitViewingPattern.test(normalized);
 }
 
 export function hasViewingDecline(text: string) {
