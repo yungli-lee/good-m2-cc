@@ -6,12 +6,12 @@ export function normalizeContactPhone(input: string) {
   return value;
 }
 
-const contactPhoneSchema = z.string()
+export const contactPhoneSchema = z.string()
   .trim()
   .min(1, "請輸入聯絡電話")
   .max(24, "請輸入正確聯絡電話")
   .transform(normalizeContactPhone)
-  .refine((value) => /^0\d{8,9}$/.test(value), "請輸入正確聯絡電話");
+  .refine((value) => /^(?:09\d{8}|0[2-8]\d{7,8})$/.test(value), "請輸入正確聯絡電話");
 
 export const inquirySchema = z.object({
   consent: z.boolean().optional(),

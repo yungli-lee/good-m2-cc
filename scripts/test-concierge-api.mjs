@@ -30,7 +30,7 @@ const route = compile('app/api/public/concierge/route.ts', {
   '@/lib/concierge/model': { conciergeEnv: () => ({ key: enabled ? 'mock' : '' }), modelJson: async () => { if (!modelOutputs.length) throw new Error('provider down'); return modelOutputs.shift(); } },
   '@/lib/concierge/limit': { takeConciergeSlot: () => () => {} },
   '@/lib/properties/collection-link': compile('lib/properties/collection-link.ts', {}),
-  '@/lib/properties/queries': { getPublishedPropertyBySlug: async slug => ({error:null,data:slug==='rental-space' ? {id:'rent-id',slug,title:'秀水餐飲場地',transaction_type:'rent',price:null,rent_monthly:128000,district:'秀水鄉',layout:null,deposit_months:2,minimum_lease_months:36,rental_equipment:'蒸煮油炸設備、兩部冷凍櫃',lease_notarization_required:true,private_owner:'SECRET OWNER',floor_price:'SECRET PRICE'} : slug==='selected-home' ? {id:'public-id',slug,title:'秀水輕屋齡美墅',price:1410,district:'秀水鄉',layout:'4房3廳4衛'} : null}), searchPublishedProperties: async (_, __, filters) => { calls++; assert.equal(filters.maxPrice, expectedMaxPrice); return { error: queryFails ? {} : null, data: emptyResults ? [] : [{ transaction_type: filters.transaction, rent_monthly: filters.transaction === 'rent' ? 128000 : null, id: 'public-id', slug: 'public-slug', title: '公開物件', price: 688, district: '鹿港鎮', description: '公開描述', private_owner: 'DO NOT EXPOSE', bottom_price: 500 }] }; } },
+  '@/lib/properties/queries': { getPublishedPropertyBySlug: async slug => ({error:null,data:slug==='rental-space' ? {id:'rent-id',slug,title:'秀水餐飲場地',transaction_type:'rent',price:null,rent_monthly:128000,district:'秀水鄉',layout:null,deposit_months:2,minimum_lease_months:36,rental_equipment:'蒸煮油炸設備、兩部冷凍櫃',lease_notarization_required:true,private_owner:'SECRET OWNER',floor_price:'SECRET PRICE'} : slug==='selected-home' ? {id:'public-id',slug,title:'秀水輕屋齡美墅',price:1410,district:'秀水鄉',layout:'4房3廳4衛',land_area_ping:42.67} : null}), searchPublishedProperties: async (_, __, filters) => { calls++; assert.equal(filters.maxPrice, expectedMaxPrice); return { error: queryFails ? {} : null, data: emptyResults ? [] : [{ transaction_type: filters.transaction, rent_monthly: filters.transaction === 'rent' ? 128000 : null, id: 'public-id', slug: 'public-slug', title: '公開物件', price: 688, district: '鹿港鎮', description: '公開描述', private_owner: 'DO NOT EXPOSE', bottom_price: 500 }] }; } },
   '@/lib/content/queries': { listPublicKnowledgeItems: async ({q}) => { knowledgeQueries.push(q); return { data: [{title: q + '重點', slug: q, summary: '摘要', body: '公開正文', private_notes: 'SECRET'}], error: null }; } },
   '@/lib/properties/guide-speech-env': { getGuideSpeechEnv: () => ({ enabled: false }) },
   '@/lib/concierge/audio-token': { signReply: async () => 'mock-token' }
@@ -84,6 +84,10 @@ function request(message, extra = {}, origin) { return new Request('https://exam
   response = await route.POST(request('下午的採光如何',{propertyContext:'rental-space'})); body = await response.json(); assert.equal(body.viewingTime,''); assert.equal(body.action,'property');
   response = await route.POST(request('可以加LINE嗎',{propertyContext:'rental-space'})); body = await response.json(); assert.match(body.answer,/加 LINE 諮詢/);
   enabled = true;
+  modelOutputs = [schema.needsSchema.parse({intent:'buy'}), {answer:'建蔽率60%容積率180%'}];
+  response = await route.POST(request('土地多少坪，建蔽容積率是多少',{propertyContext:'selected-home'})); body = await response.json(); assert.ok(!body.answer.includes('60%')); assert.match(body.answer,/沒有已確認數值/); assert.match(body.answer,/42.67坪/);
+  modelOutputs = [schema.needsSchema.parse({intent:'buy'}), {answer:'土地面積42.67坪'}];
+  response = await route.POST(request('土地多少坪',{propertyContext:'selected-home'})); body = await response.json(); assert.match(body.answer,/42.67坪/); assert.ok(!body.answer.includes('開價'));
   modelOutputs = [schema.needsSchema.parse({intent:'rent'}), {answer:'這件物件位於二樓'}];
   response = await route.POST(request('下午的採光如何',{propertyContext:'rental-space'})); body = await response.json(); assert.match(body.answer,/公開資料不足/); assert.ok(!body.answer.includes('位於二樓')); assert.ok(!body.viewingTime);
   modelOutputs = [schema.needsSchema.parse({intent:'buy'}), {answer:'請您自行去地政事務所查地籍图'}];
@@ -99,6 +103,9 @@ function request(message, extra = {}, origin) { return new Request('https://exam
   assert.ok(!contact.redactChatContact('我姓陳，電話0955555555').includes('陳'));
   const inquirySchema = compile('lib/inquiries/schema.ts', {});
   assert.ok(inquirySchema.inquirySchema.safeParse({name:'陳',phone:'0955555555',message:'測試需求，請協助找物件',consent:true}).success);
+  assert.ok(!inquirySchema.inquirySchema.safeParse({name:'張先生',phone:'091278789',message:'預約带看測試需求',consent:true}).success);
+  assert.ok(inquirySchema.contactPhoneSchema.safeParse('04-7222345').success);
+  assert.ok(inquirySchema.contactPhoneSchema.safeParse('+886 938-137-177').success);
   assert.equal(contact.redactChatContact('我是賣方'), '我是賣方');
   assert.ok(!contact.redactChatContact('我叫王小明 0938137177').includes('王小明'));
   assert.ok(!contact.redactChatContact('我叫王小明 0938137177').includes('0938137177'));

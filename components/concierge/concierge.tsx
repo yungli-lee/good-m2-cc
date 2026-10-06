@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import { contactPhoneSchema } from "@/lib/inquiries/schema";
 import { readPublicJson, requestChatJson } from "@/lib/concierge/public-response";
 import { chatContact, redactChatContact } from "@/lib/concierge/contact";
 import Script from "next/script";
@@ -133,6 +134,7 @@ export function Concierge({ aiEnabled, siteKey, phone, lineUrl, initialProperty,
     const form = event.currentTarget;
     const fields = new FormData(form);
     if (fields.get("consent") !== "on") { setLeadError("請勾選同意聯絡與服務需求使用資料"); return; }
+    if (!contactPhoneSchema.safeParse(String(fields.get("phone") || "")).success) { setLeadError("請確認聯絡電話：手機須為 09 開頭的 10 碼，市話請包含區碼。"); return; }
     setSending(true); setLeadError("");
     const identity = getClientAnalyticsIdentity();
     try {
