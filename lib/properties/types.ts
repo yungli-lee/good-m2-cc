@@ -41,6 +41,12 @@ export type Property = {
   floor_price?: string | null;
   frontage: string | null;
   depth: string | null;
+  transaction_type?: "sale" | "rent";
+  rent_monthly?: number | null;
+  deposit_months?: number | null;
+  minimum_lease_months?: number | null;
+  rental_equipment?: string | null;
+  lease_notarization_required?: boolean;
   price: number | null;
   land_area_ping: number | null;
   building_area_ping: number | null;

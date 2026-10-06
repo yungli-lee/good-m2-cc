@@ -17,6 +17,12 @@ export type ParsedProperty = {
   floor_price?: string;
   frontage?: string;
   depth?: string;
+  transaction_type?: string;
+  rent_monthly?: string;
+  deposit_months?: string;
+  minimum_lease_months?: string;
+  rental_equipment?: string;
+  lease_notarization_required?: string;
   price?: string;
   land_area_ping?: string;
   building_area_ping?: string;
@@ -61,7 +67,7 @@ const fieldAliases: Array<[keyof ParsedProperty | "lot_number" | "main_building"
   ["owner_phone", /^(屋主電話)$/],
   ["developer_names", /^(開發|開發人員|承辦|業務)$/],
   ["showing_instructions", /^(帶看|帶看資訊|帶看方式)$/],
-  ["frontage", /^(面寬)$/],
+  ["frontage", /^(面寬|寬度)$/],
   ["depth", /^(深度)$/],
   ["lot_number", /^(地號)$/],
   ["land_area_ping", /^(地坪|土地|土地坪數)$/],
@@ -447,6 +453,19 @@ export function parsePastedProperty(rawText: string): ParsedProperty {
     if (completion) parsed.age = calculateAgeFromDate(completion);
   }
 
+  const rental = text.match(/^\s*(?:租金|月租金|月租)\s*[:：]\s*([^\n]+)/m)?.[1] || "";
+  parsed.transaction_type = /新接租件/.test(text) || (rental && !parsed.price) ? "rent" : "sale";
+  if (parsed.transaction_type === "rent") {
+    const amount = rental.match(/(\d[\d,]*(?:\.\d+)?)\s*(萬)?/);
+    parsed.rent_monthly = amount ? String(Number(amount[1].replaceAll(",", "")) * (amount[2] ? 10000 : 1)) : "";
+    const digits = (raw: string) => Number(raw.match(/\d+/)?.[0] || ({ "一": 1, "兩": 2, "二": 2, "三": 3, "四": 4, "五": 5 } as Record<string, number>)[raw.match(/[一兩二三四五]/)?.[0] || ""] || 0);
+    const deposit = extractValue(text, ["押金"]); const lease = extractValue(text, ["最短租期", "租期"]);
+    parsed.deposit_months = deposit ? String(digits(deposit)) : "";
+    parsed.minimum_lease_months = lease ? String(digits(lease) * (/年/.test(lease) ? 12 : 1)) : "";
+    parsed.lease_notarization_required = /租約.{0,8}(?:須|需).{0,6}公證/.test(text) ? "true" : "false";
+    parsed.rental_equipment = (text.match(/^\s*(?:原)?(?:餐飲設備|附帶設備|設備)\s*[:：，,]?\s*(.+)$/m)?.[1] || "").split(/擁有|HACCP/)[0].replace(/[，,、\s]+$/, "");
+    parsed.price = "";
+  }
   parsed.price = parsed.price ? normalizePrice(parsed.price) : "";
   parsed.land_area_ping = parsed.land_area_ping ? normalizeNumber(parsed.land_area_ping) : "";
   parsed.building_area_ping = parsed.building_area_ping ? normalizeNumber(parsed.building_area_ping) : "";
@@ -483,7 +502,7 @@ export function parsePastedProperty(rawText: string): ParsedProperty {
 
   parsed.description = "";
   parsed.seo_title = `${parsed.title}｜阿勇不動產顧問`.slice(0, 180);
-  parsed.meta_description = compactMetaDescription([parsed.title || "", parsed.address_public || "", parsed.layout || "", parsed.price ? `開價 ${parsed.price} 萬` : ""]);
+  parsed.meta_description = compactMetaDescription([parsed.title || "", parsed.address_public || "", parsed.layout || "", parsed.transaction_type === "rent" ? `月租 ${parsed.rent_monthly} 元` : parsed.price ? `開價 ${parsed.price} 萬` : ""]);
 
   return parsed;
 }

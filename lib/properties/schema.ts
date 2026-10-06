@@ -49,7 +49,7 @@ const draftSlug = z
   .max(140, "Slug 最多 140 字")
   .regex(/^[a-z0-9-]*$/, "Slug 只能使用小寫英文、數字與連字號");
 
-export const propertySchema = z.object({
+export const propertyBaseSchema = z.object({
   title: z.string().trim().min(1, "請輸入案名").max(120),
   slug: z.string().trim().min(1).max(140).regex(/^[a-z0-9-]+$/),
   address_public: z.string().trim().max(160).optional().or(z.literal("")),
@@ -87,7 +87,13 @@ export const propertySchema = z.object({
   floor_price: z.string().trim().max(80).optional().or(z.literal("")),
   frontage: z.string().trim().max(80).optional().or(z.literal("")),
   depth: z.string().trim().max(80).optional().or(z.literal("")),
+  transaction_type: z.enum(["sale", "rent"]).default("sale"),
+  rent_monthly: optionalInteger,
   price: optionalNumber,
+  deposit_months: optionalNumber,
+  minimum_lease_months: optionalInteger,
+  rental_equipment: z.string().trim().max(4000).optional().or(z.literal("")),
+  lease_notarization_required: z.coerce.boolean().default(false),
   land_area_ping: optionalNumber,
   building_area_ping: optionalNumber,
   layout: z.string().trim().max(80).optional().or(z.literal("")),
@@ -143,9 +149,16 @@ export const propertySchema = z.object({
   canonical_url: z.string().trim().max(500).optional().or(z.literal(""))
 });
 
+export const propertySchema = propertyBaseSchema.superRefine((value, ctx) => {
+  if (value.transaction_type === "rent" && (!value.rent_monthly || value.rent_monthly <= 0)) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["rent_monthly"], message: "出租案件請填寫大於 0 的月租金（元）" });
+  if (value.minimum_lease_months != null && value.minimum_lease_months < 1) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["minimum_lease_months"], message: "最短租期至少一個月" });
+});
+
 export const draftPropertySchema = z.object({
   title: z.string().trim().min(1, "請輸入案名").max(120, "案名最多 120 字"),
   slug: draftSlug,
+  transaction_type: z.enum(["sale", "rent"]).default("sale"),
+  rent_monthly: optionalInteger,
   price: optionalNumber,
   address_public: z.string().trim().max(160, "公開地址最多 160 字").optional().or(z.literal(""))
 });
@@ -157,6 +170,12 @@ export type PropertyFormInput = z.infer<typeof propertySchema>;
 export type DraftPropertyFormValues = {
   title: string;
   slug: string;
+  transaction_type?: string;
+  rent_monthly?: string;
+  deposit_months?: string;
+  minimum_lease_months?: string;
+  rental_equipment?: string;
+  lease_notarization_required?: boolean;
   price: string;
   address_public: string;
 };
@@ -205,6 +224,12 @@ export type PropertyFormValues = {
   floor_price: string;
   frontage: string;
   depth: string;
+  transaction_type?: string;
+  rent_monthly?: string;
+  deposit_months?: string;
+  minimum_lease_months?: string;
+  rental_equipment?: string;
+  lease_notarization_required?: boolean;
   price: string;
   land_area_ping: string;
   building_area_ping: string;
@@ -272,6 +297,12 @@ export function draftPropertyValuesFromFormData(formData: FormData): DraftProper
   return {
     title: String(formData.get("title") || ""),
     slug: String(formData.get("slug") || ""),
+    transaction_type: String(formData.get("transaction_type") || "sale"),
+    rent_monthly: String(formData.get("rent_monthly") || ""),
+    deposit_months: String(formData.get("deposit_months") || ""),
+    minimum_lease_months: String(formData.get("minimum_lease_months") || ""),
+    rental_equipment: String(formData.get("rental_equipment") || ""),
+    lease_notarization_required: formData.get("lease_notarization_required") === "on",
     price: String(formData.get("price") || ""),
     address_public: String(formData.get("address_public") || "")
   };
@@ -316,6 +347,12 @@ export function propertyValuesFromFormData(formData: FormData): PropertyFormValu
     floor_price: String(formData.get("floor_price") || ""),
     frontage: String(formData.get("frontage") || ""),
     depth: String(formData.get("depth") || ""),
+    transaction_type: String(formData.get("transaction_type") || "sale"),
+    rent_monthly: String(formData.get("rent_monthly") || ""),
+    deposit_months: String(formData.get("deposit_months") || ""),
+    minimum_lease_months: String(formData.get("minimum_lease_months") || ""),
+    rental_equipment: String(formData.get("rental_equipment") || ""),
+    lease_notarization_required: formData.get("lease_notarization_required") === "on",
     price: String(formData.get("price") || ""),
     land_area_ping: String(formData.get("land_area_ping") || ""),
     building_area_ping: String(formData.get("building_area_ping") || ""),
@@ -377,7 +414,9 @@ export function toDraftPropertyPayload(input: DraftPropertyInput) {
   return {
     title: input.title,
     slug: toSafeSlug(input.slug, input.title),
-    price: input.price ?? null,
+    transaction_type: input.transaction_type,
+    rent_monthly: input.transaction_type === "rent" ? input.rent_monthly ?? null : null,
+    price: input.transaction_type === "rent" ? null : input.price ?? null,
     address_public: emptyToNull(input.address_public || ""),
     status: "draft" as const
   };
@@ -411,6 +450,12 @@ export function emptyToNull<T>(value: T | "") {
 export function toPropertyPayload(input: PropertyFormInput) {
   return {
     ...input,
+    price: input.transaction_type === "rent" ? null : input.price ?? null,
+    rent_monthly: input.transaction_type === "rent" ? input.rent_monthly ?? null : null,
+    deposit_months: input.transaction_type === "rent" ? input.deposit_months ?? null : null,
+    minimum_lease_months: input.transaction_type === "rent" ? input.minimum_lease_months ?? null : null,
+    rental_equipment: input.transaction_type === "rent" ? emptyToNull(input.rental_equipment || "") : null,
+    lease_notarization_required: input.transaction_type === "rent" && input.lease_notarization_required,
     address_public: emptyToNull(input.address_public || ""),
     address_private: emptyToNull(input.address_private || ""),
     city: emptyToNull(input.city || ""),

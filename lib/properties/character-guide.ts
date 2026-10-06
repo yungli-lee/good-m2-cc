@@ -1,7 +1,8 @@
+import { formatPropertyPrice } from "../format.ts";
 import type { Property } from "./types";
 
 // Explicit public allowlist: never serialize the full CMS record into the guide.
-export type GuideProperty = Pick<Property, "title" | "city" | "district" | "price" | "land_area_ping" | "building_area_ping" | "layout" | "age" | "orientation" | "highlights" | "property_type">;
+export type GuideProperty = Pick<Property, "transaction_type" | "rent_monthly" | "title" | "city" | "district" | "price" | "land_area_ping" | "building_area_ping" | "layout" | "age" | "orientation" | "highlights" | "property_type">;
 export type GuideRole = "ayong" | "amei";
 export type GuideTopic = "overview" | "details" | "highlights";
 export type GuideScripts = Record<GuideRole, Record<GuideTopic, string>>;
@@ -14,7 +15,7 @@ function number(value: number | null | undefined) {
 export function buildPropertyGuide(property: GuideProperty, typeLabel: string): GuideScripts {
   const location = [property.city, property.district].filter(Boolean).join("");
   const price = number(property.price);
-  const overview = `這件是「${property.title}」，${location ? `位於${location}，` : ""}類型是${typeLabel}。${price && Number(property.price) > 0 ? `目前公開開價 ${price} 萬元。` : "價格歡迎直接洽詢。"}`;
+  const overview = `這件是「${property.title}」，${location ? `位於${location}，` : ""}類型是${typeLabel}。${property.transaction_type === "rent" ? `目前出租，月租 ${formatPropertyPrice(property)}。` : price && Number(property.price) > 0 ? `目前公開開價 ${price} 萬元。` : "價格歡迎直接洽詢。"}`;
   const land = number(property.land_area_ping);
   const building = number(property.building_area_ping);
   const age = number(property.age);

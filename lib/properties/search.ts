@@ -23,6 +23,7 @@ const propertyTypeKeywords: Array<[string, string]> = [
 ];
 
 export type ParsedPropertySearch = {
+  transaction?: "sale" | "rent";
   keywords: string[];
   propertyTypes: string[];
   typeKeyword: string;
@@ -74,6 +75,8 @@ export function propertySearchKeywordVariants(keyword: string) {
 
 export function parsePropertySearch(input = ""): ParsedPropertySearch {
   let residual = normalizeSearchInput(input);
+  const transaction = /出租|租賃|租屋|承租|租件|月租/.test(residual) ? "rent" as const : /出售|買賣|售屋/.test(residual) ? "sale" as const : undefined;
+  residual = residual.replace(/出租|租賃|租屋|承租|租件|月租|出售|買賣|售屋/g, " ");
   const propertyTypes: string[] = [];
   let typeKeyword = "";
 
@@ -98,9 +101,15 @@ export function parsePropertySearch(input = ""): ParsedPropertySearch {
   }
 
   // A bare number in "三房" or "50坪" is not a price. Price requires 萬 or a range modifier.
-  const priceMatch = residual.match(/(\d+(?:\.\d+)?)\s*(?:萬(?:元)?\s*(以下|以內|內|以上|起)?|(以下|以內|內|以上|起))/);
+  const rentPriceMatch = transaction === "rent" ? residual.match(/(\d+(?:\.\d+)?)\s*(萬(?:元)?|元)\s*(以下|以內|內|以上|起)?/) : null;
+  const priceMatch = transaction === "rent" ? null : residual.match(/(\d+(?:\.\d+)?)\s*(?:萬(?:元)?\s*(以下|以內|內|以上|起)?|(以下|以內|內|以上|起))/);
   let price: number | null = null;
   let priceMode: ParsedPropertySearch["priceMode"] = null;
+  if (rentPriceMatch) {
+    price = Number(rentPriceMatch[1]) * (rentPriceMatch[2]?.startsWith("萬") ? 10000 : 1);
+    priceMode = /以下|以內|內/.test(rentPriceMatch[3] || "") ? "below" : /以上|起/.test(rentPriceMatch[3] || "") ? "above" : "around";
+    residual = residual.replace(rentPriceMatch[0], " ");
+  }
   if (priceMatch) {
     const amount = Number(priceMatch[1]);
     if (Number.isFinite(amount) && amount > 0) {
@@ -121,7 +130,7 @@ export function parsePropertySearch(input = ""): ParsedPropertySearch {
     .filter(Boolean)
     .flatMap(splitCompactLocationKeyword);
 
-  return { keywords, propertyTypes: [...new Set(propertyTypes)], typeKeyword, price, priceMode };
+  return { ...(transaction ? { transaction } : {}), keywords, propertyTypes: [...new Set(propertyTypes)], typeKeyword, price, priceMode };
 }
 
 // Locations are alternatives; roads, layouts and other requirements remain cumulative.

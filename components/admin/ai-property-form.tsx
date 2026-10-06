@@ -1,5 +1,7 @@
 "use client";
 
+import { PropertyRentalFields } from "./property-rental-fields";
+
 import { useActionState, useMemo, useRef, useState } from "react";
 import type { DragEvent } from "react";
 import type { AdminRole } from "@/lib/auth";
@@ -98,6 +100,7 @@ export function AiPropertyForm({
       "floor_price",
       "frontage",
       "depth",
+      "transaction_type", "rent_monthly", "deposit_months", "minimum_lease_months", "rental_equipment", "lease_notarization_required",
       "price",
       "land_area_ping",
       "building_area_ping",
@@ -246,11 +249,7 @@ export function AiPropertyForm({
         <label htmlFor="floor_price">底價</label>
         <input className="input" id="floor_price" name="floor_price" defaultValue={state.values.floor_price} placeholder="出價談" />
       </div>
-      <div className="field">
-        <label htmlFor="price">開價（萬）</label>
-        <input className="input" id="price" name="price" type="number" min="0" defaultValue={state.values.price} aria-invalid={Boolean(state.fieldErrors.price)} />
-        <FieldError message={state.fieldErrors.price} />
-      </div>
+      <PropertyRentalFields values={state.values} errors={state.fieldErrors} />
       <div className="field">
         <label htmlFor="land_area_ping">土地坪數</label>
         <input className="input" id="land_area_ping" name="land_area_ping" type="number" step="0.001" min="0" defaultValue={state.values.land_area_ping} />

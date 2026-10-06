@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { SearchTransactionFields } from "@/components/properties/search-transaction-fields";
+import { parsePropertySearch } from "@/lib/properties/search";
 import { PropertyCard } from "@/components/properties/property-card";
 import { CollectionShare } from "@/components/properties/collection-share";
 import { getPublicCompanySettings } from "@/lib/company-settings";
-import { listPublishedProperties, searchPublishedProperties } from "@/lib/properties/queries";
+import { searchPublishedProperties } from "@/lib/properties/queries";
 import { collectionFilters, collectionHref, collectionLabel, collectionDistricts, collectionTypes, type CollectionSearchParams } from "@/lib/properties/collection-link";
 import { siteOrigin } from "@/lib/home-cms/routing";
 import { resolveHomeSocialImage } from "@/lib/home-social-metadata";
@@ -19,10 +21,10 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
   const filters = collectionFilters(await searchParams);
   const [company, image] = await Promise.all([getPublicCompanySettings(), resolveHomeSocialImage({ load: getCachedHomeSocialImageUrl, supabaseOrigin: getSupabaseEnv().url })]);
   const title = `${collectionLabel(filters)}｜${company.brand_name}`;
-  const description = `一次瀏覽${collectionLabel(filters)}，阿勇與阿美可以為你詳細介紹。僅顯示目前公開在售物件。`;
+  const description = `一次瀏覽${collectionLabel(filters)}，阿勇與阿美可以為你詳細介紹。僅顯示目前公開上架物件。`;
   const url = `${siteOrigin()}${collectionHref(filters)}`;
   return { title, description, alternates: { canonical: "/properties" },
-    robots: filters.q || filters.city || filters.districts.length || filters.type || filters.minPrice !== undefined || filters.maxPrice !== undefined ? { index: false, follow: true } : undefined,
+    robots: filters.transaction || filters.q || filters.city || filters.districts.length || filters.type || filters.minPrice !== undefined || filters.maxPrice !== undefined ? { index: false, follow: true } : undefined,
     openGraph: { title, description, siteName: company.brand_name, url, type: "website", images: [{ url: image, width: 1200, height: 630 }] },
     twitter: { card: "summary_large_image", title, description, images: [image] }
   };
@@ -31,8 +33,8 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
 export default async function PropertiesPage({ searchParams }: Props) {
   const params = await searchParams;
   const filters = collectionFilters(params);
-  const filtered = Boolean(filters.q || filters.city || filters.districts.length || filters.type || filters.minPrice !== undefined || filters.maxPrice !== undefined);
-  const { data: properties, error } = filtered ? await searchPublishedProperties(filters.q, 1000, filters) : await listPublishedProperties();
+  filters.transaction ||= parsePropertySearch(filters.q).transaction || "sale";
+  const { data: properties, error } = await searchPublishedProperties(filters.q, 1000, filters);
   const label = collectionLabel(filters);
   const area = typeof params.area === "string" ? params.area : "";
   return <main>
@@ -43,7 +45,7 @@ export default async function PropertiesPage({ searchParams }: Props) {
         <p className="collection-search-help">多個地區可用 ＋、逗號或空格分隔，例如「福興＋秀水 農地」；類型與預算會一起篩選。</p>
         {filters.city ? <input name="city" type="hidden" value={filters.city} /> : null}
         <label>物件類型<select className="select" name="type" defaultValue={filters.type}><option value="">全部類型</option>{Object.entries(collectionTypes).map(([value, option]) => <option key={value} value={value}>{option.label}</option>)}</select></label>
-        <div className="collection-price-fields"><label>最低總價（萬元）<input className="input" name="price_min" type="number" min="0" max="100000000" step="any" defaultValue={filters.minPrice} /></label><label>最高總價（萬元）<input className="input" name="price_max" type="number" min="0" max="100000000" step="any" defaultValue={filters.maxPrice} /></label></div>
+        <SearchTransactionFields transaction={filters.transaction} minPrice={filters.minPrice} maxPrice={filters.maxPrice} />
         <details><summary>選擇地區（可複選）{filters.districts.length ? `：${filters.districts.join("、")}` : ""}</summary><fieldset className="collection-districts"><legend>包含任一勾選地區的物件</legend>{collectionDistricts.map(d => <label key={d}><input type="checkbox" name="district" value={d} defaultChecked={filters.districts.includes(d)} />{d}</label>)}</fieldset></details>
         <div className="actions"><button className="button" type="submit">搜尋物件</button><Link className="button ghost" href="/properties">清除條件</Link></div>
       </form>
@@ -52,8 +54,8 @@ export default async function PropertiesPage({ searchParams }: Props) {
       {area && filters.districts.length === 1 ? <Link className="button ghost" href={`/areas/${encodeURIComponent(area)}`}>返回地區頁</Link> : null}
     </div></section>
     <section className="section"><div className="container">
-      {error ? <div className="notice">目前物件資料讀取失敗，請稍後再試。</div> : <p>{properties?.length || 0} 件在售物件</p>}
-      {!error && !properties?.length ? <div className="notice">目前沒有符合條件的在售物件，可以調整條件，或把需求告訴阿勇。</div> : null}
+      {error ? <div className="notice">目前物件資料讀取失敗，請稍後再試。</div> : <p>{properties?.length || 0} 件公開物件</p>}
+      {!error && !properties?.length ? <div className="notice">目前沒有符合條件的公開物件，可以調整條件，或把需求告訴阿勇。</div> : null}
       <div className="grid">{(properties as Property[] | null)?.map(property => <PropertyCard key={property.id} property={property} />)}</div>
     </div></section>
   </main>;

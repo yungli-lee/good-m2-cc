@@ -112,3 +112,7 @@ export function propertyTypeLabel(value: string) {
   };
   return labels[value] || value;
 }
+
+export function formatPropertyPrice(property: { transaction_type?: string | null; price?: number | null; rent_monthly?: number | null }) {
+  return property.transaction_type === "rent" ? (property.rent_monthly ? `${Number(property.rent_monthly).toLocaleString("zh-TW")} 元／月` : "租金洽詢") : formatPrice(property.price);
+}

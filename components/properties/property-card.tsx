@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { formatPublicPing, formatPrice, isLandProperty } from "@/lib/format";
+import { formatPublicPing, formatPropertyPrice, isLandProperty } from "@/lib/format";
 import type { Property } from "@/lib/properties/types";
 import { getCoverMedia, getMediaImageUrl } from "@/lib/properties/types";
 import { PropertyCoverImage } from "@/components/media/property-cover-image";
@@ -18,7 +18,7 @@ export function PropertyCard({ property }: { property: Property }) {
       )}
       <div className="card-body">
         <h2 style={{ margin: "0 0 8px", fontSize: "1.2rem" }}>{property.title}</h2>
-        <div className="price">{formatPrice(property.price)}</div>
+        <span className="eyebrow">{property.transaction_type === "rent" ? "出租" : "出售"}</span><div className="price">{formatPropertyPrice(property)}</div>
         <p className="muted">{property.address_public || "地址洽詢"}</p>
         {areas.length ? <p>{areas.join(" / ")}</p> : null}
         {!isLandProperty(property.property_type) && property.layout ? <p>{property.layout}</p> : null}

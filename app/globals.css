@@ -908,6 +908,8 @@ button.button {
   gap: 16px;
 }
 
+.field[hidden] { display: none; }
+
 .field {
   display: grid;
   gap: 6px;

@@ -1,3 +1,4 @@
+import { PropertyRentalFields } from "./property-rental-fields";
 import type { Property } from "@/lib/properties/types";
 import { getCoverMedia, getMediaImageUrl } from "@/lib/properties/types";
 import { resolvePropertySeo } from "@/lib/properties/seo";
@@ -115,10 +116,7 @@ export function PropertyForm({
         <label htmlFor="floor_price">底價</label>
         <input className="input" id="floor_price" name="floor_price" defaultValue={property?.floor_price || ""} placeholder="出價談" />
       </div>
-      <div className="field">
-        <label htmlFor="price">開價</label>
-        <input className="input" id="price" name="price" type="number" min="0" defaultValue={property?.price || ""} />
-      </div>
+      <PropertyRentalFields values={property || {}} />
       <div className="field">
         <label htmlFor="land_area_ping">土地坪數</label>
         <input className="input" id="land_area_ping" name="land_area_ping" type="number" step="0.001" min="0" defaultValue={property?.land_area_ping || ""} />

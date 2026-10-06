@@ -18,7 +18,7 @@ import {
   draftPropertyValuesFromFormData,
   normalizePropertyForm,
   normalizePropertyValues,
-  propertySchema,
+  propertyBaseSchema,
   propertyValuesFromFormData,
   toDraftPropertyPayload,
   toPropertyPayload
@@ -156,7 +156,7 @@ function draftFieldErrors(error: { issues: Array<{ path: Array<string | number>;
 function propertyFieldErrors(error: { issues: Array<{ path: Array<string | number>; message: string }> }) {
   return error.issues.reduce<PropertyFormState["fieldErrors"]>((errors, issue) => {
     const field = issue.path[0];
-    if (typeof field === "string" && field in propertySchema.shape) {
+    if (typeof field === "string" && field in propertyBaseSchema.shape) {
       errors[field as keyof PropertyFormState["fieldErrors"]] = issue.message;
     }
     return errors;
@@ -292,6 +292,8 @@ export async function updateDraftPropertyAction(
       title: payload.title,
       slug,
       price: payload.price,
+      transaction_type: payload.transaction_type,
+      rent_monthly: payload.rent_monthly,
       address_public: payload.address_public,
       updated_by: current.user.id,
       updated_at: new Date().toISOString()
@@ -333,6 +335,7 @@ export async function togglePropertyPublishAction(id: string, nextStatus: "draft
   const { data: before } = await supabase.from("properties").select("*").eq("id", id).is("deleted_at", null).maybeSingle();
   if (!before) redirect("/admin/properties?error=not_found");
 
+  if (nextStatus === "published" && before.transaction_type === "rent" && !(Number(before.rent_monthly) > 0)) redirect("/admin/properties?error=rent_required");
   const now = new Date().toISOString();
   const { data, error } = await supabase
     .from("properties")
@@ -440,6 +443,7 @@ export async function republishPropertyAction(id: string) {
   const { data: before } = await supabase.from("properties").select("*").eq("id", id).is("deleted_at", null).maybeSingle();
   if (!before) redirect("/admin/properties?error=not_found");
   if (before.status === "published") redirect("/admin/properties?error=already_published");
+  if (before.transaction_type === "rent" && !(Number(before.rent_monthly) > 0)) redirect("/admin/properties?error=rent_required");
 
   const now = new Date().toISOString();
   const { data, error } = await supabase
