@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { AiPropertyForm } from "@/components/admin/ai-property-form";
+import { PacificPropertyImport } from "@/components/admin/pacific-property-import";
 import { requireRole } from "@/lib/auth";
 import type { PropertyFormState } from "@/lib/properties/schema";
 import { createPropertyAction } from "../actions";
@@ -111,6 +112,7 @@ export default async function NewPropertyPage() {
         <div className="card">
           <div className="card-body">
             <h1 style={{ marginTop: 0 }}>新增物件</h1>
+            <PacificPropertyImport />
             <p className="muted">貼上一段物件資料後按 AI 解析，系統會先完成主要欄位，送出前仍可人工調整。</p>
             <AiPropertyForm role={current.profile.role} formAction={createPropertyAction} initialState={initialState} />
             <div className="actions">
