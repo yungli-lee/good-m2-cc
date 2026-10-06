@@ -19,6 +19,7 @@ const knowledgeHelpers = compile('lib/concierge/knowledge.ts', {});
 assert.deepEqual(Array.from(knowledgeHelpers.knowledgeTerms('買房之後要注意什麼')), ['點交', '交屋', '過戶']);
 assert.deepEqual(Array.from(knowledgeHelpers.knowledgeTerms('你可以幫我找到農保田嗎')), ['農保', '農地']);
 const route = compile('app/api/public/concierge/route.ts', {
+  '@/lib/format': compile('lib/format.ts', {}),
   'next/server': { NextResponse: { json: (body, options) => Response.json(body, options) } },
   '@/lib/concierge/schema': schema,
   '@/lib/concierge/dialog': compile('lib/concierge/dialog.ts', {}),
@@ -27,7 +28,7 @@ const route = compile('app/api/public/concierge/route.ts', {
   '@/lib/concierge/model': { conciergeEnv: () => ({ key: enabled ? 'mock' : '' }), modelJson: async () => { if (!modelOutputs.length) throw new Error('provider down'); return modelOutputs.shift(); } },
   '@/lib/concierge/limit': { takeConciergeSlot: () => () => {} },
   '@/lib/properties/collection-link': compile('lib/properties/collection-link.ts', {}),
-  '@/lib/properties/queries': { getPublishedPropertyBySlug: async slug => ({error:null,data:slug==='selected-home' ? {id:'public-id',slug,title:'秀水輕屋齡美墅',price:1410,district:'秀水鄉',layout:'4房3廳4衛'} : null}), searchPublishedProperties: async (_, __, filters) => { calls++; assert.equal(filters.maxPrice, expectedMaxPrice); return { error: queryFails ? {} : null, data: emptyResults ? [] : [{ id: 'public-id', slug: 'public-slug', title: '公開物件', price: 688, district: '鹿港鎮', description: '公開描述', private_owner: 'DO NOT EXPOSE', bottom_price: 500 }] }; } },
+  '@/lib/properties/queries': { getPublishedPropertyBySlug: async slug => ({error:null,data:slug==='selected-home' ? {id:'public-id',slug,title:'秀水輕屋齡美墅',price:1410,district:'秀水鄉',layout:'4房3廳4衛'} : null}), searchPublishedProperties: async (_, __, filters) => { calls++; assert.equal(filters.maxPrice, expectedMaxPrice); return { error: queryFails ? {} : null, data: emptyResults ? [] : [{ transaction_type: filters.transaction, rent_monthly: filters.transaction === 'rent' ? 128000 : null, id: 'public-id', slug: 'public-slug', title: '公開物件', price: 688, district: '鹿港鎮', description: '公開描述', private_owner: 'DO NOT EXPOSE', bottom_price: 500 }] }; } },
   '@/lib/content/queries': { listPublicKnowledgeItems: async ({q}) => { knowledgeQueries.push(q); return { data: [{title: q + '重點', slug: q, summary: '摘要', body: '公開正文', private_notes: 'SECRET'}], error: null }; } },
   '@/lib/properties/guide-speech-env': { getGuideSpeechEnv: () => ({ enabled: false }) },
   '@/lib/concierge/audio-token': { signReply: async () => 'mock-token' }
@@ -43,7 +44,12 @@ function request(message, extra = {}, origin) { return new Request('https://exam
   emptyResults = true; response = await route.POST(request("鹿港800萬以下住宅需要孝親房")); body = await response.json(); assert.equal(body.properties.length, 0); assert.equal(body.needsReview, false); assert.ok(!body.answer.includes("以下是基本條件候選")); emptyResults = false;
   const previousCalls = calls;
   response = await route.POST(request('我想委託出租')); assert.equal(response.status, 200); assert.equal(calls, previousCalls);
-  response = await route.POST(request('租屋')); assert.equal((await response.json()).properties.length, 0);
+  expectedMaxPrice = 150000;
+  response = await route.POST(request('我想找秀水租屋15萬以下')); body = await response.json();
+  assert.equal(response.status,200); assert.equal(body.properties[0].transaction_type,'rent');
+  assert.equal(body.properties[0].priceLabel,'128,000 元／月');
+  assert.ok(body.searchHref.includes('transaction=rent')); assert.ok(body.searchHref.includes('price_max=150000'));
+  expectedMaxPrice = 800;
   assert.equal((await route.POST(request('hello', {}, 'https://attacker.example'))).status, 403);
   assert.equal((await route.POST(request('x'.repeat(501)))).status, 422);
   queryFails = true; assert.equal((await route.POST(request('鹿港800萬以下住宅'))).status, 503); queryFails = false;
@@ -108,6 +114,7 @@ function request(message, extra = {}, origin) { return new Request('https://exam
     'next/server': { NextResponse: { json: (body, options) => Response.json(body, options) } },
     '@/lib/inquiries/schema': compile('lib/inquiries/schema.ts', {}),
     '@/lib/audit/audit-log': { recordAuditLog: async () => {} },
+    '@/lib/line/inquiry': { sendInquiryLineNotification: async () => ({ok:false,disabled:true}) },
     '@/lib/email/inquiry': { sendInquiryNotification: async () => { notifications++; return { ok: true, id: 'mock-email' }; } },
     '@/lib/security/request': { getRequestMeta: async () => ({ ipHash: 'mock-hash', userAgent: 'mock' }) },
     '@/lib/supabase/env': { getSupabaseEnv: () => ({ url: 'mock', serviceRoleKey: 'mock' }), getRequestContext: () => undefined },
