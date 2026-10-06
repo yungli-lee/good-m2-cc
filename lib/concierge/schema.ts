@@ -21,7 +21,7 @@ export const chatSchema = z.object({
   rejectedSlugs: z.array(z.string().max(200)).max(24).default([])
 });
 export function needsFilters(needs: Needs): CollectionFilters {
-  return { q: "", city: "", districts: needs.districts, type: needs.type as CollectionFilters["type"],
+  return { transaction: needs.intent === "rent" ? "rent" : "sale", q: "", city: "", districts: needs.districts, type: needs.type as CollectionFilters["type"],
     ...(needs.minPrice !== null ? { minPrice: needs.minPrice } : {}), ...(needs.maxPrice !== null ? { maxPrice: needs.maxPrice } : {}) };
 }
 export function redactContact(text: string) {

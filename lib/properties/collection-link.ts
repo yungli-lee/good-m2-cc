@@ -12,7 +12,7 @@ export const collectionTypes = {
   industrial_land: { label: "工業用地", values: ["industrial_land"] }
 } as const;
 export type CollectionSearchParams = Record<string, string | string[] | undefined>;
-export type CollectionFilters = { q: string; city: string; districts: string[]; type: keyof typeof collectionTypes | ""; minPrice?: number; maxPrice?: number };
+export type CollectionFilters = { q: string; city: string; districts: string[]; type: keyof typeof collectionTypes | ""; minPrice?: number; maxPrice?: number; transaction?: "sale" | "rent" | "all" };
 const first = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v) || "";
 function priceValue(value: string | string[] | undefined) {
   const raw = first(value).trim();
@@ -23,6 +23,7 @@ function priceValue(value: string | string[] | undefined) {
 export function collectionFilters(input: CollectionSearchParams): CollectionFilters {
   const requested = Array.isArray(input.district) ? input.district : input.district ? [input.district] : [];
   return {
+    ...(["sale", "rent", "all"].includes(first(input.transaction)) ? { transaction: first(input.transaction) as "sale" | "rent" | "all" } : {}),
     ...(priceValue(input.price_min) !== undefined ? { minPrice: priceValue(input.price_min) } : {}),
     ...(priceValue(input.price_max) !== undefined ? { maxPrice: priceValue(input.price_max) } : {}),
     q: first(input.q).trim().slice(0, 200),
@@ -33,6 +34,7 @@ export function collectionFilters(input: CollectionSearchParams): CollectionFilt
 }
 export function collectionHref(filters: CollectionFilters) {
   const params = new URLSearchParams();
+  if (filters.transaction) params.set("transaction", filters.transaction);
   if (filters.q) params.set("q", filters.q);
   if (filters.city) params.set("city", filters.city);
   for (const district of filters.districts) params.append("district", district);
@@ -42,5 +44,6 @@ export function collectionHref(filters: CollectionFilters) {
   return `/properties${params.size ? `?${params}` : ""}`;
 }
 export function collectionLabel(filters: CollectionFilters) {
-  return [filters.q, filters.districts.map(d => d.replace(/[鄉鎮]$/, "")).join("、") || filters.city, filters.type ? collectionTypes[filters.type].label : "", filters.minPrice !== undefined && filters.maxPrice !== undefined ? `${filters.minPrice}～${filters.maxPrice}萬` : filters.maxPrice !== undefined ? `${filters.maxPrice}萬以下` : filters.minPrice !== undefined ? `${filters.minPrice}萬以上` : ""].filter(Boolean).join("｜") || "全部在售物件";
+  const unit = filters.transaction === "rent" ? "元／月" : "萬";
+  return [filters.transaction === "rent" ? "出租" : filters.transaction === "all" ? "出售與出租" : "", filters.q, filters.districts.map(d => d.replace(/[鄉鎮]$/, "")).join("、") || filters.city, filters.type ? collectionTypes[filters.type].label : "", filters.minPrice !== undefined && filters.maxPrice !== undefined ? `${filters.minPrice}～${filters.maxPrice}${unit}` : filters.maxPrice !== undefined ? `${filters.maxPrice}${unit}以下` : filters.minPrice !== undefined ? `${filters.minPrice}${unit}以上` : ""].filter(Boolean).join("｜") || "全部在售物件";
 }

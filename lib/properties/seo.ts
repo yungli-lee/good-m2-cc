@@ -1,4 +1,4 @@
-import { formatPing, formatPrice, propertyTypeLabel } from "@/lib/format";
+import { formatPing, formatPropertyPrice, propertyTypeLabel } from "@/lib/format";
 import type { Property } from "./types";
 import { getCoverMedia, getMediaImageUrl } from "./types";
 
@@ -11,6 +11,8 @@ type SeoProperty = Partial<Pick<
   | "title"
   | "slug"
   | "address_public"
+  | "transaction_type"
+  | "rent_monthly"
   | "price"
   | "land_area_ping"
   | "building_area_ping"
@@ -54,7 +56,7 @@ export function generatePropertyMetaDescription(property: SeoProperty, siteName 
   const base = compactText([
     title,
     property.address_public || propertyRegion(property.address_public),
-    property.price == null ? "" : `開價${formatPrice(property.price)}`,
+    property.transaction_type === "rent" ? `月租${formatPropertyPrice(property)}` : property.price == null ? "" : `開價${formatPropertyPrice(property)}`,
     property.layout ? `格局${property.layout}` : "",
     property.land_area_ping == null ? "" : `土地${formatPing(property.land_area_ping)}`,
     property.building_area_ping == null ? "" : `建物${formatPing(property.building_area_ping)}`,

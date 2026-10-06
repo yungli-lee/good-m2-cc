@@ -30,6 +30,7 @@ export async function POST(request: Request, { params }: Props) {
   const supabase = await createSupabaseServerClient();
   const { data: before } = await supabase.from("properties").select("*").eq("id", id).maybeSingle();
   if (!before || before.deleted_at) return apiError("Not found", 404);
+  if (status === "published" && before.transaction_type === "rent" && !(Number(before.rent_monthly) > 0)) return apiError("出租案件上架前請填寫月租金", 422);
   const now = new Date().toISOString();
   const { data, error } = await supabase
     .from("properties")

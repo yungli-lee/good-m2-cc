@@ -16,6 +16,12 @@ const publicPropertySelect = `
   address_public,
   city,
   district,
+  transaction_type,
+  rent_monthly,
+  deposit_months,
+  minimum_lease_months,
+  rental_equipment,
+  lease_notarization_required,
   price,
   land_area_ping,
   building_area_ping,
@@ -78,6 +84,12 @@ const featuredPropertySelect = `
   address_public,
   city,
   district,
+  transaction_type,
+  rent_monthly,
+  deposit_months,
+  minimum_lease_months,
+  rental_equipment,
+  lease_notarization_required,
   price,
   land_area_ping,
   building_area_ping,
@@ -202,12 +214,13 @@ export async function getPublishedPropertyBySlug(slug: string) {
 }
 
 export async function listRelatedPublishedProperties(
-  property: Pick<Property, "id" | "property_type" | "city" | "district" | "price">,
+  property: Pick<Property, "id" | "property_type" | "city" | "district" | "price" | "transaction_type" | "rent_monthly">,
   limit = 3
 ) {
   const supabase = await createSupabaseServerClient();
   const { data, error } = await publishedPropertiesQuery(supabase, publicPropertySelect)
     .neq("id", property.id)
+    .eq("transaction_type", property.transaction_type || "sale")
     .order("published_at", { ascending: false })
     .order("updated_at", { ascending: false })
     .limit(36);
@@ -217,7 +230,7 @@ export async function listRelatedPublishedProperties(
     return [] as Property[];
   }
 
-  const currentPrice = property.price == null ? null : Number(property.price);
+  const currentPrice = Number(property.transaction_type === "rent" ? property.rent_monthly : property.price) || null;
   return ((data || []) as unknown as Property[])
     .map((candidate) => {
       let score = 0;
@@ -225,8 +238,9 @@ export async function listRelatedPublishedProperties(
       else if (property.city && candidate.city === property.city) score += 55;
       if (candidate.property_type === property.property_type) score += 45;
 
-      if (currentPrice && candidate.price != null) {
-        const difference = Math.abs(Number(candidate.price) - currentPrice) / currentPrice;
+      const candidatePrice = candidate.transaction_type === "rent" ? candidate.rent_monthly : candidate.price;
+      if (currentPrice && candidatePrice != null) {
+        const difference = Math.abs(Number(candidatePrice) - currentPrice) / currentPrice;
         score += Math.max(0, 35 - Math.round(difference * 70));
       }
 
@@ -248,7 +262,7 @@ export async function getPublicPropertyAvailability(slug: string) {
 }
 
 export async function searchPublishedProperties(input = "", limit = 24, filters?: CollectionFilters) {
-  const { keywords, propertyTypes, typeKeyword, price, priceMode } = parsePropertySearch(input);
+  const { keywords, propertyTypes, typeKeyword, price, priceMode, transaction } = parsePropertySearch(input);
 
   const supabase = await createSupabaseServerClient();
   const query = publishedPropertiesQuery(supabase, featuredPropertySelect);
@@ -264,13 +278,18 @@ export async function searchPublishedProperties(input = "", limit = 24, filters?
   if (filters?.districts.length) searchQuery = searchQuery.in("district", filters.districts);
   if (filters?.type) searchQuery = searchQuery.in("property_type", [...collectionTypes[filters.type].values]);
 
-  if (filters?.minPrice !== undefined) searchQuery = searchQuery.gte("price", filters.minPrice);
-  if (filters?.maxPrice !== undefined) searchQuery = searchQuery.lte("price", filters.maxPrice);
-
-  if (price) {
-    if (priceMode === "below") searchQuery = searchQuery.lte("price", price);
-    else if (priceMode === "above") searchQuery = searchQuery.gte("price", price);
-    else searchQuery = searchQuery.gte("price", Math.round(price * 0.85)).lte("price", Math.round(price * 1.15));
+  const selectedTransaction = filters?.transaction || transaction || "sale";
+  if (selectedTransaction !== "all") searchQuery = searchQuery.eq("transaction_type", selectedTransaction);
+  const priceColumn = selectedTransaction === "rent" ? "rent_monthly" : "price";
+  if (selectedTransaction !== "all") {
+    if (filters?.minPrice !== undefined) searchQuery = searchQuery.gte(priceColumn, filters.minPrice);
+    if (filters?.maxPrice !== undefined) searchQuery = searchQuery.lte(priceColumn, filters.maxPrice);
+    if (price) {
+      const amount = selectedTransaction === "rent" && transaction !== "rent" ? price * 10000 : price;
+      if (priceMode === "below") searchQuery = searchQuery.lte(priceColumn, amount);
+      else if (priceMode === "above") searchQuery = searchQuery.gte(priceColumn, amount);
+      else searchQuery = searchQuery.gte(priceColumn, Math.round(amount * 0.85)).lte(priceColumn, Math.round(amount * 1.15));
+    }
   }
 
   if (propertyTypes.length && typeKeyword) {
@@ -346,7 +365,13 @@ export async function listAdminProperties(search = "", filter: AdminPropertyLife
       owner_phone,
       developer_names,
       showing_instructions,
-      price,
+      transaction_type,
+  rent_monthly,
+  deposit_months,
+  minimum_lease_months,
+  rental_equipment,
+  lease_notarization_required,
+  price,
       land_area_ping,
       building_area_ping,
       layout,

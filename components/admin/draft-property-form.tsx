@@ -1,5 +1,7 @@
 "use client";
 
+import { PropertyRentalFields } from "./property-rental-fields";
+
 import { useActionState } from "react";
 import type { DraftPropertyFormState } from "@/lib/properties/schema";
 
@@ -54,19 +56,7 @@ export function DraftPropertyForm({
         />
         <FieldError message={fieldErrors.slug} />
       </div>
-      <div className="field">
-        <label htmlFor="price">開價</label>
-        <input
-          className="input"
-          id="price"
-          name="price"
-          type="number"
-          min="0"
-          defaultValue={values.price}
-          aria-invalid={Boolean(fieldErrors.price)}
-        />
-        <FieldError message={fieldErrors.price} />
-      </div>
+      <PropertyRentalFields values={values} compact />
       <div className="field">
         <label htmlFor="address_public">公開地址</label>
         <input

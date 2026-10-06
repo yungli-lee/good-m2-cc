@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { canDeleteProperties, canPublishProperties, requireRole } from "@/lib/auth";
-import { formatDateTime, formatPrice } from "@/lib/format";
+import { formatDateTime, formatPropertyPrice } from "@/lib/format";
 import { calculatePropertyHealthScore } from "@/lib/properties/health-score";
 import { listAdminProperties } from "@/lib/properties/queries";
 import type { AdminPropertyLifecycleFilter } from "@/lib/properties/queries";
@@ -211,6 +211,7 @@ const errorMessage: Record<string, string> = {
   unpublish_reason_required: "請選擇下架原因；選「其他」時請填寫原因。",
   unpublish_failed: "下架失敗，請稍後再試。",
   not_published: "此物件目前不是已上架狀態。",
+  rent_required: "出租案件上架前請先填寫月租金。",
   already_published: "此物件已經是上架狀態。",
   republish_failed: "重新上架失敗，請稍後再試。",
   delete_failed: "刪除失敗，請稍後再試。",
@@ -298,7 +299,7 @@ export default async function AdminPropertiesPage({ searchParams }: Props) {
                     <td>{property.developer_names || "-"}</td>
                     <td>{property.city || "未填"}</td>
                     <td>{property.district || "未填"}</td>
-                    <td>{formatPrice(property.price)}</td>
+                    <td>{formatPropertyPrice(property)}</td>
                     <td><HealthScoreCell property={property} /></td>
                     <td>
                       {property.deleted_at ? "已刪除" : statusLabel[property.status]}
