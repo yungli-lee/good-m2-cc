@@ -44,6 +44,11 @@ assert.equal(viewingNudge({ latestText: "先看看就好，不用帶看", focuse
 assert.ok(hasViewingDecline("先看看就好，不用帶看"));
 assert.ok(hasExplicitViewingIntent("那我想看這間"));
 assert.equal(viewingNudge({ latestText: "後來想約週六看屋", focusedTurns: 4, declined: true }), "direct");
+assert.equal(dialogAction("想看格局圖", true), "property");
+assert.equal(dialogAction("現場有冷凍櫃嗎", true), "property");
+assert.equal(dialogAction("可以看設備照片嗎", true), "property");
+assert.equal(dialogAction("禮拜六下午方便帶看嗎", true), "viewing");
+assert.equal(dialogAction("先不用帶看", true), "property");
 const now = Date.now();
 const token = await signReply({ text: "阿美陪你找房", role: "amei", expires: now + 60000 }, "test-only-secret");
 assert.equal((await verifyReply(token, "test-only-secret", now))?.role, "amei");

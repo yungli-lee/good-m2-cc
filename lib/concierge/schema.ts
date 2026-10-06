@@ -15,6 +15,7 @@ export const chatSchema = z.object({
   message: z.string().trim().min(1).max(500),
   history: z.array(z.object({ role: z.enum(["user", "assistant"]), text: z.string().max(1200) })).max(10).default([]),
   needs: needsSchema.default({}),
+  propertyContext: z.string().max(200).default(""),
   focusedSlug: z.string().max(200).default(""),
   viewingTime: z.string().max(80).default(""),
   candidateSlugs: z.array(z.string().max(200)).max(6).default([]),

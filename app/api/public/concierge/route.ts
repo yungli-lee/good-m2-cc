@@ -2,6 +2,8 @@ import { formatPropertyPrice } from "@/lib/format";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { chatSchema, inferNeeds, needsFilters, needsSchema, needsSummary, redactContact } from "@/lib/concierge/schema";
+import { focusedAnswer, publicConversationProperty } from "@/lib/concierge/property-conversation";
+import { hasViewingDecline } from "@/lib/concierge/viewing-intent";
 import { viewingTime as readViewingTime } from "@/lib/concierge/viewing";
 import { dialogAction, referencedSlug } from "@/lib/concierge/dialog";
 import { knowledgeTerms, knowledgeExcerpt } from "@/lib/concierge/knowledge";
@@ -35,7 +37,12 @@ export async function POST(request: Request) {
     if (!parsed.success) return json({ error: "請簡短描述您的需求" }, 422);
     const input = parsed.data;
     const safeMessage = redactContact(input.message);
-    const action = dialogAction(safeMessage, Boolean(input.focusedSlug));
+    let action = dialogAction(safeMessage, Boolean(input.propertyContext || input.focusedSlug));
+    const history = input.history.map(m => ({ ...m, text: redactContact(m.text) }));
+    const lastAssistant = [...history].reverse().find(m => m.role === "assistant")?.text || "";
+    if (action === "property" && /^(好|可以|想|要|麻煩|安排)(?:的|啊|喔|呀|，|。|！|!|\s|帶看|看看)*$/.test(safeMessage) && /想安排現場|希望哪一天|什麼時段看屋/.test(lastAssistant)) action = "viewing";
+    if (hasViewingDecline(safeMessage)) action = "property";
+    if (input.propertyContext && action === "search") action = "property";
     const rejectedFocusedProperty = Boolean(input.focusedSlug && /不要這[間件]|這[間件房子].{0,8}不要|不喜歡這[間件]|太舊.{0,5}不要/.test(safeMessage));
     const requestedTime = readViewingTime(safeMessage, input.viewingTime);
     const viewingFollowup = action === "viewing" || (Boolean(input.viewingTime) && action === "property" && requestedTime !== input.viewingTime) || (Boolean(input.viewingTime) && action === "property" && /明天|後天|今天|週末|平日/.test(safeMessage));
@@ -45,12 +52,12 @@ export async function POST(request: Request) {
     const candidateResults = followup ? await Promise.all(input.candidateSlugs.map(slug => getPublishedPropertyBySlug(slug))) : [];
     if (candidateResults.some(r => r.error)) return json({ error: "物件資料暫時讀取不到，請稍後再試" }, 503);
     const candidates = candidateResults.flatMap(r => r.data ? [r.data] : []);
-    const focusedSlug = followup ? referencedSlug(safeMessage, candidates, input.focusedSlug) : "";
+    const focusedSlug = input.propertyContext || (followup ? referencedSlug(safeMessage, candidates, input.focusedSlug) : "");
     const focusResult = focusedSlug ? await getPublishedPropertyBySlug(focusedSlug) : null;
     if (focusResult?.error) return json({ error: "物件資料暫時讀取不到，請稍後再試" }, 503);
     const focused = focusResult?.data || null;
 
-    const history = input.history.map(m => ({ ...m, text: redactContact(m.text) }));
+    if (input.propertyContext && !focused) return json({ error: "這件物件已停止公開，請查看其他物件或直接聯絡阿勇、阿美。" }, 404);
     let needs = inferNeeds(safeMessage, input.needs);
     let mode = "guided";
     if (conciergeEnv().key) {
@@ -67,13 +74,11 @@ export async function POST(request: Request) {
     const filters = needsFilters(needs);
     if (needs.intent === "rent") { if (filters.minPrice != null) filters.minPrice *= 10000; if (filters.maxPrice != null) filters.maxPrice *= 10000; }
     const buying = needs.intent === "buy" || needs.intent === "rent";
-    const query = buying ? await searchPublishedProperties("", 24, filters) : null;
+    const query = buying && !focused ? await searchPublishedProperties("", 24, filters) : null;
     if (query?.error) return json({ error: "物件資料暫時讀取不到，請稍後再試" }, 503);
     // Every card is from current public rows; no model-created property IDs or URLs.
     const searchRows = rejectedFocusedProperty ? (query?.data || []).filter(p => p.slug !== input.focusedSlug) : (query?.data || []);
-    const properties = (focused ? [focused] : searchRows).map(p => ({ id: p.id, slug: p.slug, title: p.title, price: p.price, transaction_type: p.transaction_type, rent_monthly: p.rent_monthly, priceLabel: formatPropertyPrice(p),
-      district: p.district, layout: p.layout, propertyType: p.property_type, land: p.land_area_ping, building: p.building_area_ping,
-      highlights: Array.isArray(p.highlights) ? p.highlights.slice(0, 3) : [], description: (p.description || "").slice(0, 600) }));
+    const properties = (focused ? [focused] : searchRows).map(publicConversationProperty);
     const needsReview = Boolean(needs.mustHave && properties.length);
     const terms = knowledgeTerms(safeMessage);
     const knowledgeResults = await Promise.all(terms.map(q => listPublicKnowledgeItems({ q, pageSize: 6 })));
@@ -88,15 +93,16 @@ export async function POST(request: Request) {
       : needs.intent === "sell" || needs.intent === "let" ? "可以，我先幫你整理委託需求。請告訴我物件所在地區、類型、約略坪數，以及想出售或出租。先不用提供完整門牌。確認摘要後可留下聯絡方式，由阿勇、阿美親自了解與評估。"
       : needs.intent === "rent" ? "我先幫你記下承租需求；目前這裡的物件推薦以出售物件為主，不會把售價當租金。請告訴我地區、每月租金預算及必要條件，再留下需求請阿勇、阿美協助。"
       : "我可以帶你看網站的相關知識；涉及個別稅額、貸款成數或法律判斷，請由阿勇、阿美確認你的實際情況。也可以把問題留在需求摘要中。";
+    if (focused) answer = focusedAnswer(focused, safeMessage, history);
     if (mode === "ai") {
       try {
-        const output = await modelJson(`${system} 你扮演${input.role === "amei" ? "阿美" : "阿勇"}的Q版助理。依提供資料回答客人，最多180字。properties 是本次最多六件推薦，不是全部搜尋件數，不得說全區只有這幾件；以「本次先推薦」描述。住宅搜尋包含店面／店住候選，店面是否適合居住與合法用途須由真人確認，不可直接保證能住。只在需要時補問一個問題，不要每次重複問預算、坪數。客人提到的價格不能改寫成另一個數字，也不能猜測價格差異原因。只有 action=viewing（客人已明確提出看屋／帶看／時間）時，才可以主動詢問看屋日期或時段；action=search 或 action=property 時不得主動催促、詢問「哪一天看屋」或「什麼時段看屋」，先回答問題即可。看屋要求應接續安排需求，不得宣稱已預約成功。物件只可引用提供的公開資料；必要條件未經查核必須說待確認。先直接回答本次問題，再補問。區分買房前與買房後：問買房之後時，聚焦交屋點交、設備檢查、費用結清及帳戶過戶，不能拿成交行情比較代替回答。知識回答只依knowledge內的公開摘要與正文節錄，不足時明說網站資料不足並交真人；不能用不相關文章湊答案。農保田只是需求稱呼，未逐件確認前不得稱任何物件符合農保、可投保、合法用途、適合耕作或保證長期置產；必須說候選土地與客人資格均待專業確認。不得因坪數大就推論符合農保。不要宣稱所有候選完全符合必要條件。租金不可用售價推測。輸出 {"answer":"..."}，不要輸出連結或聯絡電話。`, { message: safeMessage, history, action, viewingTime: preferredTime, focusedProperty: focused ? properties[0] : null, needs, properties: properties.slice(0, 6), knowledge: knowledgeEvidence });
+        const output = await modelJson(`${system} 你扮演${input.role === "amei" ? "阿美" : "阿勇"}的Q版助理。依提供資料回答客人，最多180字。properties 是本次最多六件推薦，不是全部搜尋件數，不得說全區只有這幾件；以「本次先推薦」描述。住宅搜尋包含店面／店住候選，店面是否適合居住與合法用途須由真人確認，不可直接保證能住。只在需要時補問一個問題，不要每次重複問預算、坪數。客人提到的價格不能改寫成另一個數字，也不能猜測價格差異原因。只有 action=viewing（客人已明確提出看屋／帶看／時間）時，才可以主動詢問看屋日期或時段；action=search 或 action=property 時不得主動催促、詢問「哪一天看屋」或「什麼時段看屋」，先回答問題；可根據客人已說的用途、格局、車位或設備等需求，只補問一個尚未回答的問題。客人深入詢問兩輪以上且未拒絕帶看，可以溫和問「想安排現場確認嗎？」；未答應前不問日期。客人已拒絕帶看則繼續回答，不再邀約。客人想加 LINE 就指引使用下方 LINE 按鈕，不索取 LINE 帳號。看屋要求應接續安排需求，不得宣稱已預約成功。物件只可引用提供的公開資料；必要條件未經查核必須說待確認。先直接回答本次問題，再補問。區分買房前與買房後：問買房之後時，聚焦交屋點交、設備檢查、費用結清及帳戶過戶，不能拿成交行情比較代替回答。知識回答只依knowledge內的公開摘要與正文節錄，不足時明說網站資料不足並交真人；不能用不相關文章湊答案。農保田只是需求稱呼，未逐件確認前不得稱任何物件符合農保、可投保、合法用途、適合耕作或保證長期置產；必須說候選土地與客人資格均待專業確認。不得因坪數大就推論符合農保。不要宣稱所有候選完全符合必要條件。租金不可用售價推測。輸出 {"answer":"..."}，不要輸出連結或聯絡電話。`, { message: safeMessage, history, action, viewingTime: preferredTime, focusedProperty: focused ? properties[0] : null, needs, properties: properties.slice(0, 6), knowledge: knowledgeEvidence });
         answer = z.object({ answer: z.string().trim().min(1).max(1200) }).parse(output).answer;
       } catch (error) { logFallback("answer", error); mode = "guided"; }
     }
     const speaker = input.role === "amei" ? "阿美" : "阿勇";
     const offer = [...safeMessage.matchAll(/(\d[\d,]*(?:\.\d+)?)\s*萬/g)].at(-1)?.[1];
-    if (viewingFollowup) {
+    if (viewingFollowup && !hasViewingDecline(safeMessage)) {
       answer = `${focused ? `您想看的是「${focused.title}」。` : "可以協助整理看屋需求。"}${offer ? `您提出的 ${offer} 萬元，我也會記在需求中，交由阿勇、阿美了解屋主意願並協助洽談。` : ""}${!focused ? "請先告訴我是列表中的哪一間物件。" : (preferredTime ? (/上午|下午|晚上|早上|中午|點|[:：]/.test(preferredTime) ? `已記下您希望${preferredTime}看屋。` : `已記下您希望${preferredTime}看屋；上午、下午或晚上方便呢？`) : "您希望哪一天、什麼時段看屋？")}確認需求與聯絡方式後，由${speaker}與您聯繫確認時間；目前尚未完成預約。`;
     } else if (negotiation) {
       answer = `${focused ? `關於「${focused.title}」，` : "價格方面，"}交給阿勇、阿美為您努力爭取理想條件；${offer ? `您提出的 ${offer} 萬元能否成交，` : "能否調整，"}仍需了解屋主意願。請確認需求與聯絡方式，按「請${speaker}聯絡我」後，我們會接續協助洽談。`;

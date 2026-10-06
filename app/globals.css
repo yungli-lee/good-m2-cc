@@ -3431,3 +3431,16 @@ td {
 @media (max-width: 640px) {
   .home-contact-launchers { left: 18px; right: 18px; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); }
 }
+
+/* Property conversation stays mounted when closed so visitors keep their draft. */
+.character-guide-panel[hidden], .character-guide-panel [hidden] { display: none; }
+.character-guide-panel:has(.concierge-embedded) { width: min(480px, calc(100vw - 24px)); }
+.concierge-embedded .concierge-conversation { max-height: 300px; margin: 12px 0; padding: 10px; }
+.concierge-embedded .concierge-message { padding: 10px; }
+.concierge-embedded .concierge-focus { font-size: .85rem; }
+.concierge-embedded .concierge-compose { display: grid; gap: 8px; }
+.concierge-embedded .concierge-actions { flex-wrap: wrap; }
+.concierge-embedded .concierge-direct-contact, .concierge-embedded .concierge-handoff { margin-top: 12px; }
+.concierge-embedded .form-grid { grid-template-columns: 1fr; }
+.concierge-embedded .concierge-lead h2 { font-size: 1.2rem; }
+.concierge-embedded input, .concierge-embedded textarea { max-width: 100%; min-width: 0; font-size: 16px; }
