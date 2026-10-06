@@ -108,6 +108,8 @@ export async function POST(request: Request) {
       answer = `${focused ? `關於「${focused.title}」，` : "價格方面，"}交給阿勇、阿美為您努力爭取理想條件；${offer ? `您提出的 ${offer} 萬元能否成交，` : "能否調整，"}仍需了解屋主意願。請確認需求與聯絡方式，按「請${speaker}聯絡我」後，我們會接續協助洽談。`;
     } else if (focused && /LINE|加賴|加好友/i.test(safeMessage)) {
       answer = "可以，點下方「加 LINE 諮詢」即可聯絡我們，並告訴阿勇、阿美您正在看這一件。";
+    } else if (focused && /採光|光線|日照/.test(safeMessage)) {
+      answer = "採光會受時段、朝向與周邊遮蔽物影響，目前公開資料不足以確認您問的光線狀況。可以請阿勇、阿美協助確認現場，或依您方便的時段安排帶看；時間仍需由真人確認。";
     } else if (focused && /照片|圖片|格局圖|地籍圖/.test(safeMessage)) {
       answer = "可以先查看本頁的物件圖片區。若沒有您想看的格局圖、地籍圖或指定照片，可按「請阿勇、阿美聯絡我」整理需求，由我們確認並協助提供。";
     } else if (action === "property" && focused && /價格|多少|開價|租金|月租/.test(safeMessage)) {

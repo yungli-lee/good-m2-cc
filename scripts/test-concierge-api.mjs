@@ -84,6 +84,8 @@ function request(message, extra = {}, origin) { return new Request('https://exam
   response = await route.POST(request('下午的採光如何',{propertyContext:'rental-space'})); body = await response.json(); assert.equal(body.viewingTime,''); assert.equal(body.action,'property');
   response = await route.POST(request('可以加LINE嗎',{propertyContext:'rental-space'})); body = await response.json(); assert.match(body.answer,/加 LINE 諮詢/);
   enabled = true;
+  modelOutputs = [schema.needsSchema.parse({intent:'rent'}), {answer:'這件物件位於二樓'}];
+  response = await route.POST(request('下午的採光如何',{propertyContext:'rental-space'})); body = await response.json(); assert.match(body.answer,/公開資料不足/); assert.ok(!body.answer.includes('位於二樓')); assert.ok(!body.viewingTime);
   modelOutputs = [schema.needsSchema.parse({intent:'buy'}), {answer:'請您自行去地政事務所查地籍图'}];
   response = await route.POST(request('可以看地籍圖嗎',{propertyContext:'selected-home'})); body = await response.json(); assert.equal(body.action,'property'); assert.match(body.answer,/本頁的物件圖片區/); assert.ok(!body.answer.includes('自行'));
   const contact = compile('lib/concierge/contact.ts', {});
