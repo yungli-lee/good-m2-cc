@@ -9,23 +9,32 @@ import { getAdminPropertyById } from "@/lib/properties/queries";
 import { listPropertyTimelineEvents } from "@/lib/properties/timeline-queries";
 import type { Property } from "@/lib/properties/types";
 import { permanentDeletePropertyAction, restorePropertyAction } from "../../actions";
+import { listPropertyPeople, relationshipLabels } from "@/lib/people-properties";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { PeoplePropertyRelationForm, ArchiveRelationButton } from "@/components/admin/people-property-relation-form";
+import { formatTaipeiRelationDate } from "@/lib/format";
 
 export const runtime = "edge";
 
 type Props = {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ error?: string; saved?: string; timeline_error?: string; timeline_saved?: string; timeline_updated?: string; timeline_deleted?: string }>;
+  searchParams: Promise<{ error?: string; saved?: string; relation_error?: string; relation_saved?: string; timeline_error?: string; timeline_saved?: string; timeline_updated?: string; timeline_deleted?: string }>;
 };
 
 const errorMessage: Record<string, string> = {
   "42501": "資料庫權限不足，請確認此帳號的後台角色與物件 RLS 權限。",
   forbidden: "此帳號沒有足夠權限。",
   invalid_form: "表單欄位格式有誤，請檢查後再儲存。",
-  no_file: "請先選擇照片。",
-  invalid_file: "照片格式或大小不符合規定，請使用 JPG、PNG 或 WebP，單張 5MB 以內。",
-  media_failed: "照片資料寫入失敗，請稍後再試。",
-  media_metadata_missing_required_field: "照片資料缺少必要欄位，請重新上傳。",
-  media_not_found: "找不到要刪除的照片。",
+  no_file: "請先選擇圖片或影片。",
+  invalid_file: "圖片或影片格式、內容或大小不符合規定。圖片請使用 JPEG、PNG 或 WebP（5MB 以內）；影片請使用 MP4 或 WebM（100MB 以內）。",
+  video_poster_required: "上傳影片時，請選擇一張 Poster 圖片。Poster 支援 JPEG、PNG 或 WebP，大小須在 5MB 以內。",
+  poster_upload_failed: "影片 Poster 上傳失敗，請確認圖片格式與大小後再試一次。",
+  media_url_failed: "媒體上傳完成，但無法取得檔案網址，請稍後再試。",
+  video_poster_missing: "這支影片缺少 Poster，無法設為封面。",
+  cover_failed: "封面設定失敗，請稍後再試。",
+  media_failed: "媒體資料寫入失敗，請稍後再試。",
+  media_metadata_missing_required_field: "媒體資料缺少必要欄位，請重新上傳。",
+  media_not_found: "找不到要刪除的媒體。",
   not_found: "找不到此物件。",
   use_lifecycle_action: "上架、下架與重新上架請使用物件列表的生命週期操作。",
   restore_failed: "還原失敗，請稍後再試。",
@@ -39,11 +48,16 @@ export default async function EditPropertyPage({ params, searchParams }: Props) 
   const { data, error } = await getAdminPropertyById(id);
   if (error || !data) notFound();
   const { data: timelineEvents, error: timelineError } = await listPropertyTimelineEvents(id);
+  const supabase = await createSupabaseServerClient();
+  const { data: relatedPeople } = await listPropertyPeople(supabase, id);
+  const { data: peopleOptions } = await supabase.from("people").select("id,display_name,phone,email").is("deleted_at", null).order("display_name").limit(100);
 
   const property = data as Property;
   const health = calculatePropertyHealthScore(property);
   const missing = health.missing.slice(0, 6);
-  const activeMedia = (property.property_media || []).filter((item) => !item.deleted_at);
+  const activeMedia = (property.property_media || [])
+    .filter((item) => !item.deleted_at)
+    .sort((left, right) => left.sort_order - right.sort_order || left.created_at.localeCompare(right.created_at) || left.id.localeCompare(right.id));
 
   return (
     <main className="section">
@@ -51,7 +65,7 @@ export default async function EditPropertyPage({ params, searchParams }: Props) 
         <h1>編輯物件</h1>
         <p className="muted">B-001：物件健康度協助檢查上架資料完整度。目前狀態：{property.status}</p>
         {query.saved ? <div className="notice">已儲存。</div> : null}
-        {query.error ? <div className="notice">{errorMessage[query.error] || `操作失敗：${query.error}`}</div> : null}
+        {query.error ? <div className="notice">{errorMessage[query.error] || "操作失敗，請稍後再試。"}</div> : null}
         {property.deleted_at ? (
           <div className="notice">
             此物件已刪除，不會出現在前台。刪除時間：{property.deleted_at.replace("T", " ").slice(0, 16)}
@@ -93,6 +107,7 @@ export default async function EditPropertyPage({ params, searchParams }: Props) 
                   media={activeMedia}
                   uploadAction={`/admin/properties/${property.id}/edit/upload`}
                   setCoverAction={`/admin/properties/${property.id}/edit/cover`}
+                  reorderAction={`/admin/properties/${property.id}/edit/media/reorder`}
                   deleteActionBase={`/admin/properties/${property.id}/edit/media`}
                 />
               </>
@@ -112,6 +127,7 @@ export default async function EditPropertyPage({ params, searchParams }: Props) 
           updated={query.timeline_updated === "1"}
           deleted={query.timeline_deleted === "1"}
         />
+        <section className="card" style={{ marginTop: 18 }}><div className="card-body"><h2 style={{ marginTop: 0 }}>關聯客戶</h2>{relatedPeople?.length ? <div className="table-wrap"><table><thead><tr><th>顯示名稱</th><th>正式姓名</th><th>關係</th><th>開始日期</th><th>聯絡方式</th><th>操作</th></tr></thead><tbody>{relatedPeople.map((relation) => <tr key={relation.id}><td><Link href={`/admin/people/${relation.person?.id}`}>{relation.person?.display_name || relation.person_id}</Link></td><td>{relation.person?.legal_name || "-"}</td><td>{relationshipLabels[relation.relationship_type as keyof typeof relationshipLabels]}</td><td>{formatTaipeiRelationDate(relation.started_at)}</td><td>{relation.person?.phone || relation.person?.email || "-"}</td><td><details><summary className="button ghost">編輯</summary><PeoplePropertyRelationForm mode="update" personId={relation.person_id} propertyId={id} relationId={relation.id} initial={relation} /></details><ArchiveRelationButton relationId={relation.id} /></td></tr>)}</tbody></table></div> : <p className="muted">尚未建立關聯客戶</p>}<h3>新增關聯客戶</h3><PeoplePropertyRelationForm mode="create" personId="" propertyId={id} peopleOptions={peopleOptions || []} /></div></section>
       </div>
     </main>
   );

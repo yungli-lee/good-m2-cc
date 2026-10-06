@@ -1,16 +1,25 @@
+import { permanentRedirect } from "next/navigation";
+import { canonicalKnowledgeCategory } from "@/lib/content/knowledge-categories";
+import type { Metadata } from "next";
 import Link from "next/link";
 import { KnowledgeCard } from "@/components/content/knowledge-card";
 import { listKnowledgeCategories, listPublicKnowledgeItems } from "@/lib/content/queries";
 import type { ContentItem } from "@/lib/content/types";
+import { getPublicCompanySettings } from "@/lib/company-settings";
+import { defaultSiteDisplaySettings, getSiteDisplaySettings } from "@/lib/site-display-settings";
 
 export const runtime = "edge";
 export const dynamic = "force-dynamic";
-const pageSize = 12;
 
-export const metadata = {
-  title: "不動產知識庫｜阿勇不動產顧問",
-  description: "整理買屋、賣屋、稅務、貸款、農地農舍與法規等不動產知識。"
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const company = await getPublicCompanySettings();
+  return {
+    title: `不動產知識庫｜${company.brand_name}`,
+    description: "整理買屋、賣屋、稅務、貸款、農地農舍與法規等不動產知識。",
+    alternates: { canonical: "/knowledge" },
+    openGraph: { siteName: company.brand_name, url: "/knowledge" }
+  };
+}
 
 type Props = {
   searchParams: Promise<{ q?: string; category?: string; page?: string }>;
@@ -34,12 +43,18 @@ export default async function KnowledgeIndexPage({ searchParams }: Props) {
   const q = String(params.q || "").trim().slice(0, 80);
   const category = String(params.category || "").trim().toLowerCase();
   const page = normalizePage(params.page);
+  const canonicalCategory = canonicalKnowledgeCategory(category);
+  if (canonicalCategory !== category) {
+    permanentRedirect(knowledgeHref({ q, category: canonicalCategory, page }));
+  }
+  const displaySettings = await getSiteDisplaySettings().catch(() => defaultSiteDisplaySettings);
+  const pageSize = displaySettings.knowledge_page_size;
   const [
     { data: items, error, count, totalPages },
     categories
   ] = await Promise.all([
     listPublicKnowledgeItems({ q, category, page, pageSize }),
-    listKnowledgeCategories()
+    listKnowledgeCategories({ publicOnly: true })
   ]);
   const hasFilters = Boolean(q || category);
   const currentCategory = categories.find((item) => item.slug === category);
@@ -49,15 +64,15 @@ export default async function KnowledgeIndexPage({ searchParams }: Props) {
 
   return (
     <main>
-      <section className="hero-lite">
+      <section className="hero-lite knowledge-index-hero">
         <div className="container">
           <h1>不動產知識庫</h1>
           <p>把買屋、賣屋、貸款、稅務與法規重點整理成可長期查閱的知識內容。</p>
         </div>
       </section>
-      <section className="section">
+      <section className="section knowledge-index-section">
         <div className="container">
-          <form className="knowledge-listing-tools" action="/knowledge">
+          <form key={JSON.stringify([q, category])} className="knowledge-listing-tools" action="/knowledge">
             <label className="field knowledge-search-field">
               <span>搜尋知識庫</span>
               <input className="input" type="search" name="q" defaultValue={q} placeholder="輸入關鍵字、分類或標籤" />
@@ -95,6 +110,7 @@ export default async function KnowledgeIndexPage({ searchParams }: Props) {
             <div className="knowledge-empty-state">
               <h2>{hasFilters ? "找不到符合條件的文章" : "知識內容整理中"}</h2>
               <p>{hasFilters ? "請換個關鍵字或分類再試一次。" : "歡迎先透過 Line 詢問阿勇。"}</p>
+              {hasFilters ? <Link className="button ghost" href="/knowledge">清除所有篩選</Link> : null}
             </div>
           ) : null}
           <div className="grid knowledge-grid">

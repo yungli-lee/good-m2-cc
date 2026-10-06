@@ -28,13 +28,20 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           <nav className="nav" aria-label="後台導覽">
             <Link href="/admin/properties">物件管理</Link>
             <Link href="/admin/people">客戶 / People</Link>
+            <Link href="/admin/crm/requirements">客需管理</Link>
             <Link href="/admin/knowledge">知識管理</Link>
             <Link href="/admin/media">媒體中心</Link>
+            <Link href="/admin/property-collections">物件分享主題</Link>
             <Link href="/admin/home-campaigns">首頁 Campaign</Link>
             <Link href="/admin/site-pages">靜態頁面</Link>
+            <Link href="/admin/areas">服務地區</Link>
+            <Link href="/admin/navigation">導覽選單</Link>
             <Link href="/admin/inquiries">詢問單</Link>
+            {current.profile.role === "admin" || current.profile.role === "owner" ? <Link href="/admin/analyze">成效分析</Link> : null}
             <Link href="/admin/tools">後台工具</Link>
             <Link href="/admin/settings/company">公司資料</Link>
+            <Link href="/admin/settings/display">前台顯示</Link>
+            {current.profile.role === "admin" || current.profile.role === "owner" ? <Link href="/admin/system/email">Email 診斷</Link> : null}
             {canManageUsers(current.profile.role) ? <Link href="/admin/users">使用者管理</Link> : null}
             {current.profile.role === "owner" ? <Link href="/admin/audit">稽核紀錄</Link> : null}
             <Link href="/properties" target="_blank" rel="noopener noreferrer">前台物件</Link>

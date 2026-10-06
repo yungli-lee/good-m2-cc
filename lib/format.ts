@@ -8,6 +8,17 @@ export function formatPing(value?: number | null) {
   return `${Number(value).toLocaleString("zh-TW", { maximumFractionDigits: 3 })} 坪`;
 }
 
+const landPropertyTypes = new Set(["land", "farmland", "building_land", "industrial_land"]);
+
+export function isLandProperty(propertyType?: string | null) {
+  return landPropertyTypes.has(propertyType || "");
+}
+
+export function formatPublicPing(value?: number | null) {
+  if (value == null || !Number.isFinite(Number(value))) return null;
+  return `${Number(value).toLocaleString("zh-TW", { maximumFractionDigits: 2 })} 坪`;
+}
+
 export function formatDateTime(value?: string | null) {
   if (!value) return "-";
   return formatTaipeiDateTime(value);
@@ -61,18 +72,47 @@ export function taipeiDateTimeLocalToUtcIso(value?: string | null) {
   return Number.isNaN(date.getTime()) ? null : date.toISOString();
 }
 
+export function dateInputToTaipeiIso(value?: string | null) {
+  if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return null;
+  const [year, month, day] = value.split("-").map(Number);
+  const check = new Date(Date.UTC(year, month - 1, day));
+  if (check.getUTCFullYear() !== year || check.getUTCMonth() !== month - 1 || check.getUTCDate() !== day) return null;
+  return `${value}T00:00:00+08:00`;
+}
+
+export function toTaipeiDateInput(value?: string | null) {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  const parts = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Taipei", year: "numeric", month: "2-digit", day: "2-digit" }).formatToParts(date);
+  const part = (type: string) => parts.find((item) => item.type === type)?.value || "";
+  return `${part("year")}-${part("month")}-${part("day")}`;
+}
+
+export function formatTaipeiRelationDate(value?: string | null) {
+  const input = toTaipeiDateInput(value);
+  if (!input) return "-";
+  const [year, month, day] = input.split("-").map(Number);
+  return `${String(year - 1911).padStart(3, "0")}/${String(month).padStart(2, "0")}/${String(day).padStart(2, "0")}`;
+}
+
 export function propertyTypeLabel(value: string) {
   const labels: Record<string, string> = {
-    townhouse: "房屋",
+    townhouse: "透天住宅",
     apartment: "公寓",
-    building: "大廈",
-    land: "土地",
-    farmland: "農林漁牧地",
+    building: "電梯大樓／華廈",
+    land: "其他土地",
+    farmland: "農地",
     building_land: "建地",
     industrial_land: "工業用地",
+    farmhouse: "農舍",
     storefront: "店面",
     factory: "廠房",
     other: "其他"
   };
   return labels[value] || value;
+}
+
+export function formatPropertyPrice(property: { transaction_type?: string | null; price?: number | null; rent_monthly?: number | null }) {
+  return property.transaction_type === "rent" ? (property.rent_monthly ? `${Number(property.rent_monthly).toLocaleString("zh-TW")} 元／月` : "租金洽詢") : formatPrice(property.price);
 }

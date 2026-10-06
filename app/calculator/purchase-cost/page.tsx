@@ -1,19 +1,24 @@
+import type { Metadata } from "next";
 import Link from "next/link";
+import { getPublicCompanySettings } from "@/lib/company-settings";
 import { PurchaseCostCalculator } from "@/components/calculators/purchase-cost-calculator";
 
-export const metadata = {
-  title: "買房總成本試算｜阿勇不動產顧問",
+export async function generateMetadata(): Promise<Metadata> {
+  const company = await getPublicCompanySettings();
+  return {
+  title: `買房總成本試算｜${company.brand_name}`,
   description: "輸入成交價、貸款成數、房屋評定現值與常見費用，估算購屋一次性現金需求。",
   alternates: {
     canonical: "/calculator/purchase-cost"
   },
   openGraph: {
-    title: "買房總成本試算｜阿勇不動產顧問",
+    title: `買房總成本試算｜${company.brand_name}`,
     description: "輸入成交價、貸款成數、房屋評定現值與常見費用，估算購屋一次性現金需求。",
     url: "/calculator/purchase-cost",
-    siteName: "阿勇不動產顧問"
+    siteName: company.brand_name
   }
-};
+  };
+}
 
 export default function PurchaseCostCalculatorPage() {
   return (

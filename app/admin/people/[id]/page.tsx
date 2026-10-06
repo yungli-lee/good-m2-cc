@@ -6,13 +6,19 @@ import { formatDateTime } from "@/lib/format";
 import { personRoleLabels } from "@/lib/people/labels";
 import { getAdminPerson } from "@/lib/people/queries";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { listPersonProperties } from "@/lib/people-properties";
+import { listPersonActivities } from "@/lib/people-properties";
+import { PeoplePropertiesPanel } from "@/components/admin/people-properties-panel";
+import { PeopleRelationshipCapture } from "@/components/admin/people-relationship-capture";
+import { CustomerRequirementsPanel } from "@/components/admin/customer-requirements-panel";
+import { listPersonRequirements } from "@/lib/customer-requirements/queries";
 import { archivePersonAction } from "../actions";
 
 export const runtime = "edge";
 
 type Props = {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ error?: string; saved?: string }>;
+  searchParams: Promise<{ error?: string; saved?: string; relation_error?: string; relation_saved?: string }>;
 };
 
 const sourceLabel: Record<string, string> = {
@@ -38,7 +44,15 @@ const savedMessage: Record<string, string> = {
 };
 
 const errorMessage: Record<string, string> = {
-  archive_failed: "封存失敗，請稍後再試。"
+  archive_failed: "封存失敗，請稍後再試。",
+  invalid: "關聯欄位格式有誤，請檢查關係與日期。",
+  duplicate: "此客戶與物件已存在相同的有效關係。",
+  permission: "你沒有建立或修改關聯的權限。",
+  missing: "找不到指定的客戶或物件。",
+  schema_missing: "Preview 尚未完成 People–Property 資料表設定，請通知管理者。",
+  save: "關聯儲存失敗，請稍後再試。",
+  update: "關聯更新失敗，請稍後再試。",
+  archive: "關聯封存失敗，請稍後再試。"
 };
 
 function Field({ label, value }: { label: string; value?: ReactNode }) {
@@ -56,6 +70,12 @@ export default async function PersonDetailPage({ params, searchParams }: Props) 
   const supabase = await createSupabaseServerClient();
   const { data: person } = await getAdminPerson(supabase, id);
   if (!person) notFound();
+  const [{ data: relations }, { data: properties }, { data: activities }, { data: requirements }] = await Promise.all([
+    listPersonProperties(supabase, id),
+    supabase.from("properties").select("id,title,slug").is("deleted_at", null).order("updated_at", { ascending: false }).limit(100),
+    listPersonActivities(supabase, id),
+    listPersonRequirements(supabase, id)
+  ]);
 
   return (
     <main className="section">
@@ -73,8 +93,10 @@ export default async function PersonDetailPage({ params, searchParams }: Props) 
 
         {query.saved ? <div className="notice">{savedMessage[query.saved] || "已儲存。"}</div> : null}
         {query.error ? <div className="notice">{errorMessage[query.error] || "操作失敗，請稍後再試。"}</div> : null}
+        {query.relation_saved ? <div className="notice">{query.relation_saved === "archived" ? "關聯已封存。" : query.relation_saved === "updated" ? "關聯已更新。" : "關聯已建立。"}</div> : null}
+        {query.relation_error ? <div className="notice">{errorMessage[query.relation_error] || "關聯操作失敗，請稍後再試。"}</div> : null}
 
-        <div className="detail-layout">
+        <div id="overview" className="detail-layout">
           <section className="card">
             <div className="card-body">
               <h2 style={{ marginTop: 0 }}>基本資料</h2>
@@ -84,6 +106,7 @@ export default async function PersonDetailPage({ params, searchParams }: Props) 
                 <Field label="手機 / 電話" value={person.phone} />
                 <Field label="Line ID" value={person.line_id} />
                 <Field label="Email" value={person.email} />
+                <Field label="地址" value={person.address} />
                 <Field label="來源" value={sourceLabel[person.source] || person.source} />
                 <Field label="狀態" value={statusLabel[person.status] || person.status} />
                 <Field label="負責人" value={person.assigned_to_label} />
@@ -117,6 +140,10 @@ export default async function PersonDetailPage({ params, searchParams }: Props) 
             </div>
           </aside>
         </div>
+        <nav className="actions" aria-label="客戶資料區塊" style={{ marginTop: 18 }}><a className="button ghost" href="#overview">總覽</a><a className="button ghost" href="#requirements">客需</a><a className="button ghost" href="#activities">活動紀錄</a><a className="button ghost" href="#relations">關聯物件</a></nav>
+        <CustomerRequirementsPanel personId={id} items={(requirements || []) as never[]} />
+        <div id="relations"><PeoplePropertiesPanel personId={id} relations={(relations || []) as never[]} properties={properties || []} showCreate={false} /></div>
+        <div id="activities"><PeopleRelationshipCapture personId={id} properties={properties || []} activities={(activities || []) as never[]} /></div>
       </div>
     </main>
   );

@@ -9,20 +9,23 @@ type AuditAction =
   | "delete_property" | "restore_property" | "permanent_delete_property" | "unpublish_property" | "republish_property"
   | "property_auto_expired"
   | "timeline_event_update"
-  | "inquiry_view" | "inquiry_status_update" | "inquiry_note_create" | "inquiry_mark_spam" | "inquiry_delete"
+  | "inquiry_view" | "inquiry_create" | "inquiry_status_update" | "inquiry_note_create" | "inquiry_mark_spam" | "inquiry_delete"
+  | "inquiry_email_sent" | "inquiry_email_failed" | "inquiry_line_sent" | "inquiry_line_failed"
   | "admin_login_success" | "admin_login_failure" | "admin_logout" | "login_success" | "login_denied"
   | "role_changed" | "user.role_change" | "user_created" | "user_disabled" | "user_restored" | "display_name_updated" | "failed_permission_attempt"
   | "password_changed" | "password_change_failed" | "password_reset_email_sent"
+  | "email_test_sent" | "email_test_failed"
   | "content_create" | "content_update" | "content_publish" | "content_unpublish" | "content_delete" | "content_restore"
   | "home_campaign_create" | "home_campaign_update" | "home_campaign_publish" | "home_campaign_archive"
-  | "site_page_create" | "site_page_update" | "site_page_publish" | "site_page_archive"
+  | "site_page_create" | "site_page_update" | "site_page_publish" | "site_page_archive" | "site_page_delete"
   | "media_upload" | "media_update" | "media_delete" | "media_restore" | "media_attach" | "media_detach"
   | "media_cover_set" | "media_alt_update" | "media_caption_update" | "media_replace"
-  | "people_created" | "people_updated" | "people_deleted" | "people_role_added" | "people_role_removed";
+  | "people_created" | "people_updated" | "people_deleted" | "people_role_added" | "people_role_removed"
+  | "requirement_created" | "requirement_updated" | "requirement_status_changed" | "requirement_duplicated" | "requirement_deleted";
 
 type AuditResult = "success" | "denied" | "failed";
 
-const sensitiveKey = /^(phone|normalized_phone|email|normalized_email|line_id|normalized_line_id|name|display_name|legal_name|notes)$|password|passcode|secret|token|key|api[_-]?key|authorization|cookie|session|service[_-]?role|bank|id[_-]?number|tax|owner[_-]?phone|private[_-]?phone/i;
+const sensitiveKey = /^(phone|normalized_phone|email|normalized_email|line_id|normalized_line_id|name|display_name|legal_name|address|notes)$|password|passcode|secret|token|key|api[_-]?key|authorization|cookie|session|service[_-]?role|bank|id[_-]?number|tax|owner[_-]?phone|private[_-]?phone/i;
 
 export function maskAuditData(value: unknown): unknown {
   if (!value || typeof value !== "object") return value;

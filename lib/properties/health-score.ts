@@ -33,6 +33,8 @@ type HealthScoreProperty = Partial<
     | "developer_names"
     | "showing_instructions"
     | "price"
+    | "transaction_type"
+    | "rent_monthly"
     | "land_area_ping"
     | "building_area_ping"
     | "layout"
@@ -46,7 +48,6 @@ type HealthScoreProperty = Partial<
     | "meta_description"
     | "og_image_url"
     | "canonical_url"
-    | "property_media"
   >
 > & {
   property_media?: Partial<PropertyMedia>[] | null;
@@ -77,7 +78,7 @@ export function calculatePropertyHealthScore(property: HealthScoreProperty): Pro
     { key: "title", label: "案名", points: 8, passed: hasText(property.title) },
     { key: "slug", label: "Slug", points: 5, passed: hasText(property.slug) },
     { key: "address_public", label: "公開地址", points: 8, passed: hasText(property.address_public) },
-    { key: "price", label: "開價", points: 8, passed: hasNumber(property.price) },
+    { key: "price", label: property.transaction_type === "rent" ? "月租金" : "開價", points: 8, passed: hasNumber(property.transaction_type === "rent" ? property.rent_monthly : property.price) },
     { key: "area", label: "坪數", points: 8, passed: hasNumber(property.land_area_ping) || hasNumber(property.building_area_ping) },
     { key: "property_type", label: "物件類型", points: 5, passed: hasText(property.property_type) && property.property_type !== "other" },
     { key: "layout", label: "格局或樓層", points: 6, passed: hasText(property.layout) || hasText(property.floor) },

@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { mediaBucketName } from "@/lib/media";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import type { HomeCampaign, SitePage, SitePageKey } from "@/lib/home-cms/types";
+import type { HomeCampaign, SitePage } from "@/lib/home-cms/types";
 
 function withPublicUrl<T extends { media_assets?: { storage_path?: string | null } | null }>(supabase: SupabaseClient, item: T) {
   const path = item.media_assets?.storage_path;
@@ -10,7 +10,7 @@ function withPublicUrl<T extends { media_assets?: { storage_path?: string | null
   return { ...item, media_public_url: data.publicUrl };
 }
 
-const homeCampaignSelect = "*,media_assets(id,storage_path,alt_text,caption,original_filename)";
+const homeCampaignSelect = "*,media_assets(id,storage_path,alt_text,caption,original_filename,media_type,mime_type,file_size,poster_url,poster_storage_path)";
 const sitePageSelect = "*,media_assets(id,storage_path,alt_text,caption,original_filename)";
 
 export async function listActiveHomeCampaigns() {
@@ -55,24 +55,96 @@ export async function getHomeCampaign(id: string) {
   return { data: data as HomeCampaign | null, error };
 }
 
-export async function listPublishedSitePages() {
+async function listPublishedSitePagesByPlacement(placement: "show_as_page" | "show_on_homepage") {
   const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase
     .from("site_pages")
     .select(sitePageSelect)
     .eq("status", "published")
     .is("archived_at", null)
-    .order("sort_order", { ascending: true });
+    .eq(placement, true)
+    .order("sort_order", { ascending: true })
+    .order("published_at", { ascending: false, nullsFirst: false });
 
   if (error) {
     console.error("published_site_pages_failed", { code: error.code, message: error.message });
-    return new Map<SitePageKey, SitePage & { media_public_url: string | null }>();
+    return [] as Array<SitePage & { media_public_url: string | null }>;
   }
 
-  return new Map(
-    ((data || []) as SitePage[]).map((page) => [page.page_key, withPublicUrl(supabase, page)])
-  );
+  return ((data || []) as SitePage[]).map((page) => withPublicUrl(supabase, page));
 }
+
+export function listHomepageSitePages() {
+  return listPublishedSitePagesByPlacement("show_on_homepage");
+}
+
+export function listPublicPageSitePages() {
+  return listPublishedSitePagesByPlacement("show_as_page");
+}
+
+export async function listPublishedReminderPages(limit = 3) {
+  const supabase = await createSupabaseServerClient();
+  const { data, error } = await supabase
+    .from("site_pages")
+    .select(sitePageSelect)
+    .eq("page_type", "reminder")
+    .eq("status", "published")
+    .is("archived_at", null)
+    .eq("show_as_page", true)
+    .order("published_at", { ascending: false, nullsFirst: false })
+    .order("updated_at", { ascending: false })
+    .limit(Math.max(0, limit));
+
+  if (error) {
+    console.error("published_reminder_pages_failed", { code: error.code, message: error.message });
+    return [] as Array<SitePage & { media_public_url: string | null }>;
+  }
+
+  return ((data || []) as SitePage[]).map((page) => withPublicUrl(supabase, page));
+}
+
+export async function getPublishedReminderBySlug(slug: string) {
+  const supabase = await createSupabaseServerClient();
+  const { data, error } = await supabase
+    .from("site_pages")
+    .select(sitePageSelect)
+    .eq("page_type", "reminder")
+    .eq("page_key", slug)
+    .eq("status", "published")
+    .is("archived_at", null)
+    .maybeSingle();
+
+  if (error) {
+    console.error("published_reminder_failed", { code: error.code, message: error.message, slug });
+    return { data: null as (SitePage & { media_public_url: string | null }) | null, error };
+  }
+
+  return { data: data ? withPublicUrl(supabase, data as SitePage) : null, error: null };
+}
+
+export async function listRelatedPublishedReminderPages(currentPageKey: string, limit = 3) {
+  const supabase = await createSupabaseServerClient();
+  const { data, error } = await supabase
+    .from("site_pages")
+    .select(sitePageSelect)
+    .eq("page_type", "reminder")
+    .eq("status", "published")
+    .is("archived_at", null)
+    .neq("page_key", currentPageKey)
+    .order("published_at", { ascending: false, nullsFirst: false })
+    .order("updated_at", { ascending: false })
+    .limit(Math.max(0, limit));
+
+  if (error) {
+    console.error("related_reminder_pages_failed", { code: error.code, message: error.message, currentPageKey });
+    return [] as Array<SitePage & { media_public_url: string | null }>;
+  }
+
+  return ((data || []) as SitePage[]).map((page) => withPublicUrl(supabase, page));
+}
+
+/** @deprecated Choose a placement-specific query. */
+export const listPublishedSitePages = listHomepageSitePages;
 
 export async function listAdminSitePages() {
   const supabase = await createSupabaseServerClient();
@@ -80,6 +152,7 @@ export async function listAdminSitePages() {
     .from("site_pages")
     .select(sitePageSelect)
     .order("sort_order", { ascending: true })
+    .order("published_at", { ascending: false, nullsFirst: false })
     .order("page_key", { ascending: true });
   if (error) return { data: [] as SitePage[], error };
   return { data: (data || []) as SitePage[], error: null };
@@ -93,4 +166,50 @@ export async function getSitePage(id: string) {
     .eq("id", id)
     .maybeSingle();
   return { data: data as SitePage | null, error };
+}
+
+export async function getPublishedSitePageBySlug(slug: string) {
+  const supabase = await createSupabaseServerClient();
+  const { data, error } = await supabase
+    .from("site_pages")
+    .select(sitePageSelect)
+    .eq("page_key", slug)
+    .eq("status", "published")
+    .is("archived_at", null)
+    .eq("show_as_page", true)
+    .maybeSingle();
+
+  if (error) {
+    console.error("published_site_page_failed", { code: error.code, message: error.message, slug });
+    return { data: null as (SitePage & { media_public_url: string | null }) | null, error };
+  }
+
+  return {
+    data: data ? withPublicUrl(supabase, data as SitePage) : null,
+    error: null
+  };
+}
+
+export async function getPublishedSitePageByType(pageType: SitePage["page_type"]) {
+  const supabase = await createSupabaseServerClient();
+  const { data, error } = await supabase
+    .from("site_pages")
+    .select(sitePageSelect)
+    .eq("page_type", pageType)
+    .eq("status", "published")
+    .is("archived_at", null)
+    .eq("show_as_page", true)
+    .order("sort_order", { ascending: true })
+    .limit(1)
+    .maybeSingle();
+
+  if (error) {
+    console.error("published_site_page_type_failed", { code: error.code, message: error.message, pageType });
+    return { data: null as (SitePage & { media_public_url: string | null }) | null, error };
+  }
+
+  return {
+    data: data ? withPublicUrl(supabase, data as SitePage) : null,
+    error: null
+  };
 }

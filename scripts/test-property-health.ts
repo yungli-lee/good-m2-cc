@@ -57,4 +57,10 @@ assert.equal(healthy.level, "good");
 assert.equal(healthy.score >= 80, true);
 assert.equal(healthy.missing.length, 0);
 
+const rental = calculatePropertyHealthScore({ transaction_type: "rent", rent_monthly: 128000 });
+assert.equal(rental.missing.some((item) => item.key === "price"), false);
+assert.equal(rental.checks.find((item) => item.key === "price")?.label, "月租金");
+const missingRent = calculatePropertyHealthScore({ transaction_type: "rent", price: 1280 });
+assert.equal(missingRent.missing.some((item) => item.key === "price"), true);
+
 console.log("property health tests passed");

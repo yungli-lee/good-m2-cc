@@ -92,7 +92,7 @@ function cellMap(sheetXml: string) {
 const outputDir = join(tmpdir(), "good-m2-export-test");
 mkdirSync(outputDir, { recursive: true });
 const outputPath = join(outputDir, "property-export-test.xlsx");
-writeFileSync(outputPath, buildPropertyExportXlsx(property));
+writeFileSync(outputPath, await buildPropertyExportXlsx(property));
 
 execFileSync("unzip", ["-t", outputPath], { stdio: "pipe" });
 
@@ -111,7 +111,11 @@ assert.doesNotMatch(sheetXml, /\u0001/);
 
 const cells = cellMap(sheetXml);
 assert.equal(cells.get("C11"), "AK5384529");
-assert.equal(cells.get("H11"), "2026-01-22 - 2026-04-21");
+assert.equal(cells.get("H11"), "115/01/22～115/04/21");
+assert.equal(cells.get("A6"), "□一般簽");
+assert.equal(cells.get("A7"), "■專任");
+assert.equal(cells.get("A8"), "□口頭");
+assert.equal(cells.get("L11"), "簽約日:");
 assert.equal(cells.get("C12"), property.title);
 assert.equal(cells.get("C13"), "798萬");
 assert.equal(cells.get("C14"), "980萬");
@@ -127,22 +131,126 @@ assert.equal(cells.get("C24"), "26.275 坪");
 assert.equal(cells.get("H24"), "坐西北朝東南");
 assert.equal(cells.get("C25"), "2樓");
 assert.equal(cells.get("C26"), "4房3廳2衛");
-assert.equal(cells.get("C27"), "70/6/26");
-assert.equal(cells.get("H27"), "55.1年");
+assert.equal(cells.get("C27"), "70/06/26");
+assert.equal(cells.get("H27"), "無");
 assert.match(cells.get("G29") || "", /近快官交流道 & 台鳳/);
 assert.equal(cells.get("B43"), undefined);
 for (const ref of ["G35", "H35", "I35", "J35", "K35", "L35"]) {
   assert.equal(cells.get(ref), undefined, `${ref} should stay blank for layout image`);
 }
 
+const businessOutputPath = join(outputDir, "property-export-business-fields-test.xlsx");
+writeFileSync(businessOutputPath, await buildPropertyExportXlsx({
+  ...property,
+  listing_type: "一般委託",
+  contract_signed_date: "2026-07-28",
+  sale_motivation: ["資金運用"],
+  current_condition_type: ["自用"],
+  current_usage: ["廠房"],
+  building_style: ["透天"],
+  parking_type: ["門前停車"],
+  road_width: 16,
+  frontage: "4米",
+  depth: "19米",
+  completion_date: "1970-02-28",
+  has_addition: true,
+  addition_description: "後方及頂樓加建",
+  elementary_school_district: "大竹國小",
+  junior_high_school_district: "彰泰國中",
+  showing_meeting_location: "現場"
+}));
+const businessCells = cellMap(readZipEntry(businessOutputPath, "xl/worksheets/sheet1.xml").toString("utf8"));
+assert.equal(businessCells.get("A6"), "■一般簽");
+assert.equal(businessCells.get("A7"), "□專任");
+assert.equal(businessCells.get("A8"), "□口頭");
+assert.equal(businessCells.get("L11"), "簽約日:115/07/28");
+assert.equal(businessCells.get("H16"), "自用");
+assert.equal(businessCells.get("C19"), "廠房");
+assert.equal(businessCells.get("C20"), "透天");
+assert.equal(businessCells.get("C21"), "門前停車");
+assert.equal(businessCells.get("B29"), "16米");
+assert.equal(businessCells.get("H21"), "4米");
+assert.equal(businessCells.get("H23"), "19米");
+assert.equal(businessCells.get("C27"), "59/02/28");
+assert.equal(businessCells.get("H27"), "有：後方及頂樓加建");
+assert.equal(businessCells.get("F29"), "大竹國小");
+assert.equal(businessCells.get("F30"), "彰泰國中");
+assert.equal(businessCells.get("B43"), "現場");
+
 const buildingOutputPath = join(outputDir, "property-export-building-test.xlsx");
-writeFileSync(buildingOutputPath, buildPropertyExportXlsx({ ...property, property_type: "building" }));
+writeFileSync(buildingOutputPath, await buildPropertyExportXlsx({
+  ...property,
+  property_type: "building",
+  building_subtype: "highrise",
+  main_building_area_ping: 42.5,
+  auxiliary_building_area_ping: 3.25,
+  shared_area_ping: 15.8,
+  parking_area_ping: 8.1,
+  addition_area_ping: 2,
+  above_ground_floors: 15,
+  basement_floors: 2,
+  parking_space_features: ["平面"],
+  parking_access_types: ["坡道"],
+  parking_floor: "B1",
+  parking_space_no: "18",
+  parking_arrangement: ["固定車位"],
+  management_types: ["保全公司"],
+  management_fee: 2500,
+  management_fee_payment: "月繳",
+  cleaning_fee: 300,
+  market_area: "員林商圈",
+  park_green_space: "公園",
+  medical_facility: "醫院",
+  nearby_train_station: "員林車站",
+  nearby_bus_stop: "莒光路站",
+  community_name: "測試大樓",
+  total_units: 120,
+  elevator_count: 2,
+  units_per_floor: 4,
+  mortgage_setting_amount: 900,
+  has_courtyard: true,
+  is_corner_unit: true,
+  exterior_materials: ["二丁掛"],
+  building_structures: ["鋼筋混凝土RC"],
+  public_facilities: ["會議室", "健身房"],
+  public_facility_floor_notes: "2樓",
+  showing_key_available: true,
+  owner_age: 60,
+  owner_gender: "男",
+  owner_occupation: "自營"
+}));
 execFileSync("unzip", ["-t", buildingOutputPath], { stdio: "pipe" });
 const buildingSheetXml = readZipEntry(buildingOutputPath, "xl/worksheets/sheet1.xml").toString("utf8");
 const buildingSheetPath = join(outputDir, "building-sheet1.xml");
 writeFileSync(buildingSheetPath, buildingSheetXml);
 execFileSync("python3", ["-c", "import sys, xml.etree.ElementTree as ET; ET.parse(sys.argv[1])", buildingSheetPath], { stdio: "pipe" });
-assert.match(buildingSheetXml, /大廈/);
+assert.match(buildingSheetXml, /大樓\.華廈 發稿明細/);
+const buildingCells = cellMap(buildingSheetXml);
+assert.match(buildingCells.get("H22") || "", /■大樓/);
+assert.equal(buildingCells.get("J22"), "15");
+assert.equal(buildingCells.get("L22"), "2");
+assert.equal(buildingCells.get("C21"), "42.5 坪");
+assert.equal(buildingCells.get("D21"), "3.25 坪");
+assert.equal(buildingCells.get("C22"), "45.75 坪");
+assert.match(buildingCells.get("H30") || "", /近快官交流道 & 台鳳/);
+assert.equal(buildingCells.get("C23"), "15.8 坪");
+assert.match(buildingCells.get("H23") || "", /■平面/);
+assert.match(buildingCells.get("H24") || "", /■坡道/);
+assert.equal(buildingCells.get("H25"), "B1");
+assert.match(buildingCells.get("J25") || "", /■固定車位/);
+assert.equal(buildingCells.get("C34"), "測試大樓");
+assert.equal(buildingCells.get("C35"), "120");
+assert.equal(buildingCells.get("C36"), "2");
+assert.equal(buildingCells.get("F36"), "4");
+assert.match(buildingCells.get("C39") || "", /■二丁掛/);
+assert.match(buildingCells.get("C41") || "", /■鋼筋混凝土RC/);
+assert.match(buildingCells.get("B44") || "", /■會議室/);
+assert.match(buildingCells.get("A47") || "", /■健身房/);
+
+const apartmentOutputPath = join(outputDir, "property-export-apartment-test.xlsx");
+writeFileSync(apartmentOutputPath, await buildPropertyExportXlsx({ ...property, property_type: "apartment" }));
+const apartmentCells = cellMap(readZipEntry(apartmentOutputPath, "xl/worksheets/sheet1.xml").toString("utf8"));
+assert.match(apartmentCells.get("H22") || "", /■無電梯公寓/);
 
 const landProperty: Property = {
   ...property,
@@ -176,7 +284,7 @@ const landProperty: Property = {
 };
 
 const landOutputPath = join(outputDir, "property-export-land-test.xlsx");
-writeFileSync(landOutputPath, buildPropertyExportXlsx(landProperty));
+writeFileSync(landOutputPath, await buildPropertyExportXlsx(landProperty));
 execFileSync("unzip", ["-t", landOutputPath], { stdio: "pipe" });
 const landSheetXml = readZipEntry(landOutputPath, "xl/worksheets/sheet1.xml").toString("utf8");
 const landSheetPath = join(outputDir, "land-sheet1.xml");

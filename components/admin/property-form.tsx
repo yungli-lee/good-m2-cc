@@ -1,16 +1,23 @@
+import { PropertyRentalFields } from "./property-rental-fields";
 import type { Property } from "@/lib/properties/types";
-import { getCoverMedia } from "@/lib/properties/types";
+import { getCoverMedia, getMediaImageUrl } from "@/lib/properties/types";
 import { resolvePropertySeo } from "@/lib/properties/seo";
 import type { AdminRole } from "@/lib/auth";
+import { PropertyBusinessFields } from "./property-business-fields";
+import { PropertyApartmentBuildingFields } from "./property-apartment-building-fields";
 
 const typeOptions = [
   ["building_land", "建地"],
-  ["townhouse", "房屋"],
-  ["farmland", "農林漁牧地"],
+  ["farmland", "農地"],
   ["industrial_land", "工業用地"],
+  ["land", "其他土地"],
+  ["farmhouse", "農舍"],
+  ["townhouse", "透天住宅"],
+  ["apartment", "公寓"],
+  ["building", "電梯大樓／華廈"],
+  ["storefront", "店面"],
   ["factory", "廠房"],
-  ["building", "大廈"],
-  ["apartment", "公寓"]
+  ["other", "其他"]
 ];
 
 export function PropertyForm({
@@ -27,6 +34,7 @@ export function PropertyForm({
   const actionPath = typeof formAction === "string" ? formAction : undefined;
   const seoPreview = resolvePropertySeo(property || {});
   const cover = property ? getCoverMedia(property) : null;
+  const coverImageUrl = getMediaImageUrl(cover);
 
   return (
     <form action={formAction} method={actionPath ? "post" : undefined} className="form-grid">
@@ -46,6 +54,8 @@ export function PropertyForm({
         <label htmlFor="address_private">完整地址（後台限定）</label>
         <input className="input" id="address_private" name="address_private" defaultValue={property?.address_private || ""} />
       </div>
+      <div className="field"><label htmlFor="city">縣市</label><input className="input" id="city" name="city" defaultValue={property?.city || "彰化縣"} required /></div>
+      <div className="field"><label htmlFor="district">鄉鎮市區</label><input className="input" id="district" name="district" defaultValue={property?.district || ""} placeholder="例如：彰化市" required /></div>
       <div className="field">
         <label htmlFor="listing_no">委託書編號</label>
         <input className="input" id="listing_no" name="listing_no" defaultValue={property?.listing_no || ""} />
@@ -67,6 +77,7 @@ export function PropertyForm({
         <label htmlFor="listing_end_date">委託迄日</label>
         <input className="input" id="listing_end_date" name="listing_end_date" placeholder="2026/04/21" defaultValue={property?.listing_end_date || ""} />
       </div>
+      <PropertyBusinessFields property={property} />
       <div className="field">
         <label htmlFor="owner_name">屋主名稱</label>
         <input className="input" id="owner_name" name="owner_name" defaultValue={property?.owner_name || ""} />
@@ -105,10 +116,7 @@ export function PropertyForm({
         <label htmlFor="floor_price">底價</label>
         <input className="input" id="floor_price" name="floor_price" defaultValue={property?.floor_price || ""} placeholder="出價談" />
       </div>
-      <div className="field">
-        <label htmlFor="price">開價</label>
-        <input className="input" id="price" name="price" type="number" min="0" defaultValue={property?.price || ""} />
-      </div>
+      <PropertyRentalFields values={property || {}} />
       <div className="field">
         <label htmlFor="land_area_ping">土地坪數</label>
         <input className="input" id="land_area_ping" name="land_area_ping" type="number" step="0.001" min="0" defaultValue={property?.land_area_ping || ""} />
@@ -141,19 +149,26 @@ export function PropertyForm({
           ))}
         </select>
       </div>
+      <PropertyApartmentBuildingFields property={property} />
       <div className="field">
         <label htmlFor="sort_order">排序</label>
         <input className="input" id="sort_order" name="sort_order" type="number" defaultValue={property?.sort_order ?? 1000} />
       </div>
       <div className="field">
         <label htmlFor="status">上架狀態</label>
-        <select className="select" id="status" name="status" defaultValue={property?.status || "draft"} disabled={!canPublish}>
-          <option value="draft">草稿</option>
-          <option value="published">已上架</option>
-          <option value="archived">下架</option>
-          <option value="expired">委託到期</option>
-        </select>
-        {!canPublish ? <input type="hidden" name="status" value="draft" /> : null}
+        {property ? (
+          <>
+            <input className="input" id="status" value={{ draft: "草稿", published: "已上架", archived: "已下架", expired: "委託到期" }[property.status]} disabled />
+            <input type="hidden" name="status" value={property.status} />
+            <p className="muted">上架或下架請回物件列表操作；下架時系統會要求選擇原因。</p>
+          </>
+        ) : (
+          <select className="select" id="status" name="status" defaultValue="draft" disabled={!canPublish}>
+            <option value="draft">草稿</option>
+            <option value="published">已上架</option>
+          </select>
+        )}
+        {!property && !canPublish ? <input type="hidden" name="status" value="draft" /> : null}
       </div>
       {canPublish ? (
         <div className="field">
@@ -185,8 +200,8 @@ export function PropertyForm({
           </div>
           <div className="field full">
             <strong>OG Image</strong>
-            <p className="muted">{cover?.url ? "系統預設使用物件封面圖片。" : "尚未設定封面圖片；上傳並設為封面後會自動作為 OG Image。"}</p>
-            {cover?.url ? <img className="property-image" src={cover.url} alt={cover.alt_text || property?.title || "OG Image"} loading="lazy" /> : null}
+            <p className="muted">{coverImageUrl ? "系統預設使用物件封面圖片或影片 Poster。" : "尚未設定封面；上傳並設為封面後會自動作為 OG Image。"}</p>
+            {coverImageUrl ? <img className="property-image" src={coverImageUrl} alt={cover?.alt_text || property?.title || "OG Image"} loading="lazy" /> : null}
           </div>
           <div className="field full">
             <strong>Canonical URL</strong>

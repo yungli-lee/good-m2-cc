@@ -53,6 +53,8 @@ const actionOptions = [
   "password_changed",
   "password_change_failed",
   "password_reset_email_sent",
+  "email_test_sent",
+  "email_test_failed",
   "content_create",
   "content_update",
   "content_publish",
@@ -76,6 +78,9 @@ const actionOptions = [
   "inquiry_status_update",
   "inquiry_note_create",
   "inquiry_mark_spam",
+  "inquiry_create",
+  "inquiry_email_sent",
+  "inquiry_email_failed",
   "home_campaign_create",
   "home_campaign_update",
   "home_campaign_publish",
@@ -84,7 +89,8 @@ const actionOptions = [
   "site_page_create",
   "site_page_update",
   "site_page_publish",
-  "site_page_archive"
+  "site_page_archive",
+  "site_page_delete"
 ];
 
 function pageHref(filters: Awaited<Props["searchParams"]>, page: number) {

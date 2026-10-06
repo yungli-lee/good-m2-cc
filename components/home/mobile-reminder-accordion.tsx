@@ -1,0 +1,58 @@
+"use client";
+
+import Link from "next/link";
+import { useRef, useState } from "react";
+import { MarkdownContent } from "@/components/home/markdown-content";
+import { DeliveredImage } from "@/components/media/delivered-image";
+import { toggleReminder } from "@/lib/home-cms/reminder-accordion";
+import type { SitePage } from "@/lib/home-cms/types";
+
+type ReminderPage = SitePage & { media_public_url?: string | null };
+
+function contentId(page: ReminderPage) {
+  return `life-note-${page.id.replace(/[^a-zA-Z0-9_-]/g, "-")}`;
+}
+
+export function MobileReminderAccordion({ pages }: { pages: ReminderPage[] }) {
+  const [openIds, setOpenIds] = useState<ReadonlySet<string>>(() => new Set(pages[0] ? [pages[0].id] : []));
+  const [visibleCount, setVisibleCount] = useState(4);
+  const actionsRef = useRef<HTMLDivElement>(null);
+  const collapseReminders = () => {
+    setVisibleCount(4);
+    requestAnimationFrame(() => {
+      const behavior = window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth";
+      actionsRef.current?.scrollIntoView({ behavior, block: "center" });
+    });
+  };
+
+  return (
+    <div className="article-grid life-note-mobile-grid">
+      {pages.slice(0, visibleCount).map((page) => {
+        const isOpen = openIds.has(page.id);
+        const panelId = contentId(page);
+        return (
+          <article className={`article-card${isOpen ? " is-open" : ""}`} data-react-managed data-reminder-slug={page.page_key} key={page.id}>
+            <button
+              type="button"
+              className="article-toggle"
+              aria-controls={panelId}
+              aria-expanded={isOpen}
+              onClick={() => setOpenIds((current) => toggleReminder(current, page.id))}
+            >
+              <span><strong>{page.title}</strong>{page.subtitle ? <small>{page.subtitle}</small> : null}</span>
+              <b>{isOpen ? "收合" : "展開"}</b>
+            </button>
+            <div className="life-note-mobile-actions">
+              <Link className="button ghost life-note-read-more" href={`/reminders/${page.page_key}`}>閱讀全文</Link>
+            </div>
+            <div className="article-body" id={panelId}>
+              {page.media_public_url ? <figure className="cms-reminder-cover"><DeliveredImage sourceUrl={page.media_public_url} tier="detail" sizes="(max-width: 900px) calc(100vw - 100px), 1px" alt={page.title} loading="lazy" /></figure> : null}
+              <MarkdownContent value={page.markdown_content} />
+            </div>
+          </article>
+        );
+      })}
+      {pages.length > 4 ? <div className="reminder-more-actions" ref={actionsRef}>{visibleCount < pages.length ? <button className="button" type="button" onClick={() => setVisibleCount((count) => Math.min(count + 4, pages.length))}>顯示更多</button> : <button className="button ghost" type="button" onClick={collapseReminders}>收合提醒</button>}</div> : null}
+    </div>
+  );
+}

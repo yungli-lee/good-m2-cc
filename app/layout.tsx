@@ -1,11 +1,11 @@
-import type { Metadata } from "next";
 import { HomeHashScroll } from "@/components/layout/home-hash-scroll";
+import { AnalyticsProvider } from "@/components/analytics/analytics-provider";
 import "./globals.css";
+import "./collection.css";
+import type { Metadata } from "next";
+import { siteOrigin } from "@/lib/home-cms/routing";
 
-export const metadata: Metadata = {
-  title: "阿勇不動產顧問",
-  description: "買屋、賣屋、貸款、稅務、簽約到交屋，每一步都清楚說明。"
-};
+export const metadata: Metadata = { metadataBase: new URL(siteOrigin()), twitter: { card: "summary_large_image" } };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -13,6 +13,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body>
         {children}
         <HomeHashScroll />
+        <AnalyticsProvider />
       </body>
     </html>
   );

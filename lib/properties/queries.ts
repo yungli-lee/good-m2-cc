@@ -1,10 +1,27 @@
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { collectionTypes, type CollectionFilters } from "./collection-link";
+import type { Property } from "@/lib/properties/types";
+import {
+  escapePropertySearchTerm,
+  parsePropertySearch,
+  propertySearchKeywordVariants,
+  propertySearchKeywordGroups,
+  rankPropertySearchResults
+} from "@/lib/properties/search";
 
 const publicPropertySelect = `
   id,
   slug,
   title,
   address_public,
+  city,
+  district,
+  transaction_type,
+  rent_monthly,
+  deposit_months,
+  minimum_lease_months,
+  rental_equipment,
+  lease_notarization_required,
   price,
   land_area_ping,
   building_area_ping,
@@ -13,6 +30,21 @@ const publicPropertySelect = `
   orientation,
   floor,
   property_type,
+  building_subtype,
+  main_building_area_ping,
+  auxiliary_building_area_ping,
+  shared_area_ping,
+  parking_area_ping,
+  above_ground_floors,
+  basement_floors,
+  parking_arrangement,
+  management_fee,
+  current_usage,
+  completion_date,
+  community_name,
+  total_units,
+  elevator_count,
+  units_per_floor,
   highlights,
   description,
   status,
@@ -26,7 +58,23 @@ const publicPropertySelect = `
   created_at,
   updated_at,
   deleted_at,
-  property_media(*)
+  property_media(
+    id,
+    property_id,
+    media_type,
+    mime_type,
+    file_size,
+    url,
+    storage_path,
+    thumbnail_url,
+    poster_storage_path,
+    alt_text,
+    sort_order,
+    is_cover,
+    created_at,
+    updated_at,
+    deleted_at
+  )
 `;
 
 const featuredPropertySelect = `
@@ -34,21 +82,35 @@ const featuredPropertySelect = `
   slug,
   title,
   address_public,
+  city,
+  district,
+  transaction_type,
+  rent_monthly,
+  deposit_months,
+  minimum_lease_months,
+  rental_equipment,
+  lease_notarization_required,
   price,
   land_area_ping,
   building_area_ping,
   layout,
+  property_type,
   highlights,
+  description,
   status,
   is_featured,
+  sort_order,
   published_at,
   property_media(
     id,
     property_id,
+    media_type,
     url,
+    thumbnail_url,
     alt_text,
     sort_order,
     is_cover,
+    created_at,
     deleted_at
   )
 `;
@@ -69,16 +131,36 @@ export async function listPublishedProperties() {
   const supabase = await createSupabaseServerClient();
   const query = publishedPropertiesQuery(supabase, publicPropertySelect);
   return query
+    .order("sort_order", { referencedTable: "property_media", ascending: true })
+    .order("created_at", { referencedTable: "property_media", ascending: true })
+    .order("id", { referencedTable: "property_media", ascending: true })
     .order("sort_order", { ascending: true })
     .order("published_at", { ascending: false })
     .order("updated_at", { ascending: false });
+}
+
+export async function listPublishedPropertiesByArea(city: string, district: string, limit = 12) {
+  const supabase = await createSupabaseServerClient();
+  return publishedPropertiesQuery(supabase, publicPropertySelect)
+    .order("sort_order", { referencedTable: "property_media", ascending: true })
+    .order("created_at", { referencedTable: "property_media", ascending: true })
+    .order("id", { referencedTable: "property_media", ascending: true })
+    .order("sort_order", { ascending: true })
+    .order("published_at", { ascending: false })
+    .order("updated_at", { ascending: false })
+    .limit(limit)
+    .eq("city", city).eq("district", district);
 }
 
 export async function listFeaturedProperties(limit = 3) {
   const supabase = await createSupabaseServerClient();
   const query = publishedPropertiesQuery(supabase, featuredPropertySelect);
   return query
+    .order("sort_order", { referencedTable: "property_media", ascending: true })
+    .order("created_at", { referencedTable: "property_media", ascending: true })
+    .order("id", { referencedTable: "property_media", ascending: true })
     .eq("is_featured", true)
+    .order("sort_order", { ascending: true })
     .order("published_at", { ascending: false })
     .order("updated_at", { ascending: false })
     .limit(limit);
@@ -92,83 +174,153 @@ export async function getLatestPublishedProperties(limit = 12) {
   const supabase = await createSupabaseServerClient();
   const query = publishedPropertiesQuery(supabase, featuredPropertySelect);
   return query
+    .order("sort_order", { referencedTable: "property_media", ascending: true })
+    .order("created_at", { referencedTable: "property_media", ascending: true })
+    .order("id", { referencedTable: "property_media", ascending: true })
+    .eq("is_featured", false)
     .order("published_at", { ascending: false })
     .order("updated_at", { ascending: false })
     .limit(limit);
+}
+
+export async function listRetentionPublishedProperties(limit = 3) {
+  const supabase = await createSupabaseServerClient();
+  const query = publishedPropertiesQuery(supabase, featuredPropertySelect);
+  const { data, error } = await query
+    .order("sort_order", { referencedTable: "property_media", ascending: true })
+    .order("created_at", { referencedTable: "property_media", ascending: true })
+    .order("id", { referencedTable: "property_media", ascending: true })
+    .order("is_featured", { ascending: false })
+    .order("published_at", { ascending: false })
+    .order("updated_at", { ascending: false })
+    .limit(Math.max(0, limit));
+
+  if (error) {
+    console.error("retention_properties_failed", { code: error.code, message: error.message });
+    return [] as Property[];
+  }
+  return (data || []) as unknown as Property[];
 }
 
 export async function getPublishedPropertyBySlug(slug: string) {
   const supabase = await createSupabaseServerClient();
   const query = publishedPropertiesQuery(supabase, publicPropertySelect);
   return query
+    .order("sort_order", { referencedTable: "property_media", ascending: true })
+    .order("created_at", { referencedTable: "property_media", ascending: true })
+    .order("id", { referencedTable: "property_media", ascending: true })
     .eq("slug", slug)
     .maybeSingle();
 }
 
-function escapeSearchTerm(value: string) {
-  return value.replace(/[%_,]/g, "");
+export async function listRelatedPublishedProperties(
+  property: Pick<Property, "id" | "property_type" | "city" | "district" | "price" | "transaction_type" | "rent_monthly">,
+  limit = 3
+) {
+  const supabase = await createSupabaseServerClient();
+  const { data, error } = await publishedPropertiesQuery(supabase, publicPropertySelect)
+    .neq("id", property.id)
+    .eq("transaction_type", property.transaction_type || "sale")
+    .order("published_at", { ascending: false })
+    .order("updated_at", { ascending: false })
+    .limit(36);
+
+  if (error) {
+    console.error("related_properties_failed", { code: error.code, message: error.message, propertyId: property.id });
+    return [] as Property[];
+  }
+
+  const currentPrice = Number(property.transaction_type === "rent" ? property.rent_monthly : property.price) || null;
+  return ((data || []) as unknown as Property[])
+    .map((candidate) => {
+      let score = 0;
+      if (property.district && candidate.district === property.district) score += 100;
+      else if (property.city && candidate.city === property.city) score += 55;
+      if (candidate.property_type === property.property_type) score += 45;
+
+      const candidatePrice = candidate.transaction_type === "rent" ? candidate.rent_monthly : candidate.price;
+      if (currentPrice && candidatePrice != null) {
+        const difference = Math.abs(Number(candidatePrice) - currentPrice) / currentPrice;
+        score += Math.max(0, 35 - Math.round(difference * 70));
+      }
+
+      return { candidate, score };
+    })
+    .sort((left, right) =>
+      right.score - left.score ||
+      String(right.candidate.published_at || right.candidate.updated_at).localeCompare(
+        String(left.candidate.published_at || left.candidate.updated_at)
+      )
+    )
+    .slice(0, Math.max(0, limit))
+    .map(({ candidate }) => candidate);
 }
 
-function priceFromWan(value: string) {
-  const match = value.match(/(\d+(?:\.\d+)?)/);
-  if (!match) return null;
-  const amount = Number(match[1]);
-  if (!Number.isFinite(amount) || amount <= 0) return null;
-  return Math.round(amount);
+export async function getPublicPropertyAvailability(slug: string) {
+  const supabase = await createSupabaseServerClient();
+  return supabase.rpc("get_public_property_availability", { requested_slug: slug }).maybeSingle();
 }
 
-function propertyTypeKeyword(value: string) {
-  const keywords: Array<[string, string]> = [
-    ["農舍", "farmhouse"],
-    ["農地", "farmland"],
-    ["建地", "building_land"],
-    ["工業用地", "industrial_land"],
-    ["廠房", "factory"],
-    ["大廈", "building"],
-    ["公寓", "apartment"],
-    ["透天", "townhouse"],
-    ["房屋", "townhouse"],
-    ["店面", "storefront"]
-  ];
-  return keywords.find(([keyword]) => value.includes(keyword))?.[1] || "";
-}
-
-export async function searchPublishedProperties(input = "", limit = 24) {
-  const rawTerm = input.trim();
-  const term = escapeSearchTerm(rawTerm);
-  const propertyType = propertyTypeKeyword(rawTerm);
-  const price = priceFromWan(rawTerm);
-  const isBelow = /以下|以內|內|below|under/i.test(rawTerm);
-  const isAbove = /以上|起|above|over/i.test(rawTerm);
+export async function searchPublishedProperties(input = "", limit = 24, filters?: CollectionFilters) {
+  const { keywords, propertyTypes, typeKeyword, price, priceMode, transaction } = parsePropertySearch(input);
 
   const supabase = await createSupabaseServerClient();
   const query = publishedPropertiesQuery(supabase, featuredPropertySelect);
   let searchQuery = query
+    .order("sort_order", { referencedTable: "property_media", ascending: true })
+    .order("created_at", { referencedTable: "property_media", ascending: true })
+    .order("id", { referencedTable: "property_media", ascending: true })
     .order("published_at", { ascending: false })
     .order("updated_at", { ascending: false })
-    .limit(limit);
+    .limit(Math.min(Math.max(limit * 4, 48), filters ? 1000 : 192));
 
-  if (price) {
-    if (isBelow) searchQuery = searchQuery.lte("price", price);
-    else if (isAbove) searchQuery = searchQuery.gte("price", price);
-    else searchQuery = searchQuery.gte("price", Math.round(price * 0.85)).lte("price", Math.round(price * 1.15));
+  if (filters?.city) searchQuery = searchQuery.eq("city", filters.city);
+  if (filters?.districts.length) searchQuery = searchQuery.in("district", filters.districts);
+  if (filters?.type) searchQuery = searchQuery.in("property_type", [...collectionTypes[filters.type].values]);
+
+  const selectedTransaction = filters?.transaction || transaction || "sale";
+  if (selectedTransaction !== "all") searchQuery = searchQuery.eq("transaction_type", selectedTransaction);
+  const priceColumn = selectedTransaction === "rent" ? "rent_monthly" : "price";
+  if (selectedTransaction !== "all") {
+    if (filters?.minPrice !== undefined) searchQuery = searchQuery.gte(priceColumn, filters.minPrice);
+    if (filters?.maxPrice !== undefined) searchQuery = searchQuery.lte(priceColumn, filters.maxPrice);
+    if (price) {
+      const amount = selectedTransaction === "rent" && transaction !== "rent" ? price * 10000 : price;
+      if (priceMode === "below") searchQuery = searchQuery.lte(priceColumn, amount);
+      else if (priceMode === "above") searchQuery = searchQuery.gte(priceColumn, amount);
+      else searchQuery = searchQuery.gte(priceColumn, Math.round(amount * 0.85)).lte(priceColumn, Math.round(amount * 1.15));
+    }
   }
 
-  if (propertyType) searchQuery = searchQuery.eq("property_type", propertyType);
+  if (propertyTypes.length && typeKeyword) {
+    const typeFilters = propertyTypes.map((type) => `property_type.eq.${type}`);
+    searchQuery = filters ? searchQuery.in("property_type", propertyTypes) : searchQuery.or([
+      ...typeFilters,
+      `title.ilike.%${typeKeyword}%`,
+      `address_public.ilike.%${typeKeyword}%`,
+      `description.ilike.%${typeKeyword}%`
+    ].join(","));
+  }
 
-  if (term && !/^\d+(?:\.\d+)?\s*萬?(?:以下|以內|內|以上|起)?$/.test(term)) {
+  for (const group of propertySearchKeywordGroups(keywords)) {
+    const variants = group.flatMap(propertySearchKeywordVariants);
     searchQuery = searchQuery.or(
-      [
-        `title.ilike.%${term}%`,
-        `slug.ilike.%${term}%`,
-        `address_public.ilike.%${term}%`,
-        `layout.ilike.%${term}%`,
-        `description.ilike.%${term}%`
-      ].join(",")
+      variants.flatMap((variant) => [
+        `title.ilike.%${variant}%`,
+        `slug.ilike.%${variant}%`,
+        `address_public.ilike.%${variant}%`,
+        `city.ilike.%${variant}%`,
+        `district.ilike.%${variant}%`,
+        `layout.ilike.%${variant}%`,
+        `description.ilike.%${variant}%`
+      ]).join(",")
     );
   }
 
-  return searchQuery;
+  const result = await searchQuery;
+  if (result.error) return result;
+  const rankingKeywords = typeKeyword ? [...keywords, typeKeyword] : keywords;
+  return { ...result, data: rankPropertySearchResults(result.data || [], rankingKeywords, limit) };
 }
 
 export type AdminPropertyLifecycleFilter = "all" | "published" | "archived" | "expired" | "draft" | "deleted";
@@ -183,15 +335,43 @@ export async function listAdminProperties(search = "", filter: AdminPropertyLife
       slug,
       address_public,
       address_private,
+      city,
+      district,
+      unavailable_reason,
+      unavailable_at,
       listing_no,
       listing_type,
       listing_start_date,
       listing_end_date,
+      contract_signed_date,
+      sale_motivation,
+      sale_motivation_other,
+      current_condition_type,
+      current_condition_other,
+      current_usage,
+      current_usage_other,
+      building_style,
+      building_style_other,
+      parking_type,
+      parking_type_other,
+      road_width,
+      completion_date,
+      has_addition,
+      addition_description,
+      elementary_school_district,
+      junior_high_school_district,
+      showing_meeting_location,
       owner_name,
       owner_phone,
       developer_names,
       showing_instructions,
-      price,
+      transaction_type,
+  rent_monthly,
+  deposit_months,
+  minimum_lease_months,
+  rental_equipment,
+  lease_notarization_required,
+  price,
       land_area_ping,
       building_area_ping,
       layout,
@@ -216,11 +396,19 @@ export async function listAdminProperties(search = "", filter: AdminPropertyLife
       property_media(
         id,
         property_id,
+        media_type,
         url,
+        thumbnail_url,
+        alt_text,
+        sort_order,
         is_cover,
+        created_at,
         deleted_at
       )
     `)
+    .order("sort_order", { referencedTable: "property_media", ascending: true })
+    .order("created_at", { referencedTable: "property_media", ascending: true })
+    .order("id", { referencedTable: "property_media", ascending: true })
     .order("updated_at", { ascending: false });
 
   if (filter === "deleted") {
@@ -230,7 +418,7 @@ export async function listAdminProperties(search = "", filter: AdminPropertyLife
     if (filter !== "all") query = query.eq("status", filter);
   }
 
-  const term = escapeSearchTerm(search.trim());
+  const term = escapePropertySearchTerm(search.trim());
   if (term) {
     query = query.or(`title.ilike.%${term}%,slug.ilike.%${term}%,listing_no.ilike.%${term}%,owner_name.ilike.%${term}%`);
   }
@@ -244,5 +432,8 @@ export async function getAdminPropertyById(id: string) {
     .from("properties")
     .select("*, property_media(*)")
     .eq("id", id)
+    .order("sort_order", { referencedTable: "property_media", ascending: true })
+    .order("created_at", { referencedTable: "property_media", ascending: true })
+    .order("id", { referencedTable: "property_media", ascending: true })
     .maybeSingle();
 }

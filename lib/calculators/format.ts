@@ -16,3 +16,7 @@ export function formatWanDecimal(value: number) {
     minimumFractionDigits: Number.isInteger(value) ? 0 : 1
   }).format(value)} 萬`;
 }
+
+export function formatWanTwoDecimals(value: number) {
+  return `${new Intl.NumberFormat("zh-TW", { maximumFractionDigits: 2, minimumFractionDigits: 2 }).format(value)} 萬`;
+}

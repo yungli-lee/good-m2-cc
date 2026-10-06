@@ -1,27 +1,27 @@
 import Link from "next/link";
-import { formatPing, formatPrice } from "@/lib/format";
+import { formatPublicPing, formatPropertyPrice, isLandProperty } from "@/lib/format";
 import type { Property } from "@/lib/properties/types";
-import { getCoverMedia } from "@/lib/properties/types";
+import { getCoverMedia, getMediaImageUrl } from "@/lib/properties/types";
+import { PropertyCoverImage } from "@/components/media/property-cover-image";
 
 export function PropertyCard({ property }: { property: Property }) {
   const cover = getCoverMedia(property);
   const highlights = (property.highlights || []).slice(0, 3).join("、");
+  const areas = [property.land_area_ping == null ? null : `土地 ${formatPublicPing(property.land_area_ping)}`, property.building_area_ping == null ? null : `建物 ${formatPublicPing(property.building_area_ping)}`].filter(Boolean);
 
   return (
     <article className="card">
       {cover ? (
-        <img className="property-image" src={cover.url} alt={cover.alt_text || property.title} loading="lazy" />
+        <PropertyCoverImage className="property-image" sizes="(max-width: 760px) calc(100vw - 34px), (max-width: 1152px) calc((100vw - 68px) / 3 - 2px), 360px" src={getMediaImageUrl(cover)} alt={cover.alt_text || property.title} />
       ) : (
         <div className="property-image" role="img" aria-label={`${property.title} 尚未設定封面照片`} />
       )}
       <div className="card-body">
         <h2 style={{ margin: "0 0 8px", fontSize: "1.2rem" }}>{property.title}</h2>
-        <div className="price">{formatPrice(property.price)}</div>
+        <span className="eyebrow">{property.transaction_type === "rent" ? "出租" : "出售"}</span><div className="price">{formatPropertyPrice(property)}</div>
         <p className="muted">{property.address_public || "地址洽詢"}</p>
-        <p>
-          土地 {formatPing(property.land_area_ping)} / 建物 {formatPing(property.building_area_ping)}
-        </p>
-        <p>{property.layout || "格局洽詢"}</p>
+        {areas.length ? <p>{areas.join(" / ")}</p> : null}
+        {!isLandProperty(property.property_type) && property.layout ? <p>{property.layout}</p> : null}
         {highlights ? <p className="muted">{highlights}</p> : null}
         <Link className="button" href={`/properties/${property.slug}`}>
           查看詳情

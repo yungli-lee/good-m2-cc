@@ -3,6 +3,8 @@ export type ParsedProperty = {
   slug?: string;
   address_public?: string;
   address_private?: string;
+  city?: string;
+  district?: string;
   listing_no?: string;
   listing_type?: string;
   listing_start_date?: string;
@@ -15,6 +17,12 @@ export type ParsedProperty = {
   floor_price?: string;
   frontage?: string;
   depth?: string;
+  transaction_type?: string;
+  rent_monthly?: string;
+  deposit_months?: string;
+  minimum_lease_months?: string;
+  rental_equipment?: string;
+  lease_notarization_required?: string;
   price?: string;
   land_area_ping?: string;
   building_area_ping?: string;
@@ -27,19 +35,39 @@ export type ParsedProperty = {
   description?: string;
   seo_title?: string;
   meta_description?: string;
+  contract_signed_date?: string;
+  sale_motivation?: string;
+  sale_motivation_other?: string;
+  current_condition_type?: string;
+  current_condition_other?: string;
+  current_usage?: string;
+  current_usage_other?: string;
+  building_style?: string;
+  building_style_other?: string;
+  parking_type?: string;
+  parking_type_other?: string;
+  road_width?: string;
+  completion_date?: string;
+  has_addition?: string;
+  addition_description?: string;
+  elementary_school_district?: string;
+  junior_high_school_district?: string;
+  showing_meeting_location?: string;
 };
 
-const fieldAliases: Array<[keyof ParsedProperty | "lot_number" | "main_building" | "balcony" | "shared_area" | "completion_date" | "internal_notes", RegExp]> = [
+const fieldAliases: Array<[keyof ParsedProperty | "lot_number" | "main_building" | "balcony" | "shared_area" | "internal_notes", RegExp]> = [
   ["title", /^(案名|物件名稱|社區|標題)$/],
   ["address_public", /^(地址|公開地址|座落)$/],
   ["address_private", /^(完整地址|私有地址|後台地址)$/],
+  ["city", /^(縣市)$/],
+  ["district", /^(鄉鎮市區|行政區)$/],
   ["listing_no", /^(委託書編號|委託編號)$/],
   ["listing_type", /^(委託類型)$/],
   ["owner_name", /^(屋主名稱|屋主)$/],
   ["owner_phone", /^(屋主電話)$/],
   ["developer_names", /^(開發|開發人員|承辦|業務)$/],
   ["showing_instructions", /^(帶看|帶看資訊|帶看方式)$/],
-  ["frontage", /^(面寬)$/],
+  ["frontage", /^(面寬|寬度)$/],
   ["depth", /^(深度)$/],
   ["lot_number", /^(地號)$/],
   ["land_area_ping", /^(地坪|土地|土地坪數)$/],
@@ -56,6 +84,25 @@ const fieldAliases: Array<[keyof ParsedProperty | "lot_number" | "main_building"
   ["service_fee_rate", /^(服務費|服務費%|仲介服務費)$/],
   ["floor", /^(樓層|樓高)$/],
   ["highlights", /^(推薦特色|特色|賣點|亮點)$/],
+  ["contract_signed_date", /^(簽約日|簽約日期)$/],
+  ["sale_motivation", /^(售屋動機)$/],
+  ["sale_motivation_other", /^(售屋動機.?其他說明)$/],
+  ["current_condition_type", /^(現況種類)$/],
+  ["current_condition_type", /^(現況)$/],
+  ["current_condition_other", /^(現況種類.?其他說明)$/],
+  ["current_usage", /^(現況用途)$/],
+  ["current_usage_other", /^(現況用途.?其他說明)$/],
+  ["building_style", /^(型態|形態)$/],
+  ["building_style_other", /^(型態|形態).?其他說明$/],
+  ["parking_type", /^(停車位)$/],
+  ["parking_type_other", /^(停車位.?其他說明)$/],
+  ["road_width", /^(路寬)$/],
+  ["completion_date", /^(完工日|完工日期)$/],
+  ["has_addition", /^(加建)$/],
+  ["addition_description", /^(加建說明|加建位置)$/],
+  ["elementary_school_district", /^(小學學區)$/],
+  ["junior_high_school_district", /^(中學學區|國中學區)$/],
+  ["showing_meeting_location", /^(約看地點)$/],
   ["internal_notes", /^(內部備註|密碼|鑰匙|門牌|聯絡|管理室|租金)$/]
 ];
 
@@ -205,10 +252,21 @@ function parseDateLike(value: string) {
   return null;
 }
 
+export function normalizeDateForInput(value: string) {
+  const match = value.trim().match(/^(?:民國)?(\d{2,4})[/-年.](\d{1,2})(?:[/-月.](\d{1,2}))?$/);
+  if (!match) return "";
+  const rawYear = Number(match[1]);
+  const year = rawYear < 1911 ? rawYear + 1911 : rawYear;
+  const month = Number(match[2]);
+  const day = Number(match[3] || 1);
+  const date = new Date(Date.UTC(year, month - 1, day));
+  if (date.getUTCFullYear() !== year || date.getUTCMonth() !== month - 1 || date.getUTCDate() !== day) return "";
+  return `${year.toString().padStart(4, "0")}-${month.toString().padStart(2, "0")}-${day.toString().padStart(2, "0")}`;
+}
+
 function normalizeDateText(value: string) {
-  const date = value.trim().match(/(20\d{2}|19\d{2})[/-年.](\d{1,2})(?:[/-月.](\d{1,2}))?/);
-  if (!date) return value.trim();
-  return `${date[1]}/${date[2].padStart(2, "0")}/${(date[3] || "1").padStart(2, "0")}`;
+  const normalized = normalizeDateForInput(value.replace(/-/g, "/"));
+  return normalized ? normalized.replace(/-/g, "/") : value.trim();
 }
 
 function calculateAgeFromDate(value: string) {
@@ -225,6 +283,7 @@ function inferType(text: string) {
   if (incomingCategory === "土地") return "building_land";
   if (incomingCategory === "大樓華廈" || incomingCategory === "大樓" || incomingCategory === "華廈") return "building";
 
+  if (/農舍/.test(text)) return "farmhouse";
   if (/農林漁牧地|農地|林地|漁牧地/.test(text)) return "farmland";
   if (/工業用地/.test(text)) return "industrial_land";
   if (/建地/.test(text)) return "building_land";
@@ -300,6 +359,16 @@ function extractIncomingCategory(text: string) {
   return text.match(incomingCategoryPattern)?.[1] || "";
 }
 
+function normalizeBusinessChoices(value: string, options: readonly string[]) {
+  const selected = options.filter((option) => value.includes(option));
+  const rest = options.filter((option) => selected.includes(option)).reduce((text, option) => text.replaceAll(option, " "), value)
+    .replace(/[、,，兼及+＋]/g, " ")
+    .split(/\s+/)
+    .filter(Boolean)
+    .filter((part) => !selected.includes(part));
+  return { selected, other: rest.join("、") };
+}
+
 export function parsePastedProperty(rawText: string): ParsedProperty {
   const text = normalizeText(rawText);
   const labeled = extractLabeledLines(text);
@@ -324,9 +393,8 @@ export function parsePastedProperty(rawText: string): ParsedProperty {
       }
       continue;
     }
-    if (field === "lot_number" || field === "main_building" || field === "balcony" || field === "shared_area" || field === "completion_date" || field === "internal_notes") {
+    if (field === "lot_number" || field === "main_building" || field === "balcony" || field === "shared_area" || field === "internal_notes") {
       internalNotes.push(`${label}：${value}`);
-      if (field === "completion_date" && !parsed.age) parsed.age = calculateAgeFromDate(value);
       continue;
     }
     parsed[field] ||= value;
@@ -385,12 +453,43 @@ export function parsePastedProperty(rawText: string): ParsedProperty {
     if (completion) parsed.age = calculateAgeFromDate(completion);
   }
 
+  const rental = text.match(/^\s*(?:租金|月租金|月租)\s*[:：]\s*([^\n]+)/m)?.[1] || "";
+  parsed.transaction_type = /新接租件/.test(text) || (rental && !parsed.price) ? "rent" : "sale";
+  if (parsed.transaction_type === "rent") {
+    const amount = rental.match(/(\d[\d,]*(?:\.\d+)?)\s*(萬)?/);
+    parsed.rent_monthly = amount ? String(Number(amount[1].replaceAll(",", "")) * (amount[2] ? 10000 : 1)) : "";
+    const digits = (raw: string) => Number(raw.match(/\d+/)?.[0] || ({ "一": 1, "兩": 2, "二": 2, "三": 3, "四": 4, "五": 5 } as Record<string, number>)[raw.match(/[一兩二三四五]/)?.[0] || ""] || 0);
+    const deposit = extractValue(text, ["押金"]); const lease = extractValue(text, ["最短租期", "租期"]);
+    parsed.deposit_months = deposit ? String(digits(deposit)) : "";
+    parsed.minimum_lease_months = lease ? String(digits(lease) * (/年/.test(lease) ? 12 : 1)) : "";
+    parsed.lease_notarization_required = /租約.{0,8}(?:須|需).{0,6}公證/.test(text) ? "true" : "false";
+    parsed.rental_equipment = (text.match(/^\s*(?:原)?(?:餐飲設備|附帶設備|設備)\s*[:：，,]?\s*(.+)$/m)?.[1] || "").split(/擁有|HACCP/)[0].replace(/[，,、\s]+$/, "");
+    parsed.price = "";
+  }
   parsed.price = parsed.price ? normalizePrice(parsed.price) : "";
   parsed.land_area_ping = parsed.land_area_ping ? normalizeNumber(parsed.land_area_ping) : "";
   parsed.building_area_ping = parsed.building_area_ping ? normalizeNumber(parsed.building_area_ping) : "";
   parsed.layout = parsed.layout ? normalizeLayout(parsed.layout) : "";
   parsed.orientation = parsed.orientation ? normalizeOrientation(parsed.orientation) : "";
   parsed.age = parsed.age ? normalizeNumber(parsed.age) : "";
+  parsed.completion_date = parsed.completion_date ? normalizeDateForInput(parsed.completion_date) : "";
+  const businessFields = [
+    ["sale_motivation", ["換屋","工作","就學","家庭組成改變","移民","資金運用","其他"], "sale_motivation_other"],
+    ["current_condition_type", ["空屋","自用","出租","結構體","其他"], "current_condition_other"],
+    ["current_usage", ["住宅","店面","辦公","住辦","住店","廠房","倉庫","土地","車位","其他"], "current_usage_other"],
+    ["building_style", ["透天","別墅","農舍","公寓","華廈","電梯大樓","套房","店面","廠房","倉庫","土地","其他"], "building_style_other"],
+    ["parking_type", ["無","車庫","門前停車","騎樓停車","庭院停車","平面車位","機械車位","露天停車","其他"], "parking_type_other"]
+  ] as const;
+  for (const [field, options, otherField] of businessFields) {
+    const raw = parsed[field] || "";
+    if (!raw) continue;
+    const normalized = normalizeBusinessChoices(raw, options);
+    parsed[field] = normalized.selected.join("、");
+    if (normalized.other && !parsed[otherField]) {
+      parsed[field] = [...normalized.selected, "其他"].join("、");
+      parsed[otherField] = normalized.other;
+    }
+  }
   parsed.floor ||= inferFloor(parsed.title || text);
   parsed.listing_type = parsed.listing_type === "一般" ? "一般委託" : parsed.listing_type;
   parsed.listing_type = parsed.listing_type === "口頭約" ? "口頭" : parsed.listing_type;
@@ -403,7 +502,7 @@ export function parsePastedProperty(rawText: string): ParsedProperty {
 
   parsed.description = "";
   parsed.seo_title = `${parsed.title}｜阿勇不動產顧問`.slice(0, 180);
-  parsed.meta_description = compactMetaDescription([parsed.title || "", parsed.address_public || "", parsed.layout || "", parsed.price ? `開價 ${parsed.price} 萬` : ""]);
+  parsed.meta_description = compactMetaDescription([parsed.title || "", parsed.address_public || "", parsed.layout || "", parsed.transaction_type === "rent" ? `月租 ${parsed.rent_monthly} 元` : parsed.price ? `開價 ${parsed.price} 萬` : ""]);
 
   return parsed;
 }

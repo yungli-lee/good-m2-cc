@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { canDeleteProperties, canPublishProperties, requireRole } from "@/lib/auth";
-import { formatDateTime, formatPrice } from "@/lib/format";
+import { formatDateTime, formatPropertyPrice } from "@/lib/format";
 import { calculatePropertyHealthScore } from "@/lib/properties/health-score";
 import { listAdminProperties } from "@/lib/properties/queries";
 import type { AdminPropertyLifecycleFilter } from "@/lib/properties/queries";
@@ -23,10 +23,30 @@ type AdminPropertyListItem = {
   title: string;
   slug: string;
   address_public: string | null;
+  city: string | null;
+  district: string | null;
   listing_no: string | null;
   listing_type: string | null;
   listing_start_date: string | null;
   listing_end_date: string | null;
+  contract_signed_date: string | null;
+  sale_motivation: string[] | null;
+  sale_motivation_other: string | null;
+  current_condition_type: string[] | null;
+  current_condition_other: string | null;
+  current_usage: string[] | null;
+  current_usage_other: string | null;
+  building_style: string[] | null;
+  building_style_other: string | null;
+  parking_type: string[] | null;
+  parking_type_other: string | null;
+  road_width: number | null;
+  completion_date: string | null;
+  has_addition: boolean;
+  addition_description: string | null;
+  elementary_school_district: string | null;
+  junior_high_school_district: string | null;
+  showing_meeting_location: string | null;
   developer_names: string | null;
   owner_name: string | null;
   owner_phone: string | null;
@@ -54,7 +74,7 @@ type AdminPropertyListItem = {
   deleted_at: string | null;
   deleted_by: string | null;
   delete_reason: string | null;
-  property_media?: PropertyMedia[];
+  property_media?: Partial<PropertyMedia>[];
 };
 
 const statusLabel: Record<PropertyStatus, string> = {
@@ -63,16 +83,6 @@ const statusLabel: Record<PropertyStatus, string> = {
   archived: "下架",
   expired: "委託到期"
 };
-
-const cityPattern = /^(?<city>[^縣市]+[縣市])(?<district>[^鄉鎮市區]+[鄉鎮市區])?/;
-
-function parsePublicLocation(address?: string | null) {
-  const match = address?.match(cityPattern);
-  return {
-    city: match?.groups?.city || "-",
-    district: match?.groups?.district || "-"
-  };
-}
 
 type Props = {
   searchParams: Promise<{ error?: string; q?: string; lifecycle?: string }>;
@@ -112,7 +122,7 @@ function PublishAction({ id, status, canPublish, deleted }: { id: string; status
           <p className="muted">下架需填寫原因，紀錄會寫入時間軸。</p>
           <label className="field">
             <span>下架原因</span>
-            <select className="select" name="unpublish_reason" defaultValue="成交" required>
+            <select className="select" name="unpublish_reason" defaultValue="已成交" required>
               {unpublishReasons.map((reason) => <option key={reason} value={reason}>{reason}</option>)}
             </select>
           </label>
@@ -201,6 +211,7 @@ const errorMessage: Record<string, string> = {
   unpublish_reason_required: "請選擇下架原因；選「其他」時請填寫原因。",
   unpublish_failed: "下架失敗，請稍後再試。",
   not_published: "此物件目前不是已上架狀態。",
+  rent_required: "出租案件上架前請先填寫月租金。",
   already_published: "此物件已經是上架狀態。",
   republish_failed: "重新上架失敗，請稍後再試。",
   delete_failed: "刪除失敗，請稍後再試。",
@@ -248,7 +259,7 @@ export default async function AdminPropertiesPage({ searchParams }: Props) {
               className={filter.value === lifecycle ? "button" : "button ghost"}
               href={filterHref(filter.value, search)}
             >
-              {filter.value === lifecycle ? "☑" : "□"} {filter.label}
+              {filter.value === lifecycle ? "■" : "□"} {filter.label}
             </Link>
           ))}
         </div>
@@ -271,7 +282,6 @@ export default async function AdminPropertiesPage({ searchParams }: Props) {
             </thead>
             <tbody>
               {properties.map((property) => {
-                const location = parsePublicLocation(property.address_public);
                 return (
                   <tr key={property.id}>
                     <td>
@@ -287,9 +297,9 @@ export default async function AdminPropertiesPage({ searchParams }: Props) {
                     </td>
                     <td>{property.listing_no || "-"}</td>
                     <td>{property.developer_names || "-"}</td>
-                    <td>{location.city}</td>
-                    <td>{location.district}</td>
-                    <td>{formatPrice(property.price)}</td>
+                    <td>{property.city || "未填"}</td>
+                    <td>{property.district || "未填"}</td>
+                    <td>{formatPropertyPrice(property)}</td>
                     <td><HealthScoreCell property={property} /></td>
                     <td>
                       {property.deleted_at ? "已刪除" : statusLabel[property.status]}

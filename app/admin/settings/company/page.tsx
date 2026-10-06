@@ -20,7 +20,7 @@ export default async function AdminCompanySettingsPage({ searchParams }: Props) 
         <div className="actions" style={{ justifyContent: "space-between", marginBottom: 18 }}>
           <div>
             <h1 style={{ margin: 0 }}>公司資料設定</h1>
-            <p className="muted">前台物件詳細頁會顯示這組公開公司資訊。</p>
+            <p className="muted">前台 Header、Footer、聯絡區、聯絡頁與物件詳細頁會共用這組公開公司資訊。</p>
           </div>
           <Link className="button ghost" href="/admin">回後台首頁</Link>
         </div>

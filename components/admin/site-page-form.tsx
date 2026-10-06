@@ -1,14 +1,16 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { MediaPicker } from "@/components/admin/media-picker";
-import { cmsStatusLabels, sitePageLabels, sitePageKeys, type SitePage } from "@/lib/home-cms/types";
+import { cmsStatusLabels, type SitePage, type SitePageType } from "@/lib/home-cms/types";
 import type { MediaLibraryAsset, MediaUsageType } from "@/lib/media";
+import { reservedSitePageSlugs } from "@/lib/home-cms/routing";
 
 type Props = {
   page?: SitePage | null;
   mediaAssets: MediaLibraryAsset[];
+  existingPageTypes?: SitePageType[];
 };
 
 type SaveResponse = {
@@ -18,15 +20,66 @@ type SaveResponse = {
 };
 
 const preferredUsageTypes: MediaUsageType[] = ["hero_banner", "general", "knowledge_hero", "knowledge_inline"];
+const pageTypeOptions = [
+  { value: "philosophy", label: "服務理念", slug: "philosophy", repeatable: false },
+  { value: "services", label: "服務項目", slug: "services", repeatable: false },
+  { value: "reminder", label: "阿勇生活小提醒", slug: "", repeatable: true },
+  { value: "contact", label: "聯絡我們", slug: "contact", repeatable: false },
+  { value: "custom", label: "自訂頁面", slug: "", repeatable: true }
+] as const;
 
-export function SitePageForm({ page, mediaAssets }: Props) {
+type PageType = (typeof pageTypeOptions)[number]["value"];
+
+function suggestedSlug(title: string) {
+  const value = title
+    .trim()
+    .toLowerCase()
+    .normalize("NFKD")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+  return value || (title.trim() ? "new-page" : "");
+}
+
+export function SitePageForm({ page, mediaAssets, existingPageTypes = [] }: Props) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
   const initialAsset = mediaAssets.find((asset) => asset.id === page?.cover_media_id) || null;
   const [mediaId, setMediaId] = useState(initialAsset?.id || "");
-  const [coverUrl, setCoverUrl] = useState("");
+  const [coverUrl, setCoverUrl] = useState(page?.fallback_cover_url || "");
+  const [body, setBody] = useState(page?.markdown_content || "");
+  const [inlineAssetId, setInlineAssetId] = useState("");
+  const [title, setTitle] = useState(page?.title || "");
+  const [slug, setSlug] = useState(page?.page_key || "");
+  const [slugEdited, setSlugEdited] = useState(Boolean(page?.page_key));
+  const initialPageType = page?.page_type || "custom";
+  const [pageType, setPageType] = useState<PageType>(initialPageType);
+  const isSlugEditable = pageType === "custom" || pageType === "reminder";
+  const bodyRef = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    if (isSlugEditable && !slugEdited) setSlug(suggestedSlug(title));
+  }, [isSlugEditable, slugEdited, title]);
+
+  function insertInlineImage(asset: MediaLibraryAsset) {
+    const textarea = bodyRef.current;
+    const start = textarea?.selectionStart ?? body.length;
+    const end = textarea?.selectionEnd ?? start;
+    const alt = (asset.alt_text || asset.caption || asset.original_filename || "內文圖片")
+      .replace(/[[\]]/g, "");
+    const markdown = `![${alt}](${asset.public_url})`;
+    const before = body.slice(0, start).replace(/\s*$/, "");
+    const after = body.slice(end).replace(/^\s*/, "");
+    const nextBody = [before, markdown, after].filter(Boolean).join("\n\n");
+    setBody(nextBody);
+    setInlineAssetId(asset.id);
+    window.requestAnimationFrame(() => {
+      const cursor = before.length + (before ? 2 : 0) + markdown.length;
+      textarea?.focus();
+      textarea?.setSelectionRange(cursor, cursor);
+    });
+  }
 
   function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -58,16 +111,84 @@ export function SitePageForm({ page, mediaAssets }: Props) {
     });
   }
 
+  function handleDelete() {
+    if (!page?.id || (page.page_type !== "reminder" && page.page_type !== "custom")) return;
+    if (!window.confirm(`確定刪除「${page.title}」？此動作無法復原。`)) return;
+    setError(null);
+    setToast(null);
+    startTransition(async () => {
+      try {
+        const response = await fetch(`/api/admin/site-pages/${page.id}`, { method: "DELETE" });
+        const result = (await response.json().catch(() => null)) as SaveResponse | null;
+        if (!response.ok || !result?.ok) {
+          setError(result?.message || "刪除失敗，請稍後再試。");
+          return;
+        }
+        router.replace(result.redirectTo || "/admin/site-pages?saved=1");
+        router.refresh();
+      } catch (deleteError) {
+        setError(deleteError instanceof Error ? deleteError.message : "刪除失敗，請稍後再試。");
+      }
+    });
+  }
+
   return (
     <form className="form-grid" onSubmit={handleSubmit}>
       {toast ? <div className="success field full" role="status">{toast}</div> : null}
       {error ? <div className="notice field full" role="alert">{error}</div> : null}
       <label className="field">
-        <span>頁面</span>
-        <select className="select" name="page_key" defaultValue={page?.page_key || "philosophy"} disabled={Boolean(page) || pending}>
-          {sitePageKeys.map((key) => <option key={key} value={key}>{sitePageLabels[key]}</option>)}
+        <span>頁面類型</span>
+        <select
+          className="select"
+          name="page_type"
+          value={pageType}
+          onChange={(event) => {
+            const nextType = event.target.value as PageType;
+            const option = pageTypeOptions.find((item) => item.value === nextType);
+            setPageType(nextType);
+            if (nextType === "custom" || nextType === "reminder") {
+              setSlugEdited(false);
+              setSlug(suggestedSlug(title));
+            } else {
+              setSlugEdited(true);
+              setSlug(option?.slug || "");
+            }
+          }}
+          disabled={pending}
+        >
+          {pageTypeOptions.map((option) => {
+            const alreadyExists = !option.repeatable
+              && existingPageTypes.includes(option.value)
+              && page?.page_type !== option.value;
+            return (
+              <option key={option.value} value={option.value} disabled={alreadyExists}>
+                {option.label}{alreadyExists ? "（已建立）" : ""}
+              </option>
+            );
+          })}
         </select>
-        {page ? <input type="hidden" name="page_key" value={page.page_key} /> : null}
+      </label>
+      <label className="field">
+        <span>Slug</span>
+        <input
+          className="input"
+          name="page_key"
+          pattern="[a-z0-9]+(?:-[a-z0-9]+)*"
+          value={slug}
+          onChange={(event) => {
+            setSlugEdited(true);
+            setSlug(event.target.value);
+          }}
+          placeholder="例如：life-notes"
+          required
+          readOnly={!isSlugEditable}
+          disabled={pending}
+        />
+        <small className="muted">
+          {isSlugEditable
+            ? `每篇內容使用獨立 Slug；僅限小寫英文字母、數字與連字號。保留路徑：${reservedSitePageSlugs.join("、")}。`
+            : "預設頁型的 Slug 已鎖定，以保護既有導覽與錨點。"}
+        </small>
       </label>
       <label className="field">
         <span>狀態</span>
@@ -75,22 +196,53 @@ export function SitePageForm({ page, mediaAssets }: Props) {
           {Object.entries(cmsStatusLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
         </select>
       </label>
+      <label className="field consent-check">
+        <input name="show_as_page" type="checkbox" defaultChecked={page?.show_as_page ?? false} disabled={pending} />
+        <span>顯示為獨立頁面</span>
+      </label>
+      <label className="field consent-check">
+        <input name="show_on_homepage" type="checkbox" defaultChecked={page?.show_on_homepage ?? false} disabled={pending} />
+        <span>顯示於首頁</span>
+      </label>
       <label className="field">
         <span>排序</span>
         <input className="input" type="number" min="0" name="sort_order" defaultValue={page?.sort_order ?? 1000} disabled={pending} />
       </label>
       <label className="field full">
         <span>標題</span>
-        <input className="input" name="title" defaultValue={page?.title || ""} required disabled={pending} />
+        <input className="input" name="title" value={title} onChange={(event) => setTitle(event.target.value)} required disabled={pending} />
       </label>
       <label className="field full">
-        <span>副標</span>
+        <span>Eyebrow / 分類標籤</span>
+        <input className="input" name="eyebrow" defaultValue={page?.eyebrow || ""} disabled={pending} />
+      </label>
+      <label className="field full">
+        <span>副標 / 摘要</span>
         <input className="input" name="subtitle" defaultValue={page?.subtitle || ""} disabled={pending} />
       </label>
       <label className="field full">
         <span>內容（Markdown）</span>
-        <textarea className="textarea" name="markdown_content" rows={12} defaultValue={page?.markdown_content || ""} disabled={pending} />
+        <textarea
+          className="textarea"
+          name="markdown_content"
+          rows={16}
+          ref={bodyRef}
+          value={body}
+          onChange={(event) => setBody(event.target.value)}
+          disabled={pending}
+        />
+        <small className="muted">將游標放在要插入的位置，再從下方選擇內文圖片。刪除內容中的圖片 Markdown 即可移除圖片。</small>
       </label>
+      <div className="field full">
+        <MediaPicker
+          assets={mediaAssets}
+          preferredUsageTypes={["knowledge_inline", "knowledge_gallery", "general"]}
+          selectedId={inlineAssetId}
+          title="新增或更換內文圖片"
+          disabled={pending}
+          onSelect={insertInlineImage}
+        />
+      </div>
       <input type="hidden" name="cover_media_id" value={mediaId} />
       <div className="field full">
         <MediaPicker
@@ -104,10 +256,23 @@ export function SitePageForm({ page, mediaAssets }: Props) {
             setCoverUrl(asset.public_url);
           }}
         />
+        {mediaId || coverUrl ? (
+          <button
+            className="button ghost"
+            type="button"
+            disabled={pending}
+            onClick={() => {
+              setMediaId("");
+              setCoverUrl("");
+            }}
+          >
+            移除目前主圖
+          </button>
+        ) : null}
       </div>
       <label className="field full">
         <span>Fallback 封面 URL</span>
-        <input className="input" name="fallback_cover_url" defaultValue={page?.fallback_cover_url || coverUrl} disabled={pending} />
+        <input className="input" name="fallback_cover_url" value={coverUrl} onChange={(event) => setCoverUrl(event.target.value)} disabled={pending} />
       </label>
       <label className="field full">
         <span>SEO Title</span>
@@ -119,6 +284,9 @@ export function SitePageForm({ page, mediaAssets }: Props) {
       </label>
       <div className="actions full">
         <button className="button" type="submit" disabled={pending}>{pending ? "儲存中..." : "儲存頁面內容"}</button>
+        {page && (page.page_type === "reminder" || page.page_type === "custom") ? (
+          <button className="button danger" type="button" disabled={pending} onClick={handleDelete}>刪除內容</button>
+        ) : null}
       </div>
     </form>
   );

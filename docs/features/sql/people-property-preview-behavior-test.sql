@@ -1,0 +1,10 @@
+-- 人工測試模板：先在 Preview 取得三個 UUID，再替換下列 placeholder。
+-- TEST_PERSON_ID、TEST_PROPERTY_ID、TEST_CREATED_BY 僅是文字 placeholder，不可直接執行。
+-- 建議每一段單獨執行並保存結果；完成後使用 cleanup SQL。
+-- 1) create: INSERT ... RETURNING id, status, created_at;
+-- 2) duplicate active: 重複同一 person_id/property_id/relationship_type，預期 unique violation。
+-- 3) archive: UPDATE ... SET status='archived', archived_at=now(), ended_at=now() WHERE id='<TEST_RELATION_ID>' RETURNING *;
+-- 4) archived recreate: 再 INSERT 相同三鍵，預期成功。
+-- 5) invalid date: INSERT ended_at 早於 started_at，預期 check violation。
+-- 6) updated_at: UPDATE note 後比較更新前後 updated_at。
+-- 所有 INSERT/UPDATE 必須由使用者將明確 UUID 與 relation id 替換後執行，不能使用 broad predicate。

@@ -5,8 +5,10 @@ import { redirect } from "next/navigation";
 import { requireRole } from "@/lib/auth";
 import { recordAuditLog } from "@/lib/audit/audit-log";
 import { nullable, sitePageSchema, valuesFromFormData } from "@/lib/home-cms/schema";
+import { normalizeMarkdown } from "@/lib/home-cms/markdown";
 import { getSitePage } from "@/lib/home-cms/queries";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { revalidateSitePageContent } from "@/lib/home-cms/revalidation";
 
 function actorEmail(current: Awaited<ReturnType<typeof requireRole>>) {
   return current.user.email || current.profile.email || null;
@@ -25,13 +27,15 @@ export async function createSitePageAction(formData: FormData) {
 
   const payload = {
     ...parsed.data,
+    eyebrow: nullable(parsed.data.eyebrow),
     subtitle: nullable(parsed.data.subtitle),
-    markdown_content: nullable(parsed.data.markdown_content),
+    markdown_content: nullable(normalizeMarkdown(parsed.data.markdown_content)),
     cover_media_id: nullable(parsed.data.cover_media_id),
     fallback_cover_url: nullable(parsed.data.fallback_cover_url),
     seo_title: nullable(parsed.data.seo_title),
     seo_description: nullable(parsed.data.seo_description),
     archived_at: parsed.data.status === "archived" ? new Date().toISOString() : null,
+    published_at: parsed.data.status === "published" ? new Date().toISOString() : null,
     created_by: current.user.id,
     updated_by: current.user.id
   };
@@ -50,7 +54,7 @@ export async function createSitePageAction(formData: FormData) {
     actorRole: current.profile.role
   });
 
-  revalidatePath("/");
+  revalidateSitePageContent(data.page_key);
   revalidatePath("/admin/site-pages");
   redirect(`/admin/site-pages/${data.id}/edit?saved=1`);
 }
@@ -65,13 +69,15 @@ export async function updateSitePageAction(id: string, formData: FormData) {
 
   const payload = {
     ...parsed.data,
+    eyebrow: nullable(parsed.data.eyebrow),
     subtitle: nullable(parsed.data.subtitle),
-    markdown_content: nullable(parsed.data.markdown_content),
+    markdown_content: nullable(normalizeMarkdown(parsed.data.markdown_content)),
     cover_media_id: nullable(parsed.data.cover_media_id),
     fallback_cover_url: nullable(parsed.data.fallback_cover_url),
     seo_title: nullable(parsed.data.seo_title),
     seo_description: nullable(parsed.data.seo_description),
     archived_at: parsed.data.status === "archived" ? before.archived_at || new Date().toISOString() : null,
+    published_at: parsed.data.status === "published" ? before.published_at || new Date().toISOString() : before.published_at,
     updated_by: current.user.id
   };
 
@@ -90,7 +96,7 @@ export async function updateSitePageAction(id: string, formData: FormData) {
     actorRole: current.profile.role
   });
 
-  revalidatePath("/");
+  revalidateSitePageContent(before.page_key, data.page_key);
   revalidatePath("/admin/site-pages");
   redirect(`/admin/site-pages/${id}/edit?saved=1`);
 }

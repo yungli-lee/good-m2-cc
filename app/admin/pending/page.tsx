@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import Link from "next/link";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { logoutAction } from "../login/actions";
 import { isAdminRole } from "@/types/auth/admin";
@@ -38,7 +39,7 @@ export default async function AdminPendingPage() {
               若管理員稍後升級權限，重新整理即可進入後台。
             </p>
             <div className="actions">
-              <a className="button" href="/admin/pending">重新整理</a>
+              <Link className="button" href="/admin/pending">重新整理</Link>
               <form action={logoutAction}>
                 <button className="button ghost" type="submit">登出</button>
               </form>

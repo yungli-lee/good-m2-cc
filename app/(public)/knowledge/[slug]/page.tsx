@@ -1,8 +1,17 @@
+import { StructuredData } from "@/components/content/structured-data";
 import type { Metadata } from "next";
+import type React from "react";
 import Link from "next/link";
+import { KnowledgeViewTracker } from "@/components/analytics/content-trackers";
+import { DeliveredImage } from "@/components/media/delivered-image";
 import { notFound } from "next/navigation";
-import { getPublicKnowledgeBySlug } from "@/lib/content/queries";
+import { getPublicKnowledgeBySlug, listRelatedKnowledgeItems } from "@/lib/content/queries";
+import { getPublicCompanySettings } from "@/lib/company-settings";
+import { formatKnowledgeReadingTime } from "@/lib/content/reading-time";
 import type { ContentItem } from "@/lib/content/types";
+import { ContentRetention } from "@/components/content/content-retention";
+import { listPublishedReminderPages } from "@/lib/home-cms/queries";
+import { listRetentionPublishedProperties } from "@/lib/properties/queries";
 
 export const runtime = "edge";
 export const dynamic = "force-dynamic";
@@ -12,11 +21,11 @@ type Props = {
 };
 
 const siteOrigin = "https://good.m2.cc";
-const lineUrl = "https://line.me/ti/p/abQv5LYzzE";
+
 
 type ArticleBlock =
   | { type: "heading"; level: 1 | 2 | 3; text: string; id: string }
-  | { type: "image"; alt: string; url: string }
+  | { type: "image"; align: "left" | "center" | "right"; alt: string; caption: string; url: string; width: "25%" | "50%" | "75%" | "100%" }
   | { type: "paragraph"; text: string }
   | { type: "list"; ordered: boolean; items: string[] }
   | { type: "quote"; text: string }
@@ -63,18 +72,67 @@ function slugifyHeading(value: string, index: number) {
   return slug || `section-${index + 1}`;
 }
 
-function readingTime(body?: string | null) {
-  const text = String(body || "").replace(/\s+/g, "");
-  if (!text) return "1 分鐘";
-  return `${Math.max(1, Math.ceil(text.length / 500))} 分鐘`;
-}
-
 function parseTable(block: string) {
   const rows = block.split("\n").map((line) => line.trim()).filter(Boolean);
   if (rows.length < 2 || !rows.every((line) => line.includes("|"))) return null;
   const parsed = rows.map((line) => line.split("|").map((cell) => cell.trim()).filter(Boolean));
   if (parsed.some((row) => row.length < 2)) return null;
   return parsed.filter((row) => !row.every((cell) => /^:?-{3,}:?$/.test(cell)));
+}
+
+function isLikelyImageUrl(value: string) {
+  const url = value.trim().replace(/\s+["'][\s\S]*["']$/, "");
+  if (!/^https?:\/\//i.test(url)) return false;
+  return /\.(avif|gif|jpe?g|png|webp)([?#].*)?$/i.test(url) || /\/storage\/v1\/object\/public\/|\/media\//i.test(url);
+}
+
+function parseMarkdownImageTarget(value: string) {
+  const match = value.trim().match(/^(\S+?)(?:\s+["']([^"']*)["'])?$/);
+  const title = match?.[2]?.trim() || "";
+  const widthMatches = Array.from(title.matchAll(/\bwidth=(25%|50%|75%|100%)(?=\s|$)/gi));
+  const alignMatches = Array.from(title.matchAll(/\balign=(left|center|right)\b/gi));
+  return {
+    url: match?.[1] || value.trim(),
+    caption: title.replace(/\s*\bwidth=(25%|50%|75%|100%)(?=\s|$)/gi, "").replace(/\s*\balign=(left|center|right)\b/gi, "").trim(),
+    width: (widthMatches[widthMatches.length - 1]?.[1] || "100%") as "25%" | "50%" | "75%" | "100%",
+    align: (alignMatches[alignMatches.length - 1]?.[1] || "center") as "left" | "center" | "right"
+  };
+}
+
+function externalLinkAttrs(href: string, nofollow = false) {
+  if (href.startsWith("/")) return {};
+  try {
+    const url = new URL(href, siteOrigin);
+    if (url.origin === siteOrigin) return {};
+    return {
+      target: "_blank",
+      rel: `noopener noreferrer${nofollow ? " nofollow" : ""}`
+    };
+  } catch {
+    return {};
+  }
+}
+
+function renderInlineMarkdown(value: string) {
+  const parts: React.ReactNode[] = [];
+  const linkPattern = /\[([^\]]+)\]\((\S+?)(?:\s+["']([^"']*)["'])?\)/g;
+  let cursor = 0;
+  let match: RegExpExecArray | null;
+
+  while ((match = linkPattern.exec(value)) !== null) {
+    if (match.index > cursor) parts.push(value.slice(cursor, match.index));
+    const href = match[2] || "#";
+    const nofollow = /nofollow/i.test(match[3] || "");
+    parts.push(
+      <a href={href} key={`${href}-${match.index}`} {...externalLinkAttrs(href, nofollow)}>
+        {match[1]}
+      </a>
+    );
+    cursor = match.index + match[0].length;
+  }
+
+  if (cursor < value.length) parts.push(value.slice(cursor));
+  return parts.length ? parts : value;
 }
 
 function parseArticleBody(body?: string | null) {
@@ -103,9 +161,15 @@ function parseArticleBody(body?: string | null) {
       return;
     }
 
-    const image = block.match(/^!\[([^\]]*)\]\(([^)\n]+)\)$/);
+    const image = block.match(/^!\[([^\]]*)\]\((\S+?)(?:\s+["']([^"']*)["'])?\)$/);
     if (image) {
-      parsed.push({ type: "image", alt: image[1].trim() || "文章圖片", url: image[2].trim() });
+      const target = parseMarkdownImageTarget(`${image[2]}${image[3] ? ` "${image[3]}"` : ""}`);
+      parsed.push({ type: "image", align: target.align, alt: image[1].trim() || "文章圖片", caption: target.caption, url: target.url, width: target.width });
+      return;
+    }
+
+    if (isLikelyImageUrl(block)) {
+      parsed.push({ type: "image", align: "center", alt: "文章圖片", caption: "", url: block.trim(), width: "100%" });
       return;
     }
 
@@ -154,20 +218,42 @@ function renderArticleBlocks(blocks: ArticleBlock[]) {
   return blocks.map((block, index) => {
     if (block.type === "heading") {
       const Heading = `h${block.level}` as "h1" | "h2" | "h3";
-      return <Heading key={index} id={block.id}>{block.text}</Heading>;
+      return <Heading key={index} id={block.id}>{renderInlineMarkdown(block.text)}</Heading>;
     }
-    if (block.type === "image") return <img key={index} className="knowledge-inline-image" src={block.url} alt={block.alt} loading="lazy" />;
+    if (block.type === "image") {
+      const sizes = block.width === "100%"
+        ? "(max-width: 760px) calc(100vw - 36px), 820px"
+        : block.width === "75%"
+          ? "(max-width: 760px) 75vw, 615px"
+          : block.width === "50%"
+            ? "(max-width: 760px) 50vw, 410px"
+            : "(max-width: 760px) 25vw, 205px";
+      return (
+        <figure className="knowledge-preview-figure" key={index}>
+          <DeliveredImage
+            className={`knowledge-inline-image is-align-${block.align}`}
+            sourceUrl={block.url}
+            tier="detail"
+            sizes={sizes}
+            alt={block.alt}
+            loading="lazy"
+            style={{ width: block.width, maxWidth: "100%" }}
+          />
+          {block.caption ? <figcaption>{block.caption}</figcaption> : null}
+        </figure>
+      );
+    }
     if (block.type === "list") {
       const List = block.ordered ? "ol" : "ul";
-      return <List key={index}>{block.items.map((item, itemIndex) => <li key={itemIndex}>{item}</li>)}</List>;
+      return <List key={index}>{block.items.map((item, itemIndex) => <li key={itemIndex}>{renderInlineMarkdown(item)}</li>)}</List>;
     }
-    if (block.type === "quote") return <blockquote key={index}>{block.text}</blockquote>;
+    if (block.type === "quote") return <blockquote key={index}>{renderInlineMarkdown(block.text)}</blockquote>;
     if (block.type === "divider") return <hr key={index} />;
     if (block.type === "callout") {
       return (
         <aside key={index} className={`knowledge-callout is-${block.tone}`}>
           <strong>{block.title}</strong>
-          {block.text ? <p>{block.text}</p> : null}
+          {block.text ? <p>{renderInlineMarkdown(block.text)}</p> : null}
         </aside>
       );
     }
@@ -186,17 +272,20 @@ function renderArticleBlocks(blocks: ArticleBlock[]) {
         </div>
       );
     }
-    return <p key={index}>{block.text}</p>;
+    return <p key={index}>{renderInlineMarkdown(block.text)}</p>;
   });
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
-  const { data } = await getPublicKnowledgeBySlug(slug);
+  const [{ data }, company] = await Promise.all([
+    getPublicKnowledgeBySlug(slug),
+    getPublicCompanySettings()
+  ]);
   const item = data as ContentItem | null;
-  if (!item) return { title: "知識內容不存在｜阿勇不動產顧問" };
+  if (!item) return { title: `知識內容不存在｜${company.brand_name}` };
 
-  const title = item.seo_title?.trim() || `${item.title}｜不動產知識庫｜阿勇不動產顧問`;
+  const title = item.seo_title?.trim() || `${item.title}｜不動產知識庫｜${company.brand_name}`;
   const description = knowledgeDescription(item);
   const canonical = canonicalFor(item);
 
@@ -205,10 +294,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     description,
     openGraph: {
       title,
+      siteName: company.brand_name,
       description,
       images: item.og_image_url || item.cover_image_url ? [item.og_image_url || item.cover_image_url || ""] : undefined,
+      url: canonical,
       type: "article"
     },
+    twitter: { card: "summary_large_image", title, description, images: item.og_image_url || item.cover_image_url ? [item.og_image_url || item.cover_image_url || ""] : undefined },
     alternates: { canonical }
   };
 }
@@ -219,6 +311,8 @@ export default async function KnowledgeDetailPage({ params }: Props) {
   if (error || !data) notFound();
 
   const item = data as ContentItem;
+  const company = await getPublicCompanySettings();
+  const lineUrl = company.line_url || "/contact";
   const category = item.content_categories?.name || "不動產知識";
   const publishedDate = formatDate(item.published_at);
   const reviewedDate = formatDate(item.last_reviewed_at);
@@ -230,16 +324,23 @@ export default async function KnowledgeDetailPage({ params }: Props) {
     .map((block) => ({ id: block.id, text: block.text, level: block.level }));
   const shareText = encodeURIComponent(item.title);
   const shareUrl = encodeURIComponent(articleUrl);
+  const [relatedKnowledge, reminders, properties] = await Promise.all([
+    listRelatedKnowledgeItems(item, 3),
+    listPublishedReminderPages(3),
+    listRetentionPublishedProperties(3)
+  ]);
 
   return (
     <main>
+      <StructuredData data={{ "@context": "https://schema.org", "@graph": [{ "@type": "Article", headline: item.title, description: knowledgeDescription(item), mainEntityOfPage: articleUrl, datePublished: item.published_at || undefined, dateModified: item.updated_at || item.published_at || undefined, image: item.og_image_url || item.cover_image_url || undefined, publisher: { "@type": "Organization", name: company.brand_name, url: "https://good.m2.cc" } }, { "@type": "BreadcrumbList", itemListElement: [{ "@type": "ListItem", position: 1, name: "首頁", item: "https://good.m2.cc" }, { "@type": "ListItem", position: 2, name: "知識庫", item: "https://good.m2.cc/knowledge" }, { "@type": "ListItem", position: 3, name: item.title, item: articleUrl }] }] }} />
+      <KnowledgeViewTracker articleId={item.id} slug={item.slug} category={category} />
       <article className="section">
         <div className="container knowledge-detail-shell">
           <div className="knowledge-article-layout">
             <div className="knowledge-main-column">
               <Link className="button ghost" href="/knowledge">返回知識庫</Link>
               <header className="knowledge-detail-header">
-                <p className="knowledge-meta">{category}{publishedDate ? ` · ${publishedDate}` : ""} · 閱讀時間 {readingTime(item.body)}</p>
+                <p className="knowledge-meta">{category}{publishedDate ? ` · ${publishedDate}` : ""} · 閱讀時間 {formatKnowledgeReadingTime(item.body)}</p>
                 <h1>{item.title}</h1>
                 {item.summary ? <p className="knowledge-lead">{item.summary}</p> : null}
                 <div className="knowledge-share-actions" aria-label="分享文章">
@@ -247,7 +348,15 @@ export default async function KnowledgeDetailPage({ params }: Props) {
                   <a className="button ghost" href={`https://social-plugins.line.me/lineit/share?url=${shareUrl}`} target="_blank" rel="noreferrer">LINE 分享</a>
                   <a className="button ghost" href={`https://www.facebook.com/sharer/sharer.php?u=${shareUrl}&quote=${shareText}`} target="_blank" rel="noreferrer">Facebook 分享</a>
                 </div>
-                {item.cover_image_url ? <img className={`knowledge-hero-image is-${imageFit}`} src={item.cover_image_url} alt={item.title} /> : null}
+                {item.cover_image_url ? (
+                  <DeliveredImage
+                    className={`knowledge-hero-image is-${imageFit}`}
+                    sourceUrl={item.cover_image_url}
+                    tier="detail"
+                    sizes="(max-width: 760px) calc(100vw - 36px), 820px"
+                    alt={item.title}
+                  />
+                ) : null}
               </header>
               <div className="knowledge-body">
                 {renderArticleBlocks(articleBlocks)}
@@ -288,6 +397,15 @@ export default async function KnowledgeDetailPage({ params }: Props) {
           </div>
         </div>
       </article>
+
+      <ContentRetention
+        knowledge={relatedKnowledge}
+        reminders={reminders}
+        properties={properties}
+        knowledgeTitle="相關知識文章"
+        reminderTitle="阿勇生活小提醒"
+        propertyTitle="看完知識，也可以看看物件"
+      />
     </main>
   );
 }

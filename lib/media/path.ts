@@ -4,7 +4,9 @@ const mimeExtensionMap: Record<string, string> = {
   "image/jpeg": "jpg",
   "image/png": "png",
   "image/webp": "webp",
-  "image/gif": "gif"
+  "image/gif": "gif",
+  "video/mp4": "mp4",
+  "video/webm": "webm"
 };
 
 function padMonth(month: number) {
@@ -26,6 +28,12 @@ export function mediaExtensionFromMimeType(mimeType: string) {
 export function mediaExtensionFromFilename(filename: string) {
   const extension = filename.split(".").pop()?.toLowerCase() || "";
   return extension.replace(/[^a-z0-9]/g, "") || null;
+}
+
+export function mediaMimeMatchesExtension(mimeType: string, filename: string) {
+  const expected = mediaExtensionFromMimeType(mimeType);
+  const actual = mediaExtensionFromFilename(filename);
+  return Boolean(expected && actual && expected === actual);
 }
 
 export function buildMediaStoragePath(input: BuildMediaStoragePathInput) {

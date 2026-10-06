@@ -1,0 +1,2 @@
+import type { SupabaseClient } from "@supabase/supabase-js";
+export async function insertRequirementActivity(supabase:SupabaseClient,input:{personId:string;requirementId?:string|null;type:string;title:string;userId:string;changedFields?:string[]}){const safe=[`客需：${input.title}`,input.changedFields?.length?`變更欄位：${input.changedFields.join("、")}`:null].filter(Boolean).join("\n");return supabase.from("people_activities").insert({person_id:input.personId,requirement_id:input.requirementId||null,activity_type:input.type,note:safe,created_by:input.userId});}

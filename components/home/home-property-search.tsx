@@ -1,0 +1,107 @@
+"use client";
+
+import { formatPropertyPrice } from "@/lib/format";
+import Link from "next/link";
+import { CollectionShare } from "@/components/properties/collection-share";
+import { collectionFilters, collectionHref } from "@/lib/properties/collection-link";
+import { useState } from "react";
+import { trackEvent } from "@/lib/analytics/client";
+import { PropertyCoverImage } from "@/components/media/property-cover-image";
+
+export type HomeProperty = {
+  id: string;
+  slug: string;
+  title: string;
+  transaction_type?: "sale" | "rent";
+  rent_monthly?: number | null;
+  price: number | null;
+  address_public: string | null;
+  land_area_ping: number | null;
+  building_area_ping: number | null;
+  layout: string | null;
+  property_type?: string | null;
+  highlights?: string[] | null;
+  property_media?: Array<{ id: string; media_type: "image" | "video"; url: string; thumbnail_url: string | null; alt_text?: string | null; sort_order: number; is_cover?: boolean; created_at: string; deleted_at?: string | null }> | null;
+};
+
+function cover(property: HomeProperty) {
+  const media = [...(property.property_media || [])]
+    .filter((item) => !item.deleted_at && Boolean(item.media_type === "video" ? item.thumbnail_url : item.url))
+    .sort((left, right) => left.sort_order - right.sort_order || left.created_at.localeCompare(right.created_at) || left.id.localeCompare(right.id));
+  return media.find((item) => item.is_cover) || media[0] || null;
+}
+
+
+function area(value: number | null) {
+  if (value === null || !Number.isFinite(value)) return null;
+  return new Intl.NumberFormat("zh-TW", { maximumFractionDigits: 2 }).format(value);
+}
+
+const landTypes = new Set(["farmland", "building_land", "industrial_land", "land"]);
+
+export function HomePropertyCard({ property }: { property: HomeProperty }) {
+  const media = cover(property);
+  const coverUrl = media?.media_type === "video" ? media.thumbnail_url || "" : media?.url || "";
+  return (
+    <article className="property-discovery-card">
+      {coverUrl ? <PropertyCoverImage className="property-card-image" fallbackClassName="property-card-placeholder" sizes="(max-width: 900px) calc(max(280px, 82vw) - 2px), (max-width: 1100px) calc((90vw - 16px) / 2 - 2px), (max-width: 1312px) calc((90vw - 32px) / 3 - 2px), 381px" src={coverUrl} alt={media?.alt_text || property.title} /> : <div className="property-card-placeholder" role="img" aria-label={`${property.title} 尚未設定封面照片`} />}
+      <div className="property-discovery-body">
+        <h3>{property.title}</h3>
+        <p><strong>{formatPropertyPrice(property)}</strong></p>
+        <p>{property.address_public || "地址洽詢"}</p>
+        {area(property.land_area_ping) || area(property.building_area_ping) ? <p>{[area(property.land_area_ping) ? `土地 ${area(property.land_area_ping)} 坪` : "", area(property.building_area_ping) ? `建物 ${area(property.building_area_ping)} 坪` : ""].filter(Boolean).join(" / ")}</p> : null}
+        {!landTypes.has(property.property_type || "") && property.layout ? <p>{property.layout}</p> : null}
+        <Link className="button" href={`/properties/${property.slug}`}>查看詳情</Link>
+      </div>
+    </article>
+  );
+}
+
+export function HomePropertySearch({ lineUrl }: { lineUrl: string }) {
+  const [searchedQuery, setSearchedQuery] = useState("");
+  const [transaction, setTransaction] = useState<"sale" | "rent" | "all">("sale");
+  const [searchedTransaction, setSearchedTransaction] = useState<"sale" | "rent" | "all">("sale");
+  const [query, setQuery] = useState("");
+  const [results, setResults] = useState<HomeProperty[] | null>(null);
+  const [pending, setPending] = useState(false);
+  const [error, setError] = useState("");
+
+  async function submit(event: React.FormEvent) {
+    event.preventDefault();
+    setPending(true);
+    setError("");
+    try {
+      const params = new URLSearchParams({ mode: "search", limit: "24", transaction });
+      if (query.trim()) params.set("q", query.trim());
+      const response = await fetch(`/api/public/properties?${params}`);
+      const body = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error("搜尋暫時無法使用，請稍後再試。");
+      setSearchedQuery(query.trim());
+      setSearchedTransaction(transaction);
+      setResults(Array.isArray(body.data) ? body.data : []);
+      void trackEvent("search_property", { properties: { query: query.trim() || null, district: null, category: null, price_min: null, price_max: null, result_count: Array.isArray(body.data) ? body.data.length : 0 } });
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "搜尋暫時無法使用，請稍後再試。");
+      setResults(null);
+    } finally {
+      setPending(false);
+    }
+  }
+
+  return (
+    <section className="property-search-section" id="property-search">
+      <div className="section-heading"><p className="eyebrow">Property Search</p><h2>找找看適合的物件</h2><p>輸入地點、預算、類型或生活需求，先看目前公開上架的物件。</p></div>
+      <form className="property-search-form" onSubmit={submit}>
+        <label>交易類型<select value={transaction} onChange={event => setTransaction(event.target.value as typeof transaction)}><option value="sale">出售</option><option value="rent">出租</option><option value="all">出售與出租</option></select></label>
+        <label>搜尋條件<input value={query} onChange={(event) => setQuery(event.target.value)} type="search" placeholder={transaction === "rent" ? "秀水、出租店面、月租15萬以下" : "鹿港、福興、1000萬、農地、三房"} /></label>
+        <button className="button primary" type="submit" disabled={pending}>{pending ? "搜尋中…" : "搜尋物件"}</button>
+      </form>
+      {error ? <p className="notice" role="alert">{error}</p> : null}
+      {results ? <div className="property-search-results">
+        <div className="property-search-heading"><h3>搜尋結果</h3><Link className="button ghost" href={collectionHref(collectionFilters({ q: searchedQuery, transaction: searchedTransaction }))}>開啟完整搜尋結果</Link></div>
+        <CollectionShare href={collectionHref(collectionFilters({ q: searchedQuery, transaction: searchedTransaction }))} title={searchedQuery || "全部公開物件"} />
+        {results.length ? <div className="property-carousel"><div className="property-card-track">{results.map((item) => <HomePropertyCard property={item} key={item.id} />)}</div></div> : <div className="property-empty-cta"><p>目前沒有符合條件的公開物件，可以直接把需求傳給阿勇協助留意。</p>{lineUrl ? <a className="button primary" href={lineUrl}>Line 阿勇諮詢</a> : null}</div>}
+      </div> : null}
+    </section>
+  );
+}

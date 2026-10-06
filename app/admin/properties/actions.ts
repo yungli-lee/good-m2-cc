@@ -18,7 +18,7 @@ import {
   draftPropertyValuesFromFormData,
   normalizePropertyForm,
   normalizePropertyValues,
-  propertySchema,
+  propertyBaseSchema,
   propertyValuesFromFormData,
   toDraftPropertyPayload,
   toPropertyPayload
@@ -156,16 +156,17 @@ function draftFieldErrors(error: { issues: Array<{ path: Array<string | number>;
 function propertyFieldErrors(error: { issues: Array<{ path: Array<string | number>; message: string }> }) {
   return error.issues.reduce<PropertyFormState["fieldErrors"]>((errors, issue) => {
     const field = issue.path[0];
-    if (typeof field === "string" && field in propertySchema.shape) {
+    if (typeof field === "string" && field in propertyBaseSchema.shape) {
       errors[field as keyof PropertyFormState["fieldErrors"]] = issue.message;
     }
     return errors;
   }, {});
 }
 
-function propertyCreateErrorMessage(error: { code?: string; message?: string }) {
+function propertyCreateErrorMessage(error: { code?: string; message?: string; details?: string | null }) {
   if (error.code === "23505") return "Slug 已重複，系統自動流水號處理失敗，請稍後再試。";
   if (error.code === "42501") return "資料庫權限不足，請確認 properties insert grant 與 RLS policy。";
+  if (error.code === "23514") return `物件建立失敗（資料庫檢核限制）：${(error.details || error.message || "constraint violation").slice(0, 240)}`;
   return `物件建立失敗${error.code ? `（${error.code}）` : ""}，請稍後再試。`;
 }
 
@@ -291,6 +292,8 @@ export async function updateDraftPropertyAction(
       title: payload.title,
       slug,
       price: payload.price,
+      transaction_type: payload.transaction_type,
+      rent_monthly: payload.rent_monthly,
       address_public: payload.address_public,
       updated_by: current.user.id,
       updated_at: new Date().toISOString()
@@ -332,6 +335,7 @@ export async function togglePropertyPublishAction(id: string, nextStatus: "draft
   const { data: before } = await supabase.from("properties").select("*").eq("id", id).is("deleted_at", null).maybeSingle();
   if (!before) redirect("/admin/properties?error=not_found");
 
+  if (nextStatus === "published" && before.transaction_type === "rent" && !(Number(before.rent_monthly) > 0)) redirect("/admin/properties?error=rent_required");
   const now = new Date().toISOString();
   const { data, error } = await supabase
     .from("properties")
@@ -392,6 +396,8 @@ export async function unpublishPropertyAction(id: string, formData: FormData) {
       status: "archived",
       published_at: null,
       is_featured: false,
+      unavailable_reason: reason,
+      unavailable_at: now,
       updated_by: current.user.id,
       updated_at: now
     })
@@ -437,6 +443,7 @@ export async function republishPropertyAction(id: string) {
   const { data: before } = await supabase.from("properties").select("*").eq("id", id).is("deleted_at", null).maybeSingle();
   if (!before) redirect("/admin/properties?error=not_found");
   if (before.status === "published") redirect("/admin/properties?error=already_published");
+  if (before.transaction_type === "rent" && !(Number(before.rent_monthly) > 0)) redirect("/admin/properties?error=rent_required");
 
   const now = new Date().toISOString();
   const { data, error } = await supabase
@@ -444,6 +451,8 @@ export async function republishPropertyAction(id: string) {
     .update({
       status: "published",
       published_at: now,
+      unavailable_reason: null,
+      unavailable_at: null,
       updated_by: current.user.id,
       updated_at: now
     })
@@ -641,11 +650,7 @@ export async function updatePropertyAction(id: string, formData: FormData) {
         is_featured: before.is_featured
       }, role);
 
-  if (
-    canPublishProperties(role) &&
-    ((before.status === "published" && safePayload.status !== "published") ||
-      (before.status !== "published" && safePayload.status === "published"))
-  ) {
+  if (safePayload.status !== before.status) {
     redirect(`/admin/properties/${id}/edit?error=use_lifecycle_action`);
   }
 
@@ -829,16 +834,31 @@ export async function setCoverImageAction(propertyId: string, mediaId: string) {
   if (!canManagePropertyMedia(current.profile.role)) redirect("/admin/login?error=forbidden");
   const supabase = await createSupabaseServerClient();
 
-  await supabase.from("property_media").update({ is_cover: false }).eq("property_id", propertyId);
+  const { data: media } = await supabase.from("property_media")
+    .select("id,media_type,thumbnail_url,is_cover")
+    .eq("id", mediaId).eq("property_id", propertyId).is("deleted_at", null).maybeSingle();
+  if (!media) redirect(`/admin/properties/${propertyId}/edit?error=cover_failed`);
+  if (media.media_type === "video" && !media.thumbnail_url?.trim()) redirect(`/admin/properties/${propertyId}/edit?error=video_poster_missing`);
+  if (media.is_cover) redirect(`/admin/properties/${propertyId}/edit?saved=1`);
+  const { data: previousCover } = await supabase.from("property_media").select("id")
+    .eq("property_id", propertyId).eq("is_cover", true).is("deleted_at", null).maybeSingle();
+  const { error: clearError } = await supabase.from("property_media").update({ is_cover: false })
+    .eq("property_id", propertyId).is("deleted_at", null);
+  if (clearError) redirect(`/admin/properties/${propertyId}/edit?error=cover_failed`);
   const { data, error } = await supabase
     .from("property_media")
     .update({ is_cover: true, updated_at: new Date().toISOString() })
     .eq("id", mediaId)
     .eq("property_id", propertyId)
+    .is("deleted_at", null)
     .select()
     .single();
 
-  if (error) redirect(`/admin/properties/${propertyId}/edit?error=${encodeURIComponent(error.code || "cover_failed")}`);
+  if (error) {
+    if (previousCover?.id) await supabase.from("property_media").update({ is_cover: true })
+      .eq("id", previousCover.id).eq("property_id", propertyId).is("deleted_at", null);
+    redirect(`/admin/properties/${propertyId}/edit?error=cover_failed`);
+  }
 
   await recordAuditLog({
     action: "property_image_upload",

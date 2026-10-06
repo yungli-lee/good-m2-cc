@@ -3,16 +3,7 @@
 import { usePathname } from "next/navigation";
 import { useEffect } from "react";
 
-const homeScrollTargets = new Set([
-  "philosophy",
-  "featured-properties",
-  "services",
-  "calculators",
-  "process",
-  "reminders",
-  "team",
-  "consult"
-]);
+const validHomeScrollTarget = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
 const maxScrollAttempts = 15;
 const scrollAttemptDelayMs = 50;
@@ -25,7 +16,7 @@ function getHomeScrollTarget() {
   const hash = window.location.hash.replace("#", "");
   const target = scrollTo || hash;
 
-  return homeScrollTargets.has(target) ? { shouldCleanUrl: Boolean(scrollTo), target } : null;
+  return validHomeScrollTarget.test(target) ? { shouldCleanUrl: Boolean(scrollTo), target } : null;
 }
 
 function cleanScrollTargetQuery() {

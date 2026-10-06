@@ -23,13 +23,27 @@ export function CompanySettingsForm({ settings }: { settings: CompanySettings })
         <h2 style={{ margin: 0 }}>基本資料</h2>
       </div>
       <div className="field">
-        <label htmlFor="company_name">公司名稱</label>
+        <label htmlFor="brand_name">品牌名稱</label>
+        <input className="input" id="brand_name" name="brand_name" defaultValue={settings.brand_name} required />
+        <span className="muted">顯示於網站 Header、Mobile Header、Footer 品牌區塊與 SEO site name。</span>
+        <FieldError message={state.fieldErrors?.brand_name} />
+      </div>
+      <div className="field">
+        <label htmlFor="brand_tagline">品牌副標</label>
+        <input className="input" id="brand_tagline" name="brand_tagline" defaultValue={settings.brand_tagline} required />
+        <span className="muted">顯示於 Header 與 Mobile Header 品牌名稱下方。</span>
+        <FieldError message={state.fieldErrors?.brand_tagline} />
+      </div>
+      <div className="field">
+        <label htmlFor="company_name">公司法定名稱</label>
         <input className="input" id="company_name" name="company_name" defaultValue={settings.company_name} required />
+        <span className="muted">顯示於聯絡我們、公司資訊卡與法定揭露。</span>
         <FieldError message={state.fieldErrors?.company_name} />
       </div>
       <div className="field">
-        <label htmlFor="franchise_name">加盟店</label>
+        <label htmlFor="franchise_name">加盟店名稱</label>
         <input className="input" id="franchise_name" name="franchise_name" defaultValue={settings.franchise_name} required />
+        <span className="muted">顯示於品牌副標、Footer 與公司資訊卡。</span>
         <FieldError message={state.fieldErrors?.franchise_name} />
       </div>
       <div className="field">
@@ -101,14 +115,32 @@ export function CompanySettingsForm({ settings }: { settings: CompanySettings })
         <h2 style={{ margin: "10px 0 0" }}>圖片資料</h2>
       </div>
       <div className="field">
-        <label htmlFor="logo_url">公司 Logo URL</label>
-        <input className="input" id="logo_url" name="logo_url" type="url" defaultValue={settings.logo_url} />
-        <FieldError message={state.fieldErrors?.logo_url} />
+        <label htmlFor="brand_logo_url">品牌 Logo URL</label>
+        <input className="input" id="brand_logo_url" name="brand_logo_url" type="url" defaultValue={settings.brand_logo_url} />
+        <span className="muted">顯示於 Header、Mobile Header 與 Footer 品牌區，不影響加盟店資訊卡。</span>
+        <FieldError message={state.fieldErrors?.brand_logo_url} />
       </div>
       <div className="field">
-        <label htmlFor="logo_file">上傳公司 Logo</label>
-        <input className="input" id="logo_file" name="logo_file" type="file" accept="image/*" />
-        <span className="muted">可直接上傳圖片；上傳後會自動寫入 Logo URL。</span>
+        <label htmlFor="brand_logo_file">上傳品牌 Logo</label>
+        <input className="input" id="brand_logo_file" name="brand_logo_file" type="file" accept="image/*" />
+        <span className="muted">品牌金色圓章「勇美」；圖片以 contain 顯示。</span>
+      </div>
+      <div className="field">
+        <label htmlFor="franchise_logo_url">加盟店 Logo URL</label>
+        <input className="input" id="franchise_logo_url" name="franchise_logo_url" type="url" defaultValue={settings.franchise_logo_url} />
+        <span className="muted">顯示於聯絡我們與加盟店公司資訊卡，不影響 Header 品牌 Logo。</span>
+        <FieldError message={state.fieldErrors?.franchise_logo_url} />
+      </div>
+      <div className="field">
+        <label htmlFor="franchise_logo_file">上傳加盟店 Logo</label>
+        <input className="input" id="franchise_logo_file" name="franchise_logo_file" type="file" accept="image/*" />
+        <span className="muted">保留太平洋房屋加盟店 Logo。</span>
+      </div>
+      <div className="field">
+        <label htmlFor="logo_url">舊版公司 Logo（相容欄位）</label>
+        <input className="input" id="logo_url" name="logo_url" type="url" defaultValue={settings.logo_url} readOnly />
+        <span className="muted">僅供舊資料相容；目前 Header、Footer、聯絡我們與物件資訊卡不使用此欄位。</span>
+        <FieldError message={state.fieldErrors?.logo_url} />
       </div>
       <div className="field">
         <label htmlFor="line_qr_code_url">LINE QR Code URL</label>

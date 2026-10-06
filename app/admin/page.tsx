@@ -38,13 +38,18 @@ export default async function AdminIndexPage() {
 
         <div className="actions">
           <Link className="button" href="/admin/properties">物件管理</Link>
+          <Link className="button" href="/admin/crm/requirements">客需管理</Link>
           <Link className="button secondary" href="/admin/knowledge">知識管理</Link>
+          <Link className="button secondary" href="/admin/property-collections">物件分享主題</Link>
           <Link className="button secondary" href="/admin/home-campaigns">首頁 Campaign</Link>
           <Link className="button secondary" href="/admin/site-pages">靜態頁面</Link>
+          <Link className="button secondary" href="/admin/navigation">導覽選單</Link>
           <Link className="button secondary" href="/admin/inquiries">詢問單</Link>
           <Link className="button ghost" href="/admin/tools">成交試算中心</Link>
           <Link className="button ghost" href="/admin/settings/company">公司資料設定</Link>
+          <Link className="button ghost" href="/admin/settings/display">前台顯示設定</Link>
           {role === "admin" || role === "owner" ? <Link className="button ghost" href="/admin/tools/expire-listings">檢查委託到期物件</Link> : null}
+          {role === "admin" || role === "owner" ? <Link className="button ghost" href="/admin/system/email">Email 診斷</Link> : null}
           {canManageUsers(role) ? <Link className="button ghost" href="/admin/users">使用者管理</Link> : null}
         </div>
       </div>

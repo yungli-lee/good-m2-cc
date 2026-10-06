@@ -5,7 +5,6 @@ import { requireRole } from "@/lib/auth";
 import { getAdminPerson, listPeopleAssignees } from "@/lib/people/queries";
 import type { PersonFormState } from "@/lib/people/schema";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { updatePersonAction } from "../../actions";
 
 export const runtime = "edge";
 
@@ -30,6 +29,7 @@ export default async function EditPersonPage({ params }: Props) {
       phone: person.phone || "",
       line_id: person.line_id || "",
       email: person.email || "",
+      address: person.address || "",
       source: person.source,
       status: person.status,
       assigned_to: person.assigned_to || "",
@@ -47,7 +47,7 @@ export default async function EditPersonPage({ params }: Props) {
             <h1 style={{ marginTop: 0 }}>編輯客戶</h1>
             <p className="muted">更新 People 主檔與角色；不建立需求、追蹤或媒合資料。</p>
             <PeopleForm
-              action={updatePersonAction.bind(null, person.id)}
+              personId={person.id}
               initialState={initialState}
               assignees={assignees || []}
               submitLabel="儲存客戶"

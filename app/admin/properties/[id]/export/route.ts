@@ -34,12 +34,33 @@ export async function GET(_request: Request, { params }: Props) {
   if (!data) return apiError("Not found", 404);
 
   const property = data as Property;
-  const workbook = buildPropertyExportXlsx(property);
-  return new NextResponse(workbook, {
-    headers: {
-      "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-      "Content-Disposition": contentDisposition(propertyExportFilename(property)),
-      "Cache-Control": "no-store"
+
+  try {
+    const workbook = await buildPropertyExportXlsx(property);
+    return new NextResponse(workbook, {
+      headers: {
+        "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        "Content-Disposition": contentDisposition(propertyExportFilename(property)),
+        "Cache-Control": "no-store"
+      }
+    });
+  } catch (cause) {
+    console.error("Property Excel export failed", cause);
+
+    const host = _request.headers.get("host") || "";
+    if (host.endsWith(".pages.dev")) {
+      const error = cause instanceof Error ? cause : new Error(String(cause));
+      return new NextResponse(
+        [
+          "Property Excel export failed",
+          `name: ${error.name}`,
+          `message: ${error.message}`,
+          error.stack ? `stack: ${error.stack}` : ""
+        ].filter(Boolean).join("\n"),
+        { status: 500, headers: { "Content-Type": "text/plain; charset=utf-8", "Cache-Control": "no-store" } }
+      );
     }
-  });
+
+    return apiError("Unable to export property", 500);
+  }
 }
