@@ -50,3 +50,5 @@ Preview 5f377788 實測阿美預設/阿勇切換、鹿港福興住宅800萬以�
 聯絡電話留在聊天會遮蔽後再送模型，帶入確認表單；需客人確認本人資料並勾選同意才寫入既有 inquiries。帶看表單另外確認希望時間。source_page 記錄本物件頁，不新增資料庫欄位。成功後保留已送出狀態，重新打開不會自動重送；需新需求可明確重新開始。直接 LINE／電話仍可使用。
 
 驗證包含固定物件／已下架、公開欄位隔離、租件設備與租約條件、邀約接受、週六時段、拒絕邀約、LINE 引導、既有詢問單與通知模擬。真實通知及真人接手需正式使用者驗收，測試不寄外部訊息。
+
+本次驗證狀態：`pnpm test:concierge`、`pnpm test:property-character-guide`、`pnpm exec tsc --noEmit`、全 app/components/lib/scripts ESLint 通過。Next production 編譯與型別檢查通過，但本機 Vercel 62.2.0 匯出失敗，沒有可用 Pages Functions 產物；不能把 `--skip-build` 產出的空 worker 視為有效建置。PR #36 為草稿，feature/property-conversation 已推送；截至檢查時 GitHub 無 Cloudflare 部署狀態／Preview 連結，分支 Preview 網址回傳 404。需在 Cloudflare Pages 建立本分支 Preview，才可進行桌面／手機、真實 AI 與完整表單驗收。Production 沒有更新。

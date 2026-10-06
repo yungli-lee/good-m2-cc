@@ -26,7 +26,7 @@ export function needsFilters(needs: Needs): CollectionFilters {
     ...(needs.minPrice !== null ? { minPrice: needs.minPrice } : {}), ...(needs.maxPrice !== null ? { maxPrice: needs.maxPrice } : {}) };
 }
 export function redactContact(text: string) {
-  return text.replace(/09[\d\s-]{8,14}/g, "[電話已隱藏]").replace(/[\w.+-]+@[\w.-]+\.[a-z]{2,}/gi, "[Email已隱藏]");
+  return text.replace(/(?<!\d)(?:09(?:[\s-]*\d){8}|0[2-8](?:[\s-]*\d){7,8})(?!\d)/g, "[電話已隱藏]").replace(/[\w.+-]+@[\w.-]+\.[a-z]{2,}/gi, "[Email已隱藏]");
 }
 export function inferNeeds(message: string, previous: Needs): Needs {
   const text = message.normalize("NFKC");

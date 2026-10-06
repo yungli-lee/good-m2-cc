@@ -46,7 +46,7 @@ export async function POST(request: Request) {
     const rejectedFocusedProperty = Boolean(input.focusedSlug && /不要這[間件]|這[間件房子].{0,8}不要|不喜歡這[間件]|太舊.{0,5}不要/.test(safeMessage));
     const requestedTime = readViewingTime(safeMessage, input.viewingTime);
     const viewingFollowup = action === "viewing" || (Boolean(input.viewingTime) && action === "property" && requestedTime !== input.viewingTime) || (Boolean(input.viewingTime) && action === "property" && /明天|後天|今天|週末|平日/.test(safeMessage));
-    const preferredTime = action === "search" ? "" : requestedTime;
+    const preferredTime = action === "search" || hasViewingDecline(safeMessage) ? "" : viewingFollowup ? requestedTime : input.viewingTime;
     const negotiation = action === "offer";
     const followup = action !== "search";
     const candidateResults = followup ? await Promise.all(input.candidateSlugs.map(slug => getPublishedPropertyBySlug(slug))) : [];

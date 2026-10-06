@@ -80,12 +80,17 @@ function request(message, extra = {}, origin) { return new Request('https://exam
   assert.equal(body.viewingTime,'週六下午2點'); assert.match(body.answer,/尚未完成預約/);
   response = await route.POST(request('先不用帶看',{propertyContext:'rental-space',viewingTime:'週六下午2點'})); body = await response.json();
   assert.ok(!body.answer.includes('哪一天')); assert.ok(!body.answer.includes('想安排現場'));
+  assert.equal(body.viewingTime,'');
+  response = await route.POST(request('下午的採光如何',{propertyContext:'rental-space'})); body = await response.json(); assert.equal(body.viewingTime,''); assert.equal(body.action,'property');
   response = await route.POST(request('可以加LINE嗎',{propertyContext:'rental-space'})); body = await response.json(); assert.match(body.answer,/加 LINE 諮詢/);
   enabled = true;
   const contact = compile('lib/concierge/contact.ts', {});
   assert.equal(contact.chatContact('我叫王小明，手機0938-137-177').phone, '0938137177');
   assert.equal(contact.chatContact('我叫王小明，手機0938-137-177').name, '王小明');
   assert.equal(contact.chatContact('我姓陳，電話0955555555').name, '陳');
+  assert.equal(contact.chatContact('電話04-7222345').phone, '047222345');
+  assert.ok(!contact.redactChatContact('電話04-7222345').includes('7222345'));
+  assert.ok(!schema.redactContact('電話04-7222345').includes('7222345'));
   assert.equal(contact.chatContact('我是賣方').name, '');
   assert.ok(!contact.redactChatContact('我姓陳，電話0955555555').includes('陳'));
   const inquirySchema = compile('lib/inquiries/schema.ts', {});

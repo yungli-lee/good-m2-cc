@@ -80,6 +80,8 @@ export function Concierge({ aiEnabled, siteKey, phone, lineUrl, initialProperty,
       setViewingStateVersion(value => value + 1);
     }
     const contact = chatContact(text);
+    if (contact.name) setContactName(contact.name);
+    if (hasViewingDecline(text)) setShowLead(false);
     const updatedMessages: Message[] = [...messages, { role: "user", text }];
     const history = messages.slice(-10).map(m => ({ role: m.role, text: redactChatContact(m.text) }));
     setMessages(m => [...m, { role: "user", text }]);
