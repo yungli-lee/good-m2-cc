@@ -39,6 +39,7 @@
 | --- | --- | --- | --- |
 | `/api/public/inquiries` | Partial | 公開詢問單送出 | `app/api/public/inquiries/route.ts` |
 | `/api/public/featured-properties` | Partial | 精選物件資料 | `app/api/public/featured-properties/route.ts` |
+| `/api/admin/properties/pacific-import` | Preview | 太平洋網址讀取、草稿與照片匯入 | `app/api/admin/properties/pacific-import/route.ts` |
 | `/api/admin/properties` | Existing | 後台物件 API | `app/api/admin/properties` |
 | `/api/admin/property-media` | Existing | 後台物件媒體 API | `app/api/admin/property-media` |
 | `/api/admin/inquiries` | Existing | 後台詢問單 API | `app/api/admin/inquiries` |

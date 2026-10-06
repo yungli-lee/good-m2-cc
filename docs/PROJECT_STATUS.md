@@ -2,6 +2,8 @@
 
 本文件作為 good.m2.cc 目前完成度與功能盤點入口，後續 Sprint 只需持續更新此表，不需要每次重新 analyze 全專案。
 
+2026-10-06 Preview：太平洋物件網址匯入已實作，登入後台人工驗收待完成；Production 尚未發布。詳見 [features/pacific-property-import.md](features/pacific-property-import.md)。
+
 Production baseline：
 
 - Production main：`7bc404a`
