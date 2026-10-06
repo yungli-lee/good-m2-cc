@@ -96,7 +96,7 @@ export async function POST(request: Request) {
     if (focused) answer = focusedAnswer(focused, safeMessage, history);
     if (mode === "ai") {
       try {
-        const output = await modelJson(`${system} 你扮演${input.role === "amei" ? "阿美" : "阿勇"}的Q版助理。依提供資料回答客人，最多180字。properties 是本次最多六件推薦，不是全部搜尋件數，不得說全區只有這幾件；以「本次先推薦」描述。住宅搜尋包含店面／店住候選，店面是否適合居住與合法用途須由真人確認，不可直接保證能住。只在需要時補問一個問題，不要每次重複問預算、坪數。客人提到的價格不能改寫成另一個數字，也不能猜測價格差異原因。只有 action=viewing（客人已明確提出看屋／帶看／時間）時，才可以主動詢問看屋日期或時段；action=search 或 action=property 時不得主動催促、詢問「哪一天看屋」或「什麼時段看屋」，先回答問題；可根據客人已說的用途、格局、車位或設備等需求，只補問一個尚未回答的問題。客人深入詢問兩輪以上且未拒絕帶看，可以溫和問「想安排現場確認嗎？」；未答應前不問日期。客人已拒絕帶看則繼續回答，不再邀約。客人想加 LINE 就指引使用下方 LINE 按鈕，不索取 LINE 帳號。看屋要求應接續安排需求，不得宣稱已預約成功。物件只可引用提供的公開資料；必要條件未經查核必須說待確認。先直接回答本次問題，再補問。區分買房前與買房後：問買房之後時，聚焦交屋點交、設備檢查、費用結清及帳戶過戶，不能拿成交行情比較代替回答。知識回答只依knowledge內的公開摘要與正文節錄，不足時明說網站資料不足並交真人；不能用不相關文章湊答案。農保田只是需求稱呼，未逐件確認前不得稱任何物件符合農保、可投保、合法用途、適合耕作或保證長期置產；必須說候選土地與客人資格均待專業確認。不得因坪數大就推論符合農保。不要宣稱所有候選完全符合必要條件。租金不可用售價推測。輸出 {"answer":"..."}，不要輸出連結或聯絡電話。`, { message: safeMessage, history, action, viewingTime: preferredTime, focusedProperty: focused ? properties[0] : null, needs, properties: properties.slice(0, 6), knowledge: knowledgeEvidence });
+        const output = await modelJson(`${system} 你扮演${input.role === "amei" ? "阿美" : "阿勇"}的Q版助理。依提供資料回答客人，最多180字。properties 是本次最多六件推薦，不是全部搜尋件數，不得說全區只有這幾件；以「本次先推薦」描述。住宅搜尋包含店面／店住候選，店面是否適合居住與合法用途須由真人確認，不可直接保證能住。只在需要時補問一個問題，不要每次重複問預算、坪數。客人提到的價格不能改寫成另一個數字，也不能猜測價格差異原因。只有 action=viewing（客人已明確提出看屋／帶看／時間）時，才可以主動詢問看屋日期或時段；action=search 或 action=property 時不得主動催促、詢問「哪一天看屋」或「什麼時段看屋」，先回答問題；可根據客人已說的用途、格局、車位或設備等需求，只補問一個尚未回答的問題。客人深入詢問兩輪以上且未拒絕帶看，可以溫和問「想安排現場確認嗎？」；未答應前不問日期。客人已拒絕帶看則繼續回答，不再邀約。客人想加 LINE 就指引使用下方 LINE 按鈕，不索取 LINE 帳號。看屋要求應接續安排需求，不得宣稱已預約成功。物件只可引用提供的公開資料；必要條件未經查核必須說待確認。先直接回答本次問題，再補問。有 focusedProperty 時就是在聊這一件，不要每輪說「本次先推薦」或重新介紹租金、地點與所有設備，除非客人有問；也不要問找更多物件。地上層數或「二層」表示建物總層數，不等於物件位於二樓；沒有明確樓層資料不可推測。未被問到的樓層不要補充。農地的耕作、畜牧或其他營業用途即使刊登文字提到適合，也不可保證合法可用，須由真人查核土地使用與必要許可。區分買房前與買房後：問買房之後時，聚焦交屋點交、設備檢查、費用結清及帳戶過戶，不能拿成交行情比較代替回答。知識回答只依knowledge內的公開摘要與正文節錄，不足時明說網站資料不足並交真人；不能用不相關文章湊答案。農保田只是需求稱呼，未逐件確認前不得稱任何物件符合農保、可投保、合法用途、適合耕作或保證長期置產；必須說候選土地與客人資格均待專業確認。不得因坪數大就推論符合農保。不要宣稱所有候選完全符合必要條件。租金不可用售價推測。輸出 {"answer":"..."}，不要輸出連結或聯絡電話。`, { message: safeMessage, history, action, viewingTime: preferredTime, focusedProperty: focused ? properties[0] : null, needs, properties: properties.slice(0, 6), knowledge: knowledgeEvidence });
         answer = z.object({ answer: z.string().trim().min(1).max(1200) }).parse(output).answer;
       } catch (error) { logFallback("answer", error); mode = "guided"; }
     }
@@ -106,6 +106,10 @@ export async function POST(request: Request) {
       answer = `${focused ? `您想看的是「${focused.title}」。` : "可以協助整理看屋需求。"}${offer ? `您提出的 ${offer} 萬元，我也會記在需求中，交由阿勇、阿美了解屋主意願並協助洽談。` : ""}${!focused ? "請先告訴我是列表中的哪一間物件。" : (preferredTime ? (/上午|下午|晚上|早上|中午|點|[:：]/.test(preferredTime) ? `已記下您希望${preferredTime}看屋。` : `已記下您希望${preferredTime}看屋；上午、下午或晚上方便呢？`) : "您希望哪一天、什麼時段看屋？")}確認需求與聯絡方式後，由${speaker}與您聯繫確認時間；目前尚未完成預約。`;
     } else if (negotiation) {
       answer = `${focused ? `關於「${focused.title}」，` : "價格方面，"}交給阿勇、阿美為您努力爭取理想條件；${offer ? `您提出的 ${offer} 萬元能否成交，` : "能否調整，"}仍需了解屋主意願。請確認需求與聯絡方式，按「請${speaker}聯絡我」後，我們會接續協助洽談。`;
+    } else if (focused && /LINE|加賴|加好友/i.test(safeMessage)) {
+      answer = "可以，點下方「加 LINE 諮詢」即可聯絡我們，並告訴阿勇、阿美您正在看這一件。";
+    } else if (focused && /照片|圖片|格局圖|地籍圖/.test(safeMessage)) {
+      answer = "可以先查看本頁的物件圖片區。若沒有您想看的格局圖、地籍圖或指定照片，可按「請阿勇、阿美聯絡我」整理需求，由我們確認並協助提供。";
     } else if (action === "property" && focused && /價格|多少|開價|租金|月租/.test(safeMessage)) {
       answer = `「${focused.title}」目前網站公開${focused.transaction_type === "rent" ? "月租" : "開價"}為${formatPropertyPrice(focused)}。價格方面可以交由阿勇、阿美協助洽談，實際條件需與屋主確認。`;
     } else if (action === "property" && !focused) {

@@ -84,6 +84,8 @@ function request(message, extra = {}, origin) { return new Request('https://exam
   response = await route.POST(request('下午的採光如何',{propertyContext:'rental-space'})); body = await response.json(); assert.equal(body.viewingTime,''); assert.equal(body.action,'property');
   response = await route.POST(request('可以加LINE嗎',{propertyContext:'rental-space'})); body = await response.json(); assert.match(body.answer,/加 LINE 諮詢/);
   enabled = true;
+  modelOutputs = [schema.needsSchema.parse({intent:'buy'}), {answer:'請您自行去地政事務所查地籍图'}];
+  response = await route.POST(request('可以看地籍圖嗎',{propertyContext:'selected-home'})); body = await response.json(); assert.equal(body.action,'property'); assert.match(body.answer,/本頁的物件圖片區/); assert.ok(!body.answer.includes('自行'));
   const contact = compile('lib/concierge/contact.ts', {});
   assert.equal(contact.chatContact('我叫王小明，手機0938-137-177').phone, '0938137177');
   assert.equal(contact.chatContact('我叫王小明，手機0938-137-177').name, '王小明');
