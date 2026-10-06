@@ -54,3 +54,5 @@ Preview 5f377788 實測阿美預設/阿勇切換、鹿港福興住宅800萬以�
 本次驗證狀態：`pnpm test:concierge`、`pnpm test:property-character-guide`、`pnpm exec tsc --noEmit`、全 app/components/lib/scripts ESLint 通過。Next production 編譯與型別檢查通過，但本機 Vercel 62.2.0 匯出失敗，沒有可用 Pages Functions 產物；不能把 `--skip-build` 產出的空 worker 視為有效建置。PR #36 為草稿，feature/property-conversation 已推送；截至檢查時 GitHub 無 Cloudflare 部署狀態／Preview 連結，分支 Preview 網址回傳 404。需在 Cloudflare Pages 建立本分支 Preview，才可進行桌面／手機、真實 AI 與完整表單驗收。Production 沒有更新。
 
 Preview 已由 Cloudflare 成功部署：`0a22ed52.good-m2-cc.pages.dev`，commit `ca6cdbe`；`/api/preview/environment` 確認分支與 staging 資料庫 niorteztdbuyusemsgwa。真實 AI API 通過固定物件、地籍圖詢問分類、明天下午帶看、取消帶看、秀水租件租約與設備、採光不誤判時間、LINE 引導。使用者截圖確認表單已送出並顯示通知成功，尚未獨立驗證通知收件。自動瀏覽器無法觀察頁面，桌面／手機互動仍需人工驗收。實測另修正：照片與地籍圖先指向物件圖片區／真人協助；LINE 固定指向下方聯絡按鈕；模型不得把建物二層說成位於二樓，不在固定物件對話重複整段推薦，不保證農地營業用途。
+
+使用者驗收截圖確認帶看詢問已送出並收到通知，物件、待確認時段、補充問題與不方便來電時段均保留。`/guide` 詢問候選物件時曾收到非 JSON HTML，第二次手動詢問恢復；同流程 API 重跑回傳 200。新增唯讀聊天對 HTML／502／503／504 最多重試一次，失敗保留輸入並移除未成功問題泡泡，避免重複；表單僅安全解析，絕不自動重送。尚無足夠證據判定該次 HTML 的來源。

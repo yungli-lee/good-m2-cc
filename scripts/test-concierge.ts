@@ -4,6 +4,7 @@ import { signReply, verifyReply } from "../lib/concierge/audio-token.ts";
 import { takeConciergeSlot } from "../lib/concierge/limit.ts";
 import { dialogAction } from "../lib/concierge/dialog.ts";
 import { hasExplicitViewingIntent, hasViewingDecline, viewingNudge } from "../lib/concierge/viewing-intent.ts";
+import { readPublicJson, requestChatJson } from "../lib/concierge/public-response.ts";
 const empty = needsSchema.parse({});
 const first = inferNeeds("鹿港或福興，800萬以下住宅，需要孝親房", empty);
 assert.deepEqual(first.districts, ["鹿港鎮", "福興鄉"]);
@@ -61,3 +62,20 @@ assert.equal(takeConciergeSlot("test", now), null);
 slots.forEach(release => release?.());
 assert.ok(takeConciergeSlot("test", now));
 console.log("PASS concierge requirements, gradual viewing intent, public filters, validation, redaction, signed audio, concurrency guard");
+
+const originalFetch = globalThis.fetch;
+try {
+  let calls = 0;
+  globalThis.fetch = async () => ++calls === 1 ? new Response("<!DOCTYPE html><h1>Gateway unavailable</h1>", {status:502}) : Response.json({answer:"已恢復"});
+  const recovered = await requestChatJson<{answer:string}>("https://test.invalid/chat", {method:"POST"});
+  assert.equal(recovered.data.answer,"已恢復"); assert.equal(calls,2);
+  calls = 0;
+  globalThis.fetch = async () => { calls++; return new Response("<!DOCTYPE html>"); };
+  await assert.rejects(requestChatJson("https://test.invalid/chat", {}), /對話服務暫時忙碌/);
+  assert.equal(calls,2);
+  calls = 0;
+  globalThis.fetch = async () => { calls++; return Response.json({error:"詢問較密集"},{status:429}); };
+  assert.equal((await requestChatJson("https://test.invalid/chat", {})).response.status,429); assert.equal(calls,1);
+  await assert.rejects(readPublicJson(new Response("<!DOCTYPE html>"),"請先確認是否收到"), /請先確認是否收到/);
+} finally { globalThis.fetch = originalFetch; }
+console.log("PASS HTML/gateway chat recovery, bounded retry, rate-limit preservation and safe submission parsing");

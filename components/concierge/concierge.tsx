@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import { readPublicJson, requestChatJson } from "@/lib/concierge/public-response";
 import { chatContact, redactChatContact } from "@/lib/concierge/contact";
 import Script from "next/script";
 import { useEffect, useId, useRef, useState } from "react";
@@ -86,9 +87,8 @@ export function Concierge({ aiEnabled, siteKey, phone, lineUrl, initialProperty,
     const history = messages.slice(-10).map(m => ({ role: m.role, text: redactChatContact(m.text) }));
     setMessages(m => [...m, { role: "user", text }]);
     try {
-      const response = await fetch("/api/public/concierge", { method: "POST", headers: { "Content-Type": "application/json" },
+      const { response, data } = await requestChatJson<Reply & { error?: string }>("/api/public/concierge", { method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ role, message: redactChatContact(text), history, needs, focusedSlug: selected?.slug || "", propertyContext: initialProperty?.slug || "", viewingTime, candidateSlugs: candidates.current.map(p => p.slug) }), signal: AbortSignal.timeout(55000) });
-      const data = await response.json();
       if (!response.ok) throw new Error(data.error || "暫時無法回答，請稍後重試");
       if (contact.phone) {
         setContactPhone(contact.phone); if (contact.name) setContactName(contact.name);
@@ -98,7 +98,9 @@ export function Concierge({ aiEnabled, siteKey, phone, lineUrl, initialProperty,
       if (data.action === "search") candidates.current = data.properties;
       setNeeds(data.needs); setMessages(m => [...m, { role: "assistant", text: data.answer, reply: data, character: role }]);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "暫時無法回答");
+      setInput(text);
+      setMessages(m => m.at(-1)?.role === "user" && m.at(-1)?.text === text ? m.slice(0, -1) : m);
+      setError(e instanceof Error && !["TimeoutError", "AbortError", "TypeError"].includes(e.name) ? e.message : "對話服務暫時無法連線，您的問題仍保留，請稍後重新送出，或直接加 LINE 諮詢。");
       if (contact.phone) { setContactPhone(contact.phone); if (contact.name) setContactName(contact.name); openLead(needs, updatedMessages); }
     }
     finally { setBusy(false); }
@@ -140,7 +142,7 @@ export function Concierge({ aiEnabled, siteKey, phone, lineUrl, initialProperty,
         source_page: sourcePage, website: fields.get("website") || "", turnstile_token: token,
         visitor_id: identity?.visitorId || "", session_id: identity?.sessionId || ""
       }) });
-      const result = await response.json();
+      const result = await readPublicJson<{ ok?: boolean; field_errors?: Record<string, string>; error?: string; email_sent?: boolean; line_sent?: boolean }>(response, "暫時無法確認送出結果，請先聯絡阿勇、阿美確認是否收到，避免重複送出。");
       if (!response.ok || !result.ok) throw new Error(Object.values(result.field_errors || {}).join("；") || result.error || "送出失敗，請重試");
       setSent(true);
       void trackEvent("submit_inquiry", { properties: { form_type: handoffPurpose === "viewing" ? "concierge-viewing" : `concierge-${needs.intent}`, form_location: "guide" } });
