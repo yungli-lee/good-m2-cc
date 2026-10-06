@@ -2,6 +2,7 @@ import { z } from "zod";
 import { collectionDistricts, collectionTypes, type CollectionFilters } from "../properties/collection-link.ts";
 
 export const collectionStatusLabels = { draft: "草稿", published: "已發布", archived: "已停用" } as const;
+export const collectionModeLabels = { filters: "動態條件", manual: "精選指定" } as const;
 export const collectionCoverPattern = /^property-collections\/cover-[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\.jpg$/;
 export const collectionSlugPattern = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const optionalPrice = z.preprocess(value => value === "" || value == null ? null : Number(value), z.number().finite().min(0).max(100000000).nullable());
@@ -9,6 +10,8 @@ const inputSchema = z.object({
   slug: z.string().trim().min(1, "請填寫網址名稱。").max(80).regex(collectionSlugPattern, "網址只能使用小寫英文、數字與連字號。"),
   title: z.string().trim().min(1, "請填寫主題標題。").max(100, "標題最多100字。"),
   description: z.string().trim().max(500, "介紹最多500字。"),
+  selection_mode: z.enum(["filters", "manual"]),
+  selected_property_ids: z.array(z.string().uuid("物件編號格式錯誤。")).max(50, "最多可指定50件物件。"),
   q: z.string().trim().max(200),
   city: z.string().trim().max(80),
   districts: z.array(z.string()).max(26).refine(values => values.every(value => collectionDistricts.includes(value)), "請選擇有效地區。"),
@@ -17,12 +20,15 @@ const inputSchema = z.object({
   price_max: optionalPrice,
   cover_storage_path: z.string().refine(value => !value || collectionCoverPattern.test(value), "請重新上傳主題封面。"),
   status: z.enum(["draft", "published", "archived"])
-}).refine(value => value.price_min === null || value.price_max === null || value.price_min <= value.price_max, { message: "最低總價不能高於最高總價。", path: ["price_max"] });
+}).refine(value => value.price_min === null || value.price_max === null || value.price_min <= value.price_max, { message: "最低總價不能高於最高總價。", path: ["price_max"] })
+  .refine(value => value.selection_mode !== "manual" || value.selected_property_ids.length > 0, { message: "精選指定模式至少要選1件物件。", path: ["selected_property_ids"] });
 
 export function parseCollectionForm(form: FormData, existingSlug?: string) {
   const field = (name: string) => String(form.get(name) || "");
   return inputSchema.safeParse({
     slug: existingSlug ?? field("slug"), title: field("title"), description: field("description"),
+    selection_mode: field("selection_mode") || "filters",
+    selected_property_ids: [...new Set(form.getAll("property_id").map(String))],
     q: field("q"), city: field("city"), districts: [...new Set(form.getAll("district").map(String))],
     property_type: field("property_type"), price_min: field("price_min"), price_max: field("price_max"),
     cover_storage_path: field("cover_storage_path"), status: field("status") || "draft"
