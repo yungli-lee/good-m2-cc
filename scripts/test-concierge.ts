@@ -4,6 +4,7 @@ import { signReply, verifyReply } from "../lib/concierge/audio-token.ts";
 import { takeConciergeSlot } from "../lib/concierge/limit.ts";
 import { dialogAction } from "../lib/concierge/dialog.ts";
 import { hasExplicitViewingIntent, hasViewingDecline, viewingNudge } from "../lib/concierge/viewing-intent.ts";
+import { readPublicJson, requestChatJson } from "../lib/concierge/public-response.ts";
 const empty = needsSchema.parse({});
 const first = inferNeeds("鹿港或福興，800萬以下住宅，需要孝親房", empty);
 assert.deepEqual(first.districts, ["鹿港鎮", "福興鄉"]);
@@ -44,6 +45,11 @@ assert.equal(viewingNudge({ latestText: "先看看就好，不用帶看", focuse
 assert.ok(hasViewingDecline("先看看就好，不用帶看"));
 assert.ok(hasExplicitViewingIntent("那我想看這間"));
 assert.equal(viewingNudge({ latestText: "後來想約週六看屋", focusedTurns: 4, declined: true }), "direct");
+assert.equal(dialogAction("想看格局圖", true), "property");
+assert.equal(dialogAction("現場有冷凍櫃嗎", true), "property");
+assert.equal(dialogAction("可以看設備照片嗎", true), "property");
+assert.equal(dialogAction("禮拜六下午方便帶看嗎", true), "viewing");
+assert.equal(dialogAction("先不用帶看", true), "property");
 const now = Date.now();
 const token = await signReply({ text: "阿美陪你找房", role: "amei", expires: now + 60000 }, "test-only-secret");
 assert.equal((await verifyReply(token, "test-only-secret", now))?.role, "amei");
@@ -56,3 +62,20 @@ assert.equal(takeConciergeSlot("test", now), null);
 slots.forEach(release => release?.());
 assert.ok(takeConciergeSlot("test", now));
 console.log("PASS concierge requirements, gradual viewing intent, public filters, validation, redaction, signed audio, concurrency guard");
+
+const originalFetch = globalThis.fetch;
+try {
+  let calls = 0;
+  globalThis.fetch = async () => ++calls === 1 ? new Response("<!DOCTYPE html><h1>Gateway unavailable</h1>", {status:502}) : Response.json({answer:"已恢復"});
+  const recovered = await requestChatJson<{answer:string}>("https://test.invalid/chat", {method:"POST"});
+  assert.equal(recovered.data.answer,"已恢復"); assert.equal(calls,2);
+  calls = 0;
+  globalThis.fetch = async () => { calls++; return new Response("<!DOCTYPE html>"); };
+  await assert.rejects(requestChatJson("https://test.invalid/chat", {}), /對話服務暫時忙碌/);
+  assert.equal(calls,2);
+  calls = 0;
+  globalThis.fetch = async () => { calls++; return Response.json({error:"詢問較密集"},{status:429}); };
+  assert.equal((await requestChatJson("https://test.invalid/chat", {})).response.status,429); assert.equal(calls,1);
+  await assert.rejects(readPublicJson(new Response("<!DOCTYPE html>"),"請先確認是否收到"), /請先確認是否收到/);
+} finally { globalThis.fetch = originalFetch; }
+console.log("PASS HTML/gateway chat recovery, bounded retry, rate-limit preservation and safe submission parsing");

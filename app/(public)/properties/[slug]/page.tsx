@@ -1,3 +1,5 @@
+import { conciergeEnv } from "@/lib/concierge/model";
+import { getRequestContext } from "@/lib/supabase/env";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -327,7 +329,7 @@ export default async function PropertyDetailPage({ params }: Props) {
         price: property.price == null ? null : Number(property.price),
         listing_status: property.status || null
       }} />
-      <PropertyCharacterGuide slug={property.slug} aiSpeechEnabled={getGuideSpeechEnv().enabled} scripts={buildPropertyGuide(property, publicBuildingTypeLabel(property))} lineUrl={companySettings.line_url || "/contact"} related={relatedProperties.map(item => ({ slug: item.slug, title: item.title }))} />
+      <PropertyCharacterGuide property={{ id: property.id, slug: property.slug, title: property.title, price: property.price, transaction_type: property.transaction_type, rent_monthly: property.rent_monthly, district: property.district || null, layout: property.layout }} aiEnabled={Boolean(conciergeEnv().key)} siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || (getRequestContext()?.env as Record<string, string | undefined> | undefined)?.NEXT_PUBLIC_TURNSTILE_SITE_KEY || ""} phone={companySettings.company_phone} slug={property.slug} aiSpeechEnabled={getGuideSpeechEnv().enabled} scripts={buildPropertyGuide(property, publicBuildingTypeLabel(property))} lineUrl={companySettings.line_url || "/contact"} related={relatedProperties.map(item => ({ slug: item.slug, title: item.title }))} />
       <div className="property-detail-desktop">
         <section className="section">
           <div className="container detail-layout">

@@ -22,13 +22,15 @@ const route = compile('app/api/public/concierge/route.ts', {
   '@/lib/format': compile('lib/format.ts', {}),
   'next/server': { NextResponse: { json: (body, options) => Response.json(body, options) } },
   '@/lib/concierge/schema': schema,
-  '@/lib/concierge/dialog': compile('lib/concierge/dialog.ts', {}),
+  '@/lib/concierge/viewing-intent': compile('lib/concierge/viewing-intent.ts', {}),
+  '@/lib/concierge/property-conversation': compile('lib/concierge/property-conversation.ts', {'../format': compile('lib/format.ts', {}), './viewing-intent.ts': compile('lib/concierge/viewing-intent.ts', {})}),
+  '@/lib/concierge/dialog': compile('lib/concierge/dialog.ts', {'./viewing-intent.ts': compile('lib/concierge/viewing-intent.ts', {})}),
   '@/lib/concierge/viewing': compile('lib/concierge/viewing.ts', {}),
   '@/lib/concierge/knowledge': knowledgeHelpers,
   '@/lib/concierge/model': { conciergeEnv: () => ({ key: enabled ? 'mock' : '' }), modelJson: async () => { if (!modelOutputs.length) throw new Error('provider down'); return modelOutputs.shift(); } },
   '@/lib/concierge/limit': { takeConciergeSlot: () => () => {} },
   '@/lib/properties/collection-link': compile('lib/properties/collection-link.ts', {}),
-  '@/lib/properties/queries': { getPublishedPropertyBySlug: async slug => ({error:null,data:slug==='selected-home' ? {id:'public-id',slug,title:'秀水輕屋齡美墅',price:1410,district:'秀水鄉',layout:'4房3廳4衛'} : null}), searchPublishedProperties: async (_, __, filters) => { calls++; assert.equal(filters.maxPrice, expectedMaxPrice); return { error: queryFails ? {} : null, data: emptyResults ? [] : [{ transaction_type: filters.transaction, rent_monthly: filters.transaction === 'rent' ? 128000 : null, id: 'public-id', slug: 'public-slug', title: '公開物件', price: 688, district: '鹿港鎮', description: '公開描述', private_owner: 'DO NOT EXPOSE', bottom_price: 500 }] }; } },
+  '@/lib/properties/queries': { getPublishedPropertyBySlug: async slug => ({error:null,data:slug==='rental-space' ? {id:'rent-id',slug,title:'秀水餐飲場地',transaction_type:'rent',price:null,rent_monthly:128000,district:'秀水鄉',layout:null,deposit_months:2,minimum_lease_months:36,rental_equipment:'蒸煮油炸設備、兩部冷凍櫃',lease_notarization_required:true,private_owner:'SECRET OWNER',floor_price:'SECRET PRICE'} : slug==='selected-home' ? {id:'public-id',slug,title:'秀水輕屋齡美墅',price:1410,district:'秀水鄉',layout:'4房3廳4衛',land_area_ping:42.67} : null}), searchPublishedProperties: async (_, __, filters) => { calls++; assert.equal(filters.maxPrice, expectedMaxPrice); return { error: queryFails ? {} : null, data: emptyResults ? [] : [{ transaction_type: filters.transaction, rent_monthly: filters.transaction === 'rent' ? 128000 : null, id: 'public-id', slug: 'public-slug', title: '公開物件', price: 688, district: '鹿港鎮', description: '公開描述', private_owner: 'DO NOT EXPOSE', bottom_price: 500 }] }; } },
   '@/lib/content/queries': { listPublicKnowledgeItems: async ({q}) => { knowledgeQueries.push(q); return { data: [{title: q + '重點', slug: q, summary: '摘要', body: '公開正文', private_notes: 'SECRET'}], error: null }; } },
   '@/lib/properties/guide-speech-env': { getGuideSpeechEnv: () => ({ enabled: false }) },
   '@/lib/concierge/audio-token': { signReply: async () => 'mock-token' }
@@ -63,14 +65,47 @@ function request(message, extra = {}, origin) { return new Request('https://exam
   assert.deepEqual(knowledgeQueries, ['點交', '交屋', '過戶']);
   assert.equal(body.mode, 'ai'); assert.equal(body.properties.length, 0);
   assert.ok(!JSON.stringify(body).includes('SECRET'));
+  enabled = false;
+  const beforeFocused = calls;
+  response = await route.POST(request('押金、租期與設備有哪些？租約須公證嗎', {propertyContext:'rental-space',needs:schema.needsSchema.parse({intent:'rent'})})); body = await response.json();
+  assert.equal(body.focusedProperty.slug, 'rental-space'); assert.equal(calls, beforeFocused);
+  assert.match(body.answer, /押金2個月/); assert.match(body.answer, /36個月/); assert.match(body.answer, /兩部冷凍櫃/); assert.match(body.answer, /公證/);
+  assert.ok(!JSON.stringify(body).includes('SECRET'));
+  response = await route.POST(request('重新找其他物件', {propertyContext:'rental-space'})); body = await response.json();
+  assert.equal(body.properties.length,1); assert.equal(body.properties[0].slug,'rental-space'); assert.equal(calls,beforeFocused);
+  assert.equal((await route.POST(request('介紹重點',{propertyContext:'withdrawn'}))).status,404);
+  response = await route.POST(request('好', {propertyContext:'rental-space',history:[{role:'assistant',text:'想安排現場確認嗎？'}]})); body = await response.json();
+  assert.equal(body.action,'viewing'); assert.match(body.answer,/哪一天/);
+  response = await route.POST(request('週六下午2點方便嗎', {propertyContext:'rental-space'})); body = await response.json();
+  assert.equal(body.viewingTime,'週六下午2點'); assert.match(body.answer,/尚未完成預約/);
+  response = await route.POST(request('先不用帶看',{propertyContext:'rental-space',viewingTime:'週六下午2點'})); body = await response.json();
+  assert.ok(!body.answer.includes('哪一天')); assert.ok(!body.answer.includes('想安排現場'));
+  assert.equal(body.viewingTime,'');
+  response = await route.POST(request('下午的採光如何',{propertyContext:'rental-space'})); body = await response.json(); assert.equal(body.viewingTime,''); assert.equal(body.action,'property');
+  response = await route.POST(request('可以加LINE嗎',{propertyContext:'rental-space'})); body = await response.json(); assert.match(body.answer,/加 LINE 諮詢/);
+  enabled = true;
+  modelOutputs = [schema.needsSchema.parse({intent:'buy'}), {answer:'建蔽率60%容積率180%'}];
+  response = await route.POST(request('土地多少坪，建蔽容積率是多少',{propertyContext:'selected-home'})); body = await response.json(); assert.ok(!body.answer.includes('60%')); assert.match(body.answer,/沒有已確認數值/); assert.match(body.answer,/42.67坪/);
+  modelOutputs = [schema.needsSchema.parse({intent:'buy'}), {answer:'土地面積42.67坪'}];
+  response = await route.POST(request('土地多少坪',{propertyContext:'selected-home'})); body = await response.json(); assert.match(body.answer,/42.67坪/); assert.ok(!body.answer.includes('開價'));
+  modelOutputs = [schema.needsSchema.parse({intent:'rent'}), {answer:'這件物件位於二樓'}];
+  response = await route.POST(request('下午的採光如何',{propertyContext:'rental-space'})); body = await response.json(); assert.match(body.answer,/公開資料不足/); assert.ok(!body.answer.includes('位於二樓')); assert.ok(!body.viewingTime);
+  modelOutputs = [schema.needsSchema.parse({intent:'buy'}), {answer:'請您自行去地政事務所查地籍图'}];
+  response = await route.POST(request('可以看地籍圖嗎',{propertyContext:'selected-home'})); body = await response.json(); assert.equal(body.action,'property'); assert.match(body.answer,/本頁的物件圖片區/); assert.ok(!body.answer.includes('自行'));
   const contact = compile('lib/concierge/contact.ts', {});
   assert.equal(contact.chatContact('我叫王小明，手機0938-137-177').phone, '0938137177');
   assert.equal(contact.chatContact('我叫王小明，手機0938-137-177').name, '王小明');
   assert.equal(contact.chatContact('我姓陳，電話0955555555').name, '陳');
+  assert.equal(contact.chatContact('電話04-7222345').phone, '047222345');
+  assert.ok(!contact.redactChatContact('電話04-7222345').includes('7222345'));
+  assert.ok(!schema.redactContact('電話04-7222345').includes('7222345'));
   assert.equal(contact.chatContact('我是賣方').name, '');
   assert.ok(!contact.redactChatContact('我姓陳，電話0955555555').includes('陳'));
   const inquirySchema = compile('lib/inquiries/schema.ts', {});
   assert.ok(inquirySchema.inquirySchema.safeParse({name:'陳',phone:'0955555555',message:'測試需求，請協助找物件',consent:true}).success);
+  assert.ok(!inquirySchema.inquirySchema.safeParse({name:'張先生',phone:'091278789',message:'預約带看測試需求',consent:true}).success);
+  assert.ok(inquirySchema.contactPhoneSchema.safeParse('04-7222345').success);
+  assert.ok(inquirySchema.contactPhoneSchema.safeParse('+886 938-137-177').success);
   assert.equal(contact.redactChatContact('我是賣方'), '我是賣方');
   assert.ok(!contact.redactChatContact('我叫王小明 0938137177').includes('王小明'));
   assert.ok(!contact.redactChatContact('我叫王小明 0938137177').includes('0938137177'));
@@ -102,11 +137,11 @@ function request(message, extra = {}, origin) { return new Request('https://exam
   modelOutputs = [remembered, {answer:'上午還是下午？'}];
   response = await route.POST(request('下午2點', {needs:remembered,focusedSlug:'selected-home',viewingTime:body.viewingTime})); body = await response.json();
   assert.equal(body.viewingTime,'明天下午2點'); assert.ok(!body.answer.includes('方便呢')); assert.ok(body.answer.includes('尚未完成預約'));
-  const dialog = compile('lib/concierge/dialog.ts', {});
+  const dialog = compile('lib/concierge/dialog.ts', {'./viewing-intent.ts': compile('lib/concierge/viewing-intent.ts', {})});
   assert.equal(dialog.referencedSlug('第二間',[{slug:'a',title:'甲'},{slug:'b',title:'乙'}],''),'b');
   assert.equal(dialog.referencedSlug('這間',[{slug:'a',title:'甲'},{slug:'b',title:'乙'}],''),'');
   assert.equal(dialog.dialogAction('改找鹿港住宅',true),'search');
-  assert.equal(dialog.dialogAction('好，週末方便',true),'property');
+  assert.equal(dialog.dialogAction('好，週末方便',true),'viewing');
   assert.equal(dialog.dialogAction('有車位嗎',true),'property');
   assert.equal(dialog.dialogAction('想找鹿港住宅',true),'search');
   let notifications = 0, saves = 0;
