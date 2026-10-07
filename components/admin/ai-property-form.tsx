@@ -2,7 +2,7 @@
 
 import { PropertyRentalFields } from "./property-rental-fields";
 
-import { useActionState, useMemo, useRef, useState } from "react";
+import { useActionState, useEffect, useMemo, useRef, useState } from "react";
 import type { DragEvent } from "react";
 import type { AdminRole } from "@/lib/auth";
 import { parsePastedProperty, type ParsedProperty } from "@/lib/properties/ai-parser";
@@ -49,6 +49,19 @@ function FieldError({ message }: { message?: string }) {
   return message ? <p style={{ color: "#b42318", fontWeight: 700, margin: 0 }}>{message}</p> : null;
 }
 
+function PendingPhoto({ file, onRemove }: { file: File; onRemove: () => void }) {
+  const [src, setSrc] = useState("");
+  useEffect(() => {
+    const url = URL.createObjectURL(file);
+    setSrc(url);
+    return () => URL.revokeObjectURL(url);
+  }, [file]);
+  return <div style={{ border: "1px solid #ddd", borderRadius: 8, padding: 8 }}>
+    {src ? <img src={src} alt={file.name} style={{ width: "100%", height: 110, objectFit: "contain" }} /> : null}
+    <button type="button" className="button secondary" onClick={onRemove} aria-label={"移除 " + file.name}>移除</button>
+  </div>;
+}
+
 export function AiPropertyForm({
   role,
   formAction,
@@ -61,10 +74,13 @@ export function AiPropertyForm({
   const [state, action, pending] = useActionState(formAction, initialState);
   const formRef = useRef<HTMLFormElement>(null);
   const [quickPaste, setQuickPaste] = useState("");
+  const [importUrl, setImportUrl] = useState("");
+  const [isImporting, setIsImporting] = useState(false);
   const [message, setMessage] = useState("");
   const [multiValues, setMultiValues] = useState<Record<string, string[]>>({ sale_motivation: [], current_condition_type: [], current_usage: [], building_style: [], parking_type: [] });
   const [otherValues, setOtherValues] = useState<Record<string, string>>({ sale_motivation_other: "", current_condition_other: "", current_usage_other: "", building_style_other: "", parking_type_other: "" });
   const [selectedFileNames, setSelectedFileNames] = useState<string[]>([]);
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [isDraggingFile, setIsDraggingFile] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const selectedFilesRef = useRef<File[]>([]);
@@ -72,14 +88,8 @@ export function AiPropertyForm({
   const canManageProgressNotes = role === "admin" || role === "owner";
   const quickPasteStats = useMemo(() => quickPaste.trim().length, [quickPaste]);
 
-  function handleParse() {
+  function applyParsedProperty(parsed: ParsedProperty) {
     if (!formRef.current) return;
-    if (!quickPaste.trim()) {
-      setMessage("請先貼上物件資料。");
-      return;
-    }
-
-    const parsed = parsePastedProperty(quickPaste);
     const form = formRef.current;
     const fields: Array<keyof ParsedProperty> = [
       "title",
@@ -97,6 +107,8 @@ export function AiPropertyForm({
       "developer_names",
       "showing_instructions",
       "service_fee_rate",
+      "management_fee",
+      "management_fee_payment",
       "floor_price",
       "frontage",
       "depth",
@@ -125,18 +137,103 @@ export function AiPropertyForm({
       }
       else setFormValue(form, field, parsed[field]);
     });
+  }
+
+  function handleParse() {
+    if (!quickPaste.trim()) {
+      setMessage("請先貼上物件資料。");
+      return;
+    }
+    applyParsedProperty(parsePastedProperty(quickPaste));
     setMessage("已解析並填入表單，送出前請快速確認欄位。");
   }
 
-  function appendFiles(files: FileList | null) {
-    if (!files?.length || !fileInputRef.current) return;
-    const transfer = new DataTransfer();
-    selectedFilesRef.current.forEach((file) => transfer.items.add(file));
-    Array.from(files).forEach((file) => transfer.items.add(file));
-    fileInputRef.current.files = transfer.files;
-    selectedFilesRef.current = Array.from(transfer.files);
-    setSelectedFileNames(Array.from(transfer.files).map((file) => file.name));
+  async function handlePacificImport() {
+    const url = importUrl.trim();
+    if (!url) {
+      setMessage("請先貼上太平洋房屋物件網址。");
+      return;
+    }
+
+    setIsImporting(true);
+    setMessage("正在讀取太平洋房屋物件資料…");
+    try {
+      const response = await fetch("/api/admin/import-property-url", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ url })
+      });
+      const payload = await response.json().catch(() => null);
+      if (!response.ok) {
+        throw new Error(payload?.error || "匯入失敗");
+      }
+      const rawText = payload?.data?.rawText || "";
+      if (!rawText) throw new Error("沒有取得可解析的物件資料");
+
+      setQuickPaste(rawText);
+      if (!payload?.data?.parsed) throw new Error("沒有取得確認過的物件欄位，請重新匯入");
+      applyParsedProperty(payload.data.parsed as ParsedProperty);
+      const photos: Array<{ url: string; name: string; label: string }> = payload.data.photos || [];
+      const downloaded: File[] = [];
+      let failed = 0;
+      for (let index = 0; index < photos.length; index += 2) {
+        setMessage("文字已填入，正在下載照片 " + (index + 1) + "／" + photos.length + "…");
+        const results = await Promise.all(photos.slice(index, index + 2).map(async (photo) => {
+          const image = await fetch("/api/admin/import-property-photo", {
+            method: "POST", headers: { "content-type": "application/json" },
+            body: JSON.stringify({ url: photo.url }), signal: AbortSignal.timeout(20000)
+          });
+          if (!image.ok) throw new Error("照片下載失敗");
+          const blob = await image.blob();
+          const extension = blob.type === "image/png" ? "png" : blob.type === "image/webp" ? "webp" : "jpg";
+          return new File([blob], photo.name.replace(/\.[^.]+$/, "." + extension), { type: blob.type, lastModified: 0 });
+        }).map((promise) => promise.catch(() => null)));
+        for (const file of results) { if (file) downloaded.push(file); else failed += 1; }
+      }
+      const added = appendFiles(downloaded);
+      setMessage("文字已填入；新增 " + added + " 張待上傳照片。" +
+        (failed ? failed + " 張下載失敗，可再次匯入重試。" : "") +
+        (added < downloaded.length ? "重複照片或超過總容量的照片未加入。" : "") +
+        (payload.data.photoWarning || "") + "請確認下方照片，按建立物件後儲存。");
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "太平洋房屋物件匯入失敗");
+    } finally {
+      setIsImporting(false);
+    }
   }
+
+  function syncFiles(files: File[]) {
+    if (!fileInputRef.current) return;
+    const transfer = new DataTransfer();
+    files.forEach((file) => transfer.items.add(file));
+    fileInputRef.current.files = transfer.files;
+    selectedFilesRef.current = files;
+    setSelectedFiles(files);
+    setSelectedFileNames(files.map((file) => file.name));
+  }
+
+  function appendFiles(files: FileList | File[] | null) {
+    if (!files?.length || !fileInputRef.current) return 0;
+    const merged = [...selectedFilesRef.current];
+    let size = merged.reduce((sum, file) => sum + file.size, 0);
+    let added = 0;
+    for (const file of Array.from(files)) {
+      if (merged.some((existing) => existing.name === file.name && existing.size === file.size && existing.lastModified === file.lastModified)) continue;
+      if (size + file.size > 40 * 1024 * 1024) continue;
+      merged.push(file); size += file.size; added += 1;
+    }
+    syncFiles(merged);
+    return added;
+  }
+
+  useEffect(() => {
+    // Validation may remount the form; restore the pending files to its new input.
+    if (fileInputRef.current) {
+      const transfer = new DataTransfer();
+      selectedFilesRef.current.forEach((file) => transfer.items.add(file));
+      fileInputRef.current.files = transfer.files;
+    }
+  }, [state.formKey]);
 
   function handleFileDrop(event: DragEvent<HTMLDivElement>) {
     event.preventDefault();
@@ -150,8 +247,25 @@ export function AiPropertyForm({
         <div className="ai-quick-paste-header">
           <div>
             <h2>AI 快速建立物件</h2>
-            <p className="muted">貼上 Line 或 Word 物件資料，解析後會先填入表單，可再人工校正。</p>
+            <p className="muted">可貼上太平洋房屋物件網址，或貼上 Line／Word 物件資料；解析後會先填入表單，可再人工校正。</p>
           </div>
+        </div>
+        <div className="field full">
+          <label htmlFor="pacific-import-url">太平洋房屋物件網址</label>
+          <div className="ai-quick-paste-actions">
+            <input
+              className="input"
+              id="pacific-import-url"
+              type="url"
+              value={importUrl}
+              onChange={(event) => setImportUrl(event.target.value)}
+              placeholder="https://www.pacific.com.tw/Object/ObjectDetail/?saleID=S2984754"
+            />
+            <button className="button secondary" type="button" onClick={handlePacificImport} disabled={isImporting}>
+              {isImporting ? "匯入中…" : "匯入太平洋物件"}
+            </button>
+          </div>
+          <p className="muted">會匯入文字、現場照片與格局圖；照片先供你確認，按建立物件後才儲存到網站。</p>
         </div>
         <textarea
           className="textarea ai-quick-paste-textarea"
@@ -248,6 +362,19 @@ export function AiPropertyForm({
       <div className="field">
         <label htmlFor="floor_price">底價</label>
         <input className="input" id="floor_price" name="floor_price" defaultValue={state.values.floor_price} placeholder="出價談" />
+      </div>
+      <div className="field">
+        <label htmlFor="management_fee">管理費（元／期）</label>
+        <input className="input" id="management_fee" name="management_fee" type="number" min="0" step="any" defaultValue={state.values.management_fee} />
+        <FieldError message={state.fieldErrors.management_fee} />
+      </div>
+      <div className="field">
+        <label htmlFor="management_fee_payment">管理費繳費方式</label>
+        <select className="select" id="management_fee_payment" name="management_fee_payment" defaultValue={state.values.management_fee_payment}>
+          <option value="">未提供</option>
+          {["月繳", "雙月繳", "季繳", "年繳", "一次繳"].map((value) => <option key={value} value={value}>{value}</option>)}
+        </select>
+        <FieldError message={state.fieldErrors.management_fee_payment} />
       </div>
       <PropertyRentalFields values={state.values} errors={state.fieldErrors} />
       <div className="field">
@@ -347,6 +474,10 @@ export function AiPropertyForm({
           multiple
           onChange={(event) => appendFiles(event.currentTarget.files)}
         />
+        {selectedFiles.length ? <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))", gap: 10 }}>
+          {selectedFiles.map((file, index) => <PendingPhoto key={file.name + file.size + file.lastModified} file={file}
+            onRemove={() => syncFiles(selectedFilesRef.current.filter((_, i) => i !== index))} />)}
+        </div> : null}
         <span className="muted">
           {selectedFileNames.length ? `已選擇 ${selectedFileNames.length} 張：${selectedFileNames.join("、")}` : "可點選選擇多張檔案，或將照片拖曳到此欄位。建立後可在編輯頁繼續上傳、設封面或刪除。"}
         </span>
@@ -356,7 +487,7 @@ export function AiPropertyForm({
         <input className="input" id="alt_text" name="alt_text" />
       </div>
       <div className="field full">
-        <button className="button" type="submit" disabled={pending}>{pending ? "建立中..." : "建立物件"}</button>
+        <button className="button" type="submit" disabled={pending || isImporting}>{pending ? "建立中..." : "建立物件"}</button>
       </div>
     </form>
   );

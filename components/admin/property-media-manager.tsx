@@ -6,16 +6,21 @@ import { buildFileSelection } from "@/lib/media/file-selection";
 import type { FileSelectionSource } from "@/lib/media/file-selection";
 import { placeMediaId, moveMediaId } from "@/lib/properties/media-order";
 import type { PropertyMedia } from "@/lib/properties/types";
+import { PacificPhotoImport } from "@/components/admin/pacific-photo-import";
 import { PropertyCoverImage } from "@/components/media/property-cover-image";
 
 export function PropertyMediaManager({
   media,
+  propertyId,
+  sourceText = "",
   uploadAction,
   setCoverAction,
   reorderAction,
   deleteActionBase
 }: {
   media: PropertyMedia[];
+  propertyId?: string;
+  sourceText?: string;
   uploadAction: string;
   setCoverAction: string;
   reorderAction: string;
@@ -90,6 +95,7 @@ export function PropertyMediaManager({
   return (
     <section className="section" style={{ paddingBottom: 0 }}>
       <h2>物件媒體</h2>
+      {propertyId ? <PacificPhotoImport propertyId={propertyId} sourceText={sourceText} media={orderedMedia} /> : null}
       <form action={uploadAction} method="post" encType="multipart/form-data" className="form-grid" style={{ marginBottom: 18 }}>
         <div
           className={`field media-dropzone${isDraggingFile ? " is-dragging" : ""}`}

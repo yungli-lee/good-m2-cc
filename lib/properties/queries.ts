@@ -39,6 +39,7 @@ const publicPropertySelect = `
   basement_floors,
   parking_arrangement,
   management_fee,
+  management_fee_payment,
   current_usage,
   completion_date,
   community_name,
