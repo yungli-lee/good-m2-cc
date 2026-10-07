@@ -106,6 +106,8 @@ export default async function EditPropertyPage({ params, searchParams }: Props) 
                 <PropertyForm key={property.id} property={property} role={current.profile.role} formAction={`/admin/properties/${property.id}/edit/save`} />
                 <PropertyMediaManager
                   media={activeMedia}
+                  propertyId={property.id}
+                  sourceText={property.address_private || ""}
                   uploadAction={`/admin/properties/${property.id}/edit/upload`}
                   setCoverAction={`/admin/properties/${property.id}/edit/cover`}
                   reorderAction={`/admin/properties/${property.id}/edit/media/reorder`}
