@@ -14,6 +14,8 @@ export type ParsedProperty = {
   developer_names?: string;
   showing_instructions?: string;
   service_fee_rate?: string;
+  management_fee?: string;
+  management_fee_payment?: string;
   floor_price?: string;
   frontage?: string;
   depth?: string;
@@ -80,6 +82,8 @@ const fieldAliases: Array<[keyof ParsedProperty | "lot_number" | "main_building"
   ["age", /^(屋齡)$/],
   ["completion_date", /^(完工日|完工日期|建築完成日|使照日期)$/],
   ["price", /^(開價|售價|總價)$/],
+  ["management_fee", /^(管理費)$/],
+  ["management_fee_payment", /^(管理費繳費方式|管理費收取方式)$/],
   ["floor_price", /^(底價)$/],
   ["service_fee_rate", /^(服務費|服務費%|仲介服務費)$/],
   ["floor", /^(樓層|樓高)$/],
@@ -466,6 +470,7 @@ export function parsePastedProperty(rawText: string): ParsedProperty {
     parsed.rental_equipment = (text.match(/^\s*(?:原)?(?:餐飲設備|附帶設備|設備)\s*[:：，,]?\s*(.+)$/m)?.[1] || "").split(/擁有|HACCP/)[0].replace(/[，,、\s]+$/, "");
     parsed.price = "";
   }
+  parsed.management_fee = parsed.management_fee ? normalizeNumber(parsed.management_fee) : "";
   parsed.price = parsed.price ? normalizePrice(parsed.price) : "";
   parsed.land_area_ping = parsed.land_area_ping ? normalizeNumber(parsed.land_area_ping) : "";
   parsed.building_area_ping = parsed.building_area_ping ? normalizeNumber(parsed.building_area_ping) : "";
