@@ -16,10 +16,11 @@ export async function POST(request: Request) {
     // This is the same public data endpoint and public authorization used by Pacific's page.
     const response = await fetch("https://www.pacific.com.tw/api/ObjectAPI/GetObjectDetail/" + encodeURIComponent(id), {
       headers: { accept: "application/json", authorization: "Basic cHJtczpwcm1z" },
-      redirect: "error",
+      redirect: "manual",
       cache: "no-store",
       signal: AbortSignal.timeout(15000)
     });
+    if (response.status >= 300 && response.status < 400) return apiError("太平洋房屋資料 API 發生轉址，未匯入任何欄位", 502);
     if (!response.ok) return apiError("太平洋房屋物件資料回應異常（HTTP " + response.status + "）", 502);
     const data: unknown = await response.json();
     const { rawText, parsed } = parsePacificProperty(data, sourceUrl);
