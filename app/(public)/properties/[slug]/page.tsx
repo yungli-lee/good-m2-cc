@@ -215,7 +215,7 @@ export default async function PropertyDetailPage({ params }: Props) {
     ["電梯數", formatPublicNumber(property.elevator_count, " 部")],
     ["每層戶數", formatPublicNumber(property.units_per_floor, " 戶")],
     ["車位方式", joinPublicValues(property.parking_arrangement)],
-    ["管理費", property.management_fee == null ? "" : `${formatPublicNumber(property.management_fee)} 元`]
+    ["管理費", property.management_fee == null ? "" : `${formatPublicNumber(property.management_fee)} 元${property.management_fee_payment ? `／${property.management_fee_payment}` : ""}`]
   ].filter(([, value]) => Boolean(value)) : [];
 
   const renderBuildingDetails = () => {
