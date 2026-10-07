@@ -22,6 +22,7 @@ type Props = {
 };
 
 const errorMessage: Record<string, string> = {
+  initial_photos_failed: "物件已建立，但部分照片儲存失敗，請在此頁補傳並確認封面。",
   "42501": "資料庫權限不足，請確認此帳號的後台角色與物件 RLS 權限。",
   forbidden: "此帳號沒有足夠權限。",
   invalid_form: "表單欄位格式有誤，請檢查後再儲存。",

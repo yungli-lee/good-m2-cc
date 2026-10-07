@@ -117,6 +117,8 @@ async function tryUploadInitialPropertyImage({
         media_type: "image",
         url: publicUrl.publicUrl,
         storage_path: storagePath,
+        mime_type: file.type,
+        file_size: file.size,
         alt_text: altText || null,
         is_cover: isCover
       })
@@ -136,10 +138,12 @@ async function tryUploadInitialPropertyImage({
       userId,
       userEmail
     });
+    return true;
   } catch (error) {
     console.error("initial_property_image_upload_failed", {
       message: error instanceof Error ? error.message.slice(0, 180) : "unknown"
     });
+    return false;
   }
 }
 
@@ -609,20 +613,24 @@ export async function createPropertyAction(
   });
 
   const files = uploadedImageFiles(formData);
-  for (const [index, file] of files.entries()) {
-    await tryUploadInitialPropertyImage({
+  let uploadFailures = 0;
+  let coverCreated = false;
+  for (const file of files) {
+    const uploaded = await tryUploadInitialPropertyImage({
       supabase,
       file,
       propertyId: data.id,
       userId: current.user.id,
       userEmail: current.user.email,
       altText: String(formData.get("alt_text") || ""),
-      isCover: index === 0
+      isCover: !coverCreated
     });
+    if (uploaded) coverCreated = true;
+    else uploadFailures += 1;
   }
 
   revalidatePath("/properties");
-  redirect(`/admin/properties/${data.id}/edit`);
+  redirect(`/admin/properties/${data.id}/edit${uploadFailures ? "?error=initial_photos_failed" : ""}`);
 }
 
 export async function updatePropertyAction(id: string, formData: FormData) {
