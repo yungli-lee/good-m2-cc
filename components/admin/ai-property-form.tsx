@@ -61,6 +61,8 @@ export function AiPropertyForm({
   const [state, action, pending] = useActionState(formAction, initialState);
   const formRef = useRef<HTMLFormElement>(null);
   const [quickPaste, setQuickPaste] = useState("");
+  const [importUrl, setImportUrl] = useState("");
+  const [isImporting, setIsImporting] = useState(false);
   const [message, setMessage] = useState("");
   const [multiValues, setMultiValues] = useState<Record<string, string[]>>({ sale_motivation: [], current_condition_type: [], current_usage: [], building_style: [], parking_type: [] });
   const [otherValues, setOtherValues] = useState<Record<string, string>>({ sale_motivation_other: "", current_condition_other: "", current_usage_other: "", building_style_other: "", parking_type_other: "" });
@@ -72,14 +74,8 @@ export function AiPropertyForm({
   const canManageProgressNotes = role === "admin" || role === "owner";
   const quickPasteStats = useMemo(() => quickPaste.trim().length, [quickPaste]);
 
-  function handleParse() {
+  function applyParsedProperty(parsed: ParsedProperty) {
     if (!formRef.current) return;
-    if (!quickPaste.trim()) {
-      setMessage("請先貼上物件資料。");
-      return;
-    }
-
-    const parsed = parsePastedProperty(quickPaste);
     const form = formRef.current;
     const fields: Array<keyof ParsedProperty> = [
       "title",
@@ -125,7 +121,47 @@ export function AiPropertyForm({
       }
       else setFormValue(form, field, parsed[field]);
     });
+  }
+
+  function handleParse() {
+    if (!quickPaste.trim()) {
+      setMessage("請先貼上物件資料。");
+      return;
+    }
+    applyParsedProperty(parsePastedProperty(quickPaste));
     setMessage("已解析並填入表單，送出前請快速確認欄位。");
+  }
+
+  async function handlePacificImport() {
+    const url = importUrl.trim();
+    if (!url) {
+      setMessage("請先貼上太平洋房屋物件網址。");
+      return;
+    }
+
+    setIsImporting(true);
+    setMessage("正在讀取太平洋房屋物件資料…");
+    try {
+      const response = await fetch("/api/admin/import-property-url", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ url })
+      });
+      const payload = await response.json().catch(() => null);
+      if (!response.ok) {
+        throw new Error(payload?.error || "匯入失敗");
+      }
+      const rawText = payload?.data?.rawText || "";
+      if (!rawText) throw new Error("沒有取得可解析的物件資料");
+
+      setQuickPaste(rawText);
+      applyParsedProperty(parsePastedProperty(rawText));
+      setMessage("已從太平洋房屋匯入並填入表單，請確認價格、坪數、地址與格局後再建立。");
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "太平洋房屋物件匯入失敗");
+    } finally {
+      setIsImporting(false);
+    }
   }
 
   function appendFiles(files: FileList | null) {
@@ -150,8 +186,25 @@ export function AiPropertyForm({
         <div className="ai-quick-paste-header">
           <div>
             <h2>AI 快速建立物件</h2>
-            <p className="muted">貼上 Line 或 Word 物件資料，解析後會先填入表單，可再人工校正。</p>
+            <p className="muted">可貼上太平洋房屋物件網址，或貼上 Line／Word 物件資料；解析後會先填入表單，可再人工校正。</p>
           </div>
+        </div>
+        <div className="field full">
+          <label htmlFor="pacific-import-url">太平洋房屋物件網址</label>
+          <div className="ai-quick-paste-actions">
+            <input
+              className="input"
+              id="pacific-import-url"
+              type="url"
+              value={importUrl}
+              onChange={(event) => setImportUrl(event.target.value)}
+              placeholder="https://www.pacific.com.tw/Object/ObjectDetail/?saleID=S2984754"
+            />
+            <button className="button secondary" type="button" onClick={handlePacificImport} disabled={isImporting}>
+              {isImporting ? "匯入中…" : "匯入太平洋物件"}
+            </button>
+          </div>
+          <p className="muted">目前先匯入文字欄位；照片仍使用下方「物件照片」上傳，避免直接連結外站圖片失效。</p>
         </div>
         <textarea
           className="textarea ai-quick-paste-textarea"
