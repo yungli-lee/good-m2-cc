@@ -155,7 +155,8 @@ export function AiPropertyForm({
       if (!rawText) throw new Error("沒有取得可解析的物件資料");
 
       setQuickPaste(rawText);
-      applyParsedProperty(parsePastedProperty(rawText));
+      if (!payload?.data?.parsed) throw new Error("沒有取得確認過的物件欄位，請重新匯入");
+      applyParsedProperty(payload.data.parsed as ParsedProperty);
       setMessage("已從太平洋房屋匯入並填入表單，請確認價格、坪數、地址與格局後再建立。");
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "太平洋房屋物件匯入失敗");
