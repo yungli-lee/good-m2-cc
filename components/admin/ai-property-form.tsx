@@ -93,6 +93,8 @@ export function AiPropertyForm({
       "developer_names",
       "showing_instructions",
       "service_fee_rate",
+      "management_fee",
+      "management_fee_payment",
       "floor_price",
       "frontage",
       "depth",
@@ -302,6 +304,19 @@ export function AiPropertyForm({
       <div className="field">
         <label htmlFor="floor_price">底價</label>
         <input className="input" id="floor_price" name="floor_price" defaultValue={state.values.floor_price} placeholder="出價談" />
+      </div>
+      <div className="field">
+        <label htmlFor="management_fee">管理費（元／期）</label>
+        <input className="input" id="management_fee" name="management_fee" type="number" min="0" step="any" defaultValue={state.values.management_fee} />
+        <FieldError message={state.fieldErrors.management_fee} />
+      </div>
+      <div className="field">
+        <label htmlFor="management_fee_payment">管理費繳費方式</label>
+        <select className="select" id="management_fee_payment" name="management_fee_payment" defaultValue={state.values.management_fee_payment}>
+          <option value="">未提供</option>
+          {["月繳", "雙月繳", "季繳", "年繳", "一次繳"].map((value) => <option key={value} value={value}>{value}</option>)}
+        </select>
+        <FieldError message={state.fieldErrors.management_fee_payment} />
       </div>
       <PropertyRentalFields values={state.values} errors={state.fieldErrors} />
       <div className="field">
