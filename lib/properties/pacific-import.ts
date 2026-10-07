@@ -64,6 +64,12 @@ export function parsePacificProperty(data: unknown, sourceUrl: string) {
     add("現況", item.useStatusName);
     add("停車位", Number(item.hasStall) === 2 ? "無" : Number(item.hasStall) === 1 ? (/平面/.test(text(item.stallTypeName)) ? "平面車位" : /機械/.test(text(item.stallTypeName)) ? "機械車位" : item.stallTypeName) : "");
   }
+  const fee = number(item.adminFee);
+  if (!isLand && fee !== undefined) {
+    add("管理費", fee);
+    const payment = text(item.payAdminFeeTypeName) || ({ "1": "月繳", "2": "季繳", "3": "年繳" } as Record<string, string>)[text(item.payAdminFeeType)] || "";
+    if (["月繳", "雙月繳", "季繳", "年繳", "一次繳"].includes(payment)) add("管理費繳費方式", payment);
+  }
   add("推薦特色", item.objFeature1);
   const notes = [
     "太平洋物件編號 " + id,
