@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { BrokerageDisclosure } from "@/components/layout/brokerage-disclosure";
 import type { CompanySettings } from "@/lib/company-settings";
 import type { ResolvedNavigationItem } from "@/lib/navigation";
 
@@ -17,6 +18,7 @@ export function HomeFooter({ company, navigation }: { company: CompanySettings; 
           <span>嚴選好物件</span><span>價格透明</span><span>安全交易</span><span>售後服務</span>
           <strong>讓我們協助您安心成家・投資增值</strong>
         </div>
+        <div className="container brokerage-footer"><BrokerageDisclosure settings={company} /></div>
       </footer>
       <div className="home-contact-launchers" aria-label="找物件與聯絡"><Link className="home-concierge-launcher" href="/guide">阿勇阿美陪你找物件</Link>{company.line_url ? <a className="floating-line" href={company.line_url}>Line 諮詢</a> : null}</div>
     </>

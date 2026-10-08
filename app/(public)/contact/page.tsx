@@ -77,8 +77,8 @@ export default async function ContactPage() {
               {company.franchise_logo_url ? <img className="company-info-logo" src={company.franchise_logo_url} alt={`${company.franchise_name}標誌`} /> : null}
               <h2>{company.company_name}</h2>
               <p>{company.franchise_name}</p>
-              <p>{company.brokerage_license_no}</p>
-              <p>{company.realtor_certificate_no}</p>
+              <p>經紀業許可文號：{company.brokerage_license_no}</p>
+              <p>不動產經紀人證號：{company.realtor_certificate_no}</p>
             </div>
           </aside>
         </div>
