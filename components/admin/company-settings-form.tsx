@@ -37,17 +37,17 @@ export function CompanySettingsForm({ settings }: { settings: CompanySettings })
       <div className="field">
         <label htmlFor="company_name">公司法定名稱</label>
         <input className="input" id="company_name" name="company_name" defaultValue={settings.company_name} required />
-        <span className="muted">顯示於聯絡我們、公司資訊卡與法定揭露。</span>
+        <span className="muted">顯示於聯絡我們、公司資訊卡、頁尾與物件價格下方的揭露資訊。</span>
         <FieldError message={state.fieldErrors?.company_name} />
       </div>
       <div className="field">
         <label htmlFor="franchise_name">加盟店名稱</label>
         <input className="input" id="franchise_name" name="franchise_name" defaultValue={settings.franchise_name} required />
-        <span className="muted">顯示於品牌副標、Footer 與公司資訊卡。</span>
+        <span className="muted">顯示於 Footer、公司資訊卡與物件價格下方的揭露資訊。</span>
         <FieldError message={state.fieldErrors?.franchise_name} />
       </div>
       <div className="field">
-        <label htmlFor="brokerage_license_no">經紀業特許字號</label>
+        <label htmlFor="brokerage_license_no">經紀業許可字號</label>
         <input className="input" id="brokerage_license_no" name="brokerage_license_no" defaultValue={settings.brokerage_license_no} required />
         <FieldError message={state.fieldErrors?.brokerage_license_no} />
       </div>
