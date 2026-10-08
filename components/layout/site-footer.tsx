@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { BrokerageDisclosure } from "@/components/layout/brokerage-disclosure";
 import type { CompanySettings } from "@/lib/company-settings";
 import type { ResolvedNavigationItem } from "@/lib/navigation";
 
@@ -54,6 +55,7 @@ export function SiteFooter({ settings, navigation }: { settings: CompanySettings
               <span>售後服務</span>
             </div>
             <strong>讓我們協助您安心成家・投資增值</strong>
+            <div className="brokerage-footer"><BrokerageDisclosure settings={settings} /></div>
             <small>{settings.copyright_text}</small>
           </div>
         </div>

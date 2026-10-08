@@ -43,7 +43,7 @@ assert.doesNotMatch(header, /settings\.logo_url/);
 assert.match(contact, /company\.franchise_logo_url/);
 assert.match(property, /companySettings\.franchise_logo_url/);
 assert.doesNotMatch(footer, /<small>\{settings\.company_name\}<\/small>/);
-assert.doesNotMatch(footer, /brokerage_license_no|realtor_certificate/);
+assert.match(footer, /<BrokerageDisclosure settings=\{settings\}/);
 assert.match(footer, /settings\.copyright_text/);
 
 assert.match(contact, /<h2>\{company\.company_name\}<\/h2>/);

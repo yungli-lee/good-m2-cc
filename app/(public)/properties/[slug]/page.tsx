@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getPublicCompanySettings } from "@/lib/company-settings";
+import { BrokerageDisclosure } from "@/components/layout/brokerage-disclosure";
 import { formatPublicPing, formatPropertyPrice, isLandProperty, propertyTypeLabel } from "@/lib/format";
 import { getPublishedPropertyBySlug, getPublicPropertyAvailability, listRelatedPublishedProperties, listRetentionPublishedProperties } from "@/lib/properties/queries";
 import { resolvePropertySeo } from "@/lib/properties/seo";
@@ -125,7 +126,7 @@ export default async function PropertyDetailPage({ params }: Props) {
       <p>{companySettings.franchise_name}</p>
       <dl>
         <div>
-          <dt>經紀業特許字號</dt>
+          <dt>經紀業許可文號</dt>
           <dd>{companySettings.brokerage_license_no}</dd>
         </div>
         <div>
@@ -173,6 +174,7 @@ export default async function PropertyDetailPage({ params }: Props) {
         <h1 style={{ marginTop: 0 }}>{property.title}</h1>
         <p className="eyebrow">{property.transaction_type === "rent" ? "出租" : "出售"}</p>
         <div className="price">{formatPropertyPrice(property)}</div>
+        <BrokerageDisclosure settings={companySettings} compact />
         {property.transaction_type === "rent" ? <div className="rental-terms">{property.deposit_months != null ? <p>押金：{property.deposit_months} 個月</p> : null}{property.minimum_lease_months ? <p>最短租期：{property.minimum_lease_months % 12 === 0 ? `${property.minimum_lease_months / 12} 年` : `${property.minimum_lease_months} 個月`}</p> : null}{property.rental_equipment ? <p style={{ whiteSpace: "pre-wrap" }}>附帶設備／條件：{property.rental_equipment}</p> : null}{property.lease_notarization_required ? <p>租約須經公證</p> : null}</div> : null}
         <p>{property.address_public || "地址洽詢"}</p>
         <p>類型：{publicBuildingTypeLabel(property)}</p>

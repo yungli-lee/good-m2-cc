@@ -7,6 +7,27 @@
   --color-brand-cream: #f6f3eb;
 }
 
+/* Visible brokerage identity on every public footer and property summary. */
+.brokerage-disclosure {
+  min-width: 0;
+  font-size: 0.875rem;
+  line-height: 1.8;
+  overflow-wrap: anywhere;
+}
+.brokerage-disclosure p { margin: 0; }
+.brokerage-disclosure .brokerage-disclosure-company { font-size: 1rem; }
+.brokerage-disclosure dl { display: grid; gap: 4px; margin: 12px 0 0; }
+.brokerage-disclosure dl > div { display: flex; justify-content: center; flex-wrap: wrap; column-gap: 12px; }
+.brokerage-disclosure dt, .brokerage-disclosure dd { margin: 0; }
+.brokerage-disclosure-compact { margin: 12px 0 16px; padding: 12px 14px; border-left: 3px solid #c99a43; background: #f6f3eb; color: #17233f; text-align: left; }
+.brokerage-footer { grid-column: 1 / -1; padding-block: 18px; text-align: center; }
+.site-app-footer .brokerage-footer { padding-block: 0; }
+@media (max-width: 600px) {
+  .brokerage-footer { padding-bottom: calc(150px + env(safe-area-inset-bottom, 0px)); }
+  .site-app-footer .brokerage-footer { padding-bottom: calc(170px + env(safe-area-inset-bottom, 0px)); }
+  .brokerage-disclosure dl > div { display: block; }
+}
+
 * {
   box-sizing: border-box;
 }
