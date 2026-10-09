@@ -11,7 +11,7 @@ export async function POST(request: Request) {
   try { form = await request.formData(); } catch { return apiError("圖片資料無法讀取", 400); }
   const role = form.get("role");
   const file = form.get("file");
-  if (role !== "ayong" && role !== "amei") return apiError("角色不正確", 422);
+  if (role !== "ayong" && role !== "amei" && role !== "duo") return apiError("角色不正確", 422);
   if (!(file instanceof File) || file.size === 0 || file.size > maxSize) return apiError("請選擇 5MB 以下圖片", 422);
   if (!["image/png", "image/webp"].includes(file.type)) return apiError("僅支援透明背景 PNG 或 WebP", 422);
   const bytes = new Uint8Array(await file.arrayBuffer());
