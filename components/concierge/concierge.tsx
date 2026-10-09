@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import { AssistantPortrait } from "@/components/concierge/assistant-portrait";
 import { contactPhoneSchema } from "@/lib/inquiries/schema";
 import { readPublicJson, requestChatJson } from "@/lib/concierge/public-response";
 import { chatContact, redactChatContact } from "@/lib/concierge/contact";
@@ -162,10 +163,10 @@ export function Concierge({ aiEnabled, siteKey, phone, lineUrl, initialProperty,
     declined: Boolean(viewingDeclined.current[focusedProperty.id])
   }) : "none";
   void viewingStateVersion;
-  return <div className={`concierge ${embedded ? "concierge-embedded" : ""}`}>
+  return <div className={`concierge ${embedded ? "concierge-embedded" : "concierge-guide-page"}`}>
     {siteKey && <Script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" onReady={() => setWidgetReady(true)} />}
-    {!embedded && <div className="concierge-heading"><div className={`character-guide-person character-guide-person-${role}`} aria-hidden="true"><img src="/images/guides/ayong-amei.webp" alt="" width="184" height="170" /></div>
-      <div><p className="eyebrow">陪你一起找房</p><h1>你想找什麼物件？</h1><p>{aiEnabled ? "告訴我地區、預算與需求，阿美、阿勇陪你找。" : "目前為需求導覽模式，可整理條件、搜尋物件與留下需求。"}</p>
+    {!embedded && <div className="concierge-heading"><div className={`character-guide-person character-guide-person-${role}`} aria-hidden="true"><AssistantPortrait role={role} width={240} height={260} /></div>
+      <div className="concierge-hero-copy"><p className="eyebrow">陪你一起找房</p><h1>你想找什麼物件？</h1><p>{aiEnabled ? "告訴我地區、預算與需求，阿美、阿勇陪你找。" : "目前為需求導覽模式，可整理條件、搜尋物件與留下需求。"}</p>
         <div className="concierge-role-switch" aria-label="選擇導覽角色">{(["amei", "ayong"] as const).map(value => <button key={value} type="button" aria-pressed={role === value} className={role === value ? "selected" : ""} onClick={() => { stop(); setRole(value); }}>{value === "amei" ? "阿美" : "阿勇"}帶你找</button>)}</div></div></div>}
     <div className="concierge-shortcuts">{!messages.length && (initialProperty ? ["介紹這件的重點", initialProperty.transaction_type === "rent" ? "租期、押金和設備有哪些？" : "想了解格局和停車"] : ["我想找鹿港住宅", "我有物件想委託出售", "我想找租屋"]).map(text => <button className="concierge-quiet" type="button" key={text} disabled={busy} onClick={() => void ask(text)}>{text}</button>)}{messages.length > 0 && <button className="concierge-quiet" disabled={busy || sending} onClick={() => { stop(); setMessages([]); setViewingTime(""); setFocusedProperty(initialProperty || null); candidates.current = []; setNeeds(initialNeeds()); clicked.current = []; focusedTurns.current = {}; viewingDeclined.current = {}; setViewingStateVersion(value => value + 1); setShowLead(false); setContactName(""); setContactPhone(""); setSummary(""); setSent(false); setError(""); }}>重新開始</button>}</div>
     {focusedProperty && <div className="concierge-focus"><span>正在聊：<strong>{focusedProperty.title}</strong></span>{!initialProperty && <button className="concierge-quiet" type="button" disabled={busy || sending} onClick={() => { setFocusedProperty(null); void ask("重新找物件", null); }}>重新找物件</button>}</div>}

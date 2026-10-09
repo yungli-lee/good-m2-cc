@@ -3467,3 +3467,85 @@ td {
 .concierge-embedded .form-grid { grid-template-columns: 1fr; }
 .concierge-embedded .concierge-lead h2 { font-size: 1.2rem; }
 .concierge-embedded input, .concierge-embedded textarea { max-width: 100%; min-width: 0; font-size: 16px; }
+
+/* Individual assistant pictures replace the old side-by-side sprite without cropping. */
+.character-guide-person img.assistant-portrait-single { left: 0; width: 92px; height: 170px; max-width: 100%; object-fit: contain; object-position: center bottom; }
+@media (max-width: 600px) { .concierge-heading .character-guide-person img.assistant-portrait-single { left: 0; width: 74px; height: 136px; } }
+
+/* Preview: give individual AI portraits the full visual size rather than the legacy half-sprite crop. */
+.character-guide-hosts .character-guide-person:has(img.assistant-portrait-single) { width: 160px; height: 208px; overflow: visible; }
+.character-guide-hosts .character-guide-person img.assistant-portrait-single { position: relative; left: auto; top: auto; width: 160px; height: 208px; max-width: 100%; object-fit: contain; object-position: center bottom; }
+.concierge-heading .character-guide-person:has(img.assistant-portrait-single) { width: 120px; height: 170px; overflow: visible; }
+.concierge-heading .character-guide-person img.assistant-portrait-single { position: relative; left: auto; top: auto; width: 120px; height: 170px; max-width: 100%; object-fit: contain; }
+@media (max-width: 600px) {
+ .character-guide-hosts .character-guide-person:has(img.assistant-portrait-single) { width: 136px; height: 188px; }
+ .character-guide-hosts .character-guide-person img.assistant-portrait-single { width: 136px; height: 188px; }
+ .concierge-heading .character-guide-person:has(img.assistant-portrait-single) { width: 100px; height: 145px; }
+ .concierge-heading .character-guide-person img.assistant-portrait-single { width: 100px; height: 145px; }
+}
+
+/* Guide landing hero: scoped to /guide, preserving embedded property chat. */
+.concierge-guide-page { --guide-ink: #122746; max-width: 980px; }
+.concierge-guide-page .concierge-heading {
+  display: grid; grid-template-columns: 210px minmax(0,1fr); align-items: center;
+  gap: clamp(18px,3vw,38px); padding: 24px 32px;
+  background: linear-gradient(125deg,#fff9eb 0%,#fffdf8 60%,#eef5fd 100%);
+  border: 1px solid #e7ddc9; border-radius: 24px;
+}
+.concierge-guide-page .concierge-heading .character-guide-person,
+.concierge-guide-page .concierge-heading .character-guide-person:has(img.assistant-portrait-single) {
+  width: 210px; height: 230px; overflow: visible; display: grid; place-items: center;
+}
+.concierge-guide-page .concierge-heading .character-guide-person img.assistant-portrait-single {
+  position: static; width: 205px; height: 225px; max-width: 100%;
+  object-fit: contain; object-position: center bottom;
+}
+.concierge-guide-page .concierge-hero-copy { min-width: 0; }
+.concierge-guide-page .concierge-hero-copy .eyebrow { margin: 0 0 7px; font-weight: 750; color: #9b6c19; }
+.concierge-guide-page .concierge-hero-copy h1 { margin: 0 0 9px; line-height: 1.22; font-size: clamp(27px,3.5vw,39px); letter-spacing: -.025em; color: var(--guide-ink); }
+.concierge-guide-page .concierge-hero-copy > p:not(.eyebrow) { margin: 0 0 16px; line-height: 1.6; color: #526078; }
+.concierge-guide-page .concierge-role-switch { padding: 3px; gap: 2px; }
+.concierge-guide-page .concierge-role-switch button { font-weight: 650; padding: 7px 13px; font-size: 14px; }
+.concierge-guide-page .concierge-shortcuts {
+  display: flex; flex-wrap: wrap; gap: 9px; margin: 18px 0 16px; padding: 0 2px;
+}
+.concierge-guide-page .concierge-shortcuts .concierge-quiet {
+  padding: 10px 16px; border-radius: 14px; font-weight: 650; background: #fff;
+}
+.concierge-guide-page .concierge-compose {
+  padding: 22px 24px; border-radius: 20px;
+  border: 1px solid #e5d9c1; box-shadow: 0 8px 24px #1023430a;
+}
+.concierge-guide-page .concierge-compose textarea { min-height: 110px; }
+.concierge-guide-page .concierge-direct-contact {
+  padding: 16px 0 0; border-top: 1px solid #e9e2d6; margin-top: 18px;
+}
+@media (max-width: 640px) {
+  .concierge-guide-page .concierge-heading {
+    grid-template-columns: 116px minmax(0,1fr); gap: 12px; padding: 17px 14px;
+    border-radius: 18px; align-items: center;
+  }
+  .concierge-guide-page .concierge-heading .character-guide-person,
+  .concierge-guide-page .concierge-heading .character-guide-person:has(img.assistant-portrait-single) {
+    width: 116px; height: 155px; overflow: visible;
+  }
+  .concierge-guide-page .concierge-heading .character-guide-person img.assistant-portrait-single {
+    position: static; width: 116px; height: 152px; max-width: 100%; object-fit: contain;
+  }
+  .concierge-guide-page .concierge-hero-copy h1 { font-size: clamp(22px,5.5vw,28px); margin-bottom: 7px; }
+  .concierge-guide-page .concierge-hero-copy .eyebrow { font-size: 12px; margin-bottom: 5px; }
+  .concierge-guide-page .concierge-hero-copy > p:not(.eyebrow) { font-size: 12px; line-height: 1.5; margin-bottom: 10px; }
+  .concierge-guide-page .concierge-role-switch button { font-size: 12px; padding: 7px 9px; white-space: nowrap; }
+  .concierge-guide-page .concierge-shortcuts { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 8px; margin: 13px 0; }
+  .concierge-guide-page .concierge-shortcuts .concierge-quiet { white-space: normal; text-align: center; padding: 10px 8px; font-size: 13px; line-height: 1.35; }
+  .concierge-guide-page .concierge-shortcuts .concierge-quiet:nth-child(2) { grid-column: span 2; }
+  .concierge-guide-page .concierge-compose { padding: 16px 14px; border-radius: 16px; }
+  .concierge-guide-page .concierge-compose textarea { min-height: 90px; }
+}
+@media (max-width: 360px) {
+ .concierge-guide-page .concierge-heading { grid-template-columns: 98px minmax(0,1fr); padding: 13px 10px; gap: 8px; }
+ .concierge-guide-page .concierge-heading .character-guide-person,
+ .concierge-guide-page .concierge-heading .character-guide-person:has(img.assistant-portrait-single) { width: 98px; height: 132px; }
+ .concierge-guide-page .concierge-heading .character-guide-person img.assistant-portrait-single { width: 98px; height: 132px; }
+ .concierge-guide-page .concierge-role-switch button { padding: 6px 7px; font-size: 11px; }
+}
