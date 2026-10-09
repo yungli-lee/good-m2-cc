@@ -119,7 +119,7 @@ export function PropertyCharacterGuide({ property, aiEnabled, siteKey, phone, sl
     {!hidden && !open ? <div className="character-guide-launcher">
       <button type="button" className="character-guide-hide" aria-label="隱藏角色小幫手" onClick={dismiss}>×</button>
       <button type="button" className="character-guide-launch" aria-expanded={false} aria-controls={panelId} onClick={show}>
-        <AssistantPortrait role={role} />
+        <AssistantPortrait role="duo" />
         <span>聊聊這一件</span>
       </button>
     </div> : null}
