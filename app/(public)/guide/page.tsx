@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { PropertyCard } from "@/components/properties/property-card";
+import type { Property } from "@/lib/properties/types";
 import { KnowledgeCard } from "@/components/content/knowledge-card";
 import { ReminderCard } from "@/components/content/reminder-card";
 import { listFeaturedProperties } from "@/lib/properties/queries";
@@ -52,7 +53,7 @@ export default async function GuidePage() {
     listKnowledgeRecommendations(3),
     listPublishedReminderPages(2)
   ]);
-  const featured = featuredResult.error ? [] : (featuredResult.data || []);
+  const featured = featuredResult.error ? [] : ((featuredResult.data || []) as unknown as Property[]);
   const env = getRequestContext()?.env as Record<string, string | undefined> | undefined;
   const siteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || env?.NEXT_PUBLIC_TURNSTILE_SITE_KEY || "";
   return <main className="guide-landing">
