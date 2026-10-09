@@ -30,3 +30,12 @@ export async function POST(request: Request) {
   if (error) return apiError("影片已上傳，但設定儲存失敗，原設定仍保留", 500);
   return NextResponse.json({ data: { url } }, { status: 201, headers: { "Cache-Control": "no-store" } });
 }
+
+export async function DELETE() {
+  const auth = await requireApiRole(["editor", "admin", "owner"]);
+  if (auth.response) return auth.response;
+  const db = await createSupabaseServerClient();
+  const { error } = await db.from("ai_assistant_duo_video").delete().eq("id", true);
+  if (error) return apiError("無法停用動畫", 500);
+  return NextResponse.json({ ok: true }, { headers: { "Cache-Control": "no-store" } });
+}
