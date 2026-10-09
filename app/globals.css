@@ -3580,3 +3580,18 @@ td {
  .guide-landing-benefits > div { padding: 14px 16px; }
  .guide-landing-final-panel { padding: 20px; }
 }
+
+/* Keep uploaded duo video within the exact footprint of the original launcher image. */
+.character-guide-launch .assistant-duo-video {
+  display: block;
+  width: 132px;
+  max-width: 100%;
+  height: auto;
+  aspect-ratio: 1 / 1;
+  object-fit: contain;
+  margin: 0 auto -4px;
+  filter: drop-shadow(0 4px 5px #10234322);
+}
+@media (max-width: 480px) {
+  .character-guide-launch .assistant-duo-video { width: 120px; }
+}
