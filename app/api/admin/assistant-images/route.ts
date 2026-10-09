@@ -23,7 +23,7 @@ export async function POST(request: Request) {
   const { error: uploadError } = await db.storage.from(mediaBucketName).upload(path, bytes, { contentType: file.type, cacheControl: "31536000", upsert: false });
   if (uploadError) return apiError("圖片上傳失敗", 500);
   const url = db.storage.from(mediaBucketName).getPublicUrl(path).data.publicUrl;
-  const { error } = await db.from("ai_assistant_images").upsert({ role, image_url: url, storage_path: path, updated_by: auth.current.user.id, updated_at: new Date().toISOString() }, { onConflict: "role" });
+  const { error } = await db.from("ai_assistant_images").upsert({ role, image_url: url, storage_path: path, updated_by: auth.current?.user.id, updated_at: new Date().toISOString() }, { onConflict: "role" });
   if (error) return apiError("圖片已上傳，但設定儲存失敗，原圖仍保留", 500);
   return NextResponse.json({ data: { role, url } }, { status: 201, headers: { "Cache-Control": "no-store" } });
 }
