@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { AssistantPortrait } from "@/components/concierge/assistant-portrait";
 import { Concierge, type ConciergeProperty } from "@/components/concierge/concierge";
 import { useEffect, useId, useRef, useState } from "react";
 import type { GuideRole, GuideScripts, GuideTopic } from "@/lib/properties/character-guide";
@@ -118,7 +119,7 @@ export function PropertyCharacterGuide({ property, aiEnabled, siteKey, phone, sl
     {!hidden && !open ? <div className="character-guide-launcher">
       <button type="button" className="character-guide-hide" aria-label="隱藏角色小幫手" onClick={dismiss}>×</button>
       <button type="button" className="character-guide-launch" aria-expanded={false} aria-controls={panelId} onClick={show}>
-        <img src="/images/guides/ayong-amei.webp" alt="" width={720} height={665} loading="lazy" decoding="async" />
+        <AssistantPortrait role={role} />
         <span>聊聊這一件</span>
       </button>
     </div> : null}
@@ -128,7 +129,7 @@ export function PropertyCharacterGuide({ property, aiEnabled, siteKey, phone, sl
         <button ref={closeRef} type="button" className="character-guide-close" aria-label="關閉物件介紹" onClick={close}>×</button>
       </div>
       <div className="character-guide-hosts">
-        <div className={`character-guide-person character-guide-person-${role}`}><img src="/images/guides/ayong-amei.webp" alt={`Q 版${roles[role]}，微笑為你介紹`} width={720} height={665} /></div>
+        <div className={`character-guide-person character-guide-person-${role}`}><AssistantPortrait role={role} alt={`Q 版${roles[role]}，微笑為你介紹`} /></div>
         <div className="character-guide-role-buttons">{(Object.keys(roles) as GuideRole[]).map(item => <button type="button" key={item} aria-pressed={role === item} onClick={() => { stopSpeech(); setRole(item); }}>{roles[item]}介紹</button>)}</div>
       </div>
       <div className="character-guide-topics" aria-label="小幫手模式"><button type="button" aria-pressed={view === "chat"} onClick={() => { stopSpeech(); setView("chat"); }}>聊聊／帶看邀約</button><button type="button" aria-pressed={view === "intro"} onClick={() => setView("intro")}>聽物件介紹</button></div>
