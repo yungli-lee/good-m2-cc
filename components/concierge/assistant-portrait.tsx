@@ -7,6 +7,14 @@ export function AssistantPortrait({ role, alt = "", width = 720, height = 665 }:
   const [images, setImages] = useState<Partial<Record<Role,string>>>(cache || {});
   const [duoVideo, setDuoVideo] = useState<string | null>(cachedDuoVideo);
   const [videoFailed, setVideoFailed] = useState(false);
+  const [reduceMotion, setReduceMotion] = useState(false);
+  useEffect(() => {
+    const media = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const update = () => setReduceMotion(media.matches);
+    update();
+    media.addEventListener("change", update);
+    return () => media.removeEventListener("change", update);
+  }, []);
   useEffect(() => {
     let live = true;
     fetch("/api/public/assistant-images", { cache: "no-store" }).then(async response => {
@@ -21,7 +29,7 @@ export function AssistantPortrait({ role, alt = "", width = 720, height = 665 }:
     return () => { live = false; };
   }, []);
   const uploaded = images[role];
-  if (role === "duo" && duoVideo && !videoFailed) return <video
+  if (role === "duo" && duoVideo && !videoFailed && !reduceMotion) return <video
     src={duoVideo}
     className="assistant-duo-video"
     width={width} height={height}
