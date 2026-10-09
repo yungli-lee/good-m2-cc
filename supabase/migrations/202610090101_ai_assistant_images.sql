@@ -1,7 +1,7 @@
 create table if not exists public.ai_assistant_images (
-  role text primary key check (role in ('ayong', 'amei')),
+  role text primary key check (role in ('ayong', 'amei', 'duo')),
   image_url text not null check (image_url like 'https://%'),
-  storage_path text not null check (storage_path ~ '^ai-assistants/(ayong|amei)/[0-9a-f-]+\.(png|webp)$'),
+  storage_path text not null check (storage_path ~ '^ai-assistants/(ayong|amei|duo)/[0-9a-f-]+\.(png|webp)$'),
   updated_by uuid references auth.users(id),
   updated_at timestamptz not null default now()
 );
