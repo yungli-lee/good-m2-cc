@@ -16,5 +16,5 @@ export function AssistantPortrait({ role, alt = "", width = 720, height = 665 }:
     return () => { live = false; };
   }, []);
   const uploaded = images[role];
-  return <img src={uploaded || "/images/guides/ayong-amei.webp"} alt={alt} width={width} height={height} loading="lazy" decoding="async" style={uploaded ? { objectFit: "contain", objectPosition: "center" } : undefined} />;
+  return <img className={uploaded ? "assistant-portrait-single" : undefined} src={uploaded || "/images/guides/ayong-amei.webp"} alt={alt} width={width} height={height} loading="lazy" decoding="async" style={uploaded ? { objectFit: "contain", objectPosition: "center" } : undefined} />;
 }
