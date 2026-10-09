@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-type Role = "ayong" | "amei";
+type Role = "ayong" | "amei" | "duo";
 let cache: Partial<Record<Role, string>> | null = null;
 export function AssistantPortrait({ role, alt = "", width = 720, height = 665 }: { role: Role; alt?: string; width?: number; height?: number }) {
   const [images, setImages] = useState<Partial<Record<Role,string>>>(cache || {});
@@ -16,5 +16,5 @@ export function AssistantPortrait({ role, alt = "", width = 720, height = 665 }:
     return () => { live = false; };
   }, []);
   const uploaded = images[role];
-  return <img className={uploaded ? "assistant-portrait-single" : undefined} src={uploaded || "/images/guides/ayong-amei.webp"} alt={alt} width={width} height={height} loading="lazy" decoding="async" style={uploaded ? { objectFit: "contain", objectPosition: "center" } : undefined} />;
+  return <img className={uploaded && role !== "duo" ? "assistant-portrait-single" : undefined} src={uploaded || "/images/guides/ayong-amei.webp"} alt={alt} width={width} height={height} loading="lazy" decoding="async" style={uploaded ? { objectFit: "contain", objectPosition: "center" } : undefined} />;
 }
