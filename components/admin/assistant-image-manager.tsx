@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-type Role = "ayong" | "amei";
+type Role = "ayong" | "amei" | "duo";
 export function AssistantImageManager({ initial }: { initial: Partial<Record<Role,string>> }) {
   const [images, setImages] = useState(initial);
   const [busy, setBusy] = useState<Role | null>(null);
@@ -19,11 +19,11 @@ export function AssistantImageManager({ initial }: { initial: Partial<Record<Rol
     } catch (error) { setMessages(v=>({...v,[role]:error instanceof Error ? error.message : "上傳失敗"})); }
     finally { setBusy(null); }
   }
-  return <div className="grid">{(["amei","ayong"] as const).map(role=><section className="card" key={role}><div className="card-body">
-    <h2>{role==="amei"?"AI 阿美":"AI 阿勇"}</h2>
-    <p className="muted">上傳後立即更新本角色，不影響另一位。建議透明背景 PNG／WebP、正方形、5MB 以下。</p>
-    <img src={images[role] || "/images/guides/ayong-amei.webp"} alt={role==="amei"?"阿美形象預覽":"阿勇形象預覽"} style={{ display:"block",width:180,height:180,objectFit:"contain",background:"#f3f4f6",borderRadius:12 }} />
-    <input aria-label={role==="amei"?"更換阿美圖片":"更換阿勇圖片"} type="file" accept="image/png,image/webp" disabled={busy!==null} onChange={e=>{void upload(role,e.target.files?.[0]);e.target.value="";}} />
+  return <div className="grid">{(["amei","ayong","duo"] as const).map(role=><section className="card" key={role}><div className="card-body">
+    <h2>{role==="amei"?"AI 阿美":role==="ayong"?"AI 阿勇":"AI 雙人浮動入口"}</h2>
+    <p className="muted">上傳後立即更新這個圖片欄位，不影響其他圖片。建議透明背景 PNG／WebP、正方形、5MB 以下。</p>
+    <img src={images[role] || "/images/guides/ayong-amei.webp"} alt={role==="amei"?"阿美形象預覽":role==="ayong"?"阿勇形象預覽":"雙人聊天入口預覽"} style={{ display:"block",width:180,height:180,objectFit:"contain",background:"#f3f4f6",borderRadius:12 }} />
+    <input aria-label={role==="amei"?"更換阿美圖片":role==="ayong"?"更換阿勇圖片":"更換雙人版圖片"} type="file" accept="image/png,image/webp" disabled={busy!==null} onChange={e=>{void upload(role,e.target.files?.[0]);e.target.value="";}} />
     <p role="status">{messages[role] || ""}</p>
   </div></section>)}</div>;
 }
