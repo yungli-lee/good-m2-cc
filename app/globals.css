@@ -3471,3 +3471,15 @@ td {
 /* Individual assistant pictures replace the old side-by-side sprite without cropping. */
 .character-guide-person img.assistant-portrait-single { left: 0; width: 92px; height: 170px; max-width: 100%; object-fit: contain; object-position: center bottom; }
 @media (max-width: 600px) { .concierge-heading .character-guide-person img.assistant-portrait-single { left: 0; width: 74px; height: 136px; } }
+
+/* Preview: give individual AI portraits the full visual size rather than the legacy half-sprite crop. */
+.character-guide-hosts .character-guide-person:has(img.assistant-portrait-single) { width: 160px; height: 208px; overflow: visible; }
+.character-guide-hosts .character-guide-person img.assistant-portrait-single { position: relative; left: auto; top: auto; width: 160px; height: 208px; max-width: 100%; object-fit: contain; object-position: center bottom; }
+.concierge-heading .character-guide-person:has(img.assistant-portrait-single) { width: 120px; height: 170px; overflow: visible; }
+.concierge-heading .character-guide-person img.assistant-portrait-single { position: relative; left: auto; top: auto; width: 120px; height: 170px; max-width: 100%; object-fit: contain; }
+@media (max-width: 600px) {
+ .character-guide-hosts .character-guide-person:has(img.assistant-portrait-single) { width: 136px; height: 188px; }
+ .character-guide-hosts .character-guide-person img.assistant-portrait-single { width: 136px; height: 188px; }
+ .concierge-heading .character-guide-person:has(img.assistant-portrait-single) { width: 100px; height: 145px; }
+ .concierge-heading .character-guide-person img.assistant-portrait-single { width: 100px; height: 145px; }
+}
