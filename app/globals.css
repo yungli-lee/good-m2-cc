@@ -3549,3 +3549,34 @@ td {
  .concierge-guide-page .concierge-heading .character-guide-person img.assistant-portrait-single { width: 98px; height: 132px; }
  .concierge-guide-page .concierge-role-switch button { padding: 6px 7px; font-size: 11px; }
 }
+
+/* Landing content for paid traffic: keep AI entry primary and make supporting content skimmable. */
+.guide-landing-intro { padding-bottom: 16px; }
+.guide-landing-section { padding-top: 38px; padding-bottom: 40px; }
+.guide-landing-section:nth-of-type(odd) { background: #faf8f2; }
+.guide-landing-section-heading { display: flex; align-items: end; justify-content: space-between; flex-wrap: wrap; gap: 14px; margin-bottom: 20px; }
+.guide-landing-section-heading h2 { margin: 3px 0 8px; font-size: clamp(24px,3vw,32px); color: #102343; }
+.guide-landing-section-heading p { margin: 0; }
+.guide-landing-card-grid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 18px; align-items: stretch; }
+.guide-landing-benefits { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 14px; }
+.guide-landing-benefits > div { padding: 20px; border: 1px solid #e6dac5; border-radius: 16px; background: #fff; }
+.guide-landing-benefits strong { color: #102343; font-size: 17px; }
+.guide-landing-benefits p { margin: 10px 0 0; color: #536074; line-height: 1.65; }
+.guide-landing-disclaimer { margin: 15px 0 0; color: #58657b; font-size: 13px; }
+.guide-landing-empty { border: 1px solid #e6dac5; border-radius: 16px; padding: 20px; background: #fff; }
+.guide-landing-empty p { margin-top: 0; }
+.guide-landing-final { padding: 32px 0 54px; }
+.guide-landing-final-panel { padding: 28px; border-radius: 20px; border: 1px solid #e1d4b7; background: linear-gradient(115deg,#fff8e7,#f3f7fd); }
+.guide-landing-final-panel h2 { margin: 0 0 10px; }
+.guide-landing-final-panel p { margin: 0 0 15px; }
+@media(max-width: 780px) {
+ .guide-landing-card-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
+ .guide-landing-section { padding-top: 26px; padding-bottom: 28px; }
+}
+@media(max-width: 540px) {
+ .guide-landing-card-grid,.guide-landing-benefits { grid-template-columns: 1fr; }
+ .guide-landing-section-heading { align-items: start; }
+ .guide-landing-section-heading .button { font-size: 13px; }
+ .guide-landing-benefits > div { padding: 14px 16px; }
+ .guide-landing-final-panel { padding: 20px; }
+}
