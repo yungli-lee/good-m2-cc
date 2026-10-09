@@ -3467,3 +3467,7 @@ td {
 .concierge-embedded .form-grid { grid-template-columns: 1fr; }
 .concierge-embedded .concierge-lead h2 { font-size: 1.2rem; }
 .concierge-embedded input, .concierge-embedded textarea { max-width: 100%; min-width: 0; font-size: 16px; }
+
+/* Individual assistant pictures replace the old side-by-side sprite without cropping. */
+.character-guide-person img.assistant-portrait-single { left: 0; width: 92px; height: 170px; max-width: 100%; object-fit: contain; object-position: center bottom; }
+@media (max-width: 600px) { .concierge-heading .character-guide-person img.assistant-portrait-single { left: 0; width: 74px; height: 136px; } }
