@@ -122,9 +122,9 @@ export function Concierge({ aiEnabled, siteKey, phone, lineUrl, initialProperty,
       if (data.action === "search") candidates.current = data.properties;
       setNeeds(data.needs); setMessages(m => [...m, { role: "assistant", text: data.answer, reply: data, character: role }]);
       if (archive) {
-        void fetch("/api/public/concierge/session", {method:"POST",headers:{"Content-Type":"application/json"},
+        await fetch("/api/public/concierge/session", {method:"POST",headers:{"Content-Type":"application/json"},
           body:JSON.stringify({action:"append",...archive,userText:text,assistantText:data.answer,propertySlug:selected?.slug || data.focusedProperty?.slug || "",needs:data.needs})
-        }).then(response => {if (!response.ok) setArchiveStatus("本次對話未能保存；AI 回答不受影響。");}).catch(() => setArchiveStatus("本次對話未能保存；AI 回答不受影響。"));
+        }).then(response => {if (!response.ok) setArchiveStatus("本次對話未能保存；AI 回答不受影響。"); else setArchiveStatus("對話已安全保存。");}).catch(() => setArchiveStatus("本次對話未能保存；AI 回答不受影響。"));
       }
 
     } catch (e) {
@@ -205,7 +205,8 @@ export function Concierge({ aiEnabled, siteKey, phone, lineUrl, initialProperty,
         <details className="concierge-consent-details"><summary>了解保存用途與期限</summary><p>僅在同意後保存後續 AI 對話及物件偏好，用於分析需求、改善推薦。保存 90 天；不同意仍可正常找房，不會自動建立聯絡資料。可在隱私設定撤回並刪除。</p></details>
         <div className="concierge-consent-actions"><button type="button" className="button primary" disabled={busy} onClick={() => void consentArchive()}>我同意保存後續對話</button><button type="button" className="button" onClick={() => {setArchiveDeclined(true);setArchiveStatus("");}}>不同意，繼續找房</button></div>
       </section>}
-      {archive && <p className="muted" style={{fontSize:12,margin:"8px 0"}}>已同意保存後續對話。您可從下方「隱私與聯絡說明」撤回並刪除。</p>}
+      {archive && <p className="muted" style={{fontSize:12,margin:"8px 0"}}>已同意保存後續對話；可在「隱私與聯絡說明」撤回。</p>}
+      {archive && archiveStatus && <p role="status" style={{fontSize:12}}>{archiveStatus}</p>}
       {archiveStatus && !archive && !archiveDeclined && <p role="status">{archiveStatus}</p>}
 
       {messages.map((m, index) => <article className={`concierge-message ${m.role}`} key={index}>
