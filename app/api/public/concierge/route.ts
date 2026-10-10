@@ -124,6 +124,15 @@ export async function POST(request: Request) {
     if (buying && !focused && action === "search" && properties.length) {
       answer = `本次先推薦 ${Math.min(properties.length, 6)} 件候選物件，完整結果請點「查看這組條件的搜尋結果」。${needs.type === "residential" && properties.some(p => p.propertyType === "storefront") ? "包含店面／店住類候選，居住用途與條件仍待阿勇、阿美確認。" : ""}\n${answer}`;
     }
+    // Discovery question only when not inside a single-property conversation.
+    // Treat a customer's previous viewings as self-reported, never as verified showings.
+    const reportedPriorViewing = /看過|去看過|之前看|上次看/.test(safeMessage);
+    const expressedPreference = /喜歡|滿意|有興趣|不喜歡|太舊|太貴|太小|車位|格局/.test(safeMessage);
+    if (!focused && action === "search" && buying && !reportedPriorViewing && !history.some(m => /之前看過哪些物件|哪一間還想深入了解/.test(m.text))) {
+      answer += "\\n另外，您之前有看過哪些物件嗎？有沒有一間比較有興趣、還想繼續了解？我可以參考您喜歡或不喜歡的原因推薦類似在售物件。";
+    } else if (!focused && reportedPriorViewing && !expressedPreference) {
+      answer += "\\n您對那間房子最喜歡或最介意的是什麼？例如屋齡、價格、車位或格局，我可以用這些條件尋找相似案件。";
+    }
     // Restrict text links; real navigation is rendered exclusively from queried cards.
     answer = answer.replace(/https?:\/\/\S+|\[[^\]]*\]\([^)]*\)/g, "（請使用下方資料連結）");
     const speech = getGuideSpeechEnv();
