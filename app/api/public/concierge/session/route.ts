@@ -22,8 +22,8 @@ export async function POST(request: Request) {
   try { body = schema.parse(await request.json()); } catch { return failure(422,"archive_input"); }
   try {
     const configuredUrl = getSupabaseEnv().url || "";
-    const expectedPreviewProject = "niorteztdbuyusemsgwa";
-    if (!configuredUrl.startsWith(`https://${expectedPreviewProject}.supabase.co`)) {
+    const expectedProject = getSupabaseEnv().url?.includes("niorteztdbuyusemsgwa") ? "niorteztdbuyusemsgwa" : "rlbuadkmylulieoryzal";
+    if (!configuredUrl.startsWith(`https://${expectedProject}.supabase.co`)) {
       console.error("concierge_archive_wrong_database_target");
       return failure(503,"archive_target");
     }
