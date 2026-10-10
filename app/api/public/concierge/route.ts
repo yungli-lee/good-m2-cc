@@ -135,7 +135,7 @@ export async function POST(request: Request) {
     } else if (!focused && reportedPriorViewing && !expressedPreference) {
       answer += "\\n您對那間房子最喜歡或最介意的是什麼？例如屋齡、價格、車位或格局，我可以用這些條件尋找相似案件。";
     }
-    if (visitorSalutation && !answer.startsWith(visitorSalutation)) {
+    if (visitorSalutation && (history.filter(m => m.role === "assistant").length % 3 === 0) && !answer.startsWith(visitorSalutation)) {
       answer = visitorSalutation + "，" + answer;
     }
     // Restrict text links; real navigation is rendered exclusively from queried cards.
