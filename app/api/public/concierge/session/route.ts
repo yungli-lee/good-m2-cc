@@ -41,8 +41,14 @@ export async function POST(request: Request) {
     const { data: session, error } = await db.from("concierge_consented_sessions").select("id,proof_hash,expires_at").eq("id",body.sessionId).maybeSingle();
     if (error || !session || session.proof_hash !== await hash(body.proof) || Date.parse(session.expires_at) <= Date.now()) return failure(403,"archive_authorization");
     if (body.action === "revoke") {
-      const { error: deleteError } = await db.from("concierge_consented_sessions").delete().eq("id",body.sessionId);
-      return deleteError ? failure(503,"archive_database") : NextResponse.json({ ok: true }, { headers: noStore });
+      const { data: deleted, error: deleteError } = await db.from("concierge_consented_sessions").delete().eq("id",body.sessionId).select("id");
+      if (deleteError || deleted?.length !== 1) {
+        console.error("concierge_archive_delete_unverified", deleteError?.code || "no_deleted_row");
+        return failure(503,"archive_database");
+      }
+      const { data: remaining, error: verifyError } = await db.from("concierge_consented_sessions").select("id").eq("id",body.sessionId).maybeSingle();
+      if (verifyError || remaining) return failure(503,"archive_database");
+      return NextResponse.json({ ok: true, deleted: true }, { headers: noStore });
     }
     const preference = /不喜歡|不要這間|太舊|太貴|不考慮/.test(body.userText) ? "not_interested" : /喜歡|有興趣|想了解|還想看/.test(body.userText) ? "interested" : "unspecified";
     const needs = body.needs || {};
