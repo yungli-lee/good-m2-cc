@@ -52,6 +52,7 @@ export function Concierge({ aiEnabled, siteKey, phone, lineUrl, initialProperty,
   const [error, setError] = useState("");
   const [showLead, setShowLead] = useState(false);
   const [contactName, setContactName] = useState("");
+  const [preferredName, setPreferredName] = useState("");
   const [contactPhone, setContactPhone] = useState("");
   const [leadVersion, setLeadVersion] = useState(0);
   const leadSection = useRef<HTMLElement>(null);
@@ -110,7 +111,7 @@ export function Concierge({ aiEnabled, siteKey, phone, lineUrl, initialProperty,
     setMessages(m => [...m, { role: "user", text }]);
     try {
       const { response, data } = await requestChatJson<Reply & { error?: string }>("/api/public/concierge", { method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ role, message: redactChatContact(text), history, needs, focusedSlug: selected?.slug || "", propertyContext: initialProperty?.slug || "", viewingTime, candidateSlugs: candidates.current.map(p => p.slug) }), signal: AbortSignal.timeout(55000) });
+        body: JSON.stringify({ role, displayName: preferredName, message: redactChatContact(text), history, needs, focusedSlug: selected?.slug || "", propertyContext: initialProperty?.slug || "", viewingTime, candidateSlugs: candidates.current.map(p => p.slug) }), signal: AbortSignal.timeout(55000) });
       if (!response.ok) throw new Error(data.error || "暫時無法回答，請稍後重試");
       if (contact.phone) {
         setContactPhone(contact.phone); if (contact.name) setContactName(contact.name);
@@ -212,6 +213,11 @@ export function Concierge({ aiEnabled, siteKey, phone, lineUrl, initialProperty,
       </article>)}{busy && <p role="status">正在整理需求與查詢公開資料…</p>}<div ref={bottom} />
     </div>
     {error && <p role="alert">{error}</p>}
+    <div className="concierge-preferred-name" style={{margin:"12px 0",padding:"12px 16px",border:"1px solid #e4d9c5",borderRadius:12}}>
+      <label htmlFor={inputId + "-name"}>方便請問怎麼稱呼您？（選填）</label>
+      <input id={inputId + "-name"} value={preferredName} onChange={e => setPreferredName(e.target.value.slice(0,16))} maxLength={16} placeholder="例如：林先生、陳小姐、阿宏；也可以不填" autoComplete="off" style={{display:"block",width:"100%",marginTop:6,padding:10,border:"1px solid #ccd0d7",borderRadius:8}}/>
+      <small>僅用於本次對話稱呼；不會因此建立客戶聯絡資料。</small>
+    </div>
     <form className="concierge-compose" onSubmit={e => { e.preventDefault(); void ask(input); }}><label htmlFor={inputId}>告訴我你的需求</label><textarea id={inputId} value={input} onChange={e => setInput(e.target.value)} maxLength={500} rows={2} placeholder={initialProperty ? "例如：有幾個房間？設備包含哪些？" : "例如：鹿港或福興，800萬以下的住宅，需要孝親房"} required disabled={busy} /><button className="button primary" disabled={busy}>{busy ? "整理中…" : "送出提問"}</button></form>
     <div className="concierge-direct-contact"><p>不想留下資料？可以直接打電話或加 LINE。</p><div className="concierge-actions">{phone && <a className="button" href={`tel:${phone.replace(/[^\d+]/g, "")}`} data-contact-person="阿勇" data-cta-location="concierge_direct">阿勇 {phone} · 撥打電話</a>}{lineUrl && <a className="button" href={lineUrl} target="_blank" rel="noopener noreferrer" data-contact-person="阿勇" data-cta-location="concierge_direct">加 LINE 諮詢 ↗</a>}</div></div>
     <div className="concierge-handoff"><span>想請我們回電？</span><button className="button primary" type="button" disabled={busy || sending} onClick={() => openLead()}>{`請${role === "amei" ? "阿美" : "阿勇"}聯絡我`}</button></div>
