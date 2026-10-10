@@ -12,6 +12,7 @@ export const needsSchema = z.object({
 export type Needs = z.infer<typeof needsSchema>;
 export const chatSchema = z.object({
   role: z.enum(["amei", "ayong"]).default("amei"),
+  displayName: z.string().trim().max(16).default(""),
   message: z.string().trim().min(1).max(500),
   history: z.array(z.object({ role: z.enum(["user", "assistant"]), text: z.string().max(1200) })).max(10).default([]),
   needs: needsSchema.default({}),
@@ -38,7 +39,9 @@ export function inferNeeds(message: string, previous: Needs): Needs {
   const range = text.match(/(\d+(?:\.\d+)?)\s*(?:萬)?\s*[~～至到-]\s*(\d+(?:\.\d+)?)\s*萬/);
   const below = text.match(/(\d+(?:\.\d+)?)\s*萬\s*(?:以內|以下|內)/) || text.match(/(?:預算|最多|上限)\s*(\d+(?:\.\d+)?)\s*萬/);
   const above = text.match(/(\d+(?:\.\d+)?)\s*萬\s*(?:以上|起)/);
-  const important = ["孝親房", "電梯", "車位", "平面車位", "無障礙", "近學校"].filter(v => text.includes(v));
+  const important = ["孝親房", "電梯", "車位", "平面車位", "無障礙", "近學校", "屋齡較新", "大客廳", "採光好"].filter(v => text.includes(v));
+  if (/屋齡.{0,5}(?:太高|太老|太舊)|希望.{0,6}(?:屋齡新|新一點)/.test(text)) important.push("屋齡較新");
+  if (/客廳.{0,8}(?:大|寬敞)|喜歡.{0,8}大客廳/.test(text)) important.push("大客廳");
   return needsSchema.parse({ ...base, intent, districts: found.length ? found : base.districts, type,
     minPrice: range ? Number(range[1]) : above ? Number(above[1]) : base.minPrice,
     maxPrice: range ? Number(range[2]) : below ? Number(below[1]) : base.maxPrice,

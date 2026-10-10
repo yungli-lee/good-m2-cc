@@ -3595,3 +3595,35 @@ td {
 @media (max-width: 480px) {
   .character-guide-launch .assistant-duo-video { width: 120px; }
 }
+
+
+/* Consent stays discoverable without covering the latest question or answer. */
+.concierge-archive-consent {
+  position: sticky;
+  top: 8px;
+  z-index: 8;
+  margin: 10px 0;
+  padding: 12px 14px;
+  border: 2px solid #d49d3a;
+  border-radius: 12px;
+  background: #fffaf0;
+  box-shadow: 0 4px 10px rgba(20,40,70,.10);
+}
+.concierge-archive-consent strong { display: block; line-height: 1.35; }
+.concierge-consent-details { font-size: .85rem; margin: 6px 0; }
+.concierge-consent-details summary { cursor: pointer; color: #394b64; }
+.concierge-consent-details p { line-height: 1.55; margin: 6px 0; }
+.concierge-consent-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+@media (max-width: 600px) {
+  .concierge-archive-consent {
+    top: 4px;
+    padding: 9px 10px;
+    margin: 6px 0;
+    border-width: 1px;
+    box-shadow: 0 2px 7px rgba(20,40,70,.10);
+  }
+  .concierge-archive-consent strong { font-size: .88rem; }
+  .concierge-consent-details { margin: 3px 0 6px; font-size: .76rem; }
+  .concierge-consent-actions { gap: 6px; flex-wrap: nowrap; }
+  .concierge-consent-actions .button { padding: 6px 8px; font-size: .76rem; line-height: 1.25; white-space: normal; }
+}

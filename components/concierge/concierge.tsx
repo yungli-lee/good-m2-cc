@@ -24,6 +24,27 @@ export function Concierge({ aiEnabled, siteKey, phone, lineUrl, initialProperty,
   const [role, setRole] = useState<"amei" | "ayong">(character);
   const [needs, setNeeds] = useState<Needs>(initialNeeds);
   const [messages, setMessages] = useState<Message[]>([]);
+  const [archive, setArchive] = useState<{sessionId:string;proof:string} | null>(null);
+  const [archiveStatus, setArchiveStatus] = useState("");
+  const [archiveDeclined, setArchiveDeclined] = useState(false);
+  async function consentArchive() {
+    setArchiveStatus("正在啟用對話保存…");
+    try {
+      const response = await fetch("/api/public/concierge/session", {method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"consent",accepted:true,sourcePath:sourcePage})});
+      if (!response.ok) { const info = await response.json().catch(() => ({})) as {error?:string}; throw new Error(info.error || `無法啟用保存（${response.status}）`); }
+      const data = await response.json() as {sessionId:string;proof:string};
+      setArchiveDeclined(false); setArchive(data); setArchiveStatus("已同意：接下來的對話會保存 90 天，可隨時停止並刪除。");
+    } catch (error) { setArchiveStatus(error instanceof Error ? error.message : "保存功能目前無法使用；仍可繼續使用 AI 對話。"); }
+  }
+  async function revokeArchive() {
+    if (!archive) return;
+    try {
+      const response = await fetch("/api/public/concierge/session", {method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"revoke",...archive})});
+      if (!response.ok) throw new Error();
+      setArchive(null); setArchiveDeclined(true); setArchiveStatus("已停止保存並刪除此段已保存的對話。");
+    } catch { setArchiveStatus("刪除未完成，請稍後重試。"); }
+  }
+
   const [focusedProperty, setFocusedProperty] = useState<Card | null>(initialProperty || null);
   const candidates = useRef<Card[]>([]);
   const [viewingTime, setViewingTime] = useState("");
@@ -32,6 +53,7 @@ export function Concierge({ aiEnabled, siteKey, phone, lineUrl, initialProperty,
   const [error, setError] = useState("");
   const [showLead, setShowLead] = useState(false);
   const [contactName, setContactName] = useState("");
+  const [preferredName, setPreferredName] = useState("");
   const [contactPhone, setContactPhone] = useState("");
   const [leadVersion, setLeadVersion] = useState(0);
   const leadSection = useRef<HTMLElement>(null);
@@ -83,14 +105,14 @@ export function Concierge({ aiEnabled, siteKey, phone, lineUrl, initialProperty,
       setViewingStateVersion(value => value + 1);
     }
     const contact = chatContact(text);
-    if (contact.name) setContactName(contact.name);
+    if (contact.name) { setContactName(contact.name); setPreferredName(contact.name); }
     if (hasViewingDecline(text)) setShowLead(false);
     const updatedMessages: Message[] = [...messages, { role: "user", text }];
     const history = messages.slice(-10).map(m => ({ role: m.role, text: redactChatContact(m.text) }));
     setMessages(m => [...m, { role: "user", text }]);
     try {
       const { response, data } = await requestChatJson<Reply & { error?: string }>("/api/public/concierge", { method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ role, message: redactChatContact(text), history, needs, focusedSlug: selected?.slug || "", propertyContext: initialProperty?.slug || "", viewingTime, candidateSlugs: candidates.current.map(p => p.slug) }), signal: AbortSignal.timeout(55000) });
+        body: JSON.stringify({ role, displayName: contact.name || preferredName, message: redactChatContact(text), history, needs, focusedSlug: selected?.slug || "", propertyContext: initialProperty?.slug || "", viewingTime, candidateSlugs: candidates.current.map(p => p.slug) }), signal: AbortSignal.timeout(55000) });
       if (!response.ok) throw new Error(data.error || "暫時無法回答，請稍後重試");
       if (contact.phone) {
         setContactPhone(contact.phone); if (contact.name) setContactName(contact.name);
@@ -99,6 +121,12 @@ export function Concierge({ aiEnabled, siteKey, phone, lineUrl, initialProperty,
       setFocusedProperty(data.focusedProperty || null); setViewingTime(data.viewingTime || "");
       if (data.action === "search") candidates.current = data.properties;
       setNeeds(data.needs); setMessages(m => [...m, { role: "assistant", text: data.answer, reply: data, character: role }]);
+      if (archive) {
+        await fetch("/api/public/concierge/session", {method:"POST",headers:{"Content-Type":"application/json"},
+          body:JSON.stringify({action:"append",...archive,userText:text,assistantText:data.answer,propertySlug:selected?.slug || data.focusedProperty?.slug || "",needs:data.needs})
+        }).then(response => {if (!response.ok) setArchiveStatus("本次對話未能保存；AI 回答不受影響。"); else setArchiveStatus("對話已安全保存。");}).catch(() => setArchiveStatus("本次對話未能保存；AI 回答不受影響。"));
+      }
+
     } catch (e) {
       setInput(text);
       setMessages(m => m.at(-1)?.role === "user" && m.at(-1)?.text === text ? m.slice(0, -1) : m);
@@ -172,9 +200,25 @@ export function Concierge({ aiEnabled, siteKey, phone, lineUrl, initialProperty,
     {focusedProperty && <div className="concierge-focus"><span>正在聊：<strong>{focusedProperty.title}</strong></span>{!initialProperty && <button className="concierge-quiet" type="button" disabled={busy || sending} onClick={() => { setFocusedProperty(null); void ask("重新找物件", null); }}>重新找物件</button>}</div>}
     <div className={`concierge-conversation ${!initialProperty && !messages.length && !busy ? "is-empty" : ""}`} role="log" aria-label="需求導覽對話" aria-live="polite">
       {!messages.length && <p>{initialProperty ? "您好！我可以陪您了解這一件。想先問格局、設備，還是其他細節？" : "想找房、找土地，還是有物件想委託？告訴我地區、預算與必要條件，我陪你一起找。"}</p>}
+      {!archive && !archiveDeclined && <section className="concierge-archive-consent" aria-label="AI 對話保存同意">
+        <strong>是否同意保存後續 AI 對話？</strong>
+        <details className="concierge-consent-details"><summary>了解保存用途與期限</summary><p>僅在同意後保存後續 AI 對話及物件偏好，用於分析需求、改善推薦。保存 90 天；不同意仍可正常找房，不會自動建立聯絡資料。可在隱私設定撤回並刪除。</p></details>
+        <div className="concierge-consent-actions"><button type="button" className="button primary" disabled={busy} onClick={() => void consentArchive()}>我同意保存後續對話</button><button type="button" className="button" onClick={() => {setArchiveDeclined(true);setArchiveStatus("");}}>不同意，繼續找房</button></div>
+      </section>}
+      {archive && <p className="muted" style={{fontSize:12,margin:"8px 0"}}>已同意保存後續對話；可在「隱私與聯絡說明」撤回。</p>}
+      {archive && archiveStatus && <p role="status" style={{fontSize:12}}>{archiveStatus}</p>}
+      {archiveStatus && !archive && !archiveDeclined && <p role="status">{archiveStatus}</p>}
+
       {messages.map((m, index) => <article className={`concierge-message ${m.role}`} key={index}>
         <strong>{m.role === "user" ? "你" : `${m.character === "ayong" ? "阿勇" : "阿美"} Q版助理${m.reply?.mode === "ai" ? " · AI 回答" : " · 需求導覽"}`}</strong><p>{m.text}</p>
-        {m.reply && <>{index === lastReplyIndex && (viewingPrompt !== "none" || m.reply.action === "contact" || m.reply.action === "offer") && <div className="concierge-actions">
+        {m.reply && <>{index === lastReplyIndex && !focusedProperty && m.reply.action === "search" && m.reply.properties.length > 0 && <section aria-label="AI 找房追問" style={{margin:"16px 0",padding:18,border:"2px solid #d59c33",borderRadius:16,background:"#fff5dc",boxShadow:"0 4px 14px rgba(96,72,27,.12)"}}>
+          <strong style={{display:"block",fontSize:19,color:"#14294a",marginBottom:10}}>💬 想多了解您：之前看過哪些房子呢？</strong>
+          <p style={{margin:"0 0 12px",lineHeight:1.7}}>有沒有一間讓您特別喜歡，或覺得哪裡不夠理想？告訴我，我幫您找更接近需求的物件。</p>
+          <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
+            {["有看過，想分享喜歡的地方","有看過，但有不滿意的地方","還沒看過，想先比較"].map(choice => <button type="button" key={choice} className="button" disabled={busy || sending} onClick={() => { setInput(choice === "還沒看過，想先比較" ? "我還沒看過房子，想先比較符合預算的物件。" : choice === "有看過，想分享喜歡的地方" ? "我之前看過一間房子，喜歡的是：" : "我之前看過一間房子，不滿意的是："); }}> {choice} ↗ </button>)}
+          </div>
+          <small style={{display:"block",marginTop:10}}>點選後可補充詳細內容，再按「送出提問」。</small>
+        </section>}{index === lastReplyIndex && (viewingPrompt !== "none" || m.reply.action === "contact" || m.reply.action === "offer") && <div className="concierge-actions">
           {viewingPrompt === "direct" ? <><button className="button primary" type="button" disabled={busy || sending} onClick={() => openLead(needs, messages, viewingTime, "viewing")}>預約帶看這間</button><span>填希望時間即可，實際時段由阿勇、阿美再確認。</span></> :
           viewingPrompt === "soft" ? <><button className="button" type="button" disabled={busy || sending} onClick={() => openLead(needs, messages, viewingTime, "viewing")}>想現場確認？可安排看看</button><span>不急，先了解清楚也可以。</span></> :
           <><button className="button primary" type="button" disabled={busy || sending} onClick={() => openLead()}>{`請${role === "amei" ? "阿美" : "阿勇"}聯絡我`}</button><span>整理需求，確認後再送出</span></>}
@@ -186,10 +230,15 @@ export function Concierge({ aiEnabled, siteKey, phone, lineUrl, initialProperty,
       </article>)}{busy && <p role="status">正在整理需求與查詢公開資料…</p>}<div ref={bottom} />
     </div>
     {error && <p role="alert">{error}</p>}
+    {<div className="concierge-preferred-name" style={{margin:"12px 0",padding:"12px 16px",border:"1px solid #e4d9c5",borderRadius:12}}>
+      <label htmlFor={inputId + "-name"}>{preferredName ? "目前怎麼稱呼您？（可修改）" : "方便請問怎麼稱呼您？（選填）"}</label>
+      <input id={inputId + "-name"} value={preferredName} onChange={e => setPreferredName(e.target.value.slice(0,16))} maxLength={16} placeholder="例如：林先生、陳小姐、阿宏；也可以不填" autoComplete="off" style={{display:"block",width:"100%",marginTop:6,padding:10,border:"1px solid #ccd0d7",borderRadius:8}}/>
+      <small>僅用於本次對話稱呼；不會因此建立客戶聯絡資料。</small>
+    </div>}
     <form className="concierge-compose" onSubmit={e => { e.preventDefault(); void ask(input); }}><label htmlFor={inputId}>告訴我你的需求</label><textarea id={inputId} value={input} onChange={e => setInput(e.target.value)} maxLength={500} rows={2} placeholder={initialProperty ? "例如：有幾個房間？設備包含哪些？" : "例如：鹿港或福興，800萬以下的住宅，需要孝親房"} required disabled={busy} /><button className="button primary" disabled={busy}>{busy ? "整理中…" : "送出提問"}</button></form>
     <div className="concierge-direct-contact"><p>不想留下資料？可以直接打電話或加 LINE。</p><div className="concierge-actions">{phone && <a className="button" href={`tel:${phone.replace(/[^\d+]/g, "")}`} data-contact-person="阿勇" data-cta-location="concierge_direct">阿勇 {phone} · 撥打電話</a>}{lineUrl && <a className="button" href={lineUrl} target="_blank" rel="noopener noreferrer" data-contact-person="阿勇" data-cta-location="concierge_direct">加 LINE 諮詢 ↗</a>}</div></div>
     <div className="concierge-handoff"><span>想請我們回電？</span><button className="button primary" type="button" disabled={busy || sending} onClick={() => openLead()}>{`請${role === "amei" ? "阿美" : "阿勇"}聯絡我`}</button></div>
-    <details className="concierge-privacy"><summary>隱私與聯絡說明</summary><p className="concierge-privacy">先描述需求，不用提供完整門牌。若在聊天留下手機，會帶入聯絡表單，由你確認後才送出。{aiEnabled ? "文字問題會交由 AI 服務處理；聯絡資料在確認送出表單後才存入後台。" : "聯絡資料在確認送出表單後才存入後台。"}</p></details>
+    <details className="concierge-privacy"><summary>隱私與聯絡說明</summary><p className="concierge-privacy">先描述需求，不用提供完整門牌。若在聊天留下手機，會帶入聯絡表單，由你確認後才送出。{aiEnabled ? "文字問題會交由 AI 服務處理；聯絡資料在確認送出表單後才存入後台。" : "聯絡資料在確認送出表單後才存入後台。"}</p>{archive && <><p>已開啟對話保存；可隨時撤回並刪除本次已保存對話。</p><button type="button" className="button ghost" onClick={() => void revokeArchive()}>撤回同意並刪除對話</button>{archiveStatus && <p role="status">{archiveStatus}</p>}</>}</details>
     {showLead && <section ref={leadSection} className="concierge-lead" aria-labelledby={leadTitleId}><h2 id={leadTitleId}>{handoffPurpose === "viewing" ? "預約帶看｜確認聯絡方式" : "確認需求與聯絡方式"}</h2><p>{handoffPurpose === "viewing" ? "填寫希望時間即可，實際帶看時段會由阿勇、阿美再與你確認；尚未送出前都可以修改。" : "請確認這是你本人的聯絡資料。尚未送出；確認並同意後，才會通知阿勇、阿美。"}</p><form key={leadVersion} onSubmit={submit} data-form-type={handoffPurpose === "viewing" ? "concierge-viewing" : `concierge-${needs.intent}`} data-form-location="guide">
       <label>需求摘要（可以修改）<textarea rows={6} value={summary} onChange={e => setSummary(e.target.value)} minLength={10} maxLength={900} required disabled={sent || sending} /></label>
       {handoffPurpose === "viewing" && <label>希望帶看日期／時段（待真人確認）<input name="viewing_time" value={viewingTime} onChange={e => setViewingTime(e.target.value)} maxLength={80} placeholder="例如：週六下午2點" required disabled={sent || sending} /></label>}
