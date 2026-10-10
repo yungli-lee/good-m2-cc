@@ -200,10 +200,10 @@ export function Concierge({ aiEnabled, siteKey, phone, lineUrl, initialProperty,
     {focusedProperty && <div className="concierge-focus"><span>正在聊：<strong>{focusedProperty.title}</strong></span>{!initialProperty && <button className="concierge-quiet" type="button" disabled={busy || sending} onClick={() => { setFocusedProperty(null); void ask("重新找物件", null); }}>重新找物件</button>}</div>}
     <div className={`concierge-conversation ${!initialProperty && !messages.length && !busy ? "is-empty" : ""}`} role="log" aria-label="需求導覽對話" aria-live="polite">
       {!messages.length && <p>{initialProperty ? "您好！我可以陪您了解這一件。想先問格局、設備，還是其他細節？" : "想找房、找土地，還是有物件想委託？告訴我地區、預算與必要條件，我陪你一起找。"}</p>}
-      {!archive && !archiveDeclined && <section className="concierge-archive-consent" aria-label="AI 對話保存同意" style={{position:"sticky",top:8,zIndex:8,margin:"12px 0",padding:14,border:"2px solid #d49d3a",borderRadius:12,background:"#fffaf0",boxShadow:"0 6px 16px rgba(20,40,70,.13)"}}>
-        <strong>{role === "amei" ? "阿美" : "阿勇"}想先請問您：是否同意保存後續對話？</strong>
-        <p style={{margin:"8px 0"}}>同意後才會記錄接下來與 AI 的對話及物件偏好，用來了解需求、改善推薦；保存期間為 90 天。不同意也能繼續找房，不會自動建立聯絡資料。</p>
-        <div style={{display:"flex",gap:10,flexWrap:"wrap",alignItems:"center"}}><button type="button" className="button primary" disabled={busy} onClick={() => void consentArchive()}>我同意保存後續對話</button><button type="button" className="button" onClick={() => {setArchiveDeclined(true);setArchiveStatus("");}}>不同意，繼續找房</button></div>
+      {!archive && !archiveDeclined && <section className="concierge-archive-consent" aria-label="AI 對話保存同意">
+        <strong>是否同意保存後續 AI 對話？</strong>
+        <details className="concierge-consent-details"><summary>了解保存用途與期限</summary><p>僅在同意後保存後續 AI 對話及物件偏好，用於分析需求、改善推薦。保存 90 天；不同意仍可正常找房，不會自動建立聯絡資料。可在隱私設定撤回並刪除。</p></details>
+        <div className="concierge-consent-actions"><button type="button" className="button primary" disabled={busy} onClick={() => void consentArchive()}>我同意保存後續對話</button><button type="button" className="button" onClick={() => {setArchiveDeclined(true);setArchiveStatus("");}}>不同意，繼續找房</button></div>
       </section>}
       {archive && <p className="muted" style={{fontSize:12,margin:"8px 0"}}>已同意保存後續對話。您可從下方「隱私與聯絡說明」撤回並刪除。</p>}
       {archiveStatus && !archive && !archiveDeclined && <p role="status">{archiveStatus}</p>}
