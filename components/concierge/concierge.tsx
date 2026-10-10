@@ -27,7 +27,12 @@ export function Concierge({ aiEnabled, siteKey, phone, lineUrl, initialProperty,
   const [archive, setArchive] = useState<{sessionId:string;proof:string} | null>(null);
   const [archiveStatus, setArchiveStatus] = useState("");
   const [archiveDeclined, setArchiveDeclined] = useState(false);
+  const [archivePending, setArchivePending] = useState(false);
+  const archiveRequestInFlight = useRef(false);
   async function consentArchive() {
+    if (archiveRequestInFlight.current || archive) return;
+    archiveRequestInFlight.current = true;
+    setArchivePending(true);
     setArchiveStatus("正在啟用對話保存…");
     try {
       const response = await fetch("/api/public/concierge/session", {method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"consent",accepted:true,sourcePath:sourcePage})});
@@ -35,6 +40,7 @@ export function Concierge({ aiEnabled, siteKey, phone, lineUrl, initialProperty,
       const data = await response.json() as {sessionId:string;proof:string};
       setArchiveDeclined(false); setArchive(data); setArchiveStatus("已同意：接下來的對話會保存 90 天，可隨時停止並刪除。");
     } catch (error) { setArchiveStatus(error instanceof Error ? error.message : "保存功能目前無法使用；仍可繼續使用 AI 對話。"); }
+    finally { archiveRequestInFlight.current = false; setArchivePending(false); }
   }
   async function revokeArchive() {
     if (!archive) return;
@@ -198,12 +204,12 @@ export function Concierge({ aiEnabled, siteKey, phone, lineUrl, initialProperty,
         <div className="concierge-role-switch" aria-label="選擇導覽角色">{(["amei", "ayong"] as const).map(value => <button key={value} type="button" aria-pressed={role === value} className={role === value ? "selected" : ""} onClick={() => { stop(); setRole(value); }}>{value === "amei" ? "阿美" : "阿勇"}帶你找</button>)}</div></div></div>}
     <div className="concierge-shortcuts">{!messages.length && (initialProperty ? ["介紹這件的重點", initialProperty.transaction_type === "rent" ? "租期、押金和設備有哪些？" : "想了解格局和停車"] : ["我想找鹿港住宅", "我有物件想委託出售", "我想找租屋"]).map(text => <button className="concierge-quiet" type="button" key={text} disabled={busy} onClick={() => void ask(text)}>{text}</button>)}{messages.length > 0 && <button className="concierge-quiet" disabled={busy || sending} onClick={() => { stop(); setMessages([]); setViewingTime(""); setFocusedProperty(initialProperty || null); candidates.current = []; setNeeds(initialNeeds()); clicked.current = []; focusedTurns.current = {}; viewingDeclined.current = {}; setViewingStateVersion(value => value + 1); setShowLead(false); setContactName(""); setContactPhone(""); setSummary(""); setSent(false); setError(""); }}>重新開始</button>}</div>
     {focusedProperty && <div className="concierge-focus"><span>正在聊：<strong>{focusedProperty.title}</strong></span>{!initialProperty && <button className="concierge-quiet" type="button" disabled={busy || sending} onClick={() => { setFocusedProperty(null); void ask("重新找物件", null); }}>重新找物件</button>}</div>}
-    <div className={`concierge-conversation ${!initialProperty && !messages.length && !busy ? "is-empty" : ""}`} role="log" aria-label="需求導覽對話" aria-live="polite">
+    <div className={`concierge-conversation ${!initialProperty && !messages.length && !busy && archiveDeclined ? "is-empty" : ""}`} role="log" aria-label="需求導覽對話" aria-live="polite">
       {!messages.length && <p>{initialProperty ? "您好！我可以陪您了解這一件。想先問格局、設備，還是其他細節？" : "想找房、找土地，還是有物件想委託？告訴我地區、預算與必要條件，我陪你一起找。"}</p>}
       {!archive && !archiveDeclined && <section className="concierge-archive-consent" aria-label="AI 對話保存同意">
         <strong>是否同意保存後續 AI 對話？</strong>
         <details className="concierge-consent-details"><summary>了解保存用途與期限</summary><p>僅在同意後保存後續 AI 對話及物件偏好，用於分析需求、改善推薦。保存 90 天；不同意仍可正常找房，不會自動建立聯絡資料。可在隱私設定撤回並刪除。</p></details>
-        <div className="concierge-consent-actions"><button type="button" className="button primary" disabled={busy} onClick={() => void consentArchive()}>我同意保存後續對話</button><button type="button" className="button" onClick={() => {setArchiveDeclined(true);setArchiveStatus("");}}>不同意，繼續找房</button></div>
+        <div className="concierge-consent-actions"><button type="button" className="button primary" disabled={archivePending} aria-busy={archivePending} onClick={() => void consentArchive()}>{archivePending ? "同意處理中…" : "我同意保存後續對話"}</button><button type="button" className="button" disabled={archivePending} onClick={() => {setArchiveDeclined(true);setArchiveStatus("");}}>不同意，繼續找房</button></div>
       </section>}
       {archive && <p className="muted" style={{fontSize:12,margin:"8px 0"}}>已同意保存後續對話；可在「隱私與聯絡說明」撤回。</p>}
       {archive && archiveStatus && <p role="status" style={{fontSize:12}}>{archiveStatus}</p>}
