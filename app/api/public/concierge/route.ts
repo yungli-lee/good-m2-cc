@@ -100,6 +100,8 @@ export async function POST(request: Request) {
         answer = z.object({ answer: z.string().trim().min(1).max(1200) }).parse(output).answer;
       } catch (error) { logFallback("answer", error); mode = "guided"; }
     }
+    // Respect only a visitor-provided salutation. Never infer gender or use unsolicited flattery.
+    const visitorSalutation = input.displayName.replace(/[<>\\r\\n]/g, "").trim().slice(0,16);
     const speaker = input.role === "amei" ? "阿美" : "阿勇";
     const offer = [...safeMessage.matchAll(/(\d[\d,]*(?:\.\d+)?)\s*萬/g)].at(-1)?.[1];
     if (viewingFollowup && !hasViewingDecline(safeMessage)) {
@@ -132,6 +134,9 @@ export async function POST(request: Request) {
       answer += "\\n另外，您之前有看過哪些物件嗎？有沒有一間比較有興趣、還想繼續了解？我可以參考您喜歡或不喜歡的原因推薦類似在售物件。";
     } else if (!focused && reportedPriorViewing && !expressedPreference) {
       answer += "\\n您對那間房子最喜歡或最介意的是什麼？例如屋齡、價格、車位或格局，我可以用這些條件尋找相似案件。";
+    }
+    if (visitorSalutation && !answer.startsWith(visitorSalutation)) {
+      answer = visitorSalutation + "，" + answer;
     }
     // Restrict text links; real navigation is rendered exclusively from queried cards.
     answer = answer.replace(/https?:\/\/\S+|\[[^\]]*\]\([^)]*\)/g, "（請使用下方資料連結）");
