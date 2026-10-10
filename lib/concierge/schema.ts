@@ -12,6 +12,7 @@ export const needsSchema = z.object({
 export type Needs = z.infer<typeof needsSchema>;
 export const chatSchema = z.object({
   role: z.enum(["amei", "ayong"]).default("amei"),
+  displayName: z.string().trim().max(16).default(""),
   message: z.string().trim().min(1).max(500),
   history: z.array(z.object({ role: z.enum(["user", "assistant"]), text: z.string().max(1200) })).max(10).default([]),
   needs: needsSchema.default({}),
