@@ -235,7 +235,7 @@ export function Concierge({ aiEnabled, siteKey, phone, lineUrl, initialProperty,
     <div className="concierge-preferred-name" style={{margin:"12px 0",padding:"12px 16px",border:"1px solid #e4d9c5",borderRadius:12}}>
       {preferredName && !editingPreferredName ? <div>目前稱呼：<strong>{preferredName}</strong> <button type="button" className="concierge-quiet" onClick={() => setEditingPreferredName(true)}>修改稱呼</button></div> : <>
         <label htmlFor={inputId + "-name"}>方便請問怎麼稱呼您？（選填）</label>
-        <input id={inputId + "-name"} value={preferredName} onChange={e => setPreferredName(e.target.value.slice(0,16))}
+        <input id={inputId + "-name"} value={preferredName} onFocus={() => setEditingPreferredName(true)} onChange={e => { setEditingPreferredName(true); setPreferredName(e.target.value.slice(0,16)); }}
           maxLength={16} placeholder="例如：何先生、林小姐、阿宏；也可以不填" autoComplete="off"
           style={{display:"block",width:"100%",marginTop:6,padding:10,border:"1px solid #ccd0d7",borderRadius:8}}/>
         <button type="button" className="concierge-quiet" style={{marginTop:8}} onClick={() => {
