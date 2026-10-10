@@ -29,7 +29,7 @@ export function Concierge({ aiEnabled, siteKey, phone, lineUrl, initialProperty,
   async function consentArchive() {
     setArchiveStatus("正在啟用對話保存…");
     try {
-      const response = await fetch("/api/public/concierge/session", {method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"consent",accepted:true,sourcePath})});
+      const response = await fetch("/api/public/concierge/session", {method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"consent",accepted:true,sourcePath:sourcePage})});
       if (!response.ok) throw new Error("無法啟用保存，請稍後再試");
       const data = await response.json() as {sessionId:string;proof:string};
       setArchive(data); setArchiveStatus("已同意：接下來的對話會保存 90 天，可隨時停止並刪除。");
