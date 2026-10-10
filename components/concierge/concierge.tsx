@@ -209,7 +209,7 @@ export function Concierge({ aiEnabled, siteKey, phone, lineUrl, initialProperty,
       {!archive && !archiveDeclined && <section className="concierge-archive-consent" aria-label="AI 對話保存同意">
         <strong>是否同意保存後續 AI 對話？</strong>
         <details className="concierge-consent-details"><summary>了解保存用途與期限</summary><p>僅在同意後保存後續 AI 對話及物件偏好，用於分析需求、改善推薦。保存 90 天；不同意仍可正常找房，不會自動建立聯絡資料。可在隱私設定撤回並刪除。</p></details>
-        <div className="concierge-consent-actions"><button type="button" className="button primary" disabled={busy || archivePending} aria-busy={archivePending} onClick={() => void consentArchive()}>{archivePending ? "同意處理中…" : "我同意保存後續對話"}</button><button type="button" className="button" disabled={archivePending} onClick={() => {setArchiveDeclined(true);setArchiveStatus("");}}>不同意，繼續找房</button></div>
+        <div className="concierge-consent-actions"><button type="button" className="button primary" disabled={archivePending} aria-busy={archivePending} onClick={() => void consentArchive()}>{archivePending ? "同意處理中…" : "我同意保存後續對話"}</button><button type="button" className="button" disabled={archivePending} onClick={() => {setArchiveDeclined(true);setArchiveStatus("");}}>不同意，繼續找房</button></div>
       </section>}
       {archive && <p className="muted" style={{fontSize:12,margin:"8px 0"}}>已同意保存後續對話；可在「隱私與聯絡說明」撤回。</p>}
       {archive && archiveStatus && <p role="status" style={{fontSize:12}}>{archiveStatus}</p>}
