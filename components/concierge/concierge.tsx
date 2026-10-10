@@ -209,7 +209,14 @@ export function Concierge({ aiEnabled, siteKey, phone, lineUrl, initialProperty,
 
       {messages.map((m, index) => <article className={`concierge-message ${m.role}`} key={index}>
         <strong>{m.role === "user" ? "你" : `${m.character === "ayong" ? "阿勇" : "阿美"} Q版助理${m.reply?.mode === "ai" ? " · AI 回答" : " · 需求導覽"}`}</strong><p>{m.text}</p>
-        {m.reply && <>{index === lastReplyIndex && (viewingPrompt !== "none" || m.reply.action === "contact" || m.reply.action === "offer") && <div className="concierge-actions">
+        {m.reply && <>{index === lastReplyIndex && !focusedProperty && m.reply.action === "search" && m.reply.properties.length > 0 && <section aria-label="AI 找房追問" style={{margin:"16px 0",padding:18,border:"2px solid #d59c33",borderRadius:16,background:"#fff5dc",boxShadow:"0 4px 14px rgba(96,72,27,.12)"}}>
+          <strong style={{display:"block",fontSize:19,color:"#14294a",marginBottom:10}}>💬 想多了解您：之前看過哪些房子呢？</strong>
+          <p style={{margin:"0 0 12px",lineHeight:1.7}}>有沒有一間讓您特別喜歡，或覺得哪裡不夠理想？告訴我，我幫您找更接近需求的物件。</p>
+          <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
+            {["有看過，想分享喜歡的地方","有看過，但有不滿意的地方","還沒看過，想先比較"].map(choice => <button type="button" key={choice} className="button" disabled={busy || sending} onClick={() => { setInput(choice === "還沒看過，想先比較" ? "我還沒看過房子，想先比較符合預算的物件。" : choice === "有看過，想分享喜歡的地方" ? "我之前看過一間房子，喜歡的是：" : "我之前看過一間房子，不滿意的是："); }}> {choice} ↗ </button>)}
+          </div>
+          <small style={{display:"block",marginTop:10}}>點選後可補充詳細內容，再按「送出提問」。</small>
+        </section>}{index === lastReplyIndex && (viewingPrompt !== "none" || m.reply.action === "contact" || m.reply.action === "offer") && <div className="concierge-actions">
           {viewingPrompt === "direct" ? <><button className="button primary" type="button" disabled={busy || sending} onClick={() => openLead(needs, messages, viewingTime, "viewing")}>預約帶看這間</button><span>填希望時間即可，實際時段由阿勇、阿美再確認。</span></> :
           viewingPrompt === "soft" ? <><button className="button" type="button" disabled={busy || sending} onClick={() => openLead(needs, messages, viewingTime, "viewing")}>想現場確認？可安排看看</button><span>不急，先了解清楚也可以。</span></> :
           <><button className="button primary" type="button" disabled={busy || sending} onClick={() => openLead()}>{`請${role === "amei" ? "阿美" : "阿勇"}聯絡我`}</button><span>整理需求，確認後再送出</span></>}
