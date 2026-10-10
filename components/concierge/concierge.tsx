@@ -30,10 +30,10 @@ export function Concierge({ aiEnabled, siteKey, phone, lineUrl, initialProperty,
     setArchiveStatus("正在啟用對話保存…");
     try {
       const response = await fetch("/api/public/concierge/session", {method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"consent",accepted:true,sourcePath:sourcePage})});
-      if (!response.ok) throw new Error("無法啟用保存，請稍後再試");
+      if (!response.ok) { const info = await response.json().catch(() => ({})) as {error?:string}; throw new Error(info.error || `無法啟用保存（${response.status}）`); }
       const data = await response.json() as {sessionId:string;proof:string};
       setArchive(data); setArchiveStatus("已同意：接下來的對話會保存 90 天，可隨時停止並刪除。");
-    } catch { setArchiveStatus("保存功能目前無法使用；仍可繼續使用 AI 對話。"); }
+    } catch (error) { setArchiveStatus(error instanceof Error ? error.message : "保存功能目前無法使用；仍可繼續使用 AI 對話。"); }
   }
   async function revokeArchive() {
     if (!archive) return;
@@ -221,8 +221,8 @@ export function Concierge({ aiEnabled, siteKey, phone, lineUrl, initialProperty,
       </article>)}{busy && <p role="status">正在整理需求與查詢公開資料…</p>}<div ref={bottom} />
     </div>
     {error && <p role="alert">{error}</p>}
-    {!preferredName && <div className="concierge-preferred-name" style={{margin:"12px 0",padding:"12px 16px",border:"1px solid #e4d9c5",borderRadius:12}}>
-      <label htmlFor={inputId + "-name"}>方便請問怎麼稱呼您？（選填）</label>
+    {<div className="concierge-preferred-name" style={{margin:"12px 0",padding:"12px 16px",border:"1px solid #e4d9c5",borderRadius:12}}>
+      <label htmlFor={inputId + "-name"}>{preferredName ? "目前怎麼稱呼您？（可修改）" : "方便請問怎麼稱呼您？（選填）"}</label>
       <input id={inputId + "-name"} value={preferredName} onChange={e => setPreferredName(e.target.value.slice(0,16))} maxLength={16} placeholder="例如：林先生、陳小姐、阿宏；也可以不填" autoComplete="off" style={{display:"block",width:"100%",marginTop:6,padding:10,border:"1px solid #ccd0d7",borderRadius:8}}/>
       <small>僅用於本次對話稱呼；不會因此建立客戶聯絡資料。</small>
     </div>}
