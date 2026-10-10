@@ -26,13 +26,14 @@ export function Concierge({ aiEnabled, siteKey, phone, lineUrl, initialProperty,
   const [messages, setMessages] = useState<Message[]>([]);
   const [archive, setArchive] = useState<{sessionId:string;proof:string} | null>(null);
   const [archiveStatus, setArchiveStatus] = useState("");
+  const [archiveDeclined, setArchiveDeclined] = useState(false);
   async function consentArchive() {
     setArchiveStatus("正在啟用對話保存…");
     try {
       const response = await fetch("/api/public/concierge/session", {method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"consent",accepted:true,sourcePath:sourcePage})});
       if (!response.ok) { const info = await response.json().catch(() => ({})) as {error?:string}; throw new Error(info.error || `無法啟用保存（${response.status}）`); }
       const data = await response.json() as {sessionId:string;proof:string};
-      setArchive(data); setArchiveStatus("已同意：接下來的對話會保存 90 天，可隨時停止並刪除。");
+      setArchiveDeclined(false); setArchive(data); setArchiveStatus("已同意：接下來的對話會保存 90 天，可隨時停止並刪除。");
     } catch (error) { setArchiveStatus(error instanceof Error ? error.message : "保存功能目前無法使用；仍可繼續使用 AI 對話。"); }
   }
   async function revokeArchive() {
@@ -40,7 +41,7 @@ export function Concierge({ aiEnabled, siteKey, phone, lineUrl, initialProperty,
     try {
       const response = await fetch("/api/public/concierge/session", {method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"revoke",...archive})});
       if (!response.ok) throw new Error();
-      setArchive(null); setArchiveStatus("已停止保存並刪除此段已保存的對話。");
+      setArchive(null); setArchiveDeclined(true); setArchiveStatus("已停止保存並刪除此段已保存的對話。");
     } catch { setArchiveStatus("刪除未完成，請稍後重試。"); }
   }
 
@@ -199,13 +200,13 @@ export function Concierge({ aiEnabled, siteKey, phone, lineUrl, initialProperty,
     {focusedProperty && <div className="concierge-focus"><span>正在聊：<strong>{focusedProperty.title}</strong></span>{!initialProperty && <button className="concierge-quiet" type="button" disabled={busy || sending} onClick={() => { setFocusedProperty(null); void ask("重新找物件", null); }}>重新找物件</button>}</div>}
     <div className={`concierge-conversation ${!initialProperty && !messages.length && !busy ? "is-empty" : ""}`} role="log" aria-label="需求導覽對話" aria-live="polite">
       {!messages.length && <p>{initialProperty ? "您好！我可以陪您了解這一件。想先問格局、設備，還是其他細節？" : "想找房、找土地，還是有物件想委託？告訴我地區、預算與必要條件，我陪你一起找。"}</p>}
-      {!archive && <section className="concierge-archive-consent" aria-label="AI 對話保存同意" style={{margin:"12px 0",padding:14,border:"1px solid #e4d9c5",borderRadius:12,background:"#fffaf0"}}>
+      {!archive && !archiveDeclined && <section className="concierge-archive-consent" aria-label="AI 對話保存同意" style={{position:"sticky",top:8,zIndex:8,margin:"12px 0",padding:14,border:"2px solid #d49d3a",borderRadius:12,background:"#fffaf0",boxShadow:"0 6px 16px rgba(20,40,70,.13)"}}>
         <strong>{role === "amei" ? "阿美" : "阿勇"}想先請問您：是否同意保存後續對話？</strong>
         <p style={{margin:"8px 0"}}>同意後才會記錄接下來與 AI 的對話及物件偏好，用來了解需求、改善推薦；保存期間為 90 天。不同意也能繼續找房，不會自動建立聯絡資料。</p>
-        <button type="button" className="button primary" disabled={busy} onClick={() => void consentArchive()}>我同意保存後續對話</button>
+        <div style={{display:"flex",gap:10,flexWrap:"wrap",alignItems:"center"}}><button type="button" className="button primary" disabled={busy} onClick={() => void consentArchive()}>我同意保存後續對話</button><button type="button" className="button" onClick={() => {setArchiveDeclined(true);setArchiveStatus("");}}>不同意，繼續找房</button></div>
       </section>}
       {archive && <p className="muted" style={{fontSize:12,margin:"8px 0"}}>已同意保存後續對話。您可從下方「隱私與聯絡說明」撤回並刪除。</p>}
-      {archiveStatus && !archive && <p role="status">{archiveStatus}</p>}
+      {archiveStatus && !archive && !archiveDeclined && <p role="status">{archiveStatus}</p>}
 
       {messages.map((m, index) => <article className={`concierge-message ${m.role}`} key={index}>
         <strong>{m.role === "user" ? "你" : `${m.character === "ayong" ? "阿勇" : "阿美"} Q版助理${m.reply?.mode === "ai" ? " · AI 回答" : " · 需求導覽"}`}</strong><p>{m.text}</p>
