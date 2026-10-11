@@ -3649,3 +3649,14 @@ td {
     margin: 0;
   }
 }
+
+
+/* Keep the dense user-management table usable on iPad without crushed controls. */
+@media (min-width: 701px) and (max-width: 1300px) {
+  .admin-users-table { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .admin-users-table table { min-width: 1120px; table-layout: auto; }
+  .admin-users-table th, .admin-users-table td { white-space: normal; vertical-align: top; }
+  .admin-users-table td:nth-child(3) .select { min-width: 90px; }
+  .admin-users-table td:nth-child(7) .button { white-space: nowrap; }
+  .admin-users-table td:nth-child(8) { min-width: 112px; }
+}
