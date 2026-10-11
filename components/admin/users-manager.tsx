@@ -432,6 +432,7 @@ export function UsersManager({
                   {user.last_login_at ? <span>{formatDateTime(user.last_login_at)}</span> : <span>尚未登入</span>}
                 </div>
                 {actorRole === "owner" ? <form action={updateSalesLineIdAction.bind(null,user.id)} className="field"><span className="muted">LINE 通知 User ID</span><input className="input" name="line_user_id" defaultValue={lineIds[user.id]||""} pattern="U[0-9a-fA-F]{32}" placeholder="U + 32位英數字" /><button className="button ghost" type="submit">儲存 LINE</button></form> : null}
+                {actorRole==="owner"?<button className="button ghost" type="button" onClick={()=>issueBinding(user)}>產生 LINE 綁定碼</button>:null}
                 <div>
                   <div className="muted">設備</div>
                   <span>{user.last_login_at ? user.last_login_device || "Unknown device" : "-"}</span>
