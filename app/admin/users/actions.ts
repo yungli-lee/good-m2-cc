@@ -641,3 +641,38 @@ export async function sendPasswordResetEmailAction(targetId: string) {
   revalidatePath("/admin/users");
   redirect("/admin/users?saved=password_reset_email");
 }
+
+
+export async function issueTemporaryPasswordAction(targetId: string): Promise<{ok:boolean;password?:string;error?:string}> {
+  const current=await requireRole(["admin","owner"]);
+  const parsed=uuidSchema.safeParse(targetId);
+  if(!parsed.success)return {ok:false,error:"invalid_request"};
+  const supabase=await createSupabaseServerClient();
+  const {data:target,error:lookupError}=await supabase.from("profiles")
+   .select("id,email,role,deleted_at").eq("id",parsed.data).maybeSingle();
+  if(lookupError||!target||target.deleted_at)return {ok:false,error:"not_found"};
+  const permitted=current.profile.role==="owner" ||
+    (current.profile.role==="admin" && ["viewer","editor"].includes(target.role));
+  // Resetting the currently signed-in account must use password reauthentication.
+  if(!permitted || current.user.id===parsed.data)return {ok:false,error:"forbidden"};
+  const bytes=crypto.getRandomValues(new Uint8Array(24));
+  const alphabet="ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%";
+  const password=Array.from(bytes,b=>alphabet[b%alphabet.length]).join("")+"aA1!";
+  const expiresAt=new Date(Date.now()+30*60*1000).toISOString();
+  const admin=createSupabaseAdminClient();
+  const {data:authData,error:authGetError}=await admin.auth.admin.getUserById(parsed.data);
+  if(authGetError||!authData.user)return {ok:false,error:"request_failed"};
+  const {error}=await admin.auth.admin.updateUserById(parsed.data,{
+   password,
+   app_metadata:{...authData.user.app_metadata,must_change_password:true,temp_password_expires_at:expiresAt}
+  });
+  if(error)return {ok:false,error:"request_failed"};
+  await recordAuditLog({
+   action:"user.temporary_password_issued",resourceType:"auth",resourceId:parsed.data,
+   userId:current.user.id,userEmail:current.user.email,actorRole:current.profile.role,
+   targetUserId:parsed.data,targetEmail:target.email,
+   afterData:{expires_at:expiresAt,requires_password_change:true},
+   result:"success"
+  });
+  return {ok:true,password};
+}
