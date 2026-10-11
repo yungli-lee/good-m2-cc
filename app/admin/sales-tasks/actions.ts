@@ -25,7 +25,7 @@ export async function createSalesTask(form: FormData) {
     title:input.title,person_id:input.person_id||null,property_id:input.property_id||null,
     task_type:input.task_type,showing_status:input.task_type==="showing" ? input.showing_status||"pending_confirmation" : null,
     priority:input.priority,notes:input.notes||null,due_at:new Date(input.due_at+"+08:00").toISOString(),
-    showing_at:input.task_type==="showing"&&input.showing_at ? new Date(input.showing_at+"+08:00").toISOString() : null,
+    showing_at:input.showing_at ? new Date(input.showing_at+"+08:00").toISOString() : null,
     assigned_to:current.user.id,created_by:current.user.id
   });
   if (error) redirect("/admin/sales-tasks?error=save");
@@ -61,7 +61,7 @@ export async function updateSalesTask(id:string,form:FormData){
  const {data,error}=await db.from("sales_follow_up_tasks").update({
  title:input.title,person_id:input.person_id||null,property_id:input.property_id||null,
  task_type:input.task_type,showing_status:input.task_type==="showing"?input.showing_status||"pending_confirmation":null,
- showing_at:input.task_type==="showing"&&input.showing_at?new Date(input.showing_at+"+08:00").toISOString():null,
+ showing_at:input.showing_at?new Date(input.showing_at+"+08:00").toISOString():null,
  due_at:new Date(input.due_at+"+08:00").toISOString(),priority:input.priority,notes:input.notes||null,updated_at:new Date().toISOString()
  }).eq("id",id).eq("assigned_to",current.user.id).select("id").maybeSingle();
  if(error||!data)redirect("/admin/sales-tasks?error=save");
