@@ -1,16 +1,18 @@
 import { NextResponse } from "next/server";
 import { createSupabaseAdminClient } from "@/lib/supabase/server";
 import { getLineMessagingConfig } from "@/lib/line/config";
+import { getRequestContext } from "@/lib/supabase/env";
 import { formatSalesLineReminder, type SalesReminder } from "@/lib/sales-reminders";
 
 export const runtime="edge";
 export const dynamic="force-dynamic";
 function cfg(name:string){
- const e=(globalThis as unknown as {__unused?:string});void e;
- return process.env[name]?.trim()||"";
+ const env=getRequestContext()?.env as Record<string,string|undefined>|undefined;
+ return (process.env[name]||env?.[name]||"").trim();
 }
 export async function POST(request:Request){
  // Disabled unless explicitly enabled in the Preview environment.
+ if(cfg("NEXT_PUBLIC_SUPABASE_URL")?.includes("rlbuadkmylulieoryzal"))return NextResponse.json({ok:false,reason:"production_blocked"},{status:403});
  if(cfg("SALES_LINE_REMINDERS_ENABLED")!=="true")return NextResponse.json({ok:false,reason:"disabled"},{status:503});
  const key=cfg("SALES_LINE_CRON_SECRET");
  if(!key||request.headers.get("authorization")!==`Bearer ${key}`)
