@@ -19,8 +19,7 @@ export async function POST(request:Request){
    return NextResponse.json({ok:false,reason:"unauthorized"},{status:401});
  const line=getLineMessagingConfig();
  // Prevent falling back to multi-recipient inquiry notifications.
- const recipient=cfg("LINE_SALES_RECIPIENT_ID");
- if(!recipient||!line.channelAccessToken)return NextResponse.json({ok:false,reason:"missing_line_config"},{status:503});
+ if(!line.channelAccessToken)return NextResponse.json({ok:false,reason:"missing_line_config"},{status:503});
  const activation=Date.parse(cfg("SALES_LINE_REMINDERS_START_AT"));
  if(!Number.isFinite(activation))return NextResponse.json({ok:false,reason:"missing_activation_time"},{status:503});
  const dbUrl=cfg("NEXT_PUBLIC_SUPABASE_URL");
@@ -40,6 +39,13 @@ export async function POST(request:Request){
    .select("id,status,due_at,line_reminder_sent_for")
    .eq("id",task.id).maybeSingle();
   if(!latest||latest.status!=="open"||latest.due_at!==task.due_at||latest.line_reminder_sent_for===task.due_at)continue;
+  const {data:taskOwner}=await db.from("sales_follow_up_tasks").select("assigned_to").eq("id",task.id).maybeSingle();
+  const {data:destination}=taskOwner?.assigned_to ? await db.from("sales_line_recipients").select("line_user_id").eq("user_id",taskOwner.assigned_to).maybeSingle() : {data:null};
+  const recipient=destination?.line_user_id;
+  if(!recipient){
+   await db.from("sales_follow_up_tasks").update({line_reminder_last_error:"Recipient LINE ID is not configured"}).eq("id",task.id).eq("line_reminder_claimed_for",task.due_at);
+   failed++;continue;
+  }
   let success=false;
   try{
    const res=await fetch("https://api.line.me/v2/bot/message/push",{
