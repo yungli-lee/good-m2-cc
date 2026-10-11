@@ -641,3 +641,86 @@ export async function sendPasswordResetEmailAction(targetId: string) {
   revalidatePath("/admin/users");
   redirect("/admin/users?saved=password_reset_email");
 }
+
+
+export async function issueTemporaryPasswordAction(targetId: string): Promise<{ok:boolean;password?:string;error?:string}> {
+  const current=await requireRole(["admin","owner"]);
+  const parsed=uuidSchema.safeParse(targetId);
+  if(!parsed.success)return {ok:false,error:"invalid_request"};
+  const supabase=await createSupabaseServerClient();
+  const {data:target,error:lookupError}=await supabase.from("profiles")
+   .select("id,email,role,deleted_at").eq("id",parsed.data).maybeSingle();
+  if(lookupError||!target||target.deleted_at)return {ok:false,error:"not_found"};
+  const permitted=current.profile.role==="owner" ||
+    (current.profile.role==="admin" && ["viewer","editor"].includes(target.role));
+  // Resetting the currently signed-in account must use password reauthentication.
+  if(!permitted || current.user.id===parsed.data)return {ok:false,error:"forbidden"};
+  const bytes=crypto.getRandomValues(new Uint8Array(24));
+  const alphabet="ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%";
+  const password=Array.from(bytes,b=>alphabet[b%alphabet.length]).join("")+"aA1!";
+  const expiresAt=new Date(Date.now()+30*60*1000).toISOString();
+  const admin=createSupabaseAdminClient();
+  const {data:authData,error:authGetError}=await admin.auth.admin.getUserById(parsed.data);
+  if(authGetError||!authData.user)return {ok:false,error:"request_failed"};
+  const {error}=await admin.auth.admin.updateUserById(parsed.data,{
+   password,
+   app_metadata:{...authData.user.app_metadata,must_change_password:true,temp_password_expires_at:expiresAt}
+  });
+  if(error)return {ok:false,error:"request_failed"};
+  await recordAuditLog({
+   action:"user.temporary_password_issued",resourceType:"auth",resourceId:parsed.data,
+   userId:current.user.id,userEmail:current.user.email,actorRole:current.profile.role,
+   targetUserId:parsed.data,targetEmail:target.email,
+   afterData:{expires_at:expiresAt,requires_password_change:true},
+   result:"success"
+  });
+  return {ok:true,password};
+}
+
+export async function updateSalesLineIdAction(targetId:string,formData:FormData){
+ const current=await requireRole(["owner"]);
+ const parsed=uuidSchema.safeParse(targetId);
+ if(!parsed.success)safeErrorRedirect("invalid_request");
+ const lineId=String(formData.get("line_user_id")||"").trim();
+ if(lineId && !/^U[0-9a-fA-F]{32}$/.test(lineId))safeErrorRedirect("invalid_line_id");
+ const admin=createSupabaseAdminClient();
+ const {data:profile,error}=await admin.from("profiles").select("id,deleted_at").eq("id",parsed.data).maybeSingle();
+ if(error||!profile||profile.deleted_at)safeErrorRedirect("not_found");
+ const result=lineId
+  ? await admin.from("sales_line_recipients").upsert({user_id:parsed.data,line_user_id:lineId,updated_by:current.user.id,updated_at:new Date().toISOString()},{onConflict:"user_id"})
+  : await admin.from("sales_line_recipients").delete().eq("user_id",parsed.data);
+ if(result.error)safeErrorRedirect("request_failed");
+ await recordAuditLog({action:"sales_line_recipient_updated",resourceType:"sales_line_recipient",resourceId:parsed.data,
+ userId:current.user.id,userEmail:current.user.email,actorRole:current.profile.role,targetUserId:parsed.data,
+ afterData:{line_configured:Boolean(lineId)},result:"success"});
+ revalidatePath("/admin/users");
+ redirect("/admin/users?saved=line_recipient");
+}
+
+export async function issueSalesLineBindingCodeAction(targetId:string):Promise<{ok:boolean;code?:string;error?:string}>{
+ const current=await requireRole(["owner"]);
+ const parsed=uuidSchema.safeParse(targetId);
+ if(!parsed.success)return {ok:false,error:"invalid_request"};
+ const supabase=await createSupabaseServerClient();
+ const {data:profile,error}=await supabase.from("profiles").select("id,deleted_at").eq("id",parsed.data).maybeSingle();
+ if(error){
+  console.error("sales_line_binding_profile_lookup_failed",{code:error.code});
+  return {ok:false,error:"lookup_failed"};
+ }
+ if(!profile||profile.deleted_at)return {ok:false,error:"not_found"};
+ const admin=createSupabaseAdminClient();
+ const alphabet="ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+ const bytes=crypto.getRandomValues(new Uint8Array(8));
+ const code=Array.from(bytes,b=>alphabet[b%alphabet.length]).join("");
+ const digest=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(code));
+ const token_hash=Array.from(new Uint8Array(digest),b=>b.toString(16).padStart(2,"0")).join("");
+ const {error:insertError}=await admin.from("sales_line_bindings").insert({
+  target_user_id:parsed.data,token_hash,created_by:current.user.id,
+  expires_at:new Date(Date.now()+10*60000).toISOString()
+ });
+ if(insertError){
+  console.error("sales_line_binding_insert_failed",{code:insertError.code,message:insertError.message?.slice(0,140)});
+  return {ok:false,error:insertError.code||"request_failed"};
+ }
+ return {ok:true,code};
+}

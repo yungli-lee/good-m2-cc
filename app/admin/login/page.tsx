@@ -29,6 +29,7 @@ export default async function AdminLoginPage({ searchParams }: Props) {
           <div className="card-body">
             <h1 style={{ marginTop: 0 }}>後台登入</h1>
             {params.error === "auth_not_configured" ? <div className="notice">登入服務尚未設定，請先配置 Supabase 環境變數。</div> : null}
+            {params.error === "temporary_password_expired" ? <div className="notice">臨時密碼已逾期，請聯絡管理員重新產生。</div> : null}
             {params.error === "login_failed" ? <div className="notice">登入失敗，請確認帳號或密碼。</div> : null}
             {params.error === "forbidden" ? <div className="notice">此帳號沒有足夠權限。</div> : null}
             <form action={loginAction} className="form-grid" style={{ gridTemplateColumns: "1fr", marginTop: 16 }}>

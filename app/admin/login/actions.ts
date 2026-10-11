@@ -1,7 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { createSupabaseServerClient, createSupabaseAdminClient } from "@/lib/supabase/server";
 import { recordAuditLog } from "@/lib/audit/audit-log";
 import { getRequestMeta } from "@/lib/security/request";
 import { summarizeDevice } from "@/lib/security/device";
@@ -38,6 +38,14 @@ export async function loginAction(formData: FormData) {
     redirect("/admin/login?error=login_failed");
   }
 
+  if(data.user.app_metadata?.must_change_password === true){
+    const expires=Date.parse(String(data.user.app_metadata.temp_password_expires_at||""));
+    if(!Number.isFinite(expires)||Date.now()>expires){
+      await supabase.auth.signOut();
+      redirect("/admin/login?error=temporary_password_expired");
+    }
+  }
+
   const { data: profile, error: profileError } = await supabase
     .from("profiles")
     .select("role,deleted_at")
@@ -67,7 +75,7 @@ export async function loginAction(formData: FormData) {
 
   const { ipHash, userAgent } = await getRequestMeta();
   const loginAt = new Date().toISOString();
-  const { error: trackingError } = await supabase
+  const { error: trackingError } = await createSupabaseAdminClient()
     .from("profiles")
     .update({
       last_login_at: loginAt,
@@ -107,7 +115,7 @@ export async function loginAction(formData: FormData) {
     result: "success"
   });
 
-  redirect("/admin");
+  redirect(data.user.app_metadata?.must_change_password === true ? "/admin/account?section=password" : "/admin");
 }
 
 export async function logoutAction() {
