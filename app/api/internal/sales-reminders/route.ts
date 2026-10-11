@@ -12,7 +12,7 @@ function cfg(name:string){
 }
 export async function POST(request:Request){
  // Disabled unless explicitly enabled in the Preview environment.
- if(cfg("NEXT_PUBLIC_SUPABASE_URL")?.includes("rlbuadkmylulieoryzal"))return NextResponse.json({ok:false,reason:"production_blocked"},{status:403});
+ if(!cfg("NEXT_PUBLIC_SUPABASE_URL").includes("niorteztdbuyusemsgwa"))return NextResponse.json({ok:false,reason:"preview_only"},{status:403});
  if(cfg("SALES_LINE_REMINDERS_ENABLED")!=="true")return NextResponse.json({ok:false,reason:"disabled"},{status:503});
  const key=cfg("SALES_LINE_CRON_SECRET");
  if(!key||request.headers.get("authorization")!==`Bearer ${key}`)
@@ -21,12 +21,16 @@ export async function POST(request:Request){
  // Prevent falling back to multi-recipient inquiry notifications.
  const recipient=cfg("LINE_SALES_RECIPIENT_ID");
  if(!recipient||!line.channelAccessToken)return NextResponse.json({ok:false,reason:"missing_line_config"},{status:503});
+ const activation=Date.parse(cfg("SALES_LINE_REMINDERS_START_AT"));
+ if(!Number.isFinite(activation))return NextResponse.json({ok:false,reason:"missing_activation_time"},{status:503});
  const db=createSupabaseAdminClient();
  const {data,error}=await db.rpc("claim_due_sales_reminders",{p_limit:10});
  if(error)return NextResponse.json({ok:false,reason:"database_unavailable"},{status:503});
  const siteUrl=cfg("NEXT_PUBLIC_SITE_URL")||"https://good.m2.cc";
  let sent=0;let failed=0;
  for(const task of (data||[]) as SalesReminder[]){
+  // Never send historical overdue tasks dating from before activation.
+  if(Date.parse(task.due_at)<activation)continue;
   // Re-read after claim: task can have been cancelled or rescheduled.
   const {data:latest}=await db.from("sales_follow_up_tasks")
    .select("id,status,due_at,line_reminder_sent_for")
