@@ -209,7 +209,7 @@ export function UsersManager({
     setIssueError(null);
     const result=await issueSalesLineBindingCodeAction(user.id);
     if(result.ok&&result.code)setBinding({email:user.email||user.id,code:result.code});
-    else setIssueError("無法產生 LINE 綁定碼。");
+    else setIssueError(`無法產生 LINE 綁定碼（${result.error || "unknown"}）。`);
   }
   async function issueTemporary(user:AdminUserListItem){
     if(!window.confirm(`確定為 ${user.email} 重設登入密碼？舊密碼將立即失效。`))return;
