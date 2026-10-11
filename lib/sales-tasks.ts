@@ -8,6 +8,7 @@ export const salesTaskInput=z.object({
  showing_status:z.union([z.literal(""),z.enum(["requested","pending_confirmation","confirmed","completed","cancelled"])]),
  priority:z.enum(["low","normal","high"]),
  due_at:z.string().regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/),
+ showing_at:z.union([z.literal(""),z.string().regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/)]),
  notes:z.string().trim().max(2000)
 }).refine(v=>Boolean(v.person_id||v.property_id),{message:"請選擇客戶或物件"});
 export const taskTypeLabels:Record<string,string>={
