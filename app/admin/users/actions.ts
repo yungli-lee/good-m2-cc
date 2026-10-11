@@ -690,7 +690,7 @@ export async function updateSalesLineIdAction(targetId:string,formData:FormData)
   ? await admin.from("sales_line_recipients").upsert({user_id:parsed.data,line_user_id:lineId,updated_by:current.user.id,updated_at:new Date().toISOString()},{onConflict:"user_id"})
   : await admin.from("sales_line_recipients").delete().eq("user_id",parsed.data);
  if(result.error)safeErrorRedirect("request_failed");
- await recordAuditLog({action:"display_name_updated",resourceType:"sales_line_recipient",resourceId:parsed.data,
+ await recordAuditLog({action:"sales_line_recipient_updated",resourceType:"sales_line_recipient",resourceId:parsed.data,
  userId:current.user.id,userEmail:current.user.email,actorRole:current.profile.role,targetUserId:parsed.data,
  afterData:{line_configured:Boolean(lineId)},result:"success"});
  revalidatePath("/admin/users");
