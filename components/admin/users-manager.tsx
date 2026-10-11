@@ -8,7 +8,8 @@ import {
   disableUserAction,
   restoreUserAction,
   updateDisplayNameAction,
-  sendPasswordResetEmailAction
+  sendPasswordResetEmailAction,
+  issueTemporaryPasswordAction
 } from "@/app/admin/users/actions";
 
 export type AdminUserListItem = {
@@ -196,6 +197,19 @@ export function UsersManager({
   const [page, setPage] = useState(1);
   const [confirmation, setConfirmation] = useState<PendingConfirmation | null>(null);
   const [showCreate, setShowCreate] = useState(false);
+  const [temporaryPassword, setTemporaryPassword] = useState<{email:string;value:string}|null>(null);
+  const [issuingFor, setIssuingFor] = useState<string|null>(null);
+  const [issueError, setIssueError] = useState<string|null>(null);
+  async function issueTemporary(user:AdminUserListItem){
+    if(!window.confirm(`確定為 ${user.email} 重設登入密碼？舊密碼將立即失效。`))return;
+    setIssuingFor(user.id);setIssueError(null);
+    try{
+      const result=await issueTemporaryPasswordAction(user.id);
+      if(result.ok&&result.password)setTemporaryPassword({email:user.email||user.id,value:result.password});
+      else setIssueError("無法產生臨時密碼，請確認權限與帳號狀態。");
+    }catch{setIssueError("產生臨時密碼失敗。");}
+    finally{setIssuingFor(null);}
+  }
 
   useEffect(() => {
     setReady(true);
@@ -259,6 +273,8 @@ export function UsersManager({
         </label>
       </div>
 
+      {issueError ? <div className="notice">{issueError}</div> : null}
+      {temporaryPassword ? <div className="notice" role="alert"><strong>{temporaryPassword.email} 的臨時密碼（僅顯示一次）</strong><p>有效期 30 分鐘。首次登入必須立即修改密碼，請勿透過公開管道傳送。</p><code>{temporaryPassword.value}</code><div className="actions"><button className="button ghost" type="button" onClick={()=>navigator.clipboard.writeText(temporaryPassword.value)}>複製密碼</button><button className="button" type="button" onClick={()=>setTemporaryPassword(null)}>已妥善保存，關閉</button></div></div> : null}
       {loadError ? <div className="notice">使用者資料讀取失敗。</div> : null}
 
       <div className="admin-users-table table-wrap">
@@ -320,6 +336,7 @@ export function UsersManager({
                           停用
                         </button>
                       )}
+                      <button className="button ghost" type="button" disabled={Boolean(user.deleted_at) || issuingFor===user.id || !(actorRole==="owner" && user.role!=="owner" || actorRole==="admin" && (user.role==="viewer"||user.role==="editor"))} onClick={()=>issueTemporary(user)}>產生臨時密碼</button>
                       <button className="button ghost" type="button" disabled={!canResetPassword} onClick={() => setConfirmation({ type: "reset-password", user })}>
                         重設密碼 Email
                       </button>
@@ -412,7 +429,8 @@ export function UsersManager({
                     停用
                   </button>
                 )}
-                <button className="button ghost" type="button" disabled={!canResetPassword} onClick={() => setConfirmation({ type: "reset-password", user })}>
+                <button className="button ghost" type="button" disabled={Boolean(user.deleted_at) || issuingFor===user.id || !(actorRole==="owner" && user.role!=="owner" || actorRole==="admin" && (user.role==="viewer"||user.role==="editor"))} onClick={()=>issueTemporary(user)}>產生臨時密碼</button>
+                      <button className="button ghost" type="button" disabled={!canResetPassword} onClick={() => setConfirmation({ type: "reset-password", user })}>
                   重設密碼 Email
                 </button>
               </div>
