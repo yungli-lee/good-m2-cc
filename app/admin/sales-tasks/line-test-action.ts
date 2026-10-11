@@ -17,8 +17,11 @@ export async function sendPreviewSalesLineTest() {
  const {channelAccessToken}=getLineMessagingConfig();
  if(!recipient||!channelAccessToken)
   redirect("/admin/sales-tasks?line_test=missing_config");
- if(!/^U[0-9a-f]{32}$/i.test(recipient))
-  redirect("/admin/sales-tasks?line_test=invalid_recipient");
+ if(!/^U[0-9a-f]{32}$/i.test(recipient)) {
+  const hint=recipient.startsWith("U")?"u_prefix":"other_prefix";
+  const length=recipient.length;
+  redirect(`/admin/sales-tasks?line_test=invalid_recipient&line_length=${length}&line_hint=${hint}`);
+ }
  try {
   const res=await fetch("https://api.line.me/v2/bot/message/push",{
    method:"POST",
