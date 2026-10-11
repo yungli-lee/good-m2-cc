@@ -10,7 +10,8 @@ import {
   updateDisplayNameAction,
   sendPasswordResetEmailAction,
   issueTemporaryPasswordAction,
-  updateSalesLineIdAction
+  updateSalesLineIdAction,
+  issueSalesLineBindingCodeAction
 } from "@/app/admin/users/actions";
 
 export type AdminUserListItem = {
@@ -203,6 +204,13 @@ export function UsersManager({
   const [temporaryPassword, setTemporaryPassword] = useState<{email:string;value:string}|null>(null);
   const [issuingFor, setIssuingFor] = useState<string|null>(null);
   const [issueError, setIssueError] = useState<string|null>(null);
+  const [binding, setBinding] = useState<{email:string;code:string}|null>(null);
+  async function issueBinding(user:AdminUserListItem){
+    setIssueError(null);
+    const result=await issueSalesLineBindingCodeAction(user.id);
+    if(result.ok&&result.code)setBinding({email:user.email||user.id,code:result.code});
+    else setIssueError("無法產生 LINE 綁定碼。");
+  }
   async function issueTemporary(user:AdminUserListItem){
     if(!window.confirm(`確定為 ${user.email} 重設登入密碼？舊密碼將立即失效。`))return;
     setIssuingFor(user.id);setIssueError(null);
@@ -276,6 +284,7 @@ export function UsersManager({
         </label>
       </div>
 
+      {binding?<div className="notice" role="status"><strong>{binding.email} 的 LINE 綁定碼</strong><p>請在 10 分鐘內由欲接收通知的 LINE 帳號傳送：<code>綁定 {binding.code}</code> 至官方帳號。綁定碼只能使用一次。</p><button className="button ghost" type="button" onClick={()=>setBinding(null)}>關閉</button></div>:null}
       {issueError ? <div className="notice">{issueError}</div> : null}
       {temporaryPassword ? <div className="notice" role="alert"><strong>{temporaryPassword.email} 的臨時密碼（僅顯示一次）</strong><p>有效期 30 分鐘。首次登入必須立即修改密碼，請勿透過公開管道傳送。</p><code>{temporaryPassword.value}</code><div className="actions"><button className="button ghost" type="button" onClick={()=>navigator.clipboard.writeText(temporaryPassword.value)}>複製密碼</button><button className="button" type="button" onClick={()=>setTemporaryPassword(null)}>已妥善保存，關閉</button></div></div> : null}
       {loadError ? <div className="notice">使用者資料讀取失敗。</div> : null}
@@ -347,7 +356,7 @@ export function UsersManager({
                       </button>
                     </div>
                   </td>
-                  {actorRole === "owner" ? <td><form action={updateSalesLineIdAction.bind(null,user.id)} className="admin-users-inline-form"><input className="input" name="line_user_id" aria-label={`${user.email} LINE User ID`} defaultValue={lineIds[user.id]||""} placeholder="U + 32位英數字" pattern="U[0-9a-fA-F]{32}" /><button className="button ghost" type="submit">儲存 LINE</button></form></td> : null}
+                  {actorRole === "owner" ? <td><form action={updateSalesLineIdAction.bind(null,user.id)} className="admin-users-inline-form"><input className="input" name="line_user_id" aria-label={`${user.email} LINE User ID`} defaultValue={lineIds[user.id]||""} placeholder="U + 32位英數字" pattern="U[0-9a-fA-F]{32}" /><button className="button ghost" type="submit">儲存 LINE</button></form><button className="button ghost" type="button" onClick={()=>issueBinding(user)}>產生綁定碼</button></td> : null}
                 </tr>
               );
             })}
