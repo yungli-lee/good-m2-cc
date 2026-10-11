@@ -62,7 +62,8 @@ export async function updateSalesTask(id:string,form:FormData){
  title:input.title,person_id:input.person_id||null,property_id:input.property_id||null,
  task_type:input.task_type,showing_status:input.task_type==="showing"?input.showing_status||"pending_confirmation":null,
  showing_at:input.showing_at?new Date(input.showing_at+"+08:00").toISOString():null,
- due_at:new Date(input.due_at+"+08:00").toISOString(),priority:input.priority,notes:input.notes||null,updated_at:new Date().toISOString()
+ due_at:new Date(input.due_at+"+08:00").toISOString(),priority:input.priority,notes:input.notes||null,updated_at:new Date().toISOString(),
+ line_reminder_attempts:0,line_reminder_claimed_for:null,line_reminder_claimed_at:null,line_reminder_last_error:null
  }).eq("id",id).eq("assigned_to",current.user.id).select("id").maybeSingle();
  if(error||!data)redirect("/admin/sales-tasks?error=save");
  revalidatePath("/admin/sales-tasks");revalidatePath("/admin");
