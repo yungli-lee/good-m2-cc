@@ -41,7 +41,10 @@ export async function POST(request:Request){
   if(!latest||latest.status!=="open"||latest.due_at!==task.due_at||latest.line_reminder_sent_for===task.due_at)continue;
   const {data:taskOwner}=await db.from("sales_follow_up_tasks").select("assigned_to").eq("id",task.id).maybeSingle();
   const {data:destination}=taskOwner?.assigned_to ? await db.from("sales_line_recipients").select("line_user_id").eq("user_id",taskOwner.assigned_to).maybeSingle() : {data:null};
-  const recipient=destination?.line_user_id;
+  // Preserve the legacy recipient only for a task actually assigned to an Owner.
+  // Never forward an unconfigured Editor/Admin task to the owner.
+  const {data:assignee}=taskOwner?.assigned_to ? await db.from("profiles").select("role").eq("id",taskOwner.assigned_to).maybeSingle() : {data:null};
+  const recipient=destination?.line_user_id || (assignee?.role==="owner" ? cfg("LINE_SALES_RECIPIENT_ID") : "");
   if(!recipient){
    await db.from("sales_follow_up_tasks").update({line_reminder_last_error:"Recipient LINE ID is not configured"}).eq("id",task.id).eq("line_reminder_claimed_for",task.due_at);
    failed++;continue;
