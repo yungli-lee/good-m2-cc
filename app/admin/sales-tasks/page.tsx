@@ -10,7 +10,7 @@ export const dynamic="force-dynamic";
 type Task={id:string;title:string;status:string;task_type:string;showing_status:string|null;priority:string;due_at:string;showing_at:string|null;person_id:string|null;property_id:string|null;notes:string|null};
 type Person={id:string;display_name:string};
 type Property={id:string;title:string};
-type Props={searchParams:Promise<{error?:string;saved?:string;line_test?:string}>};
+type Props={searchParams:Promise<{error?:string;saved?:string;line_test?:string;line_length?:string;line_hint?:string}>};
 const formatDate=(iso:string)=>new Intl.DateTimeFormat("zh-TW",{timeZone:"Asia/Taipei",year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit",hourCycle:"h23"}).format(new Date(iso));
 const taipeiInput=(iso:string|null)=>iso?new Intl.DateTimeFormat("sv-SE",{timeZone:"Asia/Taipei",year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit",hourCycle:"h23"}).format(new Date(iso)).replace(" ","T"):"";
 export default async function SalesTasksPage({searchParams}:Props){
@@ -35,7 +35,7 @@ export default async function SalesTasksPage({searchParams}:Props){
    <div><h1 style={{margin:0}}>銷售跟進任務</h1><p className="muted">第一版僅顯示自己負責的任務；客戶有看屋意願不代表已確認帶看。</p></div>
    <Link className="button ghost" href="/admin">返回銷售工作台</Link>
   </div>
-  {current.profile.role==="owner"?<div className="card" style={{marginBottom:16}}><div className="card-body"><h2 style={{marginTop:0}}>LINE 提醒｜Preview 手動測試</h2><p className="muted">這個按鈕只會發出一則測試訊息給專用收件者，不會觸發任何任務提醒，也不需要啟用自動排程。限 owner 使用。</p><form action={sendPreviewSalesLineTest}><button className="button" type="submit">發送一則測試 LINE 給阿勇</button></form>{params.line_test?<p className="notice">{({accepted:"LINE API 已接受發送請求，請確認手機是否收到。",failed:"LINE 發送失敗；請檢查 Preview Token、收件者與頻道權限。",preview_only:"安全限制：僅可在 Preview 測試。",missing_config:"缺少 Preview LINE Token 或專用收件者。",invalid_recipient:"LINE 收件者格式不符合 User ID。" } as Record<string,string>)[params.line_test]||"測試未完成"}</p>:null}</div></div>:null}
+  {current.profile.role==="owner"?<div className="card" style={{marginBottom:16}}><div className="card-body"><h2 style={{marginTop:0}}>LINE 提醒｜Preview 手動測試</h2><p className="muted">這個按鈕只會發出一則測試訊息給專用收件者，不會觸發任何任務提醒，也不需要啟用自動排程。限 owner 使用。</p><form action={sendPreviewSalesLineTest}><button className="button" type="submit">發送一則測試 LINE 給阿勇</button></form>{params.line_test?<p className="notice">{({accepted:"LINE API 已接受發送請求，請確認手機是否收到。",failed:"LINE 發送失敗；請檢查 Preview Token、收件者與頻道權限。",preview_only:"安全限制：僅可在 Preview 測試。",missing_config:"缺少 Preview LINE Token 或專用收件者。",invalid_recipient:"LINE 收件者格式不符合 User ID。" } as Record<string,string>)[params.line_test]||"測試未完成"}{params.line_test==="invalid_recipient" && params.line_length ? `（Preview 讀取字元數：${params.line_length}；開頭分類：${params.line_hint==="u_prefix"?"U":"非 U"}，不顯示內容）`:""}</p>:null}</div></div>:null}
   {params.saved?<div className="notice">任務已儲存。</div>:null}
   {params.error?<div className="notice">操作未成功（{params.error}）。請檢查欄位、權限及 Preview 資料表。</div>:null}
   {tasksResult.error?<div className="notice">無法讀取銷售任務；請先在 Preview Supabase 執行對應 migration，並確認 RLS 權限。</div>:null}
