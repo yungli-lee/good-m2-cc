@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { requireRole } from "@/lib/auth";
 import { UsersManager, type AdminUserListItem } from "@/components/admin/users-manager";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { createSupabaseServerClient, createSupabaseAdminClient } from "@/lib/supabase/server";
 
 export const runtime = "edge";
 
@@ -13,7 +13,8 @@ const errorMessage: Record<string, string> = {
   forbidden: "權限不足，無法執行此操作。",
   invalid_request: "請求資料格式不正確。",
   not_found: "找不到指定使用者。",
-  request_failed: "操作失敗，請稍後再試。"
+  request_failed: "操作失敗，請稍後再試。",
+  invalid_line_id:"LINE ID 格式不正確。請輸入 U 開頭的 33 碼 User ID。"
 };
 
 const warningMessage: Record<string, string> = {
@@ -21,7 +22,8 @@ const warningMessage: Record<string, string> = {
 };
 
 const savedMessage: Record<string, string> = {
-  password_reset_email: "已寄送密碼重設 Email。"
+  password_reset_email: "已寄送密碼重設 Email。",
+  line_recipient:"LINE 收件人設定已更新。"
 };
 
 export default async function AdminUsersPage({ searchParams }: Props) {
@@ -33,6 +35,8 @@ export default async function AdminUsersPage({ searchParams }: Props) {
     .select("id,email,display_name,role,created_at,deleted_at,last_login_at,last_login_device")
     .order("created_at", { ascending: false });
   const users = (data || []) as AdminUserListItem[];
+  const lineResult = current.profile.role === "owner" ? await createSupabaseAdminClient().from("sales_line_recipients").select("user_id,line_user_id") : null;
+  const lineIds = Object.fromEntries((lineResult?.data || []).map((row) => [row.user_id,row.line_user_id]));
 
   return (
     <main className="section">
@@ -49,7 +53,7 @@ export default async function AdminUsersPage({ searchParams }: Props) {
         {query.warning ? <div className="notice">{warningMessage[query.warning] || "操作已完成，但有部分狀態需要確認。"}</div> : null}
         {query.error ? <div className="notice">{errorMessage[query.error] || "操作失敗，請稍後再試。"}</div> : null}
 
-        <UsersManager users={users} actorRole={current.profile.role} loadError={Boolean(error)} />
+        <UsersManager users={users} actorRole={current.profile.role} loadError={Boolean(error)} lineIds={lineIds} />
       </div>
     </main>
   );
