@@ -6,7 +6,15 @@ export function formatTaipeiReminderDate(iso:string){
 export function formatSalesLineReminder(row:SalesReminder,siteUrl:string){
  const lines=["🔔 勇美銷售跟進提醒",`任務：${row.title}`,`跟進：${formatTaipeiReminderDate(row.due_at)}`];
  if(row.showing_at)lines.push(`預定帶看：${formatTaipeiReminderDate(row.showing_at)}`);
- lines.push("請至後台確認並記錄處理結果。",`${siteUrl.replace(/\/$/,"")}/admin/sales-tasks`);
+ const footer=["請至後台確認並記錄處理結果。",`${siteUrl.replace(/\/$/,"")}/admin/sales-tasks`];
+ const note=row.notes?.trim();
+ // Reserve room for the footer and preserve the reminder title and dates.
+ const budget=4900-lines.join("\n").length-footer.join("\n").length-8;
+ if(note && budget>0){
+  const clean=note.replace(/\\r\\n?/g,"\\n");
+  lines.push(`備註：${clean.length>budget?clean.slice(0,budget-1)+"…":clean}`);
+ }
+ lines.push(...footer);
  return lines.join("\n").slice(0,5000);
 }
 export function shouldSendReminder(row:{status:string;due_at:string;line_reminder_sent_for:string|null},now:Date){
