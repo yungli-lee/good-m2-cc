@@ -26,7 +26,8 @@ export async function POST(request:Request){
  const db=createSupabaseAdminClient();
  const {data,error}=await db.rpc("claim_due_sales_reminders",{p_limit:10});
  if(error)return NextResponse.json({ok:false,reason:"database_unavailable"},{status:503});
- const siteUrl=cfg("NEXT_PUBLIC_SITE_URL")||"https://good.m2.cc";
+ // Always link back to the Preview host that invoked this endpoint.
+ const siteUrl=new URL(request.url).origin;
  let sent=0;let failed=0;
  for(const task of (data||[]) as SalesReminder[]){
   // Never send historical overdue tasks dating from before activation.
