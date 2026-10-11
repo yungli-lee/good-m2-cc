@@ -19,7 +19,7 @@ export default async function SalesTasksPage({searchParams}:Props){
  const params=await searchParams;
  const db=await createSupabaseServerClient();
  const canViewAll=current.profile.role==="owner"||current.profile.role==="admin";
- const isPreview = getSupabaseEnv().url.includes("niorteztdbuyusemsgwa");
+ const isPreview = getSupabaseEnv().url?.includes("niorteztdbuyusemsgwa") === true;
  const taskQuery=db.from("sales_follow_up_tasks").select("id,title,status,task_type,showing_status,priority,due_at,showing_at,person_id,property_id,notes,assigned_to");
  const [tasksResult,peopleResult,propertiesResult]=await Promise.all([
   (canViewAll?taskQuery:taskQuery.eq("assigned_to",current.user.id)).order("due_at",{ascending:true}).limit(100),
