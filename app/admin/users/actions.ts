@@ -696,3 +696,23 @@ export async function updateSalesLineIdAction(targetId:string,formData:FormData)
  revalidatePath("/admin/users");
  redirect("/admin/users?saved=line_recipient");
 }
+
+export async function issueSalesLineBindingCodeAction(targetId:string):Promise<{ok:boolean;code?:string;error?:string}>{
+ const current=await requireRole(["owner"]);
+ const parsed=uuidSchema.safeParse(targetId);
+ if(!parsed.success)return {ok:false,error:"invalid_request"};
+ const admin=createSupabaseAdminClient();
+ const {data:profile,error}=await admin.from("profiles").select("id,deleted_at").eq("id",parsed.data).maybeSingle();
+ if(error||!profile||profile.deleted_at)return {ok:false,error:"not_found"};
+ const alphabet="ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+ const bytes=crypto.getRandomValues(new Uint8Array(8));
+ const code=Array.from(bytes,b=>alphabet[b%alphabet.length]).join("");
+ const digest=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(code));
+ const token_hash=Array.from(new Uint8Array(digest),b=>b.toString(16).padStart(2,"0")).join("");
+ const {error:insertError}=await admin.from("sales_line_bindings").insert({
+  target_user_id:parsed.data,token_hash,created_by:current.user.id,
+  expires_at:new Date(Date.now()+10*60000).toISOString()
+ });
+ if(insertError)return {ok:false,error:"request_failed"};
+ return {ok:true,code};
+}
