@@ -1,7 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { createSupabaseServerClient, createSupabaseAdminClient } from "@/lib/supabase/server";
 import { recordAuditLog } from "@/lib/audit/audit-log";
 import { getRequestMeta } from "@/lib/security/request";
 import { summarizeDevice } from "@/lib/security/device";
@@ -75,7 +75,7 @@ export async function loginAction(formData: FormData) {
 
   const { ipHash, userAgent } = await getRequestMeta();
   const loginAt = new Date().toISOString();
-  const { error: trackingError } = await supabase
+  const { error: trackingError } = await createSupabaseAdminClient()
     .from("profiles")
     .update({
       last_login_at: loginAt,
