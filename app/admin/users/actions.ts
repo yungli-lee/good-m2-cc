@@ -701,9 +701,14 @@ export async function issueSalesLineBindingCodeAction(targetId:string):Promise<{
  const current=await requireRole(["owner"]);
  const parsed=uuidSchema.safeParse(targetId);
  if(!parsed.success)return {ok:false,error:"invalid_request"};
+ const supabase=await createSupabaseServerClient();
+ const {data:profile,error}=await supabase.from("profiles").select("id,deleted_at").eq("id",parsed.data).maybeSingle();
+ if(error){
+  console.error("sales_line_binding_profile_lookup_failed",{code:error.code});
+  return {ok:false,error:"lookup_failed"};
+ }
+ if(!profile||profile.deleted_at)return {ok:false,error:"not_found"};
  const admin=createSupabaseAdminClient();
- const {data:profile,error}=await admin.from("profiles").select("id,deleted_at").eq("id",parsed.data).maybeSingle();
- if(error||!profile||profile.deleted_at)return {ok:false,error:"not_found"};
  const alphabet="ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
  const bytes=crypto.getRandomValues(new Uint8Array(8));
  const code=Array.from(bytes,b=>alphabet[b%alphabet.length]).join("");
