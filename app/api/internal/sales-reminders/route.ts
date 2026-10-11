@@ -24,7 +24,7 @@ export async function POST(request:Request){
  const activation=Date.parse(cfg("SALES_LINE_REMINDERS_START_AT"));
  if(!Number.isFinite(activation))return NextResponse.json({ok:false,reason:"missing_activation_time"},{status:503});
  const db=createSupabaseAdminClient();
- const {data,error}=await db.rpc("claim_due_sales_reminders",{p_limit:10});
+ const {data,error}=await db.rpc("claim_due_sales_reminders",{p_limit:10,p_not_before:new Date(activation).toISOString()});
  if(error)return NextResponse.json({ok:false,reason:"database_unavailable"},{status:503});
  // Always link back to the Preview host that invoked this endpoint.
  const siteUrl=new URL(request.url).origin;
