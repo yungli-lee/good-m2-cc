@@ -676,3 +676,23 @@ export async function issueTemporaryPasswordAction(targetId: string): Promise<{o
   });
   return {ok:true,password};
 }
+
+export async function updateSalesLineIdAction(targetId:string,formData:FormData){
+ const current=await requireRole(["owner"]);
+ const parsed=uuidSchema.safeParse(targetId);
+ if(!parsed.success)safeErrorRedirect("invalid_request");
+ const lineId=String(formData.get("line_user_id")||"").trim();
+ if(lineId && !/^U[0-9a-fA-F]{32}$/.test(lineId))safeErrorRedirect("invalid_line_id");
+ const admin=createSupabaseAdminClient();
+ const {data:profile,error}=await admin.from("profiles").select("id,deleted_at").eq("id",parsed.data).maybeSingle();
+ if(error||!profile||profile.deleted_at)safeErrorRedirect("not_found");
+ const result=lineId
+  ? await admin.from("sales_line_recipients").upsert({user_id:parsed.data,line_user_id:lineId,updated_by:current.user.id,updated_at:new Date().toISOString()},{onConflict:"user_id"})
+  : await admin.from("sales_line_recipients").delete().eq("user_id",parsed.data);
+ if(result.error)safeErrorRedirect("request_failed");
+ await recordAuditLog({action:"display_name_updated",resourceType:"sales_line_recipient",resourceId:parsed.data,
+ userId:current.user.id,userEmail:current.user.email,actorRole:current.profile.role,targetUserId:parsed.data,
+ afterData:{line_configured:Boolean(lineId)},result:"success"});
+ revalidatePath("/admin/users");
+ redirect("/admin/users?saved=line_recipient");
+}
