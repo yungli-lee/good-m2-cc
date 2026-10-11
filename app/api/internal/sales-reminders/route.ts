@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createSupabaseAdminClient } from "@/lib/supabase/server";
+import { createClient } from "@supabase/supabase-js";
 import { getLineMessagingConfig } from "@/lib/line/config";
 import { getRequestContext } from "@/lib/supabase/env";
 import { formatSalesLineReminder, type SalesReminder } from "@/lib/sales-reminders";
@@ -23,9 +23,12 @@ export async function POST(request:Request){
  if(!recipient||!line.channelAccessToken)return NextResponse.json({ok:false,reason:"missing_line_config"},{status:503});
  const activation=Date.parse(cfg("SALES_LINE_REMINDERS_START_AT"));
  if(!Number.isFinite(activation))return NextResponse.json({ok:false,reason:"missing_activation_time"},{status:503});
- const db=createSupabaseAdminClient();
+ const dbUrl=cfg("NEXT_PUBLIC_SUPABASE_URL");
+ const dbKey=cfg("SUPABASE_SERVICE_ROLE_KEY");
+ if(!dbKey||!dbUrl.includes("niorteztdbuyusemsgwa"))return NextResponse.json({ok:false,reason:"missing_preview_database_config"},{status:503});
+ const db=createClient(dbUrl,dbKey,{auth:{persistSession:false,autoRefreshToken:false},global:{headers:{apikey:dbKey,Authorization:`Bearer ${dbKey}`}}});
  const {data,error}=await db.rpc("claim_due_sales_reminders",{p_limit:10,p_not_before:new Date(activation).toISOString()});
- if(error)return NextResponse.json({ok:false,reason:"database_unavailable"},{status:503});
+ if(error)return NextResponse.json({ok:false,reason:"database_unavailable",db_code:error.code||"unknown"},{status:503});
  // Always link back to the Preview host that invoked this endpoint.
  const siteUrl=new URL(request.url).origin;
  let sent=0;let failed=0;
