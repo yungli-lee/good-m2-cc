@@ -8,7 +8,7 @@ export const runtime="edge";
 export const dynamic="force-dynamic";
 function cfg(name:string){
  const env=getRequestContext()?.env as Record<string,string|undefined>|undefined;
- return (process.env[name]||env?.[name]||"").trim();
+ return (env?.[name]||process.env[name]||"").trim();
 }
 export async function POST(request:Request){
  // Disabled unless explicitly enabled in the Preview environment.
