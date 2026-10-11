@@ -713,6 +713,9 @@ export async function issueSalesLineBindingCodeAction(targetId:string):Promise<{
   target_user_id:parsed.data,token_hash,created_by:current.user.id,
   expires_at:new Date(Date.now()+10*60000).toISOString()
  });
- if(insertError)return {ok:false,error:"request_failed"};
+ if(insertError){
+  console.error("sales_line_binding_insert_failed",{code:insertError.code,message:insertError.message?.slice(0,140)});
+  return {ok:false,error:insertError.code||"request_failed"};
+ }
  return {ok:true,code};
 }
