@@ -59,7 +59,6 @@ export async function middleware(request: NextRequest) {
   }
 
   const mustChangePassword = data.user?.app_metadata?.must_change_password === true;
-  const passwordExpired = mustChangePassword && Date.parse(String(data.user?.app_metadata?.temp_password_expires_at || "")) < Date.now();
   const isAccountPath = path === "/admin/account" || path === "/admin/account/";
   if (data.user && mustChangePassword && !isAdminLoginPath && !isAccountPath) {
     if (path.startsWith("/api/admin")) return NextResponse.json({error:"Password change required"},{status:403});
