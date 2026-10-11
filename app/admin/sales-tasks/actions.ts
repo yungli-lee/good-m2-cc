@@ -1,0 +1,47 @@
+"use server";
+import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
+import { requireRole } from "@/lib/auth";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { salesTaskInput } from "@/lib/sales-tasks";
+
+export async function createSalesTask(form: FormData) {
+  const current = await requireRole(["editor","admin","owner"]);
+  const values = Object.fromEntries(form.entries());
+  const parsed = salesTaskInput.safeParse(values);
+  if (!parsed.success) redirect("/admin/sales-tasks?error=invalid");
+  const supabase = await createSupabaseServerClient();
+  const input = parsed.data;
+  // Validate the referenced records are still available to this logged-in operator.
+  if (input.person_id) {
+    const { data } = await supabase.from("people").select("id").eq("id",input.person_id).is("deleted_at",null).maybeSingle();
+    if (!data) redirect("/admin/sales-tasks?error=person");
+  }
+  if (input.property_id) {
+    const { data } = await supabase.from("properties").select("id").eq("id",input.property_id).is("deleted_at",null).maybeSingle();
+    if (!data) redirect("/admin/sales-tasks?error=property");
+  }
+  const { error } = await supabase.from("sales_follow_up_tasks").insert({
+    title:input.title,person_id:input.person_id||null,property_id:input.property_id||null,
+    task_type:input.task_type,showing_status:input.task_type==="showing" ? input.showing_status||"pending_confirmation" : null,
+    priority:input.priority,notes:input.notes||null,due_at:new Date(input.due_at+"+08:00").toISOString(),
+    assigned_to:current.user.id,created_by:current.user.id
+  });
+  if (error) redirect("/admin/sales-tasks?error=save");
+  revalidatePath("/admin/sales-tasks");
+  revalidatePath("/admin");
+  redirect("/admin/sales-tasks?saved=1");
+}
+
+export async function changeSalesTaskStatus(id: string, status: "completed"|"open"|"cancelled") {
+  const current = await requireRole(["editor","admin","owner"]);
+  if (!/^[0-9a-f-]{36}$/i.test(id)) redirect("/admin/sales-tasks?error=invalid");
+  const supabase = await createSupabaseServerClient();
+  const { error } = await supabase.from("sales_follow_up_tasks")
+    .update({ status, completed_at:status==="completed"?new Date().toISOString():null, updated_at:new Date().toISOString() })
+    .eq("id",id).eq("assigned_to",current.user.id);
+  if (error) redirect("/admin/sales-tasks?error=save");
+  revalidatePath("/admin/sales-tasks");
+  revalidatePath("/admin");
+  redirect("/admin/sales-tasks?saved=1");
+}
