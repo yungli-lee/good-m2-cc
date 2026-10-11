@@ -68,3 +68,25 @@ export async function updateSalesTask(id:string,form:FormData){
  revalidatePath("/admin/sales-tasks");revalidatePath("/admin");
  redirect("/admin/sales-tasks?saved=updated");
 }
+
+
+export async function cancelSalesShowing(id:string){
+ const current=await requireRole(["editor","admin","owner"]);
+ if(!/^[0-9a-f-]{36}$/i.test(id)) redirect("/admin/sales-tasks?error=invalid");
+ const db=await createSupabaseServerClient();
+ const {data:prior,error:lookupError}=await db.from("sales_follow_up_tasks")
+  .select("id,showing_at,showing_status,notes").eq("id",id).eq("assigned_to",current.user.id).maybeSingle();
+ if(lookupError||!prior) redirect("/admin/sales-tasks?error=not_found");
+ if(!prior.showing_at && prior.showing_status==="cancelled") redirect("/admin/sales-tasks");
+ // Preserve an internal record of the former appointment without cancelling the follow-up task.
+ const former=prior.showing_at ? new Intl.DateTimeFormat("zh-TW",{timeZone:"Asia/Taipei",dateStyle:"short",timeStyle:"short",hourCycle:"h23"}).format(new Date(prior.showing_at)) : "未指定時間";
+ const entry=`[取消帶看 ${new Intl.DateTimeFormat("sv-SE",{timeZone:"Asia/Taipei",dateStyle:"short",timeStyle:"short",hourCycle:"h23"}).format(new Date())}] 原帶看時間：${former}`;
+ const notes=[prior.notes||"",entry].filter(Boolean).join("\n");
+ if(notes.length>2000) redirect("/admin/sales-tasks?error=notes_full");
+ const {data,error}=await db.from("sales_follow_up_tasks").update({
+   showing_at:null,showing_status:"cancelled",notes,updated_at:new Date().toISOString()
+ }).eq("id",id).eq("assigned_to",current.user.id).select("id").maybeSingle();
+ if(error||!data) redirect("/admin/sales-tasks?error=save");
+ revalidatePath("/admin/sales-tasks");revalidatePath("/admin");
+ redirect("/admin/sales-tasks?saved=showing_cancelled");
+}
