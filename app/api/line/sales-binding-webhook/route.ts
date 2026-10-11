@@ -28,7 +28,7 @@ export async function POST(request:Request){
  let bound=0;
  for(const event of (body.events||[]).slice(0,20)){
   const id=event.source?.userId,text=event.message?.text?.trim();
-  if(event.type!=="message"||event.message?.type!=="text"||!id||!text)continue;
+  if(event.type!=="message"||event.source?.type!=="user"||event.message?.type!=="text"||!id||!text)continue;
   const match=/^綁定\s+([A-Z2-9]{8})$/.exec(text);
   if(!match)continue;
   const {data,error}=await db.rpc("consume_sales_line_binding",{p_token_hash:await sha256(match[1]),p_line_user_id:id});
