@@ -36,7 +36,7 @@ export default async function AdminUsersPage({ searchParams }: Props) {
     .order("created_at", { ascending: false });
   const users = (data || []) as AdminUserListItem[];
   const lineResult = current.profile.role === "owner" ? await createSupabaseAdminClient().from("sales_line_recipients").select("user_id,line_user_id") : null;
-  const lineIds = Object.fromEntries((lineResult?.data || []).map((row) => [row.user_id,row.line_user_id]));
+  const lineIds = Object.fromEntries((lineResult?.data || []).map((row) => [row.user_id,"configured"]));
 
   return (
     <main className="section">
