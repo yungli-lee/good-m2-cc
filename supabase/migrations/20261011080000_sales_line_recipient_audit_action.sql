@@ -1,0 +1,1 @@
+alter type public.audit_action add value if not exists 'sales_line_recipient_updated';
