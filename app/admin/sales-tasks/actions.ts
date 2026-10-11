@@ -75,7 +75,7 @@ export async function cancelSalesShowing(id:string){
  if(!/^[0-9a-f-]{36}$/i.test(id)) redirect("/admin/sales-tasks?error=invalid");
  const db=await createSupabaseServerClient();
  const {data:prior,error:lookupError}=await db.from("sales_follow_up_tasks")
-  .select("id,showing_at,showing_status,notes").eq("id",id).eq("assigned_to",current.user.id).maybeSingle();
+  .select("id,task_type,showing_at,showing_status,notes").eq("id",id).eq("assigned_to",current.user.id).maybeSingle();
  if(lookupError||!prior) redirect("/admin/sales-tasks?error=not_found");
  if(!prior.showing_at && prior.showing_status==="cancelled") redirect("/admin/sales-tasks");
  // Preserve an internal record of the former appointment without cancelling the follow-up task.
@@ -84,7 +84,7 @@ export async function cancelSalesShowing(id:string){
  const notes=[prior.notes||"",entry].filter(Boolean).join("\n");
  if(notes.length>2000) redirect("/admin/sales-tasks?error=notes_full");
  const {data,error}=await db.from("sales_follow_up_tasks").update({
-   showing_at:null,showing_status:"cancelled",notes,updated_at:new Date().toISOString()
+   showing_at:null,showing_status:prior.task_type==="showing"?"cancelled":null,notes,updated_at:new Date().toISOString()
  }).eq("id",id).eq("assigned_to",current.user.id).select("id").maybeSingle();
  if(error||!data) redirect("/admin/sales-tasks?error=save");
  revalidatePath("/admin/sales-tasks");revalidatePath("/admin");
