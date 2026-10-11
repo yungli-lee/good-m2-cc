@@ -22,6 +22,8 @@ export async function POST(request:Request){
  if(signature.length!==b64.length || !([...b64].every((c,i)=>c===signature[i])))return NextResponse.json({error:"invalid_signature"},{status:401});
  let body:{events?:Array<{type?:string;message?:{type?:string;text?:string};source?:{type?:string;userId?:string}}>}={};
  try{body=JSON.parse(raw);}catch{return NextResponse.json({error:"invalid_body"},{status:400});}
+ // LINE Verify sends an empty events list; after signature verification it needs no database.
+ if(!Array.isArray(body.events)||body.events.length===0)return NextResponse.json({ok:true,bound:0});
  const dbUrl=config("NEXT_PUBLIC_SUPABASE_URL"),dbKey=config("SUPABASE_SERVICE_ROLE_KEY");
  if(!dbUrl.includes("niorteztdbuyusemsgwa")||!dbKey)return NextResponse.json({error:"database_config"},{status:503});
  const db=createClient(dbUrl,dbKey,{auth:{persistSession:false,autoRefreshToken:false}});
