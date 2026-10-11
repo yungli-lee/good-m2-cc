@@ -56,6 +56,7 @@ export default async function AdminIndexPage() {
             <h2 style={{ marginTop: 0 }}>今日銷售行動</h2>
             <p className="muted">先從現有 CRM 與物件紀錄推進。待辦截止日、帶看是否確認與屋主回報尚未完成結構化統計，不會用猜測數字冒充實際進度。</p>
             <div className="actions">
+              <Link className="button" href="/admin/sales-tasks">銷售跟進任務</Link>
               <Link className="button" href="/admin/people">跟進買方</Link>
               <Link className="button" href="/admin/crm/requirements">媒合客需</Link>
               <Link className="button" href="/admin/properties">推進委託物件</Link>
