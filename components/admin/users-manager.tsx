@@ -205,6 +205,7 @@ export function UsersManager({
   const [issuingFor, setIssuingFor] = useState<string|null>(null);
   const [issueError, setIssueError] = useState<string|null>(null);
   const [binding, setBinding] = useState<{email:string;code:string}|null>(null);
+  const [lineEditor, setLineEditor] = useState<AdminUserListItem|null>(null);
   async function issueBinding(user:AdminUserListItem){
     setIssueError(null);
     const result=await issueSalesLineBindingCodeAction(user.id);
@@ -301,7 +302,7 @@ export function UsersManager({
               <th>建立時間</th>
               <th>最後登入</th>
               <th>操作</th>
-              {actorRole === "owner" ? <th>LINE 通知 ID</th> : null}
+              {actorRole === "owner" ? <th>LINE 綁定</th> : null}
             </tr>
           </thead>
           <tbody>
@@ -356,7 +357,7 @@ export function UsersManager({
                       </button>
                     </div>
                   </td>
-                  {actorRole === "owner" ? <td><form action={updateSalesLineIdAction.bind(null,user.id)} className="admin-users-inline-form"><input className="input" name="line_user_id" aria-label={`${user.email} LINE User ID`} defaultValue={lineIds[user.id]||""} placeholder="U + 32位英數字" pattern="U[0-9a-fA-F]{32}" /><button className="button ghost" type="submit">儲存 LINE</button></form><button className="button ghost" type="button" onClick={()=>issueBinding(user)}>產生綁定碼</button></td> : null}
+                  {actorRole === "owner" ? <td><span className={lineIds[user.id] ? "admin-users-badge is-active" : "admin-users-badge is-disabled"}>{lineIds[user.id] ? "已綁定" : "未綁定"}</span><button className="button ghost" type="button" onClick={()=>setLineEditor(user)}>LINE 設定</button></td> : null}
                 </tr>
               );
             })}
@@ -431,8 +432,7 @@ export function UsersManager({
                   <div className="muted">最後登入</div>
                   {user.last_login_at ? <span>{formatDateTime(user.last_login_at)}</span> : <span>尚未登入</span>}
                 </div>
-                {actorRole === "owner" ? <form action={updateSalesLineIdAction.bind(null,user.id)} className="field"><span className="muted">LINE 通知 User ID</span><input className="input" name="line_user_id" defaultValue={lineIds[user.id]||""} pattern="U[0-9a-fA-F]{32}" placeholder="U + 32位英數字" /><button className="button ghost" type="submit">儲存 LINE</button></form> : null}
-                {actorRole==="owner"?<button className="button ghost" type="button" onClick={()=>issueBinding(user)}>產生 LINE 綁定碼</button>:null}
+                {actorRole === "owner" ? <div><span className={lineIds[user.id] ? "admin-users-badge is-active" : "admin-users-badge is-disabled"}>{lineIds[user.id] ? "LINE 已綁定" : "LINE 未綁定"}</span><button className="button ghost" type="button" onClick={()=>setLineEditor(user)}>LINE 設定</button></div> : null}
                 <div>
                   <div className="muted">設備</div>
                   <span>{user.last_login_at ? user.last_login_device || "Unknown device" : "-"}</span>
@@ -469,6 +469,7 @@ export function UsersManager({
         </button>
       </div>
 
+      {lineEditor && actorRole==="owner" ? <div className="admin-users-modal-backdrop" role="presentation"><div className="admin-users-modal" role="dialog" aria-modal="true" aria-labelledby="line-setting-title"><h2 id="line-setting-title">LINE 通知設定</h2><p>{lineEditor.email}</p><p>目前狀態：{lineIds[lineEditor.id] ? "已綁定" : "未綁定"}。為保護隱私，LINE User ID 不直接顯示。</p><div className="actions"><button className="button" type="button" onClick={()=>{const user=lineEditor;setLineEditor(null);issueBinding(user);}}>產生一次性綁定碼</button></div><form action={updateSalesLineIdAction.bind(null,lineEditor.id)} className="field"><span>手動輸入新的 LINE User ID（僅供管理員必要時使用）</span><input className="input" name="line_user_id" type="password" autoComplete="off" required pattern="U[0-9a-fA-F]{32}" placeholder="U 開頭的 User ID" /><button className="button ghost" type="submit">更新 LINE ID</button></form>{lineIds[lineEditor.id] ? <form action={updateSalesLineIdAction.bind(null,lineEditor.id)} onSubmit={(event)=>{if(!window.confirm("確定解除此帳號的 LINE 綁定？"))event.preventDefault();}}><input type="hidden" name="line_user_id" value="" /><button className="button ghost" type="submit">解除綁定</button></form>:null}<button className="button ghost" type="button" onClick={()=>setLineEditor(null)}>關閉</button></div></div> : null}
       {confirmation ? <ConfirmationModal confirmation={confirmation} onClose={() => setConfirmation(null)} /> : null}
       {showCreate ? <CreateUserModal actorRole={actorRole} onClose={() => setShowCreate(false)} /> : null}
     </div>
