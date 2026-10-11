@@ -9,7 +9,8 @@ import {
   restoreUserAction,
   updateDisplayNameAction,
   sendPasswordResetEmailAction,
-  issueTemporaryPasswordAction
+  issueTemporaryPasswordAction,
+  updateSalesLineIdAction
 } from "@/app/admin/users/actions";
 
 export type AdminUserListItem = {
@@ -184,11 +185,13 @@ function ConfirmationModal({ confirmation, onClose }: { confirmation: PendingCon
 export function UsersManager({
   users,
   actorRole,
-  loadError
+  loadError,
+  lineIds
 }: {
   users: AdminUserListItem[];
   actorRole: AdminRole;
   loadError: boolean;
+  lineIds: Record<string,string>;
 }) {
   const [ready, setReady] = useState(false);
   const [query, setQuery] = useState("");
@@ -277,6 +280,7 @@ export function UsersManager({
       {temporaryPassword ? <div className="notice" role="alert"><strong>{temporaryPassword.email} 的臨時密碼（僅顯示一次）</strong><p>有效期 30 分鐘。首次登入必須立即修改密碼，請勿透過公開管道傳送。</p><code>{temporaryPassword.value}</code><div className="actions"><button className="button ghost" type="button" onClick={()=>navigator.clipboard.writeText(temporaryPassword.value)}>複製密碼</button><button className="button" type="button" onClick={()=>setTemporaryPassword(null)}>已妥善保存，關閉</button></div></div> : null}
       {loadError ? <div className="notice">使用者資料讀取失敗。</div> : null}
 
+      {actorRole === "owner" ? <p className="muted">LINE User ID 由 Owner 設定；必須是 U 開頭 33 碼，使用者須先加入勇美 LINE 官方帳號好友才能收到推播。未設定的任務不會改送 Owner。</p> : null}
       <div className="admin-users-table table-wrap">
         <table>
           <thead>
@@ -288,6 +292,7 @@ export function UsersManager({
               <th>建立時間</th>
               <th>最後登入</th>
               <th>操作</th>
+              {actorRole === "owner" ? <th>LINE 通知 ID</th> : null}
             </tr>
           </thead>
           <tbody>
@@ -342,12 +347,13 @@ export function UsersManager({
                       </button>
                     </div>
                   </td>
+                  {actorRole === "owner" ? <td><form action={updateSalesLineIdAction.bind(null,user.id)} className="admin-users-inline-form"><input className="input" name="line_user_id" aria-label={`${user.email} LINE User ID`} defaultValue={lineIds[user.id]||""} placeholder="U + 32位英數字" pattern="U[0-9a-fA-F]{32}" /><button className="button ghost" type="submit">儲存 LINE</button></form></td> : null}
                 </tr>
               );
             })}
             {ready && !loadError && !visibleUsers.length ? (
               <tr>
-                <td colSpan={7}>
+                <td colSpan={actorRole === "owner" ? 8 : 7}>
                   <div className="admin-users-empty">
                     <strong>沒有符合條件的使用者</strong>
                     <p className="muted">請調整 Email 搜尋、Role 或 Status 篩選。</p>
@@ -416,6 +422,7 @@ export function UsersManager({
                   <div className="muted">最後登入</div>
                   {user.last_login_at ? <span>{formatDateTime(user.last_login_at)}</span> : <span>尚未登入</span>}
                 </div>
+                {actorRole === "owner" ? <form action={updateSalesLineIdAction.bind(null,user.id)} className="field"><span className="muted">LINE 通知 User ID</span><input className="input" name="line_user_id" defaultValue={lineIds[user.id]||""} pattern="U[0-9a-fA-F]{32}" placeholder="U + 32位英數字" /><button className="button ghost" type="submit">儲存 LINE</button></form> : null}
                 <div>
                   <div className="muted">設備</div>
                   <span>{user.last_login_at ? user.last_login_device || "Unknown device" : "-"}</span>
