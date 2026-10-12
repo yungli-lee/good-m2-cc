@@ -1,6 +1,7 @@
 import {NextResponse} from "next/server";
 import {createClient} from "@supabase/supabase-js";
 import {getRequestContext} from "@/lib/supabase/env";
+import {resolveSalesLineEnvironment} from "@/lib/sales-line-environment";
 export const runtime="edge";
 export const dynamic="force-dynamic";
 function config(name:string){
@@ -10,7 +11,9 @@ function config(name:string){
 function hex(b:Uint8Array){return Array.from(b,x=>x.toString(16).padStart(2,"0")).join("");}
 async function sha256(s:string){return hex(new Uint8Array(await crypto.subtle.digest("SHA-256",new TextEncoder().encode(s))));}
 export async function POST(request:Request){
- if(!config("NEXT_PUBLIC_SUPABASE_URL").includes("niorteztdbuyusemsgwa"))return NextResponse.json({error:"preview_only"},{status:403});
+ const scope=resolveSalesLineEnvironment(request.url,config);
+ if(!scope)return NextResponse.json({error:"environment_mismatch"},{status:403});
+ if(scope.environment==="production"&&config("SALES_LINE_BINDING_ENABLED")!=="true")return NextResponse.json({error:"disabled"},{status:503});
  const secret=config("LINE_MESSAGING_CHANNEL_SECRET");
  if(!secret)return NextResponse.json({error:"not_configured"},{status:503});
  const raw=await request.text();
@@ -24,8 +27,8 @@ export async function POST(request:Request){
  try{body=JSON.parse(raw);}catch{return NextResponse.json({error:"invalid_body"},{status:400});}
  // LINE Verify sends an empty events list; after signature verification it needs no database.
  if(!Array.isArray(body.events)||body.events.length===0)return NextResponse.json({ok:true,bound:0});
- const dbUrl=config("NEXT_PUBLIC_SUPABASE_URL"),dbKey=config("SUPABASE_SERVICE_ROLE_KEY");
- if(!dbUrl.includes("niorteztdbuyusemsgwa")||!dbKey)return NextResponse.json({error:"database_config"},{status:503});
+ const dbUrl=scope.databaseUrl,dbKey=config("SUPABASE_SERVICE_ROLE_KEY");
+ if(!dbKey)return NextResponse.json({error:"database_config"},{status:503});
  const db=createClient(dbUrl,dbKey,{auth:{persistSession:false,autoRefreshToken:false}});
  let bound=0;
  for(const event of (body.events||[]).slice(0,20)){

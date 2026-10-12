@@ -1,5 +1,9 @@
 # Project Status
 
+## 2026-10-12 銷售 LINE 第二階段（待驗證）
+
+PR #48/#49 已合併，正式後台手機基本操作已由阿勇確認正常。第二階段準備 Production LINE Webhook、獨立 Cron Worker 與通知啟用時間；正式通知尚未啟用，Cloudflare 管理設定與端到端送達驗證尚待完成。設定、驗收與回退以 [docs/SALES_LINE_PRODUCTION_RELEASE.md](docs/SALES_LINE_PRODUCTION_RELEASE.md) 為準。以下舊 Sprint 盤點保留作歷史背景，不代表本次部署狀態。
+
 本文件是 good.m2.cc 目前產品狀態的入口文件。詳細技術架構請以 [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) 為準；路由請以 [docs/ROUTE_MAP.md](docs/ROUTE_MAP.md) 為準；安全與上線判斷請以 [docs/SECURITY_CHECKLIST.md](docs/SECURITY_CHECKLIST.md) 與 [docs/GO_LIVE_CHECKLIST.md](docs/GO_LIVE_CHECKLIST.md) 為準；後續排程請以 [ROADMAP.md](ROADMAP.md) 為準。
 
 ## Project Overview

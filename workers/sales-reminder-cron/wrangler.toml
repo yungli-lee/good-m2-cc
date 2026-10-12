@@ -1,0 +1,29 @@
+name = "good-m2-sales-reminders-production"
+main = "index.ts"
+compatibility_date = "2026-10-12"
+workers_dev = false
+
+[vars]
+SALES_LINE_ENVIRONMENT = "production"
+SALES_LINE_SITE_URL = "https://good.m2.cc"
+SALES_LINE_CRON_ENABLED = "false"
+
+# Disabled until the Pages endpoint, recipient bindings and activation time are verified.
+[triggers]
+crons = []
+
+[observability]
+enabled = true
+
+# A separate deployment/secret. Do not replace the existing Preview test worker.
+[env.preview]
+name = "good-m2-sales-reminders-preview"
+workers_dev = false
+
+[env.preview.vars]
+SALES_LINE_ENVIRONMENT = "preview"
+SALES_LINE_SITE_URL = "https://feature-sales-dual-track-pha.good-m2-cc.pages.dev"
+SALES_LINE_CRON_ENABLED = "false"
+
+[env.preview.triggers]
+crons = []
