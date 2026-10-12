@@ -19,7 +19,8 @@ export async function runSalesReminderCron(env: SalesCronEnv, send: typeof fetch
   const response = await send(`${site.origin}/api/internal/sales-reminders`, {
     method: "POST",
     headers: { authorization: `Bearer ${env.SALES_LINE_CRON_SECRET.trim()}` },
-    redirect: "error",
+    // Workers supports manual; reject any 3xx below without forwarding the bearer token.
+    redirect: "manual",
     signal: AbortSignal.timeout(90000)
   });
   if (!response.ok) throw new Error(`Sales reminder endpoint returned ${response.status}`);
