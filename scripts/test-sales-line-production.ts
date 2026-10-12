@@ -40,7 +40,7 @@ const mockSend: typeof fetch = async (input, init) => {
   calls++;
   assert.equal(input, "https://good.m2.cc/api/internal/sales-reminders");
   assert.equal(init?.method, "POST");
-  assert.equal(init?.redirect, "error");
+  assert.equal(init?.redirect, "manual");
   assert.equal(new Headers(init?.headers).get("authorization"), "Bearer test-only-secret");
   return Response.json({ ok: true, claimed: 1, sent: 1, failed: 0 });
 };
