@@ -3627,3 +3627,36 @@ td {
   .concierge-consent-actions { gap: 6px; flex-wrap: nowrap; }
   .concierge-consent-actions .button { padding: 6px 8px; font-size: .76rem; line-height: 1.25; white-space: normal; }
 }
+
+/* Floating consent choice must stay visible while either page or chat scrolls. */
+.concierge-archive-consent {
+  position: fixed;
+  inset: auto 20px 20px auto;
+  width: min(440px, calc(100vw - 40px));
+  max-height: min(42vh, 260px);
+  overflow-y: auto;
+  z-index: 80;
+}
+@media (max-width: 600px) {
+  .concierge-archive-consent {
+    position: fixed;
+    top: auto;
+    bottom: max(12px, env(safe-area-inset-bottom, 0px));
+    left: 12px;
+    right: 12px;
+    width: auto;
+    max-height: 30vh;
+    margin: 0;
+  }
+}
+
+
+/* Keep the dense user-management table usable on iPad without crushed controls. */
+@media (min-width: 701px) and (max-width: 1300px) {
+  .admin-users-table { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .admin-users-table table { min-width: 1120px; table-layout: auto; }
+  .admin-users-table th, .admin-users-table td { white-space: normal; vertical-align: top; }
+  .admin-users-table td:nth-child(3) .select { min-width: 90px; }
+  .admin-users-table td:nth-child(7) .button { white-space: nowrap; }
+  .admin-users-table td:nth-child(8) { min-width: 112px; }
+}

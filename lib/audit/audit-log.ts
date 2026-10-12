@@ -13,7 +13,7 @@ type AuditAction =
   | "inquiry_email_sent" | "inquiry_email_failed" | "inquiry_line_sent" | "inquiry_line_failed"
   | "admin_login_success" | "admin_login_failure" | "admin_logout" | "login_success" | "login_denied"
   | "role_changed" | "user.role_change" | "user_created" | "user_disabled" | "user_restored" | "display_name_updated" | "failed_permission_attempt"
-  | "password_changed" | "password_change_failed" | "password_reset_email_sent"
+  | "password_changed" | "password_change_failed" | "password_reset_email_sent" | "user.temporary_password_issued" | "sales_line_recipient_updated"
   | "email_test_sent" | "email_test_failed"
   | "content_create" | "content_update" | "content_publish" | "content_unpublish" | "content_delete" | "content_restore"
   | "home_campaign_create" | "home_campaign_update" | "home_campaign_publish" | "home_campaign_archive"

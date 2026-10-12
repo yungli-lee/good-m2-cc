@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { recordAuditLog } from "@/lib/audit/audit-log";
 import { requireRole } from "@/lib/auth";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { createSupabaseServerClient, createSupabaseAdminClient } from "@/lib/supabase/server";
 
 const displayNameSchema = z.string().trim().max(120);
 const passwordSchema = z
@@ -115,6 +115,16 @@ export async function changeOwnPasswordAction(formData: FormData) {
   if (updateError) {
     console.error("own_password_update_failed", { userId: current.user.id, status: updateError.status, code: updateError.code });
     accountRedirect({ error: "password_update_failed", section: "password" });
+  }
+
+  if(current.user.app_metadata?.must_change_password === true){
+    const admin=createSupabaseAdminClient();
+    const {data:authRecord,error:readError}=await admin.auth.admin.getUserById(current.user.id);
+    if(readError||!authRecord.user)accountRedirect({error:"password_update_failed",section:"password"});
+    const {error:clearError}=await admin.auth.admin.updateUserById(current.user.id,{
+      app_metadata:{...authRecord.user.app_metadata,must_change_password:false,temp_password_expires_at:null}
+    });
+    if(clearError)accountRedirect({error:"password_update_failed",section:"password"});
   }
 
   const { error: refreshError } = await supabase.auth.refreshSession();
