@@ -146,14 +146,26 @@ try {
   delete process.env.SUPABASE_SERVICE_ROLE_KEY;
 }
 
-const { POST: webhook } = await import("../app/api/line/sales-binding-webhook/route.ts");
+const { POST: webhook, GET: webhookReadiness } = await import("../app/api/line/sales-binding-webhook/route.ts");
 process.env.LINE_MESSAGING_CHANNEL_SECRET = "test-only-channel-secret";
 const raw = JSON.stringify({ events: [] });
 const signature = createHmac("sha256", process.env.LINE_MESSAGING_CHANNEL_SECRET).update(raw).digest("base64");
 const webhookRequest = (sig = signature, site = "https://good.m2.cc") => new Request(`${site}/api/line/sales-binding-webhook`, { method: "POST", headers: { "x-line-signature": sig }, body: raw });
 delete process.env.SALES_LINE_BINDING_ENABLED;
 assert.equal((await webhook(webhookRequest())).status, 503);
+const readinessRequest = () => new Request("https://good.m2.cc/api/line/sales-binding-webhook");
+assert.deepEqual(await (await webhookReadiness(readinessRequest())).json(), { ok: false, error: "disabled" });
 process.env.SALES_LINE_BINDING_ENABLED = "true";
+delete process.env.LINE_MESSAGING_CHANNEL_SECRET;
+const missingSecret = await webhookReadiness(readinessRequest());
+assert.equal(missingSecret.status, 503);
+assert.equal(missingSecret.headers.get("cache-control"), "no-store");
+assert.deepEqual(await missingSecret.json(), { ok: false, error: "not_configured" });
+process.env.LINE_MESSAGING_CHANNEL_SECRET = "test-only-channel-secret";
+const ready = await webhookReadiness(readinessRequest());
+assert.equal(ready.status, 200);
+assert.deepEqual(await ready.json(), { ok: true, status: "configuration_ready" });
+assert.equal((await webhookReadiness(new Request(`${previewSite}/api/line/sales-binding-webhook`))).status, 403);
 assert.equal((await webhook(webhookRequest("invalid"))).status, 401);
 assert.deepEqual(await (await webhook(webhookRequest())).json(), { ok: true, bound: 0 });
 assert.equal((await webhook(webhookRequest(signature, previewSite))).status, 403);

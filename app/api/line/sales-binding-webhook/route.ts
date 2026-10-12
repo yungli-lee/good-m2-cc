@@ -10,6 +10,15 @@ function config(name:string){
 }
 function hex(b:Uint8Array){return Array.from(b,x=>x.toString(16).padStart(2,"0")).join("");}
 async function sha256(s:string){return hex(new Uint8Array(await crypto.subtle.digest("SHA-256",new TextEncoder().encode(s))));}
+// Read-only probe: identical configuration gates to POST; no secret values, DB access or LINE messages.
+export async function GET(request:Request){
+ const headers={"Cache-Control":"no-store"};
+ const scope=resolveSalesLineEnvironment(request.url,config);
+ if(!scope)return NextResponse.json({ok:false,error:"environment_mismatch"},{status:403,headers});
+ if(scope.environment==="production"&&config("SALES_LINE_BINDING_ENABLED")!=="true")return NextResponse.json({ok:false,error:"disabled"},{status:503,headers});
+ if(!config("LINE_MESSAGING_CHANNEL_SECRET"))return NextResponse.json({ok:false,error:"not_configured"},{status:503,headers});
+ return NextResponse.json({ok:true,status:"configuration_ready"},{headers});
+}
 export async function POST(request:Request){
  const scope=resolveSalesLineEnvironment(request.url,config);
  if(!scope)return NextResponse.json({error:"environment_mismatch"},{status:403});
