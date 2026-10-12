@@ -32,6 +32,8 @@
 
 正式 URL：`https://good.m2.cc/api/line/sales-binding-webhook`。
 
+若 LINE Verify 只顯示 503，可在瀏覽器開啟同一 URL，以 GET 讀取不含密鑰的即時設定狀態：`disabled` 是正式綁定開關未讀到 `true`；`not_configured` 是讀不到 Channel secret；`environment_mismatch` 是網站／資料庫／環境不匹配；`configuration_ready` 僅代表開關與 secret 已讀到，仍須 LINE Verify 驗證簽章。GET 不查詢資料庫、不綁定帳號、不發送訊息、不回傳 secret，並停用快取。
+
 先部署程式與 Pages 設定，再在 LINE Developers 設 Webhook URL、按 Verify，成功後開啟 Use webhook。每個 LINE channel 只有一個 Webhook URL；若目前 Preview 使用同一 channel，切到正式 URL 後 Preview 的自助綁定不能同時接收該 channel 事件。Preview 提醒 Worker 與既有測試綁定仍可繼續；需要持續測試自助綁定時使用獨立測試 channel，不可把正式綁定寫進 Staging。
 
 正式帳號應從正式後台重新產生綁定碼，並由該人自己的 LINE 傳送；驗證後台顯示已綁定。不要把 Editor B 的測試 LINE 身分直接複製到正式資料庫。
