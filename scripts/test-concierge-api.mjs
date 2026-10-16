@@ -43,7 +43,7 @@ function request(message, extra = {}, origin) { return new Request('https://exam
   assert.equal(body.mode, 'guided'); assert.equal(body.properties[0].title, '公開物件');
   assert.ok(!JSON.stringify(body).includes('DO NOT EXPOSE')); assert.ok(!JSON.stringify(body).includes('bottom_price'));
   assert.ok(body.searchHref.includes('price_max=800')); assert.equal(response.headers.get('cache-control'), 'no-store');
-  emptyResults = true; response = await route.POST(request("鹿港800萬以下住宅需要孝親房")); body = await response.json(); assert.equal(body.properties.length, 0); assert.equal(body.needsReview, false); assert.ok(!body.answer.includes("以下是基本條件候選")); emptyResults = false;
+  emptyResults = true; response = await route.POST(request("鹿港800萬以下住宅需要孝親房")); body = await response.json(); assert.equal(body.properties.length, 0); assert.equal(body.needsReview, false); assert.ok(!body.answer.includes("以下是基本條件候選")); assert.match(body.answer, /阿勇、阿美/); assert.match(body.answer, /繼續/); emptyResults = false;
   const previousCalls = calls;
   response = await route.POST(request('我想委託出租')); assert.equal(response.status, 200); assert.equal(calls, previousCalls);
   expectedMaxPrice = 150000;
@@ -56,6 +56,13 @@ function request(message, extra = {}, origin) { return new Request('https://exam
   assert.equal((await route.POST(request('x'.repeat(501)))).status, 422);
   queryFails = true; assert.equal((await route.POST(request('鹿港800萬以下住宅'))).status, 503); queryFails = false;
   enabled = true; response = await route.POST(request('鹿港800萬以下住宅')); assert.equal((await response.json()).mode, 'guided');
+  emptyResults = true;
+  modelOutputs = [schema.inferNeeds('鹿港800萬以下住宅', schema.needsSchema.parse({})), { answer: '沒有物件，請離開網站' }];
+  response = await route.POST(request('鹿港800萬以下住宅')); body = await response.json();
+  assert.equal(body.mode, 'ai'); assert.equal(body.properties.length, 0);
+  assert.match(body.answer, /阿勇、阿美/); assert.match(body.answer, /繼續/);
+  assert.ok(!body.answer.includes('離開網站'));
+  emptyResults = false;
   modelOutputs = [schema.inferNeeds('鹿港800萬以下住宅', schema.needsSchema.parse({})), { answer: '可查看 https://invented.example/secret' }];
   response = await route.POST(request('鹿港800萬以下住宅')); body = await response.json();
   assert.equal(body.mode, 'ai'); assert.ok(!body.answer.includes('invented.example')); assert.equal(body.properties[0].slug, 'public-slug');
