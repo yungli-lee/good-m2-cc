@@ -35,10 +35,10 @@ export function Concierge({ aiEnabled, siteKey, phone, lineUrl, initialProperty,
     setArchivePending(true);
     setArchiveStatus("正在啟用對話保存…");
     try {
-      const response = await fetch("/api/public/concierge/session", {method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"consent",accepted:true,sourcePath:sourcePage})});
+      const response = await fetch("/api/public/concierge/session", {method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"consent",accepted:true,sourcePath:sourcePage,history:messages.map(m => ({role:m.role,text:m.text})).filter(m => m.text.trim()).slice(-100)})});
       if (!response.ok) { const info = await response.json().catch(() => ({})) as {error?:string}; throw new Error(info.error || `無法啟用保存（${response.status}）`); }
       const data = await response.json() as {sessionId:string;proof:string};
-      setArchiveDeclined(false); setArchive(data); setArchiveStatus("已同意：接下來的對話會保存 90 天，可隨時停止並刪除。");
+      setArchiveDeclined(false); setArchive(data); setArchiveStatus("已同意：本次已發生及後續對話將保存 90 天，可隨時撤回並刪除。");
     } catch (error) { setArchiveStatus(error instanceof Error ? error.message : "保存功能目前無法使用；仍可繼續使用 AI 對話。"); }
     finally { archiveRequestInFlight.current = false; setArchivePending(false); }
   }
@@ -121,7 +121,7 @@ export function Concierge({ aiEnabled, siteKey, phone, lineUrl, initialProperty,
       const { response, data } = await requestChatJson<Reply & { error?: string }>("/api/public/concierge", { method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ role, displayName: contact.name || preferredName, message: redactChatContact(text), history, needs, focusedSlug: selected?.slug || "", propertyContext: initialProperty?.slug || "", viewingTime, candidateSlugs: candidates.current.map(p => p.slug) }), signal: AbortSignal.timeout(55000) });
       if (!response.ok) throw new Error(data.error || "暫時無法回答，請稍後重試");
-      if (contact.phone) {
+      if (contact.phone && !sent) {
         setContactPhone(contact.phone); if (contact.name) setContactName(contact.name);
         openLead(data.needs, updatedMessages, data.viewingTime || "", data.action === "viewing" || data.viewingTime ? "viewing" : "contact", data.focusedProperty || selected);
       }
@@ -138,7 +138,7 @@ export function Concierge({ aiEnabled, siteKey, phone, lineUrl, initialProperty,
       setInput(text);
       setMessages(m => m.at(-1)?.role === "user" && m.at(-1)?.text === text ? m.slice(0, -1) : m);
       setError(e instanceof Error && !["TimeoutError", "AbortError", "TypeError"].includes(e.name) ? e.message : "對話服務暫時無法連線，您的問題仍保留，請稍後重新送出，或直接加 LINE 諮詢。");
-      if (contact.phone) { setContactPhone(contact.phone); if (contact.name) setContactName(contact.name); openLead(needs, updatedMessages); }
+      if (contact.phone && !sent) { setContactPhone(contact.phone); if (contact.name) setContactName(contact.name); openLead(needs, updatedMessages); }
     }
     finally { setBusy(false); }
   }
@@ -158,7 +158,7 @@ export function Concierge({ aiEnabled, siteKey, phone, lineUrl, initialProperty,
     } catch { if (current === generation.current) { stop(); setError("語音暫時無法播放，請閱讀文字回答；較早的回答請重新詢問"); } }
   }
   function openLead(currentNeeds = needs, currentMessages = messages, currentViewingTime = viewingTime, purpose: "contact" | "viewing" = "contact", property = focusedProperty) {
-    if (sent) { setShowLead(true); return; }
+    if (sent) { setShowLead(false); return; }
     stop(); setLeadError(""); setHandoffPurpose(purpose); setViewingTime(currentViewingTime);
     if (!contactName.trim() && preferredName.trim()) setContactName(preferredName.trim());
     const turns = currentMessages.filter(m => m.role === "user").slice(-4).map(m => m.text).join("\n");
@@ -184,8 +184,13 @@ export function Concierge({ aiEnabled, siteKey, phone, lineUrl, initialProperty,
       const result = await readPublicJson<{ ok?: boolean; field_errors?: Record<string, string>; error?: string; email_sent?: boolean; line_sent?: boolean }>(response, "暫時無法確認送出結果，請先聯絡阿勇、阿美確認是否收到，避免重複送出。");
       if (!response.ok || !result.ok) throw new Error(Object.values(result.field_errors || {}).join("；") || result.error || "送出失敗，請重試");
       setSent(true);
+      setShowLead(false);
+      setMessages(current => [...current, { role: "assistant", character: role,
+        text: result.email_sent || result.line_sent
+          ? "感謝您留下聯絡方式！您的需求已經記錄下來。阿勇、阿美會盡快與您聯絡，請您留意來電。在此之前，我也可以繼續協助您。請問還有其他想了解的問題嗎？"
+          : "感謝您留下聯絡方式！您的需求已成功存入後台，但通知暫時未寄出；您也可以透過網站 LINE 聯絡阿勇、阿美。我會繼續協助您，請問還有其他想了解的問題嗎？" }]);
       void trackEvent("submit_inquiry", { properties: { form_type: handoffPurpose === "viewing" ? "concierge-viewing" : `concierge-${needs.intent}`, form_location: "guide" } });
-      setLeadError(result.email_sent || result.line_sent ? `需求已送出，並已通知阿勇、阿美；阿勇${phone ? `（${phone}）` : ""}、阿美會再與你聯繫。` : "需求已成功存入後台；通知暫時未寄出，你也可以使用網站 LINE 諮詢。");
+      setLeadError("");
     } catch (e) {
       setLeadError(e instanceof Error ? e.message : "送出失敗，請重試");
       if (widgetId.current) turnstile()?.reset(widgetId.current); setToken("");
@@ -207,13 +212,13 @@ export function Concierge({ aiEnabled, siteKey, phone, lineUrl, initialProperty,
     <div className="concierge-shortcuts">{!messages.length && (initialProperty ? ["介紹這件的重點", initialProperty.transaction_type === "rent" ? "租期、押金和設備有哪些？" : "想了解格局和停車"] : ["我想找鹿港住宅", "我有物件想委託出售", "我想找租屋"]).map(text => <button className="concierge-quiet" type="button" key={text} disabled={busy} onClick={() => void ask(text)}>{text}</button>)}{messages.length > 0 && <button className="concierge-quiet" disabled={busy || sending} onClick={() => { stop(); setMessages([]); setViewingTime(""); setFocusedProperty(initialProperty || null); candidates.current = []; setNeeds(initialNeeds()); clicked.current = []; focusedTurns.current = {}; viewingDeclined.current = {}; setViewingStateVersion(value => value + 1); setShowLead(false); setContactName(""); setContactPhone(""); setSummary(""); setSent(false); setError(""); }}>重新開始</button>}</div>
     {focusedProperty && <div className="concierge-focus"><span>正在聊：<strong>{focusedProperty.title}</strong></span>{!initialProperty && <button className="concierge-quiet" type="button" disabled={busy || sending} onClick={() => { setFocusedProperty(null); void ask("重新找物件", null); }}>重新找物件</button>}</div>}
       {!archive && !archiveDeclined && <section className="concierge-archive-consent" aria-label="AI 對話保存同意">
-        <strong>是否同意保存後續 AI 對話？</strong>
-        <details className="concierge-consent-details"><summary>了解保存用途與期限</summary><p>僅在同意後保存後續 AI 對話及物件偏好，用於分析需求、改善推薦。保存 90 天；不同意仍可正常找房，不會自動建立聯絡資料。可在隱私設定撤回並刪除。</p></details>
-        <div className="concierge-consent-actions"><button type="button" className="button primary" disabled={archivePending} aria-busy={archivePending} onClick={() => void consentArchive()}>{archivePending ? "同意處理中…" : "我同意保存後續對話"}</button><button type="button" className="button" disabled={archivePending} onClick={() => {setArchiveDeclined(true);setArchiveStatus("");}}>不同意，繼續找房</button></div>
+        <strong>是否同意保存本次 AI 對話？</strong>
+        <details className="concierge-consent-details"><summary>了解保存用途與期限</summary><p>您同意後，將保存本次已發生及接下來的 AI 對話及物件偏好，用於分析需求、改善推薦。保存 90 天；不同意仍可正常找房，不會自動建立聯絡資料。可在隱私設定撤回並刪除。</p></details>
+        <div className="concierge-consent-actions"><button type="button" className="button primary" disabled={archivePending} aria-busy={archivePending} onClick={() => void consentArchive()}>{archivePending ? "同意處理中…" : "我同意保存本次對話"}</button><button type="button" className="button" disabled={archivePending} onClick={() => {setArchiveDeclined(true);setArchiveStatus("");}}>不同意，繼續找房</button></div>
       </section>}
     <div className={`concierge-conversation ${!initialProperty && !messages.length && !busy ? "is-empty" : ""}`} role="log" aria-label="需求導覽對話" aria-live="polite">
       {!messages.length && <p>{initialProperty ? "您好！我可以陪您了解這一件。想先問格局、設備，還是其他細節？" : "想找房、找土地，還是有物件想委託？告訴我地區、預算與必要條件，我陪你一起找。"}</p>}
-      {archive && <p className="muted" style={{fontSize:12,margin:"8px 0"}}>已同意保存後續對話；可在「隱私與聯絡說明」撤回。</p>}
+      {archive && <p className="muted" style={{fontSize:12,margin:"8px 0"}}>已同意保存本次對話；可在「隱私與聯絡說明」撤回。</p>}
       {archive && archiveStatus && <p role="status" style={{fontSize:12}}>{archiveStatus}</p>}
       {archiveStatus && !archive && !archiveDeclined && <p role="status">{archiveStatus}</p>}
 
@@ -253,7 +258,7 @@ export function Concierge({ aiEnabled, siteKey, phone, lineUrl, initialProperty,
     </div>
     <form className="concierge-compose" onSubmit={e => { e.preventDefault(); void ask(input); }}><label htmlFor={inputId}>告訴我你的需求</label><textarea id={inputId} value={input} onChange={e => setInput(e.target.value)} maxLength={500} rows={2} placeholder={initialProperty ? "例如：有幾個房間？設備包含哪些？" : "例如：鹿港或福興，800萬以下的住宅，需要孝親房"} required disabled={busy} /><button className="button primary" disabled={busy}>{busy ? "整理中…" : "送出提問"}</button></form>
     <div className="concierge-direct-contact"><p>不想留下資料？可以直接打電話或加 LINE。</p><div className="concierge-actions">{phone && <a className="button" href={`tel:${phone.replace(/[^\d+]/g, "")}`} data-contact-person="阿勇" data-cta-location="concierge_direct">阿勇 {phone} · 撥打電話</a>}{lineUrl && <a className="button" href={lineUrl} target="_blank" rel="noopener noreferrer" data-contact-person="阿勇" data-cta-location="concierge_direct">加 LINE 諮詢 ↗</a>}</div></div>
-    <div className="concierge-handoff"><span>想請我們回電？</span><button className="button primary" type="button" disabled={busy || sending} onClick={() => openLead()}>{`請${role === "amei" ? "阿美" : "阿勇"}聯絡我`}</button></div>
+    {!sent && <div className="concierge-handoff"><span>想請我們回電？</span><button className="button primary" type="button" disabled={busy || sending} onClick={() => openLead()}>{`請${role === "amei" ? "阿美" : "阿勇"}聯絡我`}</button></div>}
     <details className="concierge-privacy"><summary>隱私與聯絡說明</summary><p className="concierge-privacy">先描述需求，不用提供完整門牌。若在聊天留下手機，會帶入聯絡表單，由你確認後才送出。{aiEnabled ? "文字問題會交由 AI 服務處理；聯絡資料在確認送出表單後才存入後台。" : "聯絡資料在確認送出表單後才存入後台。"}</p>{archive && <><p>已開啟對話保存；可隨時撤回並刪除本次已保存對話。</p><button type="button" className="button ghost" onClick={() => void revokeArchive()}>撤回同意並刪除對話</button>{archiveStatus && <p role="status">{archiveStatus}</p>}</>}</details>
     {showLead && <section ref={leadSection} className="concierge-lead" aria-labelledby={leadTitleId}><h2 id={leadTitleId}>{handoffPurpose === "viewing" ? "預約帶看｜確認聯絡方式" : "確認需求與聯絡方式"}</h2><p>{handoffPurpose === "viewing" ? "填寫希望時間即可，實際帶看時段會由阿勇、阿美再與你確認；尚未送出前都可以修改。" : "請確認這是你本人的聯絡資料。尚未送出；確認並同意後，才會通知阿勇、阿美。"}</p><form key={leadVersion} onSubmit={submit} data-form-type={handoffPurpose === "viewing" ? "concierge-viewing" : `concierge-${needs.intent}`} data-form-location="guide">
       <label>需求摘要（可以修改）<textarea rows={6} value={summary} onChange={e => setSummary(e.target.value)} minLength={10} maxLength={900} required disabled={sent || sending} /></label>

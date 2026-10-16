@@ -6,7 +6,7 @@ import { getSupabaseEnv } from "@/lib/supabase/env";
 export const runtime = "edge";
 const noStore = { "Cache-Control": "no-store" };
 const schema = z.discriminatedUnion("action", [
-  z.object({ action: z.literal("consent"), accepted: z.literal(true), sourcePath: z.string().max(220).default("/guide") }),
+  z.object({ action: z.literal("consent"), accepted: z.literal(true), sourcePath: z.string().max(220).default("/guide"), history: z.array(z.object({ role: z.enum(["user","assistant"]), text: z.string().trim().min(1).max(1200) })).max(100).default([]) }),
   z.object({ action: z.literal("append"), sessionId: z.string().uuid(), proof: z.string().length(64), userText: z.string().trim().min(1).max(500), assistantText: z.string().trim().min(1).max(1200), propertySlug: z.string().max(200).optional(), needs: z.record(z.string(), z.unknown()).optional() }),
   z.object({ action: z.literal("revoke"), sessionId: z.string().uuid(), proof: z.string().length(64) })
 ]);
@@ -17,7 +17,7 @@ async function hash(value: string) {
 }
 export async function POST(request: Request) {
   if (request.headers.get("origin") !== new URL(request.url).origin) return failure(403);
-  if (Number(request.headers.get("content-length") || "0") > 5000) return failure(413);
+  if (Number(request.headers.get("content-length") || "0") > 125000) return failure(413);
   let body: z.infer<typeof schema>;
   try { body = schema.parse(await request.json()); } catch { return failure(422,"archive_input"); }
   try {
@@ -36,6 +36,18 @@ export async function POST(request: Request) {
         source_path: body.sourcePath.startsWith("/") && !body.sourcePath.startsWith("//") ? body.sourcePath : "/guide"
       }).select("id").single();
       if (error || !data) { console.error("concierge_archive_consent_insert_failed", error?.code || "empty"); return failure(503,error?.code === "PGRST205" || error?.code === "42P01" ? "archive_schema" : error?.code === "42501" || error?.code === "PGRST301" || error?.code === "401" ? "archive_key" : "archive_database"); }
+      if (body.history.length) {
+        const rows = body.history.map(item => ({
+          session_id: data.id, role: item.role, message: redactContact(item.text),
+          property_slug: null, preference: "unspecified", needs: {}
+        }));
+        const { error: historyError } = await db.from("concierge_consented_messages").insert(rows);
+        if (historyError) {
+          console.error("concierge_archive_history_insert_failed", historyError.code || "unknown");
+          await db.from("concierge_consented_sessions").delete().eq("id", data.id);
+          return failure(503, "archive_database");
+        }
+      }
       return NextResponse.json({ sessionId: data.id, proof }, { headers: noStore });
     }
     const { data: session, error } = await db.from("concierge_consented_sessions").select("id,proof_hash,expires_at").eq("id",body.sessionId).maybeSingle();

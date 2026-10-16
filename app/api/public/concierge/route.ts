@@ -93,6 +93,9 @@ export async function POST(request: Request) {
       : needs.intent === "sell" || needs.intent === "let" ? "可以，我先幫你整理委託需求。請告訴我物件所在地區、類型、約略坪數，以及想出售或出租。先不用提供完整門牌。確認摘要後可留下聯絡方式，由阿勇、阿美親自了解與評估。"
       : needs.intent === "rent" ? "我先幫你記下承租需求；目前這裡的物件推薦以出售物件為主，不會把售價當租金。請告訴我地區、每月租金預算及必要條件，再留下需求請阿勇、阿美協助。"
       : "我可以帶你看網站的相關知識；涉及個別稅額、貸款成數或法律判斷，請由阿勇、阿美確認你的實際情況。也可以把問題留在需求摘要中。";
+    if (buying && !focused && properties.length === 0) {
+      answer = "目前網站沒有找到符合您需求的公開物件，但不代表市場上沒有。阿勇、阿美可以繼續協助您尋找；若願意留下聯絡方式，可透過下方聯絡表單交由專人接續服務。您也可以繼續詢問，我會盡力回答，不必為了聯絡而結束對話。";
+    }
     if (focused) answer = focusedAnswer(focused, safeMessage, history);
     if (mode === "ai") {
       try {
@@ -123,6 +126,11 @@ export async function POST(request: Request) {
     } else if (action === "contact") {
       answer = `我可以先幫您整理需求與聯絡資料；請檢查下方表單並同意聯絡，按「請${speaker}聯絡我」後才會送出。目前尚未通知真人。`;
     }
+    if (buying && !focused && properties.length === 0) {
+      // A generated answer must not turn an empty inventory into a dead end.
+      // The contact form handles consent and delivery; chat stays available.
+      answer = "目前網站沒有找到符合您需求的公開物件，但不代表市場上沒有。阿勇、阿美可以協助進一步尋找。若您願意，可使用下方聯絡表單留下電話；資料成功送出後，阿勇、阿美會盡快與您聯絡，請留意來電。您也可以繼續提出問題，我會繼續協助您。";
+    }
     if (buying && !focused && action === "search" && properties.length) {
       answer = `本次先推薦 ${Math.min(properties.length, 6)} 件候選物件，完整結果請點「查看這組條件的搜尋結果」。${needs.type === "residential" && properties.some(p => p.propertyType === "storefront") ? "包含店面／店住類候選，居住用途與條件仍待阿勇、阿美確認。" : ""}\n${answer}`;
     }
@@ -133,9 +141,9 @@ export async function POST(request: Request) {
     const alreadyAskedViewing = history.some(m => m.role === "assistant" && /之前看過哪些|有看過哪些|哪一間讓您/.test(m.text));
     const alreadyAnsweredViewing = history.some(m => m.role === "user" && /看過|沒看過|還沒看/.test(m.text));
     if (!focused && buying && action === "search" && !feedback && !alreadyAskedViewing && !alreadyAnsweredViewing) {
-      answer += "\\n您之前有看過哪些房子嗎？最喜歡哪一間、又有哪些地方不滿意呢？";
+      answer += "\n您之前有看過哪些房子嗎？最喜歡哪一間、又有哪些地方不滿意呢？";
     } else if (!focused && buying && action === "search" && feedback && !preferenceDetail) {
-      answer += "\\n那間房子最吸引您或最讓您猶豫的是什麼？例如價格、屋齡、車位或格局。";
+      answer += "\n那間房子最吸引您或最讓您猶豫的是什麼？例如價格、屋齡、車位或格局。";
     }
     if (visitorSalutation && (history.filter(m => m.role === "assistant").length % 3 === 0) && !answer.startsWith(visitorSalutation)) {
       answer = visitorSalutation + "，" + answer;
