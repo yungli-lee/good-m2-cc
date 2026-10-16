@@ -141,9 +141,9 @@ export async function POST(request: Request) {
     const alreadyAskedViewing = history.some(m => m.role === "assistant" && /之前看過哪些|有看過哪些|哪一間讓您/.test(m.text));
     const alreadyAnsweredViewing = history.some(m => m.role === "user" && /看過|沒看過|還沒看/.test(m.text));
     if (!focused && buying && action === "search" && !feedback && !alreadyAskedViewing && !alreadyAnsweredViewing) {
-      answer += "\\n您之前有看過哪些房子嗎？最喜歡哪一間、又有哪些地方不滿意呢？";
+      answer += "\n您之前有看過哪些房子嗎？最喜歡哪一間、又有哪些地方不滿意呢？";
     } else if (!focused && buying && action === "search" && feedback && !preferenceDetail) {
-      answer += "\\n那間房子最吸引您或最讓您猶豫的是什麼？例如價格、屋齡、車位或格局。";
+      answer += "\n那間房子最吸引您或最讓您猶豫的是什麼？例如價格、屋齡、車位或格局。";
     }
     if (visitorSalutation && (history.filter(m => m.role === "assistant").length % 3 === 0) && !answer.startsWith(visitorSalutation)) {
       answer = visitorSalutation + "，" + answer;
