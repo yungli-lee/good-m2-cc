@@ -121,7 +121,7 @@ export function Concierge({ aiEnabled, siteKey, phone, lineUrl, initialProperty,
       const { response, data } = await requestChatJson<Reply & { error?: string }>("/api/public/concierge", { method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ role, displayName: contact.name || preferredName, message: redactChatContact(text), history, needs, focusedSlug: selected?.slug || "", propertyContext: initialProperty?.slug || "", viewingTime, candidateSlugs: candidates.current.map(p => p.slug) }), signal: AbortSignal.timeout(55000) });
       if (!response.ok) throw new Error(data.error || "暫時無法回答，請稍後重試");
-      if (contact.phone) {
+      if (contact.phone && !sent) {
         setContactPhone(contact.phone); if (contact.name) setContactName(contact.name);
         openLead(data.needs, updatedMessages, data.viewingTime || "", data.action === "viewing" || data.viewingTime ? "viewing" : "contact", data.focusedProperty || selected);
       }
@@ -138,7 +138,7 @@ export function Concierge({ aiEnabled, siteKey, phone, lineUrl, initialProperty,
       setInput(text);
       setMessages(m => m.at(-1)?.role === "user" && m.at(-1)?.text === text ? m.slice(0, -1) : m);
       setError(e instanceof Error && !["TimeoutError", "AbortError", "TypeError"].includes(e.name) ? e.message : "對話服務暫時無法連線，您的問題仍保留，請稍後重新送出，或直接加 LINE 諮詢。");
-      if (contact.phone) { setContactPhone(contact.phone); if (contact.name) setContactName(contact.name); openLead(needs, updatedMessages); }
+      if (contact.phone && !sent) { setContactPhone(contact.phone); if (contact.name) setContactName(contact.name); openLead(needs, updatedMessages); }
     }
     finally { setBusy(false); }
   }
@@ -158,7 +158,7 @@ export function Concierge({ aiEnabled, siteKey, phone, lineUrl, initialProperty,
     } catch { if (current === generation.current) { stop(); setError("語音暫時無法播放，請閱讀文字回答；較早的回答請重新詢問"); } }
   }
   function openLead(currentNeeds = needs, currentMessages = messages, currentViewingTime = viewingTime, purpose: "contact" | "viewing" = "contact", property = focusedProperty) {
-    if (sent) { setShowLead(true); return; }
+    if (sent) { setShowLead(false); return; }
     stop(); setLeadError(""); setHandoffPurpose(purpose); setViewingTime(currentViewingTime);
     if (!contactName.trim() && preferredName.trim()) setContactName(preferredName.trim());
     const turns = currentMessages.filter(m => m.role === "user").slice(-4).map(m => m.text).join("\n");
@@ -184,8 +184,13 @@ export function Concierge({ aiEnabled, siteKey, phone, lineUrl, initialProperty,
       const result = await readPublicJson<{ ok?: boolean; field_errors?: Record<string, string>; error?: string; email_sent?: boolean; line_sent?: boolean }>(response, "暫時無法確認送出結果，請先聯絡阿勇、阿美確認是否收到，避免重複送出。");
       if (!response.ok || !result.ok) throw new Error(Object.values(result.field_errors || {}).join("；") || result.error || "送出失敗，請重試");
       setSent(true);
+      setShowLead(false);
+      setMessages(current => [...current, { role: "assistant", character: role,
+        text: result.email_sent || result.line_sent
+          ? "感謝您留下聯絡方式！您的需求已經記錄下來。阿勇、阿美會盡快與您聯絡，請您留意來電。在此之前，我也可以繼續協助您。請問還有其他想了解的問題嗎？"
+          : "感謝您留下聯絡方式！您的需求已成功存入後台，但通知暫時未寄出；您也可以透過網站 LINE 聯絡阿勇、阿美。我會繼續協助您，請問還有其他想了解的問題嗎？" }]);
       void trackEvent("submit_inquiry", { properties: { form_type: handoffPurpose === "viewing" ? "concierge-viewing" : `concierge-${needs.intent}`, form_location: "guide" } });
-      setLeadError(result.email_sent || result.line_sent ? `需求已送出，並已通知阿勇、阿美；阿勇${phone ? `（${phone}）` : ""}、阿美會再與你聯繫。` : "需求已成功存入後台；通知暫時未寄出，你也可以使用網站 LINE 諮詢。");
+      setLeadError("");
     } catch (e) {
       setLeadError(e instanceof Error ? e.message : "送出失敗，請重試");
       if (widgetId.current) turnstile()?.reset(widgetId.current); setToken("");
