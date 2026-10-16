@@ -129,7 +129,7 @@ export async function POST(request: Request) {
     if (buying && !focused && properties.length === 0) {
       // A generated answer must not turn an empty inventory into a dead end.
       // The contact form handles consent and delivery; chat stays available.
-      answer = "目前網站沒有找到符合您需求的公開物件，但不代表市場上沒有。阿勇、阿美可以協助進一步尋找。若您願意，可使用下方聯絡表單留下電話，讓專人接續服務；也歡迎繼續提出問題，我會繼續協助您。";
+      answer = "目前網站沒有找到符合您需求的公開物件，但不代表市場上沒有。阿勇、阿美可以協助進一步尋找。若您願意，可使用下方聯絡表單留下電話；資料成功送出後，阿勇、阿美會盡快與您聯絡，請留意來電。您也可以繼續提出問題，我會繼續協助您。";
     }
     if (buying && !focused && action === "search" && properties.length) {
       answer = `本次先推薦 ${Math.min(properties.length, 6)} 件候選物件，完整結果請點「查看這組條件的搜尋結果」。${needs.type === "residential" && properties.some(p => p.propertyType === "storefront") ? "包含店面／店住類候選，居住用途與條件仍待阿勇、阿美確認。" : ""}\n${answer}`;
