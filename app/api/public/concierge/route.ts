@@ -93,6 +93,9 @@ export async function POST(request: Request) {
       : needs.intent === "sell" || needs.intent === "let" ? "可以，我先幫你整理委託需求。請告訴我物件所在地區、類型、約略坪數，以及想出售或出租。先不用提供完整門牌。確認摘要後可留下聯絡方式，由阿勇、阿美親自了解與評估。"
       : needs.intent === "rent" ? "我先幫你記下承租需求；目前這裡的物件推薦以出售物件為主，不會把售價當租金。請告訴我地區、每月租金預算及必要條件，再留下需求請阿勇、阿美協助。"
       : "我可以帶你看網站的相關知識；涉及個別稅額、貸款成數或法律判斷，請由阿勇、阿美確認你的實際情況。也可以把問題留在需求摘要中。";
+    if (buying && !focused && properties.length === 0) {
+      answer = "目前網站沒有找到符合您需求的公開物件，但不代表市場上沒有。阿勇、阿美可以繼續協助您尋找；若願意留下聯絡方式，可透過下方聯絡表單交由專人接續服務。您也可以繼續詢問，我會盡力回答，不必為了聯絡而結束對話。";
+    }
     if (focused) answer = focusedAnswer(focused, safeMessage, history);
     if (mode === "ai") {
       try {
@@ -122,6 +125,11 @@ export async function POST(request: Request) {
       answer = "您想了解哪一間？可以按物件旁的「詢問這間」，或告訴我是第幾間，我再針對該物件回答。";
     } else if (action === "contact") {
       answer = `我可以先幫您整理需求與聯絡資料；請檢查下方表單並同意聯絡，按「請${speaker}聯絡我」後才會送出。目前尚未通知真人。`;
+    }
+    if (buying && !focused && properties.length === 0) {
+      // A generated answer must not turn an empty inventory into a dead end.
+      // The contact form handles consent and delivery; chat stays available.
+      answer = "目前網站沒有找到符合您需求的公開物件，但不代表市場上沒有。阿勇、阿美可以協助進一步尋找。若您願意，可使用下方聯絡表單留下電話，讓專人接續服務；也歡迎繼續提出問題，我會繼續協助您。";
     }
     if (buying && !focused && action === "search" && properties.length) {
       answer = `本次先推薦 ${Math.min(properties.length, 6)} 件候選物件，完整結果請點「查看這組條件的搜尋結果」。${needs.type === "residential" && properties.some(p => p.propertyType === "storefront") ? "包含店面／店住類候選，居住用途與條件仍待阿勇、阿美確認。" : ""}\n${answer}`;
