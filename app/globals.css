@@ -1341,7 +1341,7 @@ td {
 .gallery-main {
   width: 100%;
   aspect-ratio: 16 / 10;
-  object-fit: cover;
+  object-fit: contain;
   border-radius: 8px;
   background: #d9dee8;
 }
