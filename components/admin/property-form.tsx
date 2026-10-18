@@ -199,9 +199,10 @@ export function PropertyForm({
             <p className="muted">建議 80～150 字。空白時使用系統預設：{seoPreview.description}</p>
           </div>
           <div className="field full">
-            <strong>OG Image</strong>
-            <p className="muted">{coverImageUrl ? "系統預設使用物件封面圖片或影片 Poster。" : "尚未設定封面；上傳並設為封面後會自動作為 OG Image。"}</p>
-            {coverImageUrl ? <img className="property-image" src={coverImageUrl} alt={cover?.alt_text || property?.title || "OG Image"} loading="lazy" /> : null}
+            <label htmlFor="og_image_url">Facebook／LINE 連結預覽圖片網址（OG Image）</label>
+            <input className="input" id="og_image_url" name="og_image_url" type="url" maxLength={500} defaultValue={property?.og_image_url || ""} placeholder={coverImageUrl || "https://.../social-cover.jpg"} />
+            <p className="muted">建議上傳橫式 1200 × 630 圖片，再貼上公開 HTTPS 圖片網址。留空時仍使用物件封面或影片 Poster；不會更動網站主圖。</p>
+            {coverImageUrl ? <img className="property-image" src={property?.og_image_url || coverImageUrl} alt={cover?.alt_text || property?.title || "OG Image"} loading="lazy" /> : null}
           </div>
           <div className="field full">
             <strong>Canonical URL</strong>
