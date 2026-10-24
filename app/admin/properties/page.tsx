@@ -305,7 +305,7 @@ export default async function AdminPropertiesPage({ searchParams }: Props) {
             <thead>
               <tr>
                 <th>案名</th>
-                <th>委託書編號</th>
+
                 <th>開發人員</th>
                 <th>地區</th>
                 <th>開價</th>
@@ -332,7 +332,7 @@ export default async function AdminPropertiesPage({ searchParams }: Props) {
                         </>
                       ) : null}
                     </td>
-                    <td>{property.listing_no || "-"}</td>
+
                     <td>{property.developer_names || "-"}</td>
                     <td className="admin-property-area">{[property.city, property.district].filter(Boolean).join(" ") || "未填"}</td>
                     <td>{formatPropertyPrice(property)}</td>
@@ -376,7 +376,7 @@ export default async function AdminPropertiesPage({ searchParams }: Props) {
               })}
               {properties.length === 0 ? (
                 <tr>
-                  <td colSpan={11}>尚未建立物件。可以先使用「新增物件」建立草稿。</td>
+                  <td colSpan={10}>尚未建立物件。可以先使用「新增物件」建立草稿。</td>
                 </tr>
               ) : null}
             </tbody>
