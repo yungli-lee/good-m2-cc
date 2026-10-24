@@ -3669,7 +3669,7 @@ td {
 .admin-property-list-table th, .admin-property-list-table td { vertical-align: top; }
 .admin-property-list-table th { white-space: nowrap; }
 .admin-property-list-table td:first-child { min-width: 205px; max-width: 280px; overflow-wrap: anywhere; }
-.admin-property-list-table td:nth-child(2) { white-space: nowrap; }
+.admin-property-list-table td:nth-child(2) { min-width: 92px; }
 .admin-property-list-table .admin-property-area { min-width: 100px; }
 .admin-property-list-table .admin-property-views { min-width: 72px; white-space: nowrap; }
 .admin-property-views a { display: inline-flex; flex-direction: column; gap: 3px; }
