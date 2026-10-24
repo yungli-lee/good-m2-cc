@@ -2,6 +2,8 @@ import Link from "next/link";
 import { canDeleteProperties, canPublishProperties, requireRole } from "@/lib/auth";
 import { formatDateTime, formatPropertyPrice } from "@/lib/format";
 import { calculatePropertyHealthScore } from "@/lib/properties/health-score";
+import { getAnalyticsProperties } from "@/lib/analytics-dashboard/properties";
+import { getDashboardEnvironment } from "@/lib/analytics-dashboard/environment";
 import { listAdminProperties } from "@/lib/properties/queries";
 import type { AdminPropertyLifecycleFilter } from "@/lib/properties/queries";
 import { unpublishReasons } from "@/lib/properties/lifecycle";
@@ -85,7 +87,7 @@ const statusLabel: Record<PropertyStatus, string> = {
 };
 
 type Props = {
-  searchParams: Promise<{ error?: string; q?: string; lifecycle?: string }>;
+  searchParams: Promise<{ error?: string; q?: string; lifecycle?: string; viewsSort?: string }>;
 };
 
 const lifecycleFilters: Array<{ value: AdminPropertyLifecycleFilter; label: string }> = [
@@ -97,10 +99,11 @@ const lifecycleFilters: Array<{ value: AdminPropertyLifecycleFilter; label: stri
   { value: "deleted", label: "已刪除" }
 ];
 
-function filterHref(filter: AdminPropertyLifecycleFilter, search: string) {
+function filterHref(filter: AdminPropertyLifecycleFilter, search: string, viewsSort = "") {
   const params = new URLSearchParams();
   if (search) params.set("q", search);
   if (filter !== "all") params.set("lifecycle", filter);
+  if (viewsSort) params.set("viewsSort", viewsSort);
   return `/admin/properties${params.toString() ? `?${params.toString()}` : ""}`;
 }
 
@@ -226,10 +229,27 @@ export default async function AdminPropertiesPage({ searchParams }: Props) {
   const lifecycle = lifecycleFilters.some((item) => item.value === query.lifecycle)
     ? query.lifecycle as AdminPropertyLifecycleFilter
     : "all";
-  const { data, error } = await listAdminProperties(search, lifecycle);
-  const properties = (data || []) as AdminPropertyListItem[];
+  const viewsSort = ["7d-desc", "7d-asc", "90d-desc", "90d-asc"].includes(query.viewsSort || "") ? query.viewsSort! : "";
+  const environment = getDashboardEnvironment();
+  const [listResult, sevenDayResult, ninetyDayResult] = await Promise.allSettled([
+    listAdminProperties(search, lifecycle),
+    getAnalyticsProperties("7d", environment),
+    getAnalyticsProperties("90d", environment)
+  ]);
+  const { data, error } = listResult.status === "fulfilled" ? listResult.value : { data: null, error: true };
+  const sevenDayViews = new Map(sevenDayResult.status === "fulfilled" ? sevenDayResult.value.rows.map((row) => [row.propertyId, row.views]) : []);
+  const ninetyDayViews = new Map(ninetyDayResult.status === "fulfilled" ? ninetyDayResult.value.rows.map((row) => [row.propertyId, row.views]) : []);
+  const viewStatsAvailable = sevenDayResult.status === "fulfilled" && ninetyDayResult.status === "fulfilled";
+  const properties = [...((data || []) as AdminPropertyListItem[])];
+  if (viewsSort && viewStatsAvailable) {
+    const isSevenDay = viewsSort.startsWith("7d");
+    const counts = isSevenDay ? sevenDayViews : ninetyDayViews;
+    const multiplier = viewsSort.endsWith("asc") ? 1 : -1;
+    properties.sort((a, b) => multiplier * ((counts.get(a.id) ?? 0) - (counts.get(b.id) ?? 0)) || a.title.localeCompare(b.title, "zh-TW"));
+  }
   const canPublish = canPublishProperties(current.profile.role);
   const canDelete = canDeleteProperties(current.profile.role);
+  const viewSortHref = (sort: string) => filterHref(lifecycle, search, sort);
 
   return (
     <main className="section">
@@ -257,11 +277,19 @@ export default async function AdminPropertiesPage({ searchParams }: Props) {
             <Link
               key={filter.value}
               className={filter.value === lifecycle ? "button" : "button ghost"}
-              href={filterHref(filter.value, search)}
+              href={filterHref(filter.value, search, viewsSort)}
             >
               {filter.value === lifecycle ? "■" : "□"} {filter.label}
             </Link>
           ))}
+        </div>
+        {!viewStatsAvailable ? <div className="notice" role="status">物件流量暫時無法讀取；顯示「—」而非誤植為 0，其他管理功能不受影響。</div> : null}
+        <div className="actions" style={{ marginBottom: 12 }}>
+          <span className="muted">瀏覽數依既有成效分析事件統計（排除機器人及內部流量）；非歷史累計。</span>
+          <Link className={viewsSort === "7d-desc" ? "button" : "button ghost"} href={viewSortHref("7d-desc")}>7 日最多</Link>
+          <Link className={viewsSort === "90d-desc" ? "button" : "button ghost"} href={viewSortHref("90d-desc")}>90 日最多</Link>
+          <Link className={viewsSort === "90d-asc" ? "button" : "button ghost"} href={viewSortHref("90d-asc")}>90 日最少</Link>
+          {viewsSort ? <Link className="button ghost" href={viewSortHref("")}>恢復原排序</Link> : null}
         </div>
         <div className="table-wrap">
           <table>
@@ -274,6 +302,7 @@ export default async function AdminPropertiesPage({ searchParams }: Props) {
                 <th>行政區</th>
                 <th>開價</th>
                 <th>健康度</th>
+                <th>瀏覽數<br /><span className="muted">7 日 / 90 日</span></th>
                 <th>狀態</th>
                 <th>精選</th>
                 <th>更新時間</th>
@@ -301,6 +330,15 @@ export default async function AdminPropertiesPage({ searchParams }: Props) {
                     <td>{property.district || "未填"}</td>
                     <td>{formatPropertyPrice(property)}</td>
                     <td><HealthScoreCell property={property} /></td>
+                    <td style={{ whiteSpace: "nowrap" }}>
+                      {viewStatsAvailable ? (
+                        <Link href="/admin/analyze?range=90d" title="前往成效分析查看完整流量與互動">
+                          <strong>{(sevenDayViews.get(property.id) ?? 0).toLocaleString("zh-TW")}</strong>
+                          {" / "}
+                          <strong>{(ninetyDayViews.get(property.id) ?? 0).toLocaleString("zh-TW")}</strong>
+                        </Link>
+                      ) : "—"}
+                    </td>
                     <td>
                       {property.deleted_at ? "已刪除" : statusLabel[property.status]}
                       {property.status === "published" ? (
@@ -332,7 +370,7 @@ export default async function AdminPropertiesPage({ searchParams }: Props) {
               })}
               {properties.length === 0 ? (
                 <tr>
-                  <td colSpan={11}>尚未建立物件。可以先使用「新增物件」建立草稿。</td>
+                  <td colSpan={12}>尚未建立物件。可以先使用「新增物件」建立草稿。</td>
                 </tr>
               ) : null}
             </tbody>
