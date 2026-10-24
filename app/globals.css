@@ -3661,3 +3661,28 @@ td {
   .admin-users-table td:nth-child(7) .button { white-space: nowrap; }
   .admin-users-table td:nth-child(8) { min-width: 112px; }
 }
+
+
+/* Property-management table: readable density and horizontal scrolling on tablets. */
+.admin-property-list-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.admin-property-list-table { min-width: 1080px; table-layout: auto; }
+.admin-property-list-table th, .admin-property-list-table td { vertical-align: top; }
+.admin-property-list-table th { white-space: nowrap; }
+.admin-property-list-table td:first-child { min-width: 205px; max-width: 280px; overflow-wrap: anywhere; }
+.admin-property-list-table td:nth-child(2) { white-space: nowrap; }
+.admin-property-list-table .admin-property-area { min-width: 100px; }
+.admin-property-list-table .admin-property-views { min-width: 72px; white-space: nowrap; }
+.admin-property-views a { display: inline-flex; flex-direction: column; gap: 3px; }
+.admin-property-views a span { display: flex; justify-content: space-between; gap: 8px; }
+.admin-property-views small { color: #64748b; font-size: .73rem; }
+.admin-property-list-table .admin-property-date { min-width: 92px; white-space: nowrap; }
+.admin-property-row-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; min-width: 158px; }
+.admin-property-row-actions > * { min-width: 0; }
+.admin-property-row-actions .button { width: 100%; padding: 8px 6px; font-size: .83rem; text-align: center; white-space: nowrap; }
+.admin-property-row-actions form { margin: 0; }
+.admin-property-row-actions .property-lifecycle-action { grid-column: span 2; }
+.admin-property-row-actions .property-lifecycle-action summary { box-sizing: border-box; }
+@media (max-width: 700px) {
+  .admin-property-list-table { min-width: 990px; }
+  .admin-property-list-table td:first-child { min-width: 170px; }
+}
