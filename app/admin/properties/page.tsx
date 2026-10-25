@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { canDeleteProperties, canPublishProperties, requireRole } from "@/lib/auth";
 import { formatDateTime, formatPropertyPrice } from "@/lib/format";
-import { calculatePropertyHealthScore } from "@/lib/properties/health-score";
 import { getAnalyticsProperties } from "@/lib/analytics-dashboard/properties";
 import { getDashboardEnvironment } from "@/lib/analytics-dashboard/environment";
 import { listAdminProperties } from "@/lib/properties/queries";
@@ -200,22 +199,6 @@ function shortDate(value: string | null | undefined) {
   }).format(parsed);
 }
 
-function HealthScoreCell({ property }: { property: AdminPropertyListItem }) {
-  const health = calculatePropertyHealthScore(property);
-  const missing = health.missing.slice(0, 3).map((item) => item.label).join("、");
-
-  return (
-    <div className="property-health">
-      <span className={`property-health-badge is-${health.level}`}>{health.score}</span>
-      <div>
-        <strong>{health.label}</strong>
-        <br />
-        <span className="muted">{missing ? `待補：${missing}` : "資料完整度良好"}</span>
-      </div>
-    </div>
-  );
-}
-
 const errorMessage: Record<string, string> = {
   not_found: "找不到指定物件。",
   publish_failed: "物件狀態更新失敗，請稍後再試。",
@@ -266,7 +249,7 @@ export default async function AdminPropertiesPage({ searchParams }: Props) {
         <div className="actions" style={{ justifyContent: "space-between", marginBottom: 18 }}>
           <div>
             <h1 style={{ margin: 0 }}>物件管理</h1>
-            <p className="muted">B-001：列表顯示物件健康度，協助優先補齊可上架資料。</p>
+            <p className="muted">列表提供各物件流量、狀態與快速管理操作。</p>
           </div>
           <div className="actions">
             <Link className="button ghost" href="/admin">返回後台</Link>
@@ -309,7 +292,6 @@ export default async function AdminPropertiesPage({ searchParams }: Props) {
                 <th>開發人員</th>
                 <th>地區</th>
                 <th>開價</th>
-                <th>健康度</th>
                 <th>瀏覽數</th>
                 <th>狀態</th>
                 <th>精選</th>
@@ -336,7 +318,6 @@ export default async function AdminPropertiesPage({ searchParams }: Props) {
                     <td>{property.developer_names || "-"}</td>
                     <td className="admin-property-area">{[property.city, property.district].filter(Boolean).join(" ") || "未填"}</td>
                     <td>{formatPropertyPrice(property)}</td>
-                    <td><HealthScoreCell property={property} /></td>
                     <td className="admin-property-views">
                       {viewStatsAvailable ? (
                         <Link href="/admin/analyze?range=90d" title="前往成效分析查看完整流量與互動">
@@ -376,7 +357,7 @@ export default async function AdminPropertiesPage({ searchParams }: Props) {
               })}
               {properties.length === 0 ? (
                 <tr>
-                  <td colSpan={10}>尚未建立物件。可以先使用「新增物件」建立草稿。</td>
+                  <td colSpan={9}>尚未建立物件。可以先使用「新增物件」建立草稿。</td>
                 </tr>
               ) : null}
             </tbody>
