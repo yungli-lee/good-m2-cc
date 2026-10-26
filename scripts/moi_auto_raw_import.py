@@ -95,6 +95,14 @@ def main():
             print(f"{filename}: {len(rows)}",flush=True)
     if totals["files"]!=totals["total_expected_files"]:
         raise RuntimeError("Import manifest count mismatch")
+    final=imported_files(digest)
+    missing=[name for name in names if name not in final or final[name]["expected_rows"]!=final[name]["imported_rows"]]
+    if missing:
+        raise RuntimeError("RAW archive not fully imported: "+", ".join(missing[:20]))
+    totals["verified_complete_files"]=len(names)
+    totals["verified_rows"]=sum(final[name]["imported_rows"] for name in names)
+    if totals["verified_rows"]!=totals["rows"]:
+        raise RuntimeError(f"RAW row total mismatch: {totals['verified_rows']} != {totals['rows']}")
     print(json.dumps(totals,ensure_ascii=False),flush=True)
 
 if __name__=="__main__":main()
