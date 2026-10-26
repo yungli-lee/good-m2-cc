@@ -15,6 +15,7 @@ export function RealPriceSearch(){
  const [priceMin,setPriceMin]=useState(""),[priceMax,setPriceMax]=useState("");
  const [areaMin,setAreaMin]=useState(""),[areaMax,setAreaMax]=useState(""),[ageMax,setAgeMax]=useState("");
  const [advanced,setAdvanced]=useState(false),[page,setPage]=useState(1);
+ const [previewSample,setPreviewSample]=useState(false);
  const [queryString,setQueryString]=useState(""),[rows,setRows]=useState<Result[]>([]),[total,setTotal]=useState(0);
  const [status,setStatus]=useState<"idle"|"loading"|"ok"|"empty"|"unavailable"|"error">("idle"),[message,setMessage]=useState("");
  useEffect(()=>{
@@ -39,11 +40,11 @@ export function RealPriceSearch(){
   const p=new URLSearchParams(query);p.set("page",String(nextPage));
   try{
     const response=await fetch("/api/public/real-price?"+p.toString(),{cache:"no-store"});
-    const payload=await response.json() as {data?:Result[];total?:number;message?:string;error?:string};
+    const payload=await response.json() as {data?:Result[];total?:number;message?:string;error?:string;preview_sample?:boolean};
     if(response.status===503 && payload.error==="not_ready"){setRows([]);setTotal(0);setStatus("unavailable");return;}
     if(!response.ok)throw new Error(payload.message||"查詢暫時無法使用");
     const list=Array.isArray(payload.data)?payload.data:[];
-    setRows(list);setTotal(payload.total??0);setStatus(list.length?"ok":"empty");
+    setRows(list);setTotal(payload.total??0);setPreviewSample(payload.preview_sample===true);setStatus(list.length?"ok":"empty");
   }catch(e){setRows([]);setTotal(0);setMessage(e instanceof Error?e.message:"查詢服務暫時無法使用");setStatus("error");}
  }
  function submit(e:FormEvent<HTMLFormElement>){
@@ -96,8 +97,8 @@ export function RealPriceSearch(){
    {status==="loading"&&<p>查詢中…</p>}
    {status==="unavailable"&&<div role="status" style={{padding:18,background:"#eff6ff",border:"1px solid #bfdbfe",borderRadius:10}}><strong>查詢介面已開放預覽，成交資料尚未開放</strong><p style={{margin:"8px 0 0",color:"#475569"}}>目前可以操作篩選條件並檢查版面。資料完成驗證與發布後，才會顯示真實成交紀錄。</p></div>}
    {status==="error"&&<p role="alert" style={{padding:15,border:"1px solid #fecaca",borderRadius:8}}>{message}</p>}
-   {status==="empty"&&<p>在目前已公布的資料範圍內，沒有符合條件的紀錄。</p>}
-   {status==="ok"&&<><p>符合條件：{total.toLocaleString("zh-TW")} 筆</p><div style={{overflowX:"auto"}}><table style={{width:"100%",borderCollapse:"collapse",minWidth:670}}><thead><tr>{["交易日期","縣市／行政區","標的","道路／地段","總價（萬元）","土地／建物坪數"].map(h=><th key={h} style={{textAlign:"left",padding:10,borderBottom:"1px solid #cbd5e1"}}>{h}</th>)}</tr></thead><tbody>{rows.map(r=><tr key={r.id}><td style={{padding:10}}>{r.transaction_date}</td><td>{r.county} {r.district}</td><td>{({house_land:"房地",land:"土地",building:"建物",parking:"車位"} as Record<string,string>)[r.target_category]||r.target_category}</td><td>{[r.road_name,r.land_section].filter(Boolean).join("／")||"未提供"}</td><td>{r.total_price_ntd==null?"—":(r.total_price_ntd/10000).toLocaleString("zh-TW")}</td><td>{[r.land_area_sqm,r.building_area_sqm].map(a=>a==null?"—":(a/3.305785).toFixed(2)).join("／")}</td></tr>)}</tbody></table></div><div style={{display:"flex",gap:12,alignItems:"center",marginTop:18}}><button disabled={page<=1} onClick={()=>changePage(page-1)}>上一頁</button><span>第 {page} 頁</span><button disabled={page*20>=total} onClick={()=>changePage(page+1)}>下一頁</button></div></>}
+   {status==="empty"&&<p>在本次可查詢的資料範圍內，沒有符合條件的紀錄。</p>}
+   {status==="ok"&&<>{previewSample&&<p role="status" style={{padding:12,background:"#fff7ed",border:"1px solid #fdba74",borderRadius:8}}>Preview 驗收資料：目前僅顯示兩筆指定的 staging 官方交易紀錄，尚未完成正式批次驗證，不代表完整市場行情。</p>}<p>符合條件：{total.toLocaleString("zh-TW")} 筆</p><div style={{overflowX:"auto"}}><table style={{width:"100%",borderCollapse:"collapse",minWidth:670}}><thead><tr>{["交易日期","縣市／行政區","標的","道路／地段","總價（萬元）","土地／建物坪數"].map(h=><th key={h} style={{textAlign:"left",padding:10,borderBottom:"1px solid #cbd5e1"}}>{h}</th>)}</tr></thead><tbody>{rows.map(r=><tr key={r.id}><td style={{padding:10}}>{r.transaction_date}</td><td>{r.county} {r.district}</td><td>{({house_land:"房地",land:"土地",building:"建物",parking:"車位"} as Record<string,string>)[r.target_category]||r.target_category}</td><td>{[r.road_name,r.land_section].filter(Boolean).join("／")||"未提供"}</td><td>{r.total_price_ntd==null?"—":(r.total_price_ntd/10000).toLocaleString("zh-TW")}</td><td>{[r.land_area_sqm,r.building_area_sqm].map(a=>a==null?"—":(a/3.305785).toFixed(2)).join("／")}</td></tr>)}</tbody></table></div><div style={{display:"flex",gap:12,alignItems:"center",marginTop:18}}><button disabled={page<=1} onClick={()=>changePage(page-1)}>上一頁</button><span>第 {page} 頁</span><button disabled={page*20>=total} onClick={()=>changePage(page+1)}>下一頁</button></div></>}
   </section>
  </main>;
 }
