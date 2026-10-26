@@ -8,7 +8,7 @@ const targetOptions=[{id:"house_land",name:"房地"},{id:"land",name:"土地"},{
 const inputStyle:CSSProperties={width:"100%",minHeight:42,border:"1px solid #cbd5e1",borderRadius:8,padding:"8px 10px",background:"white",color:"#17243b"};
 const gridStyle:CSSProperties={display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(170px,1fr))",gap:12};
 export function RealPriceSearch(){
- const [county,setCounty]=useState("彰化縣"),[district,setDistrict]=useState("");
+ const [county,setCounty]=useState(""),[district,setDistrict]=useState("");
  const [dataset,setDataset]=useState("sale"),[targets,setTargets]=useState<string[]>(["house_land","land"]);
  const [road,setRoad]=useState(""),[section,setSection]=useState(""),[period,setPeriod]=useState("3");
  const [priceMin,setPriceMin]=useState(""),[priceMax,setPriceMax]=useState("");
@@ -29,8 +29,8 @@ export function RealPriceSearch(){
   }catch(e){setRows([]);setTotal(0);setMessage(e instanceof Error?e.message:"查詢服務暫時無法使用");setStatus("error");}
  }
  function submit(e:FormEvent<HTMLFormElement>){
-   e.preventDefault(); const p=new URLSearchParams({county,dataset});
-   if(district)p.set("district",district);
+   e.preventDefault(); const p=new URLSearchParams({dataset});
+   if(county)p.set("county",county);\n   if(district)p.set("district",district);
    targets.forEach(x=>p.append("target",x));
    if(road.trim())p.set("road",road.trim());if(section.trim())p.set("section",section.trim());
    if(period!=="all"){const date=new Date();date.setFullYear(date.getFullYear()-Number(period));p.set("from",date.toISOString().slice(0,10));}
@@ -45,12 +45,12 @@ export function RealPriceSearch(){
  const f=(label:string,element:ReactNode)=><label style={{display:"grid",gap:5,fontSize:14,fontWeight:600}}>{label}{element}</label>;
  return <main style={{maxWidth:1120,margin:"0 auto",padding:"32px 16px 80px",color:"#1e293b"}}>
   <h1 style={{fontSize:"clamp(25px,4vw,36px)",fontWeight:750}}>全國實價登錄查詢</h1>
-  <p style={{color:"#64748b",margin:"8px 0 22px"}}>預設彰化縣，可切換全國縣市｜買賣・預售屋・租賃</p>
+  <p style={{color:"#64748b",margin:"8px 0 22px"}}>全國各縣市皆可查詢｜可依地區篩選｜買賣・預售屋・租賃</p>
   <form onSubmit={submit} autoComplete="off" style={{padding:20,background:"#f8fafc",border:"1px solid #e2e8f0",borderRadius:12,display:"grid",gap:17}}>
    <div style={gridStyle}>
     {f("資料類型",<select style={inputStyle} value={dataset} onChange={e=>setDataset(e.target.value)}><option value="sale">不動產買賣</option><option value="presale">預售屋</option><option value="rental">租賃</option></select>)}
-    {f("縣市",<select style={inputStyle} value={county} onChange={e=>{setCounty(e.target.value);setDistrict("");}}>{counties.map(c=><option key={c}>{c}</option>)}</select>)}
-    {f("鄉鎮市區",<select key={county} style={inputStyle} value={district} onChange={e=>setDistrict(e.target.value)}><option value="">全部鄉鎮市區</option>{(county==="彰化縣"?changhua:[]).map(d=><option key={d}>{d}</option>)}</select>)}
+    {f("縣市",<select style={inputStyle} value={county} onChange={e=>{setCounty(e.target.value);setDistrict("");}}><option value="">全國（全部縣市）</option>{counties.map(c=><option key={c} value={c}>{c}</option>)}</select>)}
+    {f("鄉鎮市區",county==="彰化縣"?<select key={county} style={inputStyle} value={district} onChange={e=>setDistrict(e.target.value)}><option value="">全部鄉鎮市區</option>{changhua.map(d=><option key={d}>{d}</option>)}</select>:<input style={inputStyle} value={district} onChange={e=>setDistrict(e.target.value)} maxLength={80} placeholder={county?"全部行政區（可輸入區名）":"全國全部行政區（可輸入名稱）"}/>)}
     {f("交易期間",<select style={inputStyle} value={period} onChange={e=>setPeriod(e.target.value)}>{["1","2","3","5","10","all"].map(v=><option value={v} key={v}>{v==="all"?"全部已發布資料":`近 ${v} 年`}</option>)}</select>)}
    </div>
    <fieldset style={{border:0,padding:0}}>
