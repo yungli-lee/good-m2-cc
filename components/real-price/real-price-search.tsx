@@ -1,14 +1,15 @@
 "use client";
-import {useState, type FormEvent, type CSSProperties, type ReactNode} from "react";
+import {useEffect, useState, type FormEvent, type CSSProperties, type ReactNode} from "react";
 
 const counties=["彰化縣","臺北市","新北市","桃園市","臺中市","臺南市","高雄市","基隆市","新竹市","嘉義市","新竹縣","苗栗縣","南投縣","雲林縣","嘉義縣","屏東縣","宜蘭縣","花蓮縣","臺東縣","澎湖縣","金門縣","連江縣"];
-const changhua=["彰化市","鹿港鎮","和美鎮","北斗鎮","員林市","溪湖鎮","田中鎮","二林鎮","線西鄉","伸港鄉","福興鄉","秀水鄉","花壇鄉","芬園鄉","大村鄉","埔鹽鄉","埔心鄉","永靖鄉","社頭鄉","二水鄉","田尾鄉","埤頭鄉","芳苑鄉","大城鄉","竹塘鄉","溪州鄉"];
 type Result={id:number;county:string;district:string;transaction_date:string;target_category:string;total_price_ntd:number|null;land_area_sqm:number|null;building_area_sqm:number|null;address_display?:string|null};
 const targetOptions=[{id:"house_land",name:"房地"},{id:"land",name:"土地"},{id:"building",name:"建物"},{id:"parking",name:"車位"}];
 const inputStyle:CSSProperties={width:"100%",minHeight:42,border:"1px solid #cbd5e1",borderRadius:8,padding:"8px 10px",background:"white",color:"#17243b"};
 const gridStyle:CSSProperties={display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(170px,1fr))",gap:12};
 export function RealPriceSearch(){
  const [county,setCounty]=useState(""),[district,setDistrict]=useState("");
+ const [districtOptions,setDistrictOptions]=useState<string[]>([]);
+ const [districtLoading,setDistrictLoading]=useState(false),[districtFallback,setDistrictFallback]=useState(false);
  const [dataset,setDataset]=useState("sale"),[targets,setTargets]=useState<string[]>(["house_land","land"]);
  const [road,setRoad]=useState(""),[section,setSection]=useState(""),[period,setPeriod]=useState("3");
  const [priceMin,setPriceMin]=useState(""),[priceMax,setPriceMax]=useState("");
@@ -16,6 +17,23 @@ export function RealPriceSearch(){
  const [advanced,setAdvanced]=useState(false),[page,setPage]=useState(1);
  const [queryString,setQueryString]=useState(""),[rows,setRows]=useState<Result[]>([]),[total,setTotal]=useState(0);
  const [status,setStatus]=useState<"idle"|"loading"|"ok"|"empty"|"unavailable"|"error">("idle"),[message,setMessage]=useState("");
+ useEffect(()=>{
+   if(!county){setDistrictOptions([]);setDistrictFallback(false);setDistrictLoading(false);return;}
+   const controller=new AbortController();
+   setDistrictOptions([]);setDistrictLoading(true);setDistrictFallback(false);
+   fetch("/api/public/real-price-districts?"+new URLSearchParams({county}),{signal:controller.signal})
+     .then(async response=>{
+       if(!response.ok)throw new Error("lookup_failed");
+       return response.json() as Promise<{districts?:string[]}>;
+     }).then(payload=>{
+       if(controller.signal.aborted)return;
+       if(!Array.isArray(payload.districts)||!payload.districts.length)throw new Error("districts_missing");
+       setDistrictOptions(payload.districts);
+     }).catch(()=>{
+       if(!controller.signal.aborted)setDistrictFallback(true);
+     }).finally(()=>{if(!controller.signal.aborted)setDistrictLoading(false);});
+   return ()=>controller.abort();
+ },[county]);
  async function load(query:string,nextPage:number){
   setStatus("loading");setMessage("");
   const p=new URLSearchParams(query);p.set("page",String(nextPage));
@@ -51,7 +69,7 @@ export function RealPriceSearch(){
    <div style={gridStyle}>
     {f("資料類型",<select style={inputStyle} value={dataset} onChange={e=>setDataset(e.target.value)}><option value="sale">不動產買賣</option><option value="presale">預售屋</option><option value="rental">租賃</option></select>)}
     {f("縣市",<select style={inputStyle} value={county} onChange={e=>{setCounty(e.target.value);setDistrict("");}}><option value="">全國（全部縣市）</option>{counties.map(c=><option key={c} value={c}>{c}</option>)}</select>)}
-    {f("鄉鎮市區",county==="彰化縣"?<select key={county} style={inputStyle} value={district} onChange={e=>setDistrict(e.target.value)}><option value="">全部鄉鎮市區</option>{changhua.map(d=><option key={d}>{d}</option>)}</select>:<input style={inputStyle} value={district} onChange={e=>setDistrict(e.target.value)} maxLength={80} placeholder={county?"全部行政區（可輸入區名）":"全國全部行政區（可輸入名稱）"}/>)}
+    {f("鄉鎮市區",!county?<input style={inputStyle} value={district} onChange={e=>setDistrict(e.target.value)} placeholder="全國全部行政區（可輸入名稱）" maxLength={80}/>:districtLoading?<select style={inputStyle} disabled><option>讀取行政區中…</option></select>:districtFallback?<input style={inputStyle} value={district} onChange={e=>setDistrict(e.target.value)} placeholder="行政區服務暫時無法使用，請輸入區名" maxLength={80}/>:<select style={inputStyle} value={district} onChange={e=>setDistrict(e.target.value)}><option value="">全部鄉鎮市區</option>{districtOptions.map(d=><option key={d} value={d}>{d}</option>)}</select>)}
     {f("交易期間",<select style={inputStyle} value={period} onChange={e=>setPeriod(e.target.value)}>{["1","2","3","5","10","all"].map(v=><option value={v} key={v}>{v==="all"?"全部已發布資料":`近 ${v} 年`}</option>)}</select>)}
    </div>
    <fieldset style={{border:0,padding:0}}>
