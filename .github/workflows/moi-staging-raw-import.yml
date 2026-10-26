@@ -26,6 +26,8 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+      - name: Diagnose official download without secrets
+        run: python scripts/moi_download_diagnostic.py
       - name: Check staging-only credentials
         shell: bash
         run: |
