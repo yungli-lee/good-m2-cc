@@ -43,7 +43,8 @@ export async function GET(request: Request) {
       return NextResponse.json({error:"server_config_missing",message:"Preview 查詢服務尚未設定完成"},{status:503,headers:{"Cache-Control":"no-store"}});
     }
     const db=createSupabaseAdminClient();
-    let q=db.from(previewStaging?"moi_real_price_transactions":"moi_verified_transactions").select("id,county,district,dataset_type,transaction_date,target_category,total_price_ntd,unit_price_ntd_per_sqm,land_area_sqm,building_area_sqm,building_age_years,road_name,land_section,building_pattern",{count:"exact"})
+    const columns="id,county,district,dataset_type,transaction_date,target_category,total_price_ntd,unit_price_ntd_per_sqm,land_area_sqm,building_area_sqm,building_age_years,road_name,land_section,building_pattern"+(previewStaging?",address_display":"");
+    let q=db.from(previewStaging?"moi_real_price_transactions":"moi_verified_transactions").select(columns,{count:"exact"})
       .eq("dataset_type",dataset);
     if(previewStaging)q=q.in("id",[1,2]);
     if(county)q=q.eq("county",county);
@@ -62,7 +63,27 @@ export async function GET(request: Request) {
     if(section)q=q.ilike("land_section",`%${section}%`);
     const {data,error,count}=await q.order("transaction_date",{ascending:false}).order("id",{ascending:false}).range((page-1)*limit,page*limit-1);
     if(error) {console.error("real_price_query_error",error.code);return NextResponse.json({error:"query_unavailable"},{status:503});}
-    return NextResponse.json({data:data||[],total:count??0,page,limit,preview_sample:previewStaging},{headers:{"Cache-Control":previewStaging?"no-store":"public, s-maxage=60"}});
+    let output=(data||[]) as Array<Record<string,unknown>>;
+    if(previewStaging && output.length){
+      const ids=output.map(row=>Number(row.id));
+      const detail=await db.from("moi_transaction_details").select("transaction_id,section_name,parcel_number").in("transaction_id",ids).eq("detail_type","land").order("id");
+      if(detail.error){console.error("real_price_location_detail_error",detail.error.code);return NextResponse.json({error:"query_unavailable"},{status:503});}
+      const byTransaction=new Map<number,string[]>();
+      for(const row of detail.data||[]){
+        const raw=row.parcel_number||"";
+        const match=/^(\\d{4})(\\d{4})$/.exec(raw);
+        const number=match?(Number(match[1])+(Number(match[2])?("-"+Number(match[2])):"")):raw;
+        const location=[row.section_name,number?number+"地號":""].filter(Boolean).join(" ");
+        if(location){const current=byTransaction.get(row.transaction_id)||[];if(!current.includes(location))current.push(location);byTransaction.set(row.transaction_id,current);}
+      }
+      output=output.map(row=>{
+        const sectionParcels=byTransaction.get(Number(row.id))||[];
+        const addr=typeof row.address_display==="string"?row.address_display.trim():"";
+        const location_display=[...sectionParcels, ...(addr && !sectionParcels.some(x=>addr.replace(/\\s/g,"")===x.replace(/\\s/g,""))?[addr]:[])].join("／");
+        return {...row,location_display:location_display||null};
+      });
+    }
+    return NextResponse.json({data:output,total:count??0,page,limit,preview_sample:previewStaging},{headers:{"Cache-Control":previewStaging?"no-store":"public, s-maxage=60"}});
   } catch(e) {
     console.error("real_price_request_failure",e instanceof Error?e.message:"unknown");
     if(e instanceof Error&&e.message==="mixed_area")return NextResponse.json({error:"mixed_area",message:"土地與房地混合篩選時，請先取消坪數條件"},{status:400});
