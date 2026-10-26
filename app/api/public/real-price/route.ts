@@ -71,15 +71,15 @@ export async function GET(request: Request) {
       const byTransaction=new Map<number,string[]>();
       for(const row of detail.data||[]){
         const raw=row.parcel_number||"";
-        const match=/^(\\d{4})(\\d{4})$/.exec(raw);
-        const number=match?(Number(match[1])+(Number(match[2])?("-"+Number(match[2])):"")):raw;
+        const match=/^(\d{4})(\d{4})$/.exec(raw);
+        const number=match?(String(Number(match[1]))+(Number(match[2])?("-"+Number(match[2])):"")):raw;
         const location=[row.section_name,number?number+"地號":""].filter(Boolean).join(" ");
         if(location){const current=byTransaction.get(row.transaction_id)||[];if(!current.includes(location))current.push(location);byTransaction.set(row.transaction_id,current);}
       }
       output=output.map(row=>{
         const sectionParcels=byTransaction.get(Number(row.id))||[];
         const addr=typeof row.address_display==="string"?row.address_display.trim():"";
-        const location_display=[...sectionParcels, ...(addr && !sectionParcels.some(x=>addr.replace(/\\s/g,"")===x.replace(/\\s/g,""))?[addr]:[])].join("／");
+        const location_display=[...sectionParcels, ...(addr && !sectionParcels.some(x=>addr.replace(/\s/g,"")===x.replace(/\s/g,""))?[addr]:[])].join("／");
         return {...row,location_display:location_display||null};
       });
     }
