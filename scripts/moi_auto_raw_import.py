@@ -49,8 +49,18 @@ def kind_for(name):
     return "other"
 
 def main():
-    archive=open(os.environ["MOI_LOCAL_ZIP"],"rb").read() if os.getenv("MOI_LOCAL_ZIP") else request(SOURCE)
+    if not os.getenv("MOI_LOCAL_ZIP"):
+        parsed=urllib.parse.urlsplit(SOURCE)
+        if parsed.scheme!="https" or parsed.hostname!="plvr.land.moi.gov.tw":
+            raise RuntimeError("Refusing non-official download source")
+        print(json.dumps({"stage":"download_start","host":parsed.hostname,"path":parsed.path,"query":parsed.query},ensure_ascii=False),flush=True)
+    try:
+        archive=open(os.environ["MOI_LOCAL_ZIP"],"rb").read() if os.getenv("MOI_LOCAL_ZIP") else request(SOURCE)
+    except Exception as exc:
+        print(json.dumps({"stage":"download_failed","error_type":type(exc).__name__,"error":str(exc)[:300]},ensure_ascii=False),flush=True)
+        raise
     digest=hashlib.sha256(archive).hexdigest()
+    print(json.dumps({"stage":"download_complete","bytes":len(archive),"sha256":digest},ensure_ascii=False),flush=True)
     if not zipfile.is_zipfile(io.BytesIO(archive)):raise ValueError("MOI response is not ZIP")
     totals={"files":0,"rows":0,"sha256":digest,"at":datetime.now(timezone.utc).isoformat()}
     existing={} if CHECK_ONLY else imported_files(digest)
