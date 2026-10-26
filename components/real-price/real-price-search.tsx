@@ -9,7 +9,7 @@ const inputStyle:CSSProperties={width:"100%",minHeight:42,border:"1px solid #cbd
 const gridStyle:CSSProperties={display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(170px,1fr))",gap:12};
 const displayLocation=(value?:string|null)=>value?value.normalize("NFKC").replace(/(\\d)\\s+(?=\\d)/g,"$1").replace(/(\\d)\\s+(?=[巷弄號樓])/g,"$1"):"未提供";
 const formatParcel=(value?:string|null)=>{if(!value)return "";const m=/^(\\d{4})(\\d{4})$/.exec(value);return m?String(Number(m[1]))+(Number(m[2])?"-"+Number(m[2]):""):value;};
-const specialLabel=(r:Result)=>r.special_status==="special"?"特殊交易":r.special_status==="note_present"?"有官方備註":r.special_status==="not_assessed"?"備註待核對":"";
+const specialLabel=(r:Result)=>r.special_status==="special"?"特殊交易":r.special_status==="note_present"?"":"";
 const categoryLabel=(v:string)=>({house_land:"房地",land:"土地",building:"建物",parking:"車位"} as Record<string,string>)[v]||v;
 export function RealPriceSearch(){
  const [county,setCounty]=useState(""),[district,setDistrict]=useState("");
@@ -75,7 +75,7 @@ export function RealPriceSearch(){
    <p style={{margin:"9px 0"}}><b>總價：</b>{r.total_price_ntd==null?"未提供":(r.total_price_ntd/10000).toLocaleString("zh-TW")+" 萬元"}</p>
    <p style={{margin:"9px 0"}}><b>面積：</b>土地 {r.land_area_sqm==null?"未提供":(r.land_area_sqm/3.305785).toFixed(2)+" 坪"}／建物 {r.building_area_sqm==null?"未提供":(r.building_area_sqm/3.305785).toFixed(2)+" 坪"}</p>
    <p style={{margin:"9px 0"}}><b>建物：</b>{r.building_pattern||"類型未提供"}｜屋齡 {r.building_age_years==null?"未提供":r.building_age_years+" 年"}｜樓層 {r.floor_display||"未提供"}</p>
-   <p style={{margin:"9px 0"}}><b>特殊交易：</b>{r.special_status==="special"?"是":r.special_status==="note_present"?"有官方備註，需核對": "待核對"}</p>
+   {r.special_status==="special"&&<p style={{margin:"9px 0"}}><b>特殊交易：</b>是</p>}
    {r.official_note&&<p style={{margin:"9px 0",color:r.special_status==="special"?"#92400e":"#475569"}}>原因：{r.official_note}</p>}
    {r.details&&r.details.length>1&&<p style={{margin:"9px 0",fontSize:13,color:"#64748b"}}>本次含 {r.details.filter(d=>d.detail_type==="land").length} 筆土地、{r.details.filter(d=>d.detail_type==="building").length} 筆建物、{r.details.filter(d=>d.detail_type==="parking").length} 筆車位；總價為整筆交易，不代表個別標的價格。</p>}
    {r.history_lookup_key&&<div style={{marginTop:12,borderTop:"1px solid #cbd5e1",paddingTop:10}}>
