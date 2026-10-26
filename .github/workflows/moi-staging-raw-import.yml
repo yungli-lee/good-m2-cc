@@ -1,0 +1,39 @@
+name: MOI real price staging import
+
+on:
+  workflow_dispatch:
+  schedule:
+    # 01:20 UTC = 09:20 Asia/Taipei. Daily retry handles delayed official releases.
+    - cron: "20 1 * * *"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: moi-staging-raw-ingest
+  cancel-in-progress: false
+
+jobs:
+  raw-ingest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      STAGING_SUPABASE_URL: ${{ secrets.MOI_STAGING_SUPABASE_URL }}
+      STAGING_SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.MOI_STAGING_SUPABASE_SERVICE_ROLE_KEY }}
+      MOI_BATCH_ROWS: "400"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Check staging-only credentials
+        shell: bash
+        run: |
+          test -n "$STAGING_SUPABASE_URL" || { echo "Missing MOI_STAGING_SUPABASE_URL"; exit 1; }
+          test -n "$STAGING_SUPABASE_SERVICE_ROLE_KEY" || { echo "Missing MOI_STAGING_SUPABASE_SERVICE_ROLE_KEY"; exit 1; }
+          case "$STAGING_SUPABASE_URL" in
+            https://niorteztdbuyusemsgwa.supabase.co*) ;;
+            *) echo "Refusing non-staging destination"; exit 1;;
+          esac
+      - name: Download official ZIP and upsert all RAW columns
+        run: python scripts/moi_auto_raw_import.py
