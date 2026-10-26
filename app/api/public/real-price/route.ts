@@ -10,7 +10,7 @@ export async function GET(request: Request) {
   if(process.env.REAL_PRICE_PUBLIC_SEARCH_ENABLED!=="true") return NextResponse.json({error:"not_ready",message:"實價登錄資料尚未開放查詢"},{status:503,headers:{"Cache-Control":"no-store"}});
   try {
     const p=new URL(request.url).searchParams;
-    const county=textFilter(p.get("county"))||"彰化縣";
+    const county=textFilter(p.get("county"));
     const district=textFilter(p.get("district")); const road=textFilter(p.get("road")); const section=textFilter(p.get("section"));
     const dataset=p.get("dataset")||"sale";
     if(!["sale","presale","rental"].includes(dataset)) throw new Error("dataset");
@@ -29,7 +29,7 @@ export async function GET(request: Request) {
     if((minArea!==undefined||maxArea!==undefined)&&targets.includes("land")&&targets.some(t=>t!=="land")) throw new Error("mixed_area");
     const db=createSupabaseAdminClient();
     let q=db.from("moi_verified_transactions").select("id,county,district,dataset_type,transaction_date,target_category,total_price_ntd,land_area_sqm,building_area_sqm,building_age_years,road_name,land_section,building_pattern",{count:"exact"})
-      .eq("county",county).eq("dataset_type",dataset);
+      .eq("dataset_type",dataset);\n    if(county)q=q.eq("county",county);
     if(district)q=q.eq("district",district);
     if(targets.length)q=q.in("target_category",targets);
     if(from)q=q.gte("transaction_date",from);
