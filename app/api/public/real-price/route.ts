@@ -43,7 +43,7 @@ export async function GET(request: Request) {
       return NextResponse.json({error:"server_config_missing",message:"Preview 查詢服務尚未設定完成"},{status:503,headers:{"Cache-Control":"no-store"}});
     }
     const db=createSupabaseAdminClient();
-    const columns="id,county,district,dataset_type,transaction_date,target_category,total_price_ntd,unit_price_ntd_per_sqm,land_area_sqm,building_area_sqm,building_age_years,road_name,land_section,building_pattern"+(previewStaging?",address_display,raw_record":"");
+    const columns="id,county,district,dataset_type,transaction_date,target_category,total_price_ntd,unit_price_ntd_per_sqm,land_area_sqm,building_area_sqm,building_age_years,road_name,land_section,building_pattern"+(previewStaging?",address_display,raw_record,floor_display":"");
     let q=db.from(previewStaging?"moi_real_price_transactions":"moi_verified_transactions").select(columns,{count:"exact"})
       .eq("dataset_type",dataset);
     if(previewStaging)q=q.in("id",[1,2]);
