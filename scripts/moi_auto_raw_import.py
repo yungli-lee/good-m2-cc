@@ -68,7 +68,7 @@ def main():
     totals["total_expected_files"]=0
     with zipfile.ZipFile(io.BytesIO(archive)) as z:
         if z.testzip() is not None:raise ValueError("ZIP CRC failed")
-        names=[n for n in z.namelist() if n.lower().endswith(".csv") and not n.endswith("/")]
+        names=[n for n in z.namelist() if n.lower().endswith(".csv") and not n.endswith("/") and kind_for(n)!="other"]
         if not names:raise ValueError("ZIP contains no CSV")
         # A 200 OK or valid ZIP with only manifest.csv is not a real transaction archive.
         main_files=[n for n in names if kind_for(n)=="master"]
@@ -78,13 +78,14 @@ def main():
         totals["total_expected_files"]=len(names)
         for filename in sorted(names):
             csvdata=list(csv.reader(io.StringIO(encoding_csv(z.read(filename)))))
-            if len(csvdata)<2:continue
+            if not csvdata:
+                raise ValueError(f"Transaction CSV has no header: {filename}")
             headers=csvdata[0]
             # Official files: header row followed by English descriptions, then data rows.
-            descriptions=csvdata[1]
+            descriptions=csvdata[1] if len(csvdata)>1 else []
             if len(set(headers))!=len(headers) or any(len(x)!=len(headers) for x in csvdata):
                 raise ValueError(f"Layout mismatch: {filename}")
-            rows=csvdata[2:]
+            rows=csvdata[2:] if len(csvdata)>1 else []
             if CHECK_ONLY:
                 totals["files"]+=1
                 totals["rows"]+=len(rows)
