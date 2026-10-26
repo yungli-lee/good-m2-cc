@@ -3,7 +3,7 @@ import {useEffect, useState, type FormEvent, type CSSProperties, type ReactNode}
 
 const counties=["彰化縣","臺北市","新北市","桃園市","臺中市","臺南市","高雄市","基隆市","新竹市","嘉義市","新竹縣","苗栗縣","南投縣","雲林縣","嘉義縣","屏東縣","宜蘭縣","花蓮縣","臺東縣","澎湖縣","金門縣","連江縣"];
 type Detail={detail_type:string;section_name?:string|null;parcel_number?:string|null;building_number?:string|null;detail_area_sqm?:number|null};
-type Result={history_lookup_key?:string|null;official_note?:string|null;special_status?:"special"|"note_present"|"not_assessed";details?:Detail[];id:number;county:string;district:string;transaction_date:string;target_category:string;total_price_ntd:number|null;land_area_sqm:number|null;building_area_sqm:number|null;road_name?:string|null;land_section?:string|null;location_display?:string|null;unit_price_ntd_per_sqm?:number|null};
+type Result={history_lookup_key?:string|null;official_note?:string|null;special_status?:"special"|"note_present"|"not_assessed";details?:Detail[];id:number;county:string;district:string;transaction_date:string;target_category:string;total_price_ntd:number|null;land_area_sqm:number|null;building_area_sqm:number|null;road_name?:string|null;land_section?:string|null;location_display?:string|null;unit_price_ntd_per_sqm?:number|null;building_age_years?:number|null;building_pattern?:string|null;floor_display?:string|null};
 const targetOptions=[{id:"house_land",name:"房地"},{id:"land",name:"土地"},{id:"building",name:"建物"},{id:"parking",name:"車位"}];
 const inputStyle:CSSProperties={width:"100%",minHeight:42,border:"1px solid #cbd5e1",borderRadius:8,padding:"8px 10px",background:"white",color:"#17243b"};
 const gridStyle:CSSProperties={display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(170px,1fr))",gap:12};
@@ -70,14 +70,19 @@ export function RealPriceSearch(){
  }
  function changePage(next:number){setPage(next);void load(queryString,next);}
  const details=(r:Result)=><div style={{padding:14,background:"#f1f5f9",borderRadius:8,overflowWrap:"anywhere"}}>
-    <strong>交易組合明細</strong>{specialLabel(r)&&<p style={{margin:"8px 0",fontWeight:700,color:r.special_status==="special"?"#b45309":"#475569"}}>{specialLabel(r)}</p>}{r.official_note&&<p style={{margin:"8px 0"}}>官方備註：{r.official_note}</p>}{r.special_status==="not_assessed"&&<p style={{margin:"8px 0",fontSize:13,color:"#64748b"}}>目前缺少完整備註資料，不代表一般交易。</p>}
-    <p style={{margin:"8px 0"}}>整筆成交總價：{r.total_price_ntd==null?"—":(r.total_price_ntd/10000).toLocaleString("zh-TW")+" 萬元"}（不可直接當作個別地號成交價）</p>
-    {r.history_lookup_key&&<div style={{marginTop:12,borderTop:"1px solid #cbd5e1",paddingTop:10}}>
-      <button type="button" onClick={()=>setHistoryId(old=>old===r.id?null:r.id)} style={{color:"#1d4ed8",fontWeight:700}}>{historyId===r.id?"收合歷史交易":"查看同門牌歷史交易"}</button>
-      {historyId===r.id&&<p style={{marginTop:8,fontSize:13,color:"#475569"}}>目前驗收資料庫尚無可核實的同門牌歷史成交資料；這不代表該不動產沒有歷史交易。正式版將依正規化門牌與建物識別資料跨期比對，並區分不同樓層、戶別及交易範圍。</p>}
-    </div>}
-    {r.details?.length?<ul style={{paddingLeft:22,margin:"8px 0"}}>{r.details.map((d,i)=><li key={i} style={{marginBottom:8}}>{categoryLabel(d.detail_type)}：{[d.section_name,d.parcel_number?formatParcel(d.parcel_number)+" 地號":"",d.building_number?d.building_number+" 建號":""].filter(Boolean).join(" ")}{d.detail_area_sqm!=null?"｜"+(Number(d.detail_area_sqm)/3.305785).toFixed(2)+" 坪":""}</li>)}</ul>:<p>此筆交易的組合明細尚未提供。</p>}
-   </div>;
+   <strong>成交重點</strong>
+   <p style={{margin:"9px 0"}}><b>位置：</b>{displayLocation(r.location_display||[r.road_name,r.land_section].filter(Boolean).join("／"))}</p>
+   <p style={{margin:"9px 0"}}><b>總價：</b>{r.total_price_ntd==null?"未提供":(r.total_price_ntd/10000).toLocaleString("zh-TW")+" 萬元"}</p>
+   <p style={{margin:"9px 0"}}><b>面積：</b>土地 {r.land_area_sqm==null?"未提供":(r.land_area_sqm/3.305785).toFixed(2)+" 坪"}／建物 {r.building_area_sqm==null?"未提供":(r.building_area_sqm/3.305785).toFixed(2)+" 坪"}</p>
+   <p style={{margin:"9px 0"}}><b>建物：</b>{r.building_pattern||"類型未提供"}｜屋齡 {r.building_age_years==null?"未提供":r.building_age_years+" 年"}｜樓層 {r.floor_display||"未提供"}</p>
+   <p style={{margin:"9px 0"}}><b>特殊交易：</b>{r.special_status==="special"?"是":r.special_status==="note_present"?"有官方備註，需核對": "待核對"}</p>
+   {r.official_note&&<p style={{margin:"9px 0",color:r.special_status==="special"?"#92400e":"#475569"}}>原因：{r.official_note}</p>}
+   {r.details&&r.details.length>1&&<p style={{margin:"9px 0",fontSize:13,color:"#64748b"}}>本次含 {r.details.filter(d=>d.detail_type==="land").length} 筆土地、{r.details.filter(d=>d.detail_type==="building").length} 筆建物、{r.details.filter(d=>d.detail_type==="parking").length} 筆車位；總價為整筆交易，不代表個別標的價格。</p>}
+   {r.history_lookup_key&&<div style={{marginTop:12,borderTop:"1px solid #cbd5e1",paddingTop:10}}>
+    <button type="button" onClick={()=>setHistoryId(old=>old===r.id?null:r.id)} style={{color:"#1d4ed8",fontWeight:700}}>{historyId===r.id?"收合歷史交易":"查看歷史交易"}</button>
+    {historyId===r.id&&<p style={{marginTop:8,fontSize:13,color:"#475569"}}>目前驗收資料尚未涵蓋此物件完整歷史成交；不能據此判斷沒有歷史交易。</p>}
+   </div>}
+  </div>;
  const f=(label:string,element:ReactNode)=><label style={{display:"grid",gap:5,fontSize:14,fontWeight:600}}>{label}{element}</label>;
  return <main style={{maxWidth:1120,margin:"0 auto",padding:"32px 16px 80px",color:"#1e293b"}}>
   <h1 style={{fontSize:"clamp(25px,4vw,36px)",fontWeight:750}}>全國實價登錄查詢</h1>
