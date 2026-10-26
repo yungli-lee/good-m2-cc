@@ -60,6 +60,11 @@ def main():
         if z.testzip() is not None:raise ValueError("ZIP CRC failed")
         names=[n for n in z.namelist() if n.lower().endswith(".csv") and not n.endswith("/")]
         if not names:raise ValueError("ZIP contains no CSV")
+        # A 200 OK or valid ZIP with only manifest.csv is not a real transaction archive.
+        main_files=[n for n in names if kind_for(n)=="master"]
+        if not main_files:
+            raise ValueError("Official archive has no transaction master CSV (manifest-only or unavailable period)")
+        totals["transaction_master_files"]=len(main_files)
         totals["total_expected_files"]=len(names)
         for filename in sorted(names):
             csvdata=list(csv.reader(io.StringIO(encoding_csv(z.read(filename)))))
