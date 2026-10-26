@@ -43,7 +43,7 @@ def kind_for(name):
     if "_land.csv" in base:return "land"
     if "_build.csv" in base:return "building"
     if "_park.csv" in base:return "parking"
-    if re.search(r"_lvr_land_[abc]\\.csv$",base):return "master"
+    if re.search(r"_lvr_land_[abc]\.csv$",base):return "master"
     return "other"
 
 def main():
