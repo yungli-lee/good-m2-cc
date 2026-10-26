@@ -7,6 +7,9 @@ type Result={details?:Detail[];id:number;county:string;district:string;transacti
 const targetOptions=[{id:"house_land",name:"房地"},{id:"land",name:"土地"},{id:"building",name:"建物"},{id:"parking",name:"車位"}];
 const inputStyle:CSSProperties={width:"100%",minHeight:42,border:"1px solid #cbd5e1",borderRadius:8,padding:"8px 10px",background:"white",color:"#17243b"};
 const gridStyle:CSSProperties={display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(170px,1fr))",gap:12};
+const displayLocation=(value?:string|null)=>value?value.normalize("NFKC").replace(/(\\d)\\s+(?=\\d)/g,"$1").replace(/(\\d)\\s+(?=[巷弄號樓])/g,"$1"):"未提供";
+const formatParcel=(value?:string|null)=>{if(!value)return "";const m=/^(\\d{4})(\\d{4})$/.exec(value);return m?String(Number(m[1]))+(Number(m[2])?"-"+Number(m[2]):""):value;};
+const categoryLabel=(v:string)=>({house_land:"房地",land:"土地",building:"建物",parking:"車位"} as Record<string,string>)[v]||v;
 export function RealPriceSearch(){
  const [county,setCounty]=useState(""),[district,setDistrict]=useState("");
  const [expandedId,setExpandedId]=useState<number|null>(null);
@@ -64,6 +67,11 @@ export function RealPriceSearch(){
    const str=p.toString();setQueryString(str);setPage(1);void load(str,1);
  }
  function changePage(next:number){setPage(next);void load(queryString,next);}
+ const details=(r:Result)=><div style={{padding:14,background:"#f1f5f9",borderRadius:8,overflowWrap:"anywhere"}}>
+    <strong>交易組合明細</strong>
+    <p style={{margin:"8px 0"}}>整筆成交總價：{r.total_price_ntd==null?"—":(r.total_price_ntd/10000).toLocaleString("zh-TW")+" 萬元"}（不可直接當作個別地號成交價）</p>
+    {r.details?.length?<ul style={{paddingLeft:22,margin:"8px 0"}}>{r.details.map((d,i)=><li key={i} style={{marginBottom:8}}>{categoryLabel(d.detail_type)}：{[d.section_name,d.parcel_number?formatParcel(d.parcel_number)+" 地號":"",d.building_number?d.building_number+" 建號":""].filter(Boolean).join(" ")}{d.detail_area_sqm!=null?"｜"+(Number(d.detail_area_sqm)/3.305785).toFixed(2)+" 坪":""}</li>)}</ul>:<p>此筆交易的組合明細尚未提供。</p>}
+   </div>;
  const f=(label:string,element:ReactNode)=><label style={{display:"grid",gap:5,fontSize:14,fontWeight:600}}>{label}{element}</label>;
  return <main style={{maxWidth:1120,margin:"0 auto",padding:"32px 16px 80px",color:"#1e293b"}}>
   <h1 style={{fontSize:"clamp(25px,4vw,36px)",fontWeight:750}}>全國實價登錄查詢</h1>
@@ -100,8 +108,43 @@ export function RealPriceSearch(){
    {status==="unavailable"&&<div role="status" style={{padding:18,background:"#eff6ff",border:"1px solid #bfdbfe",borderRadius:10}}><strong>查詢介面已開放預覽，成交資料尚未開放</strong><p style={{margin:"8px 0 0",color:"#475569"}}>目前可以操作篩選條件並檢查版面。資料完成驗證與發布後，才會顯示真實成交紀錄。</p></div>}
    {status==="error"&&<p role="alert" style={{padding:15,border:"1px solid #fecaca",borderRadius:8}}>{message}</p>}
    {status==="empty"&&<p>在本次可查詢的資料範圍內，沒有符合條件的紀錄。</p>}
-   {status==="ok"&&<>{previewSample&&<p role="status" style={{padding:12,background:"#fff7ed",border:"1px solid #fdba74",borderRadius:8}}>Preview 驗收資料：目前僅顯示兩筆指定的 staging 官方交易紀錄，尚未完成正式批次驗證，不代表完整市場行情。</p>}<p>符合條件：{total.toLocaleString("zh-TW")} 筆</p><div style={{overflowX:"auto"}}><table style={{width:"100%",borderCollapse:"collapse",minWidth:670}}><thead><tr>{["交易日期","縣市／行政區","標的","地段地號／門牌","總價（萬元）","土地／建物坪數","明細"].map(h=><th key={h} style={{textAlign:"left",padding:10,borderBottom:"1px solid #cbd5e1"}}>{h}</th>)}</tr></thead><tbody>{rows.map(r=>[<tr key={r.id}><td style={{padding:10}}>{r.transaction_date}</td><td>{r.county} {r.district}</td><td>{({house_land:"房地",land:"土地",building:"建物",parking:"車位"} as Record<string,string>)[r.target_category]||r.target_category}</td><td>{r.location_display||[r.road_name,r.land_section].filter(Boolean).join("／")||"未提供"}</td><td>{r.total_price_ntd==null?"—":(r.total_price_ntd/10000).toLocaleString("zh-TW")}</td><td>{[r.land_area_sqm,r.building_area_sqm].map(a=>a==null?"—":(a/3.305785).toFixed(2)).join("／")}</td><td><button type="button" onClick={()=>setExpandedId(old=>old===r.id?null:r.id)} aria-expanded={expandedId===r.id} style={{color:"#1d4ed8",fontWeight:600,whiteSpace:"nowrap"}}>{expandedId===r.id?"收合":"查看明細"}</button></td></tr>,
-    expandedId===r.id?<tr key={String(r.id)+"-detail"}><td colSpan={7} style={{padding:"14px 18px",background:"#f1f5f9",whiteSpace:"normal"}}><strong>交易組合明細</strong><div style={{marginTop:8}}>主檔總價：{r.total_price_ntd==null?"—":(r.total_price_ntd/10000).toLocaleString("zh-TW")+" 萬元"}（整筆交易，非個別地號價格）</div>{r.details?.length?<ul style={{paddingLeft:22,marginTop:8}}>{r.details.map((d,i)=><li key={i} style={{marginBottom:6}}>{({land:"土地",building:"建物",parking:"車位"} as Record<string,string>)[d.detail_type]||d.detail_type}：{[d.section_name,d.parcel_number?d.parcel_number+"（原始地號）":"",d.building_number?d.building_number+"（建號）":""].filter(Boolean).join(" ")}{d.detail_area_sqm!=null?"｜面積 "+(Number(d.detail_area_sqm)/3.305785).toFixed(2)+" 坪":""}</li>)}</ul>:<p style={{marginTop:8}}>此筆交易的組合明細尚未提供。</p>}</td></tr>:null])}</tbody></table></div><div style={{display:"flex",gap:12,alignItems:"center",marginTop:18}}><button disabled={page<=1} onClick={()=>changePage(page-1)}>上一頁</button><span>第 {page} 頁</span><button disabled={page*20>=total} onClick={()=>changePage(page+1)}>下一頁</button></div></>}
+   {status==="ok"&&<>{previewSample&&<p role="status" style={{padding:12,background:"#fff7ed",border:"1px solid #fdba74",borderRadius:8}}>Preview 驗收資料：目前僅顯示兩筆指定的 staging 官方交易紀錄，尚未完成正式批次驗證，不代表完整市場行情。</p>}<p>符合條件：{total.toLocaleString("zh-TW")} 筆</p><style>{`
+    .real-price-desktop{display:block}
+    .real-price-mobile{display:none}
+    @media(max-width:720px){
+      .real-price-desktop{display:none}
+      .real-price-mobile{display:grid;gap:12px}
+    }
+   `}</style>
+   <div className="real-price-desktop" style={{overflowX:"auto"}}>
+    <table style={{width:"100%",borderCollapse:"collapse",minWidth:670}}>
+     <thead><tr>{["交易日期","縣市／行政區","標的","地段地號／門牌","總價（萬元）","土地／建物坪數","明細"].map(h=><th key={h} style={{textAlign:"left",padding:10,borderBottom:"1px solid #cbd5e1"}}>{h}</th>)}</tr></thead>
+     <tbody>{rows.flatMap(r=>[
+       <tr key={r.id} style={{borderBottom:"1px solid #e2e8f0"}}>
+        <td style={{padding:10}}>{r.transaction_date}</td><td>{r.county} {r.district}</td><td>{categoryLabel(r.target_category)}</td>
+        <td style={{minWidth:190,overflowWrap:"anywhere"}}>{displayLocation(r.location_display||[r.road_name,r.land_section].filter(Boolean).join("／"))}</td>
+        <td>{r.total_price_ntd==null?"—":(r.total_price_ntd/10000).toLocaleString("zh-TW")}</td>
+        <td>{[r.land_area_sqm,r.building_area_sqm].map(a=>a==null?"—":(a/3.305785).toFixed(2)).join("／")}</td>
+        <td><button type="button" onClick={()=>setExpandedId(old=>old===r.id?null:r.id)} aria-expanded={expandedId===r.id} style={{color:"#1d4ed8",fontWeight:600,whiteSpace:"nowrap"}}>{expandedId===r.id?"收合":"查看明細"}</button></td>
+       </tr>,
+       ...(expandedId===r.id?[<tr key={String(r.id)+"-detail"}><td colSpan={7}>{details(r)}</td></tr>]:[])
+      ])}</tbody>
+    </table>
+   </div>
+   <div className="real-price-mobile">
+    {rows.map(r=><article key={r.id} style={{border:"1px solid #cbd5e1",borderRadius:12,padding:14,background:"white",minWidth:0,overflowWrap:"anywhere"}}>
+      <div style={{display:"flex",justifyContent:"space-between",gap:8,flexWrap:"wrap"}}>
+       <strong>{r.transaction_date}</strong><span>{categoryLabel(r.target_category)}｜{r.county} {r.district}</span>
+      </div>
+      <p style={{margin:"10px 0",fontWeight:650}}>{displayLocation(r.location_display||[r.road_name,r.land_section].filter(Boolean).join("／"))}</p>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,fontSize:14}}>
+       <div>總價<div style={{fontWeight:700}}>{r.total_price_ntd==null?"—":(r.total_price_ntd/10000).toLocaleString("zh-TW")+" 萬"}</div></div>
+       <div>土地／建物<div style={{fontWeight:700}}>{[r.land_area_sqm,r.building_area_sqm].map(a=>a==null?"—":(a/3.305785).toFixed(2)).join("／")} 坪</div></div>
+      </div>
+      <button type="button" onClick={()=>setExpandedId(old=>old===r.id?null:r.id)} aria-expanded={expandedId===r.id} style={{marginTop:12,color:"#1d4ed8",fontWeight:700}}>{expandedId===r.id?"收合明細 ▲":"查看交易組合明細 ▼"}</button>
+      {expandedId===r.id&&<div style={{marginTop:10}}>{details(r)}</div>}
+    </article>)}
+   </div><div style={{display:"flex",gap:12,alignItems:"center",marginTop:18}}><button disabled={page<=1} onClick={()=>changePage(page-1)}>上一頁</button><span>第 {page} 頁</span><button disabled={page*20>=total} onClick={()=>changePage(page+1)}>下一頁</button></div></>}
   </section>
  </main>;
 }
