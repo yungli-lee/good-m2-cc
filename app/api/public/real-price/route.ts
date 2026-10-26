@@ -2,9 +2,9 @@ import { NextResponse } from "next/server";
 import { createSupabaseAdminClient } from "@/lib/supabase/server";
 export const runtime = "edge";
 const TARGETS = new Set(["house_land","land","building","parking"]);
-function decimal(s: string | null) { if(!s) return undefined; if(!/^\\d+(?:\\.\\d+)?$/.test(s)) throw new Error("bad number"); const n=Number(s); if(!Number.isFinite(n)||n>1e14) throw new Error("bad number"); return n; }
+function decimal(s: string | null) { if(!s) return undefined; if(!/^\d+(?:\\.\d+)?$/.test(s)) throw new Error("bad number"); const n=Number(s); if(!Number.isFinite(n)||n>1e14) throw new Error("bad number"); return n; }
 function textFilter(s: string | null) { if(!s) return undefined; const v=s.trim(); if(v.length>80||/[%,_*()]/.test(v)) throw new Error("bad text"); return v||undefined; }
-function dateFilter(s: string | null) { if(!s) return undefined; if(!/^\\d{4}-\\d{2}-\\d{2}$/.test(s)||Number.isNaN(Date.parse(s))) throw new Error("bad date"); return s; }
+function dateFilter(s: string | null) { if(!s) return undefined; if(!/^\d{4}-\d{2}-\d{2}$/.test(s)||Number.isNaN(Date.parse(s))) throw new Error("bad date"); return s; }
 export async function GET(request: Request) {
   // Explicit opt-in, never open a service-role public endpoint by deploying the route alone.
   if(process.env.REAL_PRICE_PUBLIC_SEARCH_ENABLED!=="true") return NextResponse.json({error:"not_ready",message:"實價登錄資料尚未開放查詢"},{status:503,headers:{"Cache-Control":"no-store"}});
@@ -22,14 +22,15 @@ export async function GET(request: Request) {
     const minAge=decimal(p.get("min_age")),maxAge=decimal(p.get("max_age"));
     for(const [a,b] of [[minPrice,maxPrice],[minArea,maxArea],[minAge,maxAge]]) if(a!==undefined&&b!==undefined&&a>b) throw new Error("range");
     if(from&&to&&from>to) throw new Error("dates");
-    const rawPage=p.get("page")||"1";if(!/^\\d+$/.test(rawPage))throw new Error("page");
+    const rawPage=p.get("page")||"1";if(!/^\d+$/.test(rawPage))throw new Error("page");
     const page=Number(rawPage);if(!Number.isSafeInteger(page)||page<1||page>1000)throw new Error("page");
     const limit=20;
     // Mixed land + building area searches require category-aware OR filters; reject rather than return wrong results.
     if((minArea!==undefined||maxArea!==undefined)&&targets.includes("land")&&targets.some(t=>t!=="land")) throw new Error("mixed_area");
     const db=createSupabaseAdminClient();
     let q=db.from("moi_verified_transactions").select("id,county,district,dataset_type,transaction_date,target_category,total_price_ntd,land_area_sqm,building_area_sqm,building_age_years,road_name,land_section,building_pattern",{count:"exact"})
-      .eq("dataset_type",dataset);\n    if(county)q=q.eq("county",county);
+      .eq("dataset_type",dataset);
+    if(county)q=q.eq("county",county);
     if(district)q=q.eq("district",district);
     if(targets.length)q=q.in("target_category",targets);
     if(from)q=q.gte("transaction_date",from);
