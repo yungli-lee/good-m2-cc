@@ -1,5 +1,5 @@
 "use client";
-import {useState, type FormEvent, type CSSProperties} from "react";
+import {useState, type FormEvent, type CSSProperties, type ReactNode} from "react";
 
 const counties=["彰化縣","臺北市","新北市","桃園市","臺中市","臺南市","高雄市","基隆市","新竹市","嘉義市","新竹縣","苗栗縣","南投縣","雲林縣","嘉義縣","屏東縣","宜蘭縣","花蓮縣","臺東縣","澎湖縣","金門縣","連江縣"];
 const changhua=["彰化市","鹿港鎮","和美鎮","北斗鎮","員林市","溪湖鎮","田中鎮","二林鎮","線西鄉","伸港鄉","福興鄉","秀水鄉","花壇鄉","芬園鄉","大村鄉","埔鹽鄉","埔心鄉","永靖鄉","社頭鄉","二水鄉","田尾鄉","埤頭鄉","芳苑鄉","大城鄉","竹塘鄉","溪州鄉"];
@@ -41,7 +41,7 @@ export function RealPriceSearch(){
    const str=p.toString();setQueryString(str);setPage(1);void load(str,1);
  }
  function changePage(next:number){setPage(next);void load(queryString,next);}
- const f=(label:string,element:React.ReactNode)=><label style={{display:"grid",gap:5,fontSize:14,fontWeight:600}}>{label}{element}</label>;
+ const f=(label:string,element:ReactNode)=><label style={{display:"grid",gap:5,fontSize:14,fontWeight:600}}>{label}{element}</label>;
  return <main style={{maxWidth:1120,margin:"0 auto",padding:"32px 16px 80px",color:"#1e293b"}}>
   <h1 style={{fontSize:"clamp(25px,4vw,36px)",fontWeight:750}}>全國實價登錄查詢</h1>
   <p style={{color:"#64748b",margin:"8px 0 22px"}}>預設彰化縣，可切換全國縣市｜買賣・預售屋・租賃</p>
