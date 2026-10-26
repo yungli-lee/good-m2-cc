@@ -59,7 +59,7 @@ def main():
             dataset=parts[3] if len(parts)>3 else ""
             batch=[]
             def flush():
-                if not batch:return
+                if not batch and rows:return
                 data={"p_archive_sha":digest,"p_file_name":filename,"p_dataset":dataset,
                       "p_region":region,"p_kind":kind_for(filename),"p_headers":headers,
                       "p_descriptions":descriptions,"p_expected":len(rows),"p_rows":batch}
