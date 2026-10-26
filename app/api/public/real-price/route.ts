@@ -28,7 +28,7 @@ export async function GET(request: Request) {
     // Mixed land + building area searches require category-aware OR filters; reject rather than return wrong results.
     if((minArea!==undefined||maxArea!==undefined)&&targets.includes("land")&&targets.some(t=>t!=="land")) throw new Error("mixed_area");
     const db=createSupabaseAdminClient();
-    let q=db.from("moi_verified_transactions").select("id,county,district,dataset_type,transaction_date,target_category,address_display,total_price_ntd,land_area_sqm,building_area_sqm,building_age_years,road_name,land_section,building_pattern",{count:"exact"})
+    let q=db.from("moi_verified_transactions").select("id,county,district,dataset_type,transaction_date,target_category,total_price_ntd,land_area_sqm,building_area_sqm,building_age_years,road_name,land_section,building_pattern",{count:"exact"})
       .eq("county",county).eq("dataset_type",dataset);
     if(district)q=q.eq("district",district);
     if(targets.length)q=q.in("target_category",targets);
