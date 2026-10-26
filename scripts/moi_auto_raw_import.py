@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """MOI open-data ZIP -> staging RAW CSV rows. Never touches production."""
-import csv, hashlib, io, json, os, re, sys, time, urllib.request, zipfile
+import csv, hashlib, io, json, os, re, sys, time, urllib.request, urllib.parse, zipfile
 from datetime import datetime, timezone
 
 SOURCE = os.getenv("MOI_SOURCE_URL","https://plvr.land.moi.gov.tw/Download?type=zip&fileName=lvr_landcsv.zip")
@@ -22,6 +22,16 @@ def request(url,data=None):
             if attempt==4:raise
             time.sleep(min(2**attempt*3,30))
 
+def imported_files(digest):
+    """Already fully imported files from this exact archive; safe resumable bootstrap."""
+    params=urllib.parse.urlencode({"archive_sha256":"eq."+digest,"select":"file_name,expected_rows,imported_rows"})
+    url=SUPABASE_URL+"/rest/v1/moi_raw_csv_files?"+params
+    headers={"apikey":KEY,"Authorization":"Bearer "+KEY,"Accept":"application/json"}
+    req=urllib.request.Request(url,headers=headers)
+    with urllib.request.urlopen(req,timeout=90) as resp:
+        values=json.loads(resp.read())
+    return {f["file_name"]:f for f in values}
+
 def encoding_csv(raw):
     for enc in ("utf-8-sig","cp950","big5"):
         try:return raw.decode(enc)
@@ -41,10 +51,14 @@ def main():
     digest=hashlib.sha256(archive).hexdigest()
     if not zipfile.is_zipfile(io.BytesIO(archive)):raise ValueError("MOI response is not ZIP")
     totals={"files":0,"rows":0,"sha256":digest,"at":datetime.now(timezone.utc).isoformat()}
+    existing=imported_files(digest)
+    totals["skipped_complete_files"]=0
+    totals["total_expected_files"]=0
     with zipfile.ZipFile(io.BytesIO(archive)) as z:
         if z.testzip() is not None:raise ValueError("ZIP CRC failed")
         names=[n for n in z.namelist() if n.lower().endswith(".csv") and not n.endswith("/")]
         if not names:raise ValueError("ZIP contains no CSV")
+        totals["total_expected_files"]=len(names)
         for filename in sorted(names):
             csvdata=list(csv.reader(io.StringIO(encoding_csv(z.read(filename)))))
             if len(csvdata)<2:continue
@@ -56,7 +70,7 @@ def main():
             rows=csvdata[2:]
             parts=filename.split("/")[-1].split("_")
             region=parts[0] if parts else ""
-            dataset=parts[3] if len(parts)>3 else ""
+            dataset=parts[3].split(".")[0] if len(parts)>3 else ""
             batch=[]
             def flush():
                 if not batch and rows:return
@@ -79,6 +93,8 @@ def main():
             totals["files"]+=1
             totals["rows"]+=len(rows)
             print(f"{filename}: {len(rows)}",flush=True)
+    if totals["files"]!=totals["total_expected_files"]:
+        raise RuntimeError("Import manifest count mismatch")
     print(json.dumps(totals,ensure_ascii=False),flush=True)
 
 if __name__=="__main__":main()
