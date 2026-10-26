@@ -1,0 +1,39 @@
+name: MOI historical staging bootstrap
+on:
+  workflow_dispatch:
+    inputs:
+      start_year:
+        description: "ROC first year (e.g. 101)"
+        required: true
+        default: "101"
+      end_year:
+        description: "ROC final year (e.g. 115)"
+        required: true
+        default: "115"
+permissions:
+  contents: read
+concurrency:
+  group: moi-staging-raw-ingest
+  cancel-in-progress: false
+jobs:
+  historical-bootstrap:
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    env:
+      STAGING_SUPABASE_URL: ${{ secrets.MOI_STAGING_SUPABASE_URL }}
+      STAGING_SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.MOI_STAGING_SUPABASE_SERVICE_ROLE_KEY }}
+      MOI_HISTORY_START_YEAR: ${{ inputs.start_year }}
+      MOI_HISTORY_END_YEAR: ${{ inputs.end_year }}
+      MOI_BATCH_ROWS: "400"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Restrict target to staging
+        shell: bash
+        run: |
+          test -n "$STAGING_SUPABASE_SERVICE_ROLE_KEY"
+          test "$STAGING_SUPABASE_URL" = "https://niorteztdbuyusemsgwa.supabase.co"
+      - name: Backfill all quarterly archives in requested year range
+        run: python scripts/moi_history_bootstrap.py
