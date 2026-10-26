@@ -43,7 +43,7 @@ export async function GET(request: Request) {
       return NextResponse.json({error:"server_config_missing",message:"Preview 查詢服務尚未設定完成"},{status:503,headers:{"Cache-Control":"no-store"}});
     }
     const db=createSupabaseAdminClient();
-    const columns="id,county,district,dataset_type,transaction_date,target_category,total_price_ntd,unit_price_ntd_per_sqm,land_area_sqm,building_area_sqm,building_age_years,road_name,land_section,building_pattern"+(previewStaging?",address_display":"");
+    const columns="id,county,district,dataset_type,transaction_date,target_category,total_price_ntd,unit_price_ntd_per_sqm,land_area_sqm,building_area_sqm,building_age_years,road_name,land_section,building_pattern"+(previewStaging?",address_display,raw_record":"");
     let q=db.from(previewStaging?"moi_real_price_transactions":"moi_verified_transactions").select(columns,{count:"exact"})
       .eq("dataset_type",dataset);
     if(previewStaging)q=q.in("id",[1,2]);
@@ -85,7 +85,12 @@ export async function GET(request: Request) {
         const sectionParcels=byTransaction.get(Number(row.id))||[];
         const addr=typeof row.address_display==="string"?row.address_display.trim():"";
         const location_display=[...sectionParcels, ...(addr && !sectionParcels.some(x=>addr.replace(/\s/g,"")===x.replace(/\s/g,""))?[addr]:[])].join("／");
-        return {...row,location_display:location_display||null,details:detailsByTransaction.get(Number(row.id))||[]};
+        const raw=row.raw_record&&typeof row.raw_record==="object"?row.raw_record as Record<string,unknown>:{};
+        const note=typeof raw["備註"]==="string"?raw["備註"].trim():"";
+        const special=/(親友|員工|共有人|特殊關係|急買急賣|債權債務|法院|拍賣|瑕疵|未登記|增建|持分|含裝潢|非市場|特殊交易)/.test(note);
+        const {raw_record:ignoredRaw,...safeRow}=row;
+        void ignoredRaw;
+        return {...safeRow,location_display:location_display||null,details:detailsByTransaction.get(Number(row.id))||[],official_note:note||null,special_status:note?(special?"special":"note_present"):"not_assessed"};
       });
     }
     return NextResponse.json({data:output,total:count??0,page,limit,preview_sample:previewStaging},{headers:{"Cache-Control":previewStaging?"no-store":"public, s-maxage=60"}});
