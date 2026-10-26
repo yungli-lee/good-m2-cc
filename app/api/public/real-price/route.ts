@@ -63,13 +63,18 @@ export async function GET(request: Request) {
     if(section)q=q.ilike("land_section",`%${section}%`);
     const {data,error,count}=await q.order("transaction_date",{ascending:false}).order("id",{ascending:false}).range((page-1)*limit,page*limit-1);
     if(error) {console.error("real_price_query_error",error.code);return NextResponse.json({error:"query_unavailable"},{status:503});}
-    let output=(data||[]) as Array<Record<string,unknown>>;
+    let output=(data||[]) as unknown as Array<Record<string,unknown>>;
     if(previewStaging && output.length){
       const ids=output.map(row=>Number(row.id));
-      const detail=await db.from("moi_transaction_details").select("transaction_id,section_name,parcel_number").in("transaction_id",ids).eq("detail_type","land").order("id");
+      const detail=await db.from("moi_transaction_details").select("transaction_id,detail_type,section_name,parcel_number,building_number,detail_area_sqm").in("transaction_id",ids).order("id");
       if(detail.error){console.error("real_price_location_detail_error",detail.error.code);return NextResponse.json({error:"query_unavailable"},{status:503});}
       const byTransaction=new Map<number,string[]>();
+      const detailsByTransaction=new Map<number,Array<Record<string,unknown>>>();
       for(const row of detail.data||[]){
+        const existing=detailsByTransaction.get(row.transaction_id)||[];
+        existing.push({detail_type:row.detail_type,section_name:row.section_name,parcel_number:row.parcel_number,building_number:row.building_number,detail_area_sqm:row.detail_area_sqm});
+        detailsByTransaction.set(row.transaction_id,existing);
+        if(row.detail_type!=="land")continue;
         const raw=row.parcel_number||"";
         const match=/^(\d{4})(\d{4})$/.exec(raw);
         const number=match?(String(Number(match[1]))+(Number(match[2])?("-"+Number(match[2])):"")):raw;
@@ -80,7 +85,7 @@ export async function GET(request: Request) {
         const sectionParcels=byTransaction.get(Number(row.id))||[];
         const addr=typeof row.address_display==="string"?row.address_display.trim():"";
         const location_display=[...sectionParcels, ...(addr && !sectionParcels.some(x=>addr.replace(/\s/g,"")===x.replace(/\s/g,""))?[addr]:[])].join("／");
-        return {...row,location_display:location_display||null};
+        return {...row,location_display:location_display||null,details:detailsByTransaction.get(Number(row.id))||[]};
       });
     }
     return NextResponse.json({data:output,total:count??0,page,limit,preview_sample:previewStaging},{headers:{"Cache-Control":previewStaging?"no-store":"public, s-maxage=60"}});
