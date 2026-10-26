@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createSupabaseAdminClient } from "@/lib/supabase/server";
+import { getSupabaseEnv, getRequestContext } from "@/lib/supabase/env";
 export const runtime = "edge";
 const TARGETS = new Set(["house_land","land","building","parking"]);
 function decimal(s: string | null) { if(!s) return undefined; if(!/^\d+(?:\.\d+)?$/.test(s)) throw new Error("bad number"); const n=Number(s); if(!Number.isFinite(n)||n>1e14) throw new Error("bad number"); return n; }
@@ -8,8 +9,11 @@ function dateFilter(s: string | null) { if(!s) return undefined; if(!/^\d{4}-\d{
 export async function GET(request: Request) {
   // Explicit opt-in, never open a service-role public endpoint by deploying the route alone.
   const hostname=new URL(request.url).hostname;
+  const environment=getSupabaseEnv();
+  const branch=process.env.CF_PAGES_BRANCH || getRequestContext()?.env?.CF_PAGES_BRANCH;
   const previewStaging=hostname.endsWith(".good-m2-cc.pages.dev")
-    && process.env.NEXT_PUBLIC_SUPABASE_URL==="https://niorteztdbuyusemsgwa.supabase.co";
+    && branch==="feature/real-price-public-search-v1"
+    && environment.url==="https://niorteztdbuyusemsgwa.supabase.co";
   const publicEnabled=process.env.REAL_PRICE_PUBLIC_SEARCH_ENABLED==="true";
   if(!previewStaging && !publicEnabled) return NextResponse.json({error:"not_ready",message:"實價登錄資料尚未開放查詢"},{status:503,headers:{"Cache-Control":"no-store"}});
   try {
@@ -31,6 +35,13 @@ export async function GET(request: Request) {
     const limit=20;
     // Mixed land + building area searches require category-aware OR filters; reject rather than return wrong results.
     if((minArea!==undefined||maxArea!==undefined)&&targets.includes("land")&&targets.some(t=>t!=="land")) throw new Error("mixed_area");
+    if(!environment.url || !environment.serviceRoleKey) {
+      console.error("real_price_server_config_missing",{
+        urlConfigured:Boolean(environment.url),
+        serverCredentialConfigured:Boolean(environment.serviceRoleKey)
+      });
+      return NextResponse.json({error:"server_config_missing",message:"Preview 查詢服務尚未設定完成"},{status:503,headers:{"Cache-Control":"no-store"}});
+    }
     const db=createSupabaseAdminClient();
     let q=db.from(previewStaging?"moi_real_price_transactions":"moi_verified_transactions").select("id,county,district,dataset_type,transaction_date,target_category,total_price_ntd,unit_price_ntd_per_sqm,land_area_sqm,building_area_sqm,building_age_years,road_name,land_section,building_pattern",{count:"exact"})
       .eq("dataset_type",dataset);
@@ -53,7 +64,8 @@ export async function GET(request: Request) {
     if(error) {console.error("real_price_query_error",error.code);return NextResponse.json({error:"query_unavailable"},{status:503});}
     return NextResponse.json({data:data||[],total:count??0,page,limit,preview_sample:previewStaging},{headers:{"Cache-Control":previewStaging?"no-store":"public, s-maxage=60"}});
   } catch(e) {
+    console.error("real_price_request_failure",e instanceof Error?e.message:"unknown");
     if(e instanceof Error&&e.message==="mixed_area")return NextResponse.json({error:"mixed_area",message:"土地與房地混合篩選時，請先取消坪數條件"},{status:400});
-    return NextResponse.json({error:"invalid_query"},{status:400});
+    return NextResponse.json({error:"query_failed",message:"查詢服務發生錯誤"},{status:503,headers:{"Cache-Control":"no-store"}});
   }
 }
