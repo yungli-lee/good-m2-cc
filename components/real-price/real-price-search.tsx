@@ -3,12 +3,13 @@ import {useEffect, useState, type FormEvent, type CSSProperties, type ReactNode}
 
 const counties=["彰化縣","臺北市","新北市","桃園市","臺中市","臺南市","高雄市","基隆市","新竹市","嘉義市","新竹縣","苗栗縣","南投縣","雲林縣","嘉義縣","屏東縣","宜蘭縣","花蓮縣","臺東縣","澎湖縣","金門縣","連江縣"];
 type Detail={detail_type:string;section_name?:string|null;parcel_number?:string|null;building_number?:string|null;detail_area_sqm?:number|null};
-type Result={details?:Detail[];id:number;county:string;district:string;transaction_date:string;target_category:string;total_price_ntd:number|null;land_area_sqm:number|null;building_area_sqm:number|null;road_name?:string|null;land_section?:string|null;location_display?:string|null;unit_price_ntd_per_sqm?:number|null};
+type Result={official_note?:string|null;special_status?:"special"|"note_present"|"not_assessed";details?:Detail[];id:number;county:string;district:string;transaction_date:string;target_category:string;total_price_ntd:number|null;land_area_sqm:number|null;building_area_sqm:number|null;road_name?:string|null;land_section?:string|null;location_display?:string|null;unit_price_ntd_per_sqm?:number|null};
 const targetOptions=[{id:"house_land",name:"房地"},{id:"land",name:"土地"},{id:"building",name:"建物"},{id:"parking",name:"車位"}];
 const inputStyle:CSSProperties={width:"100%",minHeight:42,border:"1px solid #cbd5e1",borderRadius:8,padding:"8px 10px",background:"white",color:"#17243b"};
 const gridStyle:CSSProperties={display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(170px,1fr))",gap:12};
 const displayLocation=(value?:string|null)=>value?value.normalize("NFKC").replace(/(\\d)\\s+(?=\\d)/g,"$1").replace(/(\\d)\\s+(?=[巷弄號樓])/g,"$1"):"未提供";
 const formatParcel=(value?:string|null)=>{if(!value)return "";const m=/^(\\d{4})(\\d{4})$/.exec(value);return m?String(Number(m[1]))+(Number(m[2])?"-"+Number(m[2]):""):value;};
+const specialLabel=(r:Result)=>r.special_status==="special"?"特殊交易":r.special_status==="note_present"?"有官方備註":r.special_status==="not_assessed"?"備註待核對":"";
 const categoryLabel=(v:string)=>({house_land:"房地",land:"土地",building:"建物",parking:"車位"} as Record<string,string>)[v]||v;
 export function RealPriceSearch(){
  const [county,setCounty]=useState(""),[district,setDistrict]=useState("");
@@ -68,7 +69,7 @@ export function RealPriceSearch(){
  }
  function changePage(next:number){setPage(next);void load(queryString,next);}
  const details=(r:Result)=><div style={{padding:14,background:"#f1f5f9",borderRadius:8,overflowWrap:"anywhere"}}>
-    <strong>交易組合明細</strong>
+    <strong>交易組合明細</strong>{specialLabel(r)&&<p style={{margin:"8px 0",fontWeight:700,color:r.special_status==="special"?"#b45309":"#475569"}}>{specialLabel(r)}</p>}{r.official_note&&<p style={{margin:"8px 0"}}>官方備註：{r.official_note}</p>}{r.special_status==="not_assessed"&&<p style={{margin:"8px 0",fontSize:13,color:"#64748b"}}>目前缺少完整備註資料，不代表一般交易。</p>}
     <p style={{margin:"8px 0"}}>整筆成交總價：{r.total_price_ntd==null?"—":(r.total_price_ntd/10000).toLocaleString("zh-TW")+" 萬元"}（不可直接當作個別地號成交價）</p>
     {r.details?.length?<ul style={{paddingLeft:22,margin:"8px 0"}}>{r.details.map((d,i)=><li key={i} style={{marginBottom:8}}>{categoryLabel(d.detail_type)}：{[d.section_name,d.parcel_number?formatParcel(d.parcel_number)+" 地號":"",d.building_number?d.building_number+" 建號":""].filter(Boolean).join(" ")}{d.detail_area_sqm!=null?"｜"+(Number(d.detail_area_sqm)/3.305785).toFixed(2)+" 坪":""}</li>)}</ul>:<p>此筆交易的組合明細尚未提供。</p>}
    </div>;
@@ -121,7 +122,7 @@ export function RealPriceSearch(){
      <thead><tr>{["交易日期","縣市／行政區","標的","地段地號／門牌","總價（萬元）","土地／建物坪數","明細"].map(h=><th key={h} style={{textAlign:"left",padding:10,borderBottom:"1px solid #cbd5e1"}}>{h}</th>)}</tr></thead>
      <tbody>{rows.flatMap(r=>[
        <tr key={r.id} style={{borderBottom:"1px solid #e2e8f0"}}>
-        <td style={{padding:10}}>{r.transaction_date}</td><td>{r.county} {r.district}</td><td>{categoryLabel(r.target_category)}</td>
+        <td style={{padding:10}}>{r.transaction_date}</td><td>{r.county} {r.district}</td><td>{categoryLabel(r.target_category)}{specialLabel(r)&&<div style={{fontSize:12,color:"#b45309"}}>{specialLabel(r)}</div>}</td>
         <td style={{minWidth:190,overflowWrap:"anywhere"}}>{displayLocation(r.location_display||[r.road_name,r.land_section].filter(Boolean).join("／"))}</td>
         <td>{r.total_price_ntd==null?"—":(r.total_price_ntd/10000).toLocaleString("zh-TW")}</td>
         <td>{[r.land_area_sqm,r.building_area_sqm].map(a=>a==null?"—":(a/3.305785).toFixed(2)).join("／")}</td>
@@ -134,7 +135,7 @@ export function RealPriceSearch(){
    <div className="real-price-mobile">
     {rows.map(r=><article key={r.id} style={{border:"1px solid #cbd5e1",borderRadius:12,padding:14,background:"white",minWidth:0,overflowWrap:"anywhere"}}>
       <div style={{display:"flex",justifyContent:"space-between",gap:8,flexWrap:"wrap"}}>
-       <strong>{r.transaction_date}</strong><span>{categoryLabel(r.target_category)}｜{r.county} {r.district}</span>
+       <strong>{r.transaction_date}</strong><span>{categoryLabel(r.target_category)}｜{r.county} {r.district}</span>{specialLabel(r)&&<span style={{width:"100%",fontSize:13,color:"#b45309"}}>{specialLabel(r)}</span>}
       </div>
       <p style={{margin:"10px 0",fontWeight:650}}>{displayLocation(r.location_display||[r.road_name,r.land_section].filter(Boolean).join("／"))}</p>
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,fontSize:14}}>
