@@ -4,8 +4,10 @@ import csv, hashlib, io, json, os, re, sys, time, urllib.request, urllib.parse, 
 from datetime import datetime, timezone
 
 SOURCE = os.getenv("MOI_SOURCE_URL","https://plvr.land.moi.gov.tw/Download?type=zip&fileName=lvr_landcsv.zip")
-SUPABASE_URL=os.environ["STAGING_SUPABASE_URL"].rstrip("/")
-KEY=os.environ["STAGING_SUPABASE_SERVICE_ROLE_KEY"]
+CHECK_ONLY=os.getenv("MOI_CHECK_ONLY")=="1"
+SUPABASE_URL=os.getenv("STAGING_SUPABASE_URL","").rstrip("/")
+KEY=os.getenv("STAGING_SUPABASE_SERVICE_ROLE_KEY","")
+if not CHECK_ONLY and (not SUPABASE_URL or not KEY):raise RuntimeError("Staging credentials required")
 MAX_ROWS=int(os.getenv("MOI_BATCH_ROWS","400"))
 if not (1<=MAX_ROWS<=1500): raise ValueError("MOI_BATCH_ROWS outside safe range")
 
@@ -47,11 +49,11 @@ def kind_for(name):
     return "other"
 
 def main():
-    archive=request(SOURCE)
+    archive=open(os.environ["MOI_LOCAL_ZIP"],"rb").read() if os.getenv("MOI_LOCAL_ZIP") else request(SOURCE)
     digest=hashlib.sha256(archive).hexdigest()
     if not zipfile.is_zipfile(io.BytesIO(archive)):raise ValueError("MOI response is not ZIP")
     totals={"files":0,"rows":0,"sha256":digest,"at":datetime.now(timezone.utc).isoformat()}
-    existing=imported_files(digest)
+    existing={} if CHECK_ONLY else imported_files(digest)
     totals["skipped_complete_files"]=0
     totals["total_expected_files"]=0
     with zipfile.ZipFile(io.BytesIO(archive)) as z:
@@ -68,6 +70,10 @@ def main():
             if len(set(headers))!=len(headers) or any(len(x)!=len(headers) for x in csvdata):
                 raise ValueError(f"Layout mismatch: {filename}")
             rows=csvdata[2:]
+            if CHECK_ONLY:
+                totals["files"]+=1
+                totals["rows"]+=len(rows)
+                continue
             previous=existing.get(filename)
             if previous and previous["expected_rows"]==len(rows) and previous["imported_rows"]==len(rows):
                 totals["skipped_complete_files"]+=1
@@ -102,6 +108,9 @@ def main():
             print(f"{filename}: {len(rows)}",flush=True)
     if totals["files"]!=totals["total_expected_files"]:
         raise RuntimeError("Import manifest count mismatch")
+    if CHECK_ONLY:
+        print(json.dumps(totals,ensure_ascii=False),flush=True)
+        return
     final=imported_files(digest)
     missing=[name for name in names if name not in final or final[name]["expected_rows"]!=final[name]["imported_rows"]]
     if missing:
