@@ -68,6 +68,13 @@ def main():
             if len(set(headers))!=len(headers) or any(len(x)!=len(headers) for x in csvdata):
                 raise ValueError(f"Layout mismatch: {filename}")
             rows=csvdata[2:]
+            previous=existing.get(filename)
+            if previous and previous["expected_rows"]==len(rows) and previous["imported_rows"]==len(rows):
+                totals["skipped_complete_files"]+=1
+                totals["files"]+=1
+                totals["rows"]+=len(rows)
+                print(f"{filename}: already complete ({len(rows)})",flush=True)
+                continue
             parts=filename.split("/")[-1].split("_")
             region=parts[0] if parts else ""
             dataset=parts[3].split(".")[0] if len(parts)>3 else ""
