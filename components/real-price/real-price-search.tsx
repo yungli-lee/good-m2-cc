@@ -30,7 +30,8 @@ export function RealPriceSearch(){
  }
  function submit(e:FormEvent<HTMLFormElement>){
    e.preventDefault(); const p=new URLSearchParams({dataset});
-   if(county)p.set("county",county);\n   if(district)p.set("district",district);
+   if(county)p.set("county",county);
+   if(district)p.set("district",district);
    targets.forEach(x=>p.append("target",x));
    if(road.trim())p.set("road",road.trim());if(section.trim())p.set("section",section.trim());
    if(period!=="all"){const date=new Date();date.setFullYear(date.getFullYear()-Number(period));p.set("from",date.toISOString().slice(0,10));}
