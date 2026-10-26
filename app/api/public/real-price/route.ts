@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { createSupabaseAdminClient } from "@/lib/supabase/server";
 export const runtime = "edge";
 const TARGETS = new Set(["house_land","land","building","parking"]);
-function decimal(s: string | null) { if(!s) return undefined; if(!/^\d+(?:\\.\d+)?$/.test(s)) throw new Error("bad number"); const n=Number(s); if(!Number.isFinite(n)||n>1e14) throw new Error("bad number"); return n; }
+function decimal(s: string | null) { if(!s) return undefined; if(!/^\d+(?:\.\d+)?$/.test(s)) throw new Error("bad number"); const n=Number(s); if(!Number.isFinite(n)||n>1e14) throw new Error("bad number"); return n; }
 function textFilter(s: string | null) { if(!s) return undefined; const v=s.trim(); if(v.length>80||/[%,_*()]/.test(v)) throw new Error("bad text"); return v||undefined; }
 function dateFilter(s: string | null) { if(!s) return undefined; if(!/^\d{4}-\d{2}-\d{2}$/.test(s)||Number.isNaN(Date.parse(s))) throw new Error("bad date"); return s; }
 export async function GET(request: Request) {
