@@ -1,0 +1,32 @@
+name: MOI direct ZIP download smoke test
+on:
+  push:
+    branches:
+      - feature/real-price-public-search-v1
+    paths:
+      - .github/workflows/moi-download-smoke-test.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  direct-download:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Direct official ZIP download (no database access)
+        shell: bash
+        run: |
+          set -euo pipefail
+          url='https://plvr.land.moi.gov.tw/Download?type=zip&fileName=lvr_landcsv.zip'
+          echo "Testing direct MOI download on GitHub-hosted runner"
+          curl --fail --location --show-error --silent --retry 2 --retry-delay 3 --connect-timeout 20 --max-time 150 --output /tmp/lvr_landcsv.zip --write-out 'HTTP %{http_code}; bytes %{size_download}; remote_ip %{remote_ip}; content_type %{content_type}\n' "$url"
+          python3 - <<'PY'
+          import os,zipfile
+          p='/tmp/lvr_landcsv.zip'
+          size=os.path.getsize(p)
+          print('Downloaded bytes:',size)
+          print('ZIP signature valid:',zipfile.is_zipfile(p))
+          if not zipfile.is_zipfile(p):
+              raise SystemExit('Response is not a ZIP')
+          print('Download success')
+          PY
