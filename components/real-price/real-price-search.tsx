@@ -119,7 +119,7 @@ export function RealPriceSearch(){
    {status==="unavailable"&&<div role="status" style={{padding:18,background:"#eff6ff",border:"1px solid #bfdbfe",borderRadius:10}}><strong>查詢介面已開放預覽，成交資料尚未開放</strong><p style={{margin:"8px 0 0",color:"#475569"}}>目前可以操作篩選條件並檢查版面。資料完成驗證與發布後，才會顯示真實成交紀錄。</p></div>}
    {status==="error"&&<p role="alert" style={{padding:15,border:"1px solid #fecaca",borderRadius:8}}>{message}</p>}
    {status==="empty"&&<p>在本次可查詢的資料範圍內，沒有符合條件的紀錄。</p>}
-   {status==="ok"&&<>{previewSample&&<p role="status" style={{padding:12,background:"#fff7ed",border:"1px solid #fdba74",borderRadius:8}}>Preview 驗收資料：目前僅顯示兩筆指定的 staging 官方交易紀錄，尚未完成正式批次驗證，不代表完整市場行情。</p>}<p>符合條件：{total.toLocaleString("zh-TW")} 筆</p><style>{`
+   {status==="ok"&&<>{previewSample&&<p role="status" style={{padding:12,background:"#fff7ed",border:"1px solid #fdba74",borderRadius:8}}>Preview 驗收資料：已開放查詢本期 staging 成交主檔；土地持分、車位明細及歷史資料仍在整理，不代表完整市場行情。</p>}<p>符合條件：{total.toLocaleString("zh-TW")} 筆</p><style>{`
     .real-price-desktop{display:block}
     .real-price-mobile{display:none}
     @media(max-width:720px){
