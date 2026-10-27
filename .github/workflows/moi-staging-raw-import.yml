@@ -1,6 +1,11 @@
 name: MOI real price staging import
 
 on:
+  push:
+    branches:
+      - feature/real-price-public-search-v1
+    paths:
+      - .github/workflows/moi-staging-raw-import.yml
   workflow_dispatch:
   schedule:
     # 01:20 UTC = 09:20 Asia/Taipei. Daily retry handles delayed official releases.
@@ -26,8 +31,17 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - name: Diagnose official download without secrets
-        run: python scripts/moi_download_diagnostic.py
+      - name: Download official ZIP using proven curl method
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --location --show-error --silent --retry 3 --retry-delay 5 --connect-timeout 20 --max-time 180 --output /tmp/lvr_landcsv.zip 'https://plvr.land.moi.gov.tw/Download?type=zip&fileName=lvr_landcsv.zip'
+          python -c "import zipfile; assert zipfile.is_zipfile('/tmp/lvr_landcsv.zip'), 'Not a ZIP'"
+      - name: Check all official CSV layouts offline
+        env:
+          MOI_CHECK_ONLY: "1"
+          MOI_LOCAL_ZIP: /tmp/lvr_landcsv.zip
+        run: python scripts/moi_auto_raw_import.py
       - name: Check staging-only credentials
         shell: bash
         run: |
@@ -37,5 +51,7 @@ jobs:
             https://niorteztdbuyusemsgwa.supabase.co*) ;;
             *) echo "Refusing non-staging destination"; exit 1;;
           esac
-      - name: Download official ZIP and upsert all RAW columns
+      - name: Import downloaded ZIP into staging RAW
+        env:
+          MOI_LOCAL_ZIP: /tmp/lvr_landcsv.zip
         run: python scripts/moi_auto_raw_import.py
