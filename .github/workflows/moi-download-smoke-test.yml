@@ -11,8 +11,9 @@ permissions:
 jobs:
   direct-download:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 10
     steps:
+      - uses: actions/checkout@v4
       - name: Direct official ZIP download (no database access)
         shell: bash
         run: |
@@ -30,3 +31,9 @@ jobs:
               raise SystemExit('Response is not a ZIP')
           print('Download success')
           PY
+
+      - name: Verify real CSV layouts directly from downloaded ZIP (no Supabase)
+        env:
+          MOI_CHECK_ONLY: "1"
+          MOI_LOCAL_ZIP: /tmp/lvr_landcsv.zip
+        run: python3 scripts/moi_auto_raw_import.py
