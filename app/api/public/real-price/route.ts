@@ -68,6 +68,9 @@ export async function GET(request: Request) {
     if(section)q=q.ilike("land_section",`%${section}%`);
     const {data,error,count}=await q.order("transaction_date",{ascending:false}).order("id",{ascending:false}).range((page-1)*limit,page*limit-1);
     if(error) {console.error("real_price_query_error",error.code);return NextResponse.json({error:"query_unavailable"},{status:503});}
+    // Page-level duplicate suppression is intentionally not applied here: it would
+    // invalidate total counts and pagination. Deduplicate at ingestion/database
+    // level using official source identity, preserving the richest detail set.
     let output=(data||[]) as unknown as Array<Record<string,unknown>>;
     if(previewStaging && output.length){
       const ids=output.map(row=>Number(row.id));
