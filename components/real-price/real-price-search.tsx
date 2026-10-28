@@ -192,7 +192,7 @@ export function RealPriceSearch(){
       <button type="button" onClick={()=>setExpandedId(old=>old===r.id?null:r.id)} aria-expanded={expandedId===r.id} style={{marginTop:12,color:"#1d4ed8",fontWeight:700}}>{expandedId===r.id?"收合明細 ▲":"查看交易組合明細 ▼"}</button>
       {expandedId===r.id&&<div style={{marginTop:10}}>{details(r)}</div>}
     </article>)}
-   </div><div style={{display:"flex",gap:12,alignItems:"center",marginTop:18}}><button disabled={page<=1} onClick={()=>changePage(page-1)}>上一頁</button><span>第 {page} 頁</span><button disabled={page*20>=total} onClick={()=>changePage(page+1)}>下一頁</button></div></>}
+   </div><div style={{display:"flex",gap:12,alignItems:"center",marginTop:18}}><button disabled={page<=1} onClick={()=>changePage(page-1)}>上一頁</button><span aria-current="page">第 {page.toLocaleString("zh-TW")} 頁／共 {Math.ceil(total/20).toLocaleString("zh-TW")} 頁</span><button disabled={page*20>=total} onClick={()=>changePage(page+1)}>下一頁</button></div></>}
   </section>
  </main>;
 }
