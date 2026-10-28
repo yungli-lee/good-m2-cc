@@ -12,6 +12,16 @@ const inputStyle:CSSProperties={width:"100%",minHeight:42,border:"1px solid #cbd
 const gridStyle:CSSProperties={display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(170px,1fr))",gap:12};
 const displayLocation=(value?:string|null)=>value?value.normalize("NFKC").replace(/(\\d)\\s+(?=\\d)/g,"$1").replace(/(\\d)\\s+(?=[巷弄號樓])/g,"$1"):"未提供";
 const formatParcel=(value?:string|null)=>{if(!value)return "";const m=/^(\d{4})(\d{4})$/.exec(value);return m?String(Number(m[1]))+(Number(m[2])?"-"+Number(m[2]):""):value;};
+// Keep transaction rows readable; never alter the official raw location or underlying details.
+const compactLocation=(r:Result)=>{
+ const raw=displayLocation(r.location_display||[r.road_name,r.land_section].filter(Boolean).join("／"));
+ const segments=raw.split(/[／/]/).map(x=>x.trim()).filter(Boolean);
+ const addresses=[...new Set(segments.filter(x=>/[0-9０-９一二三四五六七八九十]+(?:之[0-9０-９]+)?號/.test(x)&&!/地號/.test(x)))];
+ const sectionNames=[...new Set((r.details||[]).filter(d=>d.detail_type==="land").map(d=>d.section_name?.trim()).filter((s):s is string=>Boolean(s)))];
+ const main=addresses[0]||segments[0]||raw;
+ const suffix=[addresses.length>1?`另含${addresses.length-1}址`:"",sectionNames.length>1?`跨${sectionNames.length}地段`:""].filter(Boolean);
+ return {main,summary:suffix.join("・")};
+};
 const noteLabel=(r:Result)=>r.official_note?.trim()?"交易備註":"";
 const categoryLabel=(v:string)=>({house_land:"房地",land:"土地",building:"建物",parking:"車位"} as Record<string,string>)[v]||v;
 export function RealPriceSearch(){
@@ -173,7 +183,7 @@ export function RealPriceSearch(){
      <tbody>{rows.flatMap(r=>[
        <tr key={r.id} style={{borderBottom:"1px solid #e2e8f0"}}>
         <td style={{padding:10,whiteSpace:"nowrap",verticalAlign:"top"}}>{r.transaction_date}</td><td style={{verticalAlign:"top"}}>{r.county}<br/>{r.district}</td><td style={{whiteSpace:"nowrap",verticalAlign:"top"}}>{categoryLabel(r.target_category)}{noteLabel(r)&&<div style={{fontSize:12,color:"#b45309"}}>{noteLabel(r)}</div>}</td>
-        <td style={{overflowWrap:"anywhere",verticalAlign:"top",paddingRight:12}}>{displayLocation(r.location_display||[r.road_name,r.land_section].filter(Boolean).join("／"))}</td>
+        <td style={{overflowWrap:"anywhere",verticalAlign:"top",paddingRight:12}}><span>{compactLocation(r).main}</span>{compactLocation(r).summary&&<div style={{fontSize:12,color:"#64748b",marginTop:4}}>{compactLocation(r).summary}</div>}</td>
         <td>{r.total_price_ntd==null?"—":(r.total_price_ntd/10000).toLocaleString("zh-TW")}</td>
         <td>{[r.land_area_sqm,r.building_area_sqm].map(a=>a==null?"—":(a/3.305785).toFixed(2)).join("／")}</td>
         <td><button type="button" onClick={()=>setExpandedId(old=>old===r.id?null:r.id)} aria-expanded={expandedId===r.id} style={{color:"#1d4ed8",fontWeight:600,whiteSpace:"nowrap"}}>{expandedId===r.id?"收合":"查看明細"}</button></td>
@@ -187,7 +197,7 @@ export function RealPriceSearch(){
       <div style={{display:"flex",justifyContent:"space-between",gap:8,flexWrap:"wrap"}}>
        <strong>{r.transaction_date}</strong><span>{categoryLabel(r.target_category)}｜{r.county} {r.district}</span>{noteLabel(r)&&<span style={{width:"100%",fontSize:13,color:"#b45309"}}>{noteLabel(r)}</span>}
       </div>
-      <p style={{margin:"10px 0",fontWeight:650}}>{displayLocation(r.location_display||[r.road_name,r.land_section].filter(Boolean).join("／"))}</p>
+      <p style={{margin:"10px 0",fontWeight:650}}><span>{compactLocation(r).main}</span>{compactLocation(r).summary&&<div style={{fontSize:12,color:"#64748b",marginTop:4}}>{compactLocation(r).summary}</div>}</p>
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,fontSize:14}}>
        <div>總價<div style={{fontWeight:700}}>{r.total_price_ntd==null?"—":(r.total_price_ntd/10000).toLocaleString("zh-TW")+" 萬"}</div></div>
        <div>土地／建物<div style={{fontWeight:700}}>{[r.land_area_sqm,r.building_area_sqm].map(a=>a==null?"—":(a/3.305785).toFixed(2)).join("／")} 坪</div></div>
