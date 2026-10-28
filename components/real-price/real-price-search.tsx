@@ -5,13 +5,13 @@ import { parseSearchDate } from "@/lib/real-price/date-range";
 import { hasExplicitLane } from "@/lib/real-price/road-search";
 
 const counties=["彰化縣","臺北市","新北市","桃園市","臺中市","臺南市","高雄市","基隆市","新竹市","嘉義市","新竹縣","苗栗縣","南投縣","雲林縣","嘉義縣","屏東縣","宜蘭縣","花蓮縣","臺東縣","澎湖縣","金門縣","連江縣"];
-type Detail={detail_type:string;section_name?:string|null;parcel_number?:string|null;building_number?:string|null;detail_area_sqm?:number|null};
+type Detail={ownership_share_numerator?:number|null;ownership_share_denominator?:number|null;parking_type?:string|null;parking_price_ntd?:number|null;parking_floor?:string|null;share_warning?:string|null;detail_type:string;section_name?:string|null;parcel_number?:string|null;building_number?:string|null;detail_area_sqm?:number|null};
 type Result={history_lookup_key?:string|null;official_note?:string|null;special_status?:"special"|"note_present"|"not_assessed";details?:Detail[];id:number;county:string;district:string;transaction_date:string;target_category:string;total_price_ntd:number|null;land_area_sqm:number|null;building_area_sqm:number|null;road_name?:string|null;land_section?:string|null;location_display?:string|null;unit_price_ntd_per_sqm?:number|null;building_age_years?:number|null;building_pattern?:string|null;floor_display?:string|null};
 const targetOptions=[{id:"house_land",name:"房地"},{id:"land",name:"土地"},{id:"building",name:"建物"},{id:"parking",name:"車位"}];
 const inputStyle:CSSProperties={width:"100%",minHeight:42,border:"1px solid #cbd5e1",borderRadius:8,padding:"8px 10px",background:"white",color:"#17243b"};
 const gridStyle:CSSProperties={display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(170px,1fr))",gap:12};
 const displayLocation=(value?:string|null)=>value?value.normalize("NFKC").replace(/(\\d)\\s+(?=\\d)/g,"$1").replace(/(\\d)\\s+(?=[巷弄號樓])/g,"$1"):"未提供";
-const formatParcel=(value?:string|null)=>{if(!value)return "";const m=/^(\\d{4})(\\d{4})$/.exec(value);return m?String(Number(m[1]))+(Number(m[2])?"-"+Number(m[2]):""):value;};
+const formatParcel=(value?:string|null)=>{if(!value)return "";const m=/^(\d{4})(\d{4})$/.exec(value);return m?String(Number(m[1]))+(Number(m[2])?"-"+Number(m[2]):""):value;};
 const specialLabel=(r:Result)=>r.special_status==="special"?"特殊交易":r.special_status==="note_present"?"交易備註":"";
 const categoryLabel=(v:string)=>({house_land:"房地",land:"土地",building:"建物",parking:"車位"} as Record<string,string>)[v]||v;
 export function RealPriceSearch(){
@@ -91,6 +91,19 @@ export function RealPriceSearch(){
    {r.special_status==="special"&&<p style={{margin:"9px 0"}}><b>特殊交易：</b>是</p>}
    {r.official_note&&<p style={{margin:"9px 0",color:r.special_status==="special"?"#92400e":"#475569"}}>交易備註：{r.official_note}</p>}
    {r.details&&r.details.length>1&&<p style={{margin:"9px 0",fontSize:13,color:"#64748b"}}>本次含 {r.details.filter(d=>d.detail_type==="land").length} 筆土地、{r.details.filter(d=>d.detail_type==="building").length} 筆建物、{r.details.filter(d=>d.detail_type==="parking").length} 筆車位；總價為整筆交易，不代表個別標的價格。</p>}
+   {r.details&&r.details.length>0&&<div style={{marginTop:14}}>
+    <strong>土地、建物與車位明細（{r.details.length}筆）</strong>
+    <div style={{display:"grid",gap:8,maxHeight:360,overflowY:"auto",marginTop:8}}>
+     {r.details.map((d,index)=><div key={index} style={{background:"white",border:"1px solid #cbd5e1",borderRadius:8,padding:10,fontSize:14}}>
+      <b>{({land:"土地",building:"建物",parking:"車位"} as Record<string,string>)[d.detail_type]||d.detail_type} {index+1}</b>
+      {d.detail_type==="land"&&<><div>{d.section_name||"地段未提供"} {d.parcel_number?formatParcel(d.parcel_number)+"地號":"地號未提供"}</div><div>持分：{d.ownership_share_numerator!=null&&d.ownership_share_denominator!=null?`${d.ownership_share_numerator}／${d.ownership_share_denominator}`:"未提供"}</div>{d.share_warning&&<div style={{color:"#92400e"}}>{d.share_warning}</div>}</>}
+      {d.detail_type==="building"&&<div>建號：{d.building_number||"未提供"}</div>}
+      {d.detail_type==="parking"&&<><div>類型：{d.parking_type||"未提供"}｜樓層：{d.parking_floor||"未提供"}</div><div>車位價格：{d.parking_price_ntd==null?"未提供":Number(d.parking_price_ntd)===0?"官方填報0元（是否併入總價未另說明）":(Number(d.parking_price_ntd)/10000).toLocaleString("zh-TW")+"萬元"}</div></>}
+      <div>面積：{d.detail_area_sqm==null?"未提供":`${Number(d.detail_area_sqm).toLocaleString("zh-TW")}㎡（${(Number(d.detail_area_sqm)/3.305785).toFixed(2)}坪）`}</div>
+     </div>)}
+    </div>
+    <p style={{fontSize:12,color:"#64748b",marginTop:6}}>依官方明細列示；面積沿用官方申報值，不再乘上持分。部分期別可能未提供所有類型明細。</p>
+   </div>}
    {r.history_lookup_key&&<div style={{marginTop:12,borderTop:"1px solid #cbd5e1",paddingTop:10}}>
     <button type="button" onClick={()=>setHistoryId(old=>old===r.id?null:r.id)} style={{color:"#1d4ed8",fontWeight:700}}>{historyId===r.id?"收合歷史交易":"查看歷史交易"}</button>
     {historyId===r.id&&<p style={{marginTop:8,fontSize:13,color:"#475569"}}>目前驗收資料尚未涵蓋此物件完整歷史成交；不能據此判斷沒有歷史交易。</p>}
@@ -144,7 +157,7 @@ export function RealPriceSearch(){
    {status==="unavailable"&&<div role="status" style={{padding:18,background:"#eff6ff",border:"1px solid #bfdbfe",borderRadius:10}}><strong>查詢介面已開放預覽，成交資料尚未開放</strong><p style={{margin:"8px 0 0",color:"#475569"}}>目前可以操作篩選條件並檢查版面。資料完成驗證與發布後，才會顯示真實成交紀錄。</p></div>}
    {status==="error"&&<p role="alert" style={{padding:15,border:"1px solid #fecaca",borderRadius:8}}>{message}</p>}
    {status==="empty"&&<p>在本次可查詢的資料範圍內，沒有符合條件的紀錄。</p>}
-   {status==="ok"&&<>{previewSample&&<p role="status" style={{padding:12,background:"#fff7ed",border:"1px solid #fdba74",borderRadius:8}}>Preview 驗收資料：已開放查詢本期 staging 成交主檔；土地持分、車位明細及歷史資料仍在整理，不代表完整市場行情。</p>}<p>符合條件：{total.toLocaleString("zh-TW")} 筆</p><style>{`
+   {status==="ok"&&<>{previewSample&&<p role="status" style={{padding:12,background:"#fff7ed",border:"1px solid #fdba74",borderRadius:8}}>Preview 驗收資料：已開放部分當期與歷史成交資料；全國各期與明細持續補入中，尚非完整市場資料。</p>}<p>符合條件：{total.toLocaleString("zh-TW")} 筆</p><style>{`
     .real-price-desktop{display:block}
     .real-price-mobile{display:none}
     @media(max-width:720px){

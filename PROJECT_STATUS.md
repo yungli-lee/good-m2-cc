@@ -190,3 +190,11 @@ Legacy Static Cleanup 完成代表：
 - Next batch processes 114S4→114S1 and 113S3→113S1 sequentially. Each quarter validates ZIP/CSV, reconciles RAW rows, then exposes sale masters to Preview; already present master source keys remain unchanged.
 - The shared ingestion concurrency group prevents overlap. A failure stops subsequent quarters; completed source files/transaction keys allow safe reruns. Archives and summaries are retained as workflow artifacts.
 - Coverage is not complete until every quarter succeeds; presale/rental masters and detailed ownership/parking coverage are separate pending work.
+
+### National source and detail ingestion — 2026-10-28
+- National parser covers all official county codes and sale/presale/rental masters, joining land/building/parking rows by the source transaction ID within each county/dataset file.
+- Validated full 114S4 (127,554 masters / 422,159 linked details) and 115S3 (150,572 / 494,404) archives. Each contains an official invalid ownership share; raw fields are retained and normalized shares are unavailable with a warning, never reversed or fabricated.
+- New service-only SECURITY INVOKER RPC imports a chunk atomically, replaces the matching transaction's authoritative detail set, deduplicates replayed chunks, and preserves newer source periods. Legacy records with differing raw data are preserved and counted separately. Anonymous and authenticated EXECUTE are revoked.
+- Service-role rollback tests verified detail counts, replay idempotency, and older-source preservation. UI/API expose ownership shares and parking type/price/area/floor; detail fetches page beyond the Data API row cap. Official zero parking prices are not described as free parking.
+- New workflow imports current national data first, then queues 57 quarterly archives from 115S3 back to 101S3 with one concurrent historical job. Exceptions are included in archive reports and keep coverage incomplete. Failed jobs stop pending work; database size above 7GB stops ingestion for capacity review.
+- Staging only; production publication gates remain in place. Full national historical completion requires successful job reports for every quarter, not merely a workflow launch.

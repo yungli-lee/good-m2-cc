@@ -1,0 +1,97 @@
+name: MOI national masters and detail backfill
+on:
+  push:
+    branches: [feature/real-price-public-search-v1]
+    paths: [.github/workflows/moi-national-backfill.yml]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: moi-staging-raw-ingest
+  cancel-in-progress: false
+jobs:
+  current-national:
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    env:
+      STAGING_SUPABASE_URL: ${{ secrets.MOI_STAGING_SUPABASE_URL }}
+      STAGING_SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.MOI_STAGING_SUPABASE_SERVICE_ROLE_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Guard staging destination
+        run: |
+          python - <<'PY'
+          import os
+          url=os.environ["STAGING_SUPABASE_URL"].strip().rstrip("/")
+          key=os.environ["STAGING_SUPABASE_SERVICE_ROLE_KEY"].strip()
+          if url!="https://niorteztdbuyusemsgwa.supabase.co":raise SystemExit("Unexpected staging destination after normalization")
+          if not key:raise SystemExit("Staging credential missing")
+          with open(os.environ["GITHUB_ENV"],"a") as f:
+              f.write("STAGING_SUPABASE_URL="+url+"\n")
+              f.write("STAGING_SUPABASE_SERVICE_ROLE_KEY="+key+"\n")
+          PY
+      - name: Download and import current national archive
+        env:
+          MOI_LOCAL_ZIP: /tmp/moi-national-current.zip
+          MOI_REPORT_PATH: /tmp/moi-national-current-report.json
+        run: |
+          set -euo pipefail
+          export MOI_SOURCE_PERIOD="$(date -u +%F)"
+          curl --fail --location --show-error --silent --retry 3 --retry-delay 5 --connect-timeout 20 --max-time 300 --output "$MOI_LOCAL_ZIP" 'https://plvr.land.moi.gov.tw/Download?type=zip&fileName=lvr_landcsv.zip'
+          python scripts/moi_national_import.py
+      - name: Preserve current archive and reconciliation report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: moi-national-current
+          path: /tmp/moi-national-current*
+          retention-days: 7
+  historical-national:
+    needs: current-national
+    strategy:
+      fail-fast: true
+      max-parallel: 1
+      matrix:
+        season: ['115S3', '115S2', '115S1', '114S4', '114S3', '114S2', '114S1', '113S4', '113S3', '113S2', '113S1', '112S4', '112S3', '112S2', '112S1', '111S4', '111S3', '111S2', '111S1', '110S4', '110S3', '110S2', '110S1', '109S4', '109S3', '109S2', '109S1', '108S4', '108S3', '108S2', '108S1', '107S4', '107S3', '107S2', '107S1', '106S4', '106S3', '106S2', '106S1', '105S4', '105S3', '105S2', '105S1', '104S4', '104S3', '104S2', '104S1', '103S4', '103S3', '103S2', '103S1', '102S4', '102S3', '102S2', '102S1', '101S4', '101S3']
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    env:
+      STAGING_SUPABASE_URL: ${{ secrets.MOI_STAGING_SUPABASE_URL }}
+      STAGING_SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.MOI_STAGING_SUPABASE_SERVICE_ROLE_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Guard staging destination
+        run: |
+          python - <<'PY'
+          import os
+          url=os.environ["STAGING_SUPABASE_URL"].strip().rstrip("/")
+          key=os.environ["STAGING_SUPABASE_SERVICE_ROLE_KEY"].strip()
+          if url!="https://niorteztdbuyusemsgwa.supabase.co":raise SystemExit("Unexpected staging destination after normalization")
+          if not key:raise SystemExit("Staging credential missing")
+          with open(os.environ["GITHUB_ENV"],"a") as f:
+              f.write("STAGING_SUPABASE_URL="+url+"\n")
+              f.write("STAGING_SUPABASE_SERVICE_ROLE_KEY="+key+"\n")
+          PY
+      - name: Download and import historical national archive
+        env:
+          MOI_SEASON: ${{ matrix.season }}
+          MOI_LOCAL_ZIP: /tmp/moi-national-season.zip
+          MOI_REPORT_PATH: /tmp/moi-national-season-report.json
+        run: |
+          set -euo pipefail
+          export MOI_SOURCE_PERIOD="$(python -c 'import calendar,os; s=os.environ["MOI_SEASON"]; y,q=map(int,s.split("S")); y+=1911; m=q*3; print(f"{y}-{m:02d}-{calendar.monthrange(y,m)[1]}")')"
+          curl --fail --location --show-error --silent --retry 3 --retry-delay 5 --connect-timeout 20 --max-time 300 --output "$MOI_LOCAL_ZIP" "https://plvr.land.moi.gov.tw/DownloadSeason?season=${MOI_SEASON}&type=zip&fileName=lvr_landcsv.zip"
+          python scripts/moi_national_import.py
+      - name: Preserve quarterly archive and reconciliation report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: moi-national-${{ matrix.season }}
+          path: /tmp/moi-national-season*
+          retention-days: 7

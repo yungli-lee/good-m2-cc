@@ -71,20 +71,28 @@ export async function GET(request: Request) {
     let output=(data||[]) as unknown as Array<Record<string,unknown>>;
     if(previewStaging && output.length){
       const ids=output.map(row=>Number(row.id));
-      const detail=await db.from("moi_transaction_details").select("transaction_id,detail_type,section_name,parcel_number,building_number,detail_area_sqm").in("transaction_id",ids).order("id");
-      if(detail.error){console.error("real_price_location_detail_error",detail.error.code);return NextResponse.json({error:"query_unavailable"},{status:503});}
+      const allDetails:Array<Record<string,unknown>>=[];
+      for(let offset=0;;offset+=1000){
+        const detail=await db.from("moi_transaction_details").select("transaction_id,detail_type,section_name,parcel_number,building_number,detail_area_sqm,ownership_share_numerator,ownership_share_denominator,parking_type,parking_price_ntd,parking_floor,raw_record").in("transaction_id",ids).order("id").range(offset,offset+999);
+        if(detail.error){console.error("real_price_location_detail_error",detail.error.code);return NextResponse.json({error:"query_unavailable"},{status:503});}
+        allDetails.push(...(detail.data||[]));
+        if(!detail.data||detail.data.length<1000)break;
+      }
       const byTransaction=new Map<number,string[]>();
       const detailsByTransaction=new Map<number,Array<Record<string,unknown>>>();
-      for(const row of detail.data||[]){
-        const existing=detailsByTransaction.get(row.transaction_id)||[];
-        existing.push({detail_type:row.detail_type,section_name:row.section_name,parcel_number:row.parcel_number,building_number:row.building_number,detail_area_sqm:row.detail_area_sqm});
-        detailsByTransaction.set(row.transaction_id,existing);
+      for(const row of allDetails){
+        const transactionId=Number(row.transaction_id);
+        const existing=detailsByTransaction.get(transactionId)||[];
+        const raw=row.raw_record&&typeof row.raw_record==="object"?row.raw_record as Record<string,unknown>:{};
+        const shareWarning=row.detail_type==="land"&&row.ownership_share_numerator==null&&(raw["權利人持分分子"]||raw["權利人持分分母"])?"官方原始持分 "+String(raw["權利人持分分子"]??"未提供")+"／"+String(raw["權利人持分分母"]??"未提供")+"，待核對":null;
+        existing.push({detail_type:row.detail_type,section_name:row.section_name,parcel_number:row.parcel_number,building_number:row.building_number,detail_area_sqm:row.detail_area_sqm,ownership_share_numerator:row.ownership_share_numerator,ownership_share_denominator:row.ownership_share_denominator,parking_type:row.parking_type,parking_price_ntd:row.parking_price_ntd,parking_floor:row.parking_floor,share_warning:shareWarning});
+        detailsByTransaction.set(transactionId,existing);
         if(row.detail_type!=="land")continue;
-        const raw=row.parcel_number||"";
-        const match=/^(\d{4})(\d{4})$/.exec(raw);
-        const number=match?(String(Number(match[1]))+(Number(match[2])?("-"+Number(match[2])):"")):raw;
+        const parcelRaw=typeof row.parcel_number==="string"?row.parcel_number:"";
+        const match=/^(\d{4})(\d{4})$/.exec(parcelRaw);
+        const number=match?(String(Number(match[1]))+(Number(match[2])?("-"+Number(match[2])):"")):parcelRaw;
         const location=[row.section_name,number?number+"地號":""].filter(Boolean).join(" ");
-        if(location){const current=byTransaction.get(row.transaction_id)||[];if(!current.includes(location))current.push(location);byTransaction.set(row.transaction_id,current);}
+        if(location){const current=byTransaction.get(transactionId)||[];if(!current.includes(location))current.push(location);byTransaction.set(transactionId,current);}
       }
       output=output.map(row=>{
         const sectionParcels=byTransaction.get(Number(row.id))||[];
