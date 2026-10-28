@@ -29,8 +29,10 @@ export function RealPriceSearch(){
  const [priceMin,setPriceMin]=useState(""),[priceMax,setPriceMax]=useState("");
  const [areaMin,setAreaMin]=useState(""),[areaMax,setAreaMax]=useState(""),[ageMax,setAgeMax]=useState("");
  const [advanced,setAdvanced]=useState(false),[page,setPage]=useState(1);
+ const [pageInput,setPageInput]=useState("1");
  const [previewSample,setPreviewSample]=useState(false);
  const [queryString,setQueryString]=useState(""),[rows,setRows]=useState<Result[]>([]),[total,setTotal]=useState(0);
+ const totalPages=Math.max(1,Math.ceil(total/20));
  const [status,setStatus]=useState<"idle"|"loading"|"ok"|"empty"|"unavailable"|"error">("idle"),[message,setMessage]=useState("");
  useEffect(()=>{
    if(!county){setDistrictOptions([]);setDistrictFallback(false);setDistrictLoading(false);return;}
@@ -79,9 +81,9 @@ export function RealPriceSearch(){
    if(areaMin)p.set("min_area_sqm",String(Number(areaMin)*3.305785));
    if(areaMax)p.set("max_area_sqm",String(Number(areaMax)*3.305785));
    if(ageMax&&dataset!=="presale")p.set("max_age",ageMax);
-   const str=p.toString();setQueryString(str);setPage(1);void load(str,1);
+   const str=p.toString();setQueryString(str);setPage(1);setPageInput("1");void load(str,1);
  }
- function changePage(next:number){setPage(next);void load(queryString,next);}
+ function changePage(next:number){if(!Number.isSafeInteger(next)||next<1||next>totalPages)return;setPage(next);setPageInput(String(next));void load(queryString,next);}
  const details=(r:Result)=><div style={{padding:14,background:"#f1f5f9",borderRadius:8,overflowWrap:"anywhere"}}>
    <strong>成交重點</strong>
    <p style={{margin:"9px 0"}}><b>位置：</b>{displayLocation(r.location_display||[r.road_name,r.land_section].filter(Boolean).join("／"))}</p>
@@ -192,7 +194,18 @@ export function RealPriceSearch(){
       <button type="button" onClick={()=>setExpandedId(old=>old===r.id?null:r.id)} aria-expanded={expandedId===r.id} style={{marginTop:12,color:"#1d4ed8",fontWeight:700}}>{expandedId===r.id?"收合明細 ▲":"查看交易組合明細 ▼"}</button>
       {expandedId===r.id&&<div style={{marginTop:10}}>{details(r)}</div>}
     </article>)}
-   </div><div style={{display:"flex",gap:12,alignItems:"center",marginTop:18}}><button disabled={page<=1} onClick={()=>changePage(page-1)}>上一頁</button><span aria-current="page">第 {page.toLocaleString("zh-TW")} 頁／共 {Math.ceil(total/20).toLocaleString("zh-TW")} 頁</span><button disabled={page*20>=total} onClick={()=>changePage(page+1)}>下一頁</button></div></>}
+   </div><nav aria-label="成交紀錄分頁" style={{display:"flex",gap:12,alignItems:"center",flexWrap:"wrap",marginTop:18}}>
+    <button type="button" disabled={page<=1} onClick={()=>changePage(1)}>首頁</button>
+    <button type="button" disabled={page<=1} onClick={()=>changePage(page-1)}>上一頁</button>
+    <span aria-current="page">第 {page.toLocaleString("zh-TW")} 頁／共 {totalPages.toLocaleString("zh-TW")} 頁</span>
+    <button type="button" disabled={page>=totalPages} onClick={()=>changePage(page+1)}>下一頁</button>
+    <button type="button" disabled={page>=totalPages} onClick={()=>changePage(totalPages)}>末頁</button>
+    <form onSubmit={e=>{e.preventDefault();changePage(Number(pageInput));}} style={{display:"flex",alignItems:"center",gap:8}}>
+     <label htmlFor="real-price-page">跳至頁次</label>
+     <input id="real-price-page" type="number" min={1} max={totalPages} step={1} required value={pageInput} onChange={e=>setPageInput(e.target.value)} style={{...inputStyle,width:90}}/>
+     <button type="submit">跳頁</button>
+    </form>
+   </nav></>}
   </section>
  </main>;
 }

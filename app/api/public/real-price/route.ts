@@ -33,7 +33,7 @@ export async function GET(request: Request) {
     for(const [a,b] of [[minPrice,maxPrice],[minArea,maxArea],[minAge,maxAge]]) if(a!==undefined&&b!==undefined&&a>b) throw new Error("range");
     if(from&&to&&from>to) throw new Error("dates");
     const rawPage=p.get("page")||"1";if(!/^\d+$/.test(rawPage))throw new Error("page");
-    const page=Number(rawPage);if(!Number.isSafeInteger(page)||page<1||page>1000)throw new Error("page");
+    const page=Number(rawPage);if(!Number.isSafeInteger(page)||page<1||!Number.isSafeInteger(page*20))throw new Error("page");
     const limit=20;
     // Mixed land + building area searches require category-aware OR filters; reject rather than return wrong results.
     if((minArea!==undefined||maxArea!==undefined)&&targets.includes("land")&&targets.some(t=>t!=="land")) throw new Error("mixed_area");

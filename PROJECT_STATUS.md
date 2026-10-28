@@ -204,3 +204,7 @@ Legacy Static Cleanup 完成代表：
 ### Official transaction notes only — 2026-10-28
 - Removed inferred「特殊交易」classification from both API and UI. Desktop/mobile result labels use only「交易備註」when the official 備註 field is nonempty; expanded details display the original text, including its line breaks.
 - No keyword-based special-transaction flag or「特殊交易：是」is generated. If the official note itself contains those words, they remain unchanged as part of the source text.
+
+### Result page navigation — 2026-10-28
+- Added 首頁/末頁 and a bounded integer page input with 跳頁. Previous/next and current/total pages remain visible; controls wrap on mobile.
+- Searching new criteria resets page input to 1. Server pagination accepts safe integer offsets beyond page 1,000, so national-result last pages are reachable.
