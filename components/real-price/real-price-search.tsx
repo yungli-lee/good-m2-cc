@@ -1,6 +1,8 @@
 "use client";
 import {useEffect, useState, type FormEvent, type CSSProperties, type ReactNode} from "react";
 
+import { hasExplicitLane } from "@/lib/real-price/road-search";
+
 const counties=["彰化縣","臺北市","新北市","桃園市","臺中市","臺南市","高雄市","基隆市","新竹市","嘉義市","新竹縣","苗栗縣","南投縣","雲林縣","嘉義縣","屏東縣","宜蘭縣","花蓮縣","臺東縣","澎湖縣","金門縣","連江縣"];
 type Detail={detail_type:string;section_name?:string|null;parcel_number?:string|null;building_number?:string|null;detail_area_sqm?:number|null};
 type Result={history_lookup_key?:string|null;official_note?:string|null;special_status?:"special"|"note_present"|"not_assessed";details?:Detail[];id:number;county:string;district:string;transaction_date:string;target_category:string;total_price_ntd:number|null;land_area_sqm:number|null;building_area_sqm:number|null;road_name?:string|null;land_section?:string|null;location_display?:string|null;unit_price_ntd_per_sqm?:number|null;building_age_years?:number|null;building_pattern?:string|null;floor_display?:string|null};
@@ -19,6 +21,8 @@ export function RealPriceSearch(){
  const [districtLoading,setDistrictLoading]=useState(false),[districtFallback,setDistrictFallback]=useState(false);
  const [dataset,setDataset]=useState("sale"),[targets,setTargets]=useState<string[]>(["house_land","land"]);
  const [road,setRoad]=useState(""),[section,setSection]=useState(""),[period,setPeriod]=useState("3");
+ const [includeLanes,setIncludeLanes]=useState(true);
+ const explicitLane=hasExplicitLane(road);
  const [priceMin,setPriceMin]=useState(""),[priceMax,setPriceMax]=useState("");
  const [areaMin,setAreaMin]=useState(""),[areaMax,setAreaMax]=useState(""),[ageMax,setAgeMax]=useState("");
  const [advanced,setAdvanced]=useState(false),[page,setPage]=useState(1);
@@ -59,7 +63,7 @@ export function RealPriceSearch(){
    if(county)p.set("county",county);
    if(district)p.set("district",district);
    targets.forEach(x=>p.append("target",x));
-   if(road.trim())p.set("road",road.trim());if(section.trim())p.set("section",section.trim());
+   if(road.trim()){p.set("road",road.trim());p.set("include_lanes",String(includeLanes));}if(section.trim())p.set("section",section.trim());
    if(period!=="all"){const date=new Date();date.setFullYear(date.getFullYear()-Number(period));p.set("from",date.toISOString().slice(0,10));}
    if(priceMin)p.set("min_price",String(Number(priceMin)*10000));
    if(priceMax)p.set("max_price",String(Number(priceMax)*10000));
@@ -100,7 +104,11 @@ export function RealPriceSearch(){
     <details style={{marginTop:10,fontSize:13,color:"#475569"}}><summary style={{cursor:"pointer"}}>房地包含什麼？</summary><p>房地包含「土地＋建物」及「土地＋建物＋車位」。房地附帶車位仍算一筆；勾選「車位」另外查詢獨立車位交易。</p></details>
    </fieldset>
    <div style={gridStyle}>
-    {f("道路名稱",<input style={inputStyle} value={road} maxLength={80} placeholder="例如：彰水路" onChange={e=>setRoad(e.target.value)}/>)}
+    <div style={{display:"grid",gap:8}}>
+     {f("道路名稱",<input style={inputStyle} value={road} maxLength={80} placeholder="例如：彰鹿路、民族路129巷" onChange={e=>setRoad(e.target.value)}/>)}
+     <label style={{display:"flex",alignItems:"center",gap:6,fontSize:14}}><input type="checkbox" checked={includeLanes} disabled={explicitLane} onChange={e=>setIncludeLanes(e.target.checked)}/>包含巷弄</label>
+     <span style={{fontSize:12,color:"#64748b"}}>{explicitLane?"已指定巷弄，依輸入範圍查詢。":"未指定路段時，查詢全部路段。"}</span>
+    </div>
     {f("地段",<input style={inputStyle} value={section} maxLength={80} placeholder="例如：秀水段" onChange={e=>setSection(e.target.value)}/>)}
    </div>
    <button type="button" aria-expanded={advanced} onClick={()=>setAdvanced(x=>!x)} style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:12,textAlign:"left",color:"#1d4ed8",background:"#eaf1ff",border:"1px solid #c7d7f7",borderRadius:9,padding:"11px 14px",fontWeight:700,cursor:"pointer"}}><span>進階條件（總價／面積／屋齡）</span><span aria-hidden="true">{advanced?"−":"＋"}</span></button>

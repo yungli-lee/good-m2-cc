@@ -167,3 +167,11 @@ Legacy Static Cleanup 完成代表：
 1. 先補 Sprint A 必須項：表單安全端到端、rate limit、首頁精選物件、audit/blocklist/inquiries 最小管理能力。
 2. 再做 production security hardening：CSP、HSTS、Turnstile production、備份與 rollback SOP。
 3. 最後才排 Sprint B/C：試算工具、TikTok、Dashboard、Analytics。
+
+## Real-price road search — 2026-10-28 Preview
+
+- Preview staging searches `address_display`: imported `road_name` is null for the reported 民族路129巷14號 and 公園路一段133巷6號 records.
+- Road-only input covers every section; specifying a section limits it. Added default-on「包含巷弄」; explicit 巷/弄 overrides that checkbox. Full-width door numbers are supported and numeric lane/alley boundaries remain exact.
+- Database regex filtering happens before count/pagination. The verified dataset retains its existing `road_name` source; it does not currently expose complete addresses for lane filtering. Complete address coverage remains a prerequisite for production rollout.
+- Regression checks cover sections 1–8, section aliases, lane inclusion/exclusion, explicit lane/alley matching, full-width numbers, and unsafe input. Read-only staging SQL recovered both reported records and a 彰鹿路五段 lane record.
+- This change targets `feature/real-price-public-search-v1` Preview.

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createSupabaseAdminClient } from "@/lib/supabase/server";
 import { getSupabaseEnv, getRequestContext } from "@/lib/supabase/env";
+import { roadSearchPattern } from "@/lib/real-price/road-search";
 export const runtime = "edge";
 const TARGETS = new Set(["house_land","land","building","parking"]);
 function decimal(s: string | null) { if(!s) return undefined; if(!/^\d+(?:\.\d+)?$/.test(s)) throw new Error("bad number"); const n=Number(s); if(!Number.isFinite(n)||n>1e14) throw new Error("bad number"); return n; }
@@ -58,7 +59,11 @@ export async function GET(request: Request) {
     if(maxArea!==undefined)q=q.lte(areaColumn,maxArea);
     if(minAge!==undefined)q=q.gte("building_age_years",minAge);
     if(maxAge!==undefined)q=q.lte("building_age_years",maxAge);
-    if(road)q=q.ilike("road_name",`%${road}%`);
+    if(road) {
+      const includeLanes=p.get("include_lanes");
+      if(includeLanes!==null && !["true","false"].includes(includeLanes))throw new Error("bad lanes");
+      q=q.filter(previewStaging?"address_display":"road_name","match",roadSearchPattern(road,includeLanes!=="false"));
+    }
     if(section)q=q.ilike("land_section",`%${section}%`);
     const {data,error,count}=await q.order("transaction_date",{ascending:false}).order("id",{ascending:false}).range((page-1)*limit,page*limit-1);
     if(error) {console.error("real_price_query_error",error.code);return NextResponse.json({error:"query_unavailable"},{status:503});}
