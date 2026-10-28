@@ -1,0 +1,48 @@
+name: MOI 113S4 Changhua historical Preview trial
+on:
+  push:
+    branches: [feature/real-price-public-search-v1]
+    paths: [.github/workflows/moi-history-preview-trial.yml]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: moi-staging-raw-ingest
+  cancel-in-progress: false
+jobs:
+  historical-preview:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    env:
+      STAGING_SUPABASE_URL: ${{ secrets.MOI_STAGING_SUPABASE_URL }}
+      STAGING_SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.MOI_STAGING_SUPABASE_SERVICE_ROLE_KEY }}
+      MOI_LOCAL_ZIP: /tmp/moi-113S4.zip
+      MOI_REGION_FILTER: n
+      MOI_BATCH_ROWS: '400'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Guard staging destination
+        run: |
+          test "$STAGING_SUPABASE_URL" = 'https://niorteztdbuyusemsgwa.supabase.co'
+          test -n "$STAGING_SUPABASE_SERVICE_ROLE_KEY"
+      - name: Download official historical quarter with proven curl method
+        run: |
+          curl --fail --location --show-error --silent --retry 3 --retry-delay 5 --connect-timeout 20 --max-time 240 --output "$MOI_LOCAL_ZIP" 'https://plvr.land.moi.gov.tw/DownloadSeason?season=113S4&type=zip&fileName=lvr_landcsv.zip'
+          python -c 'import os,zipfile; assert zipfile.is_zipfile(os.environ["MOI_LOCAL_ZIP"]), "Not a ZIP"'
+      - name: Validate regional archive layout
+        env:
+          MOI_CHECK_ONLY: '1'
+        run: python scripts/moi_auto_raw_import.py
+      - name: Preserve source archive for reconciliation
+        uses: actions/upload-artifact@v4
+        with:
+          name: moi-113S4-official-archive
+          path: /tmp/moi-113S4.zip
+          retention-days: 7
+      - name: Append regional source rows with reconciliation
+        run: python scripts/moi_auto_raw_import.py
+      - name: Populate regional Preview transaction masters
+        run: python scripts/moi_preview_archive_import.py

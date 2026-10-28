@@ -179,3 +179,8 @@ Legacy Static Cleanup 完成代表：
 ### Custom transaction dates — 2026-10-28 Preview
 - 交易期間新增「自訂日期區間」；接受民國7碼（1100101）及西元ISO（2021-01-01）。起訖日均包含當日。
 - UI rejects invalid dates and reversed ranges; the API independently validates actual calendar dates. Existing recent-year presets remain available.
+
+### First historical Preview batch
+- Added a push-triggered GitHub trial for official 113S4, restricted to 彰化縣 (n). It downloads with curl, validates CSVs, preserves the source ZIP as an Action artifact, and reconciles RAW rows.
+- The first searchable batch includes sale master rows only. Every master is validated before writes; existing transaction source keys are preserved so historical data cannot overwrite newer records. Land/building/parking detail coverage remains pending and the Preview notice still applies.
+- A successful workflow and front-end date/location query are required before reporting this batch as available.

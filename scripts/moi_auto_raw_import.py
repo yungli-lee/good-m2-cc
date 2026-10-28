@@ -69,6 +69,10 @@ def main():
     with zipfile.ZipFile(io.BytesIO(archive)) as z:
         if z.testzip() is not None:raise ValueError("ZIP CRC failed")
         names=[n for n in z.namelist() if n.lower().endswith(".csv") and not n.endswith("/") and kind_for(n)!="other"]
+        region=os.getenv("MOI_REGION_FILTER","").lower()
+        if region:
+            if not re.fullmatch(r"[a-z]",region):raise ValueError("Invalid region filter")
+            names=[n for n in names if n.split("/")[-1].lower().startswith(region+"_")]
         if not names:raise ValueError("ZIP contains no CSV")
         # A 200 OK or valid ZIP with only manifest.csv is not a real transaction archive.
         main_files=[n for n in names if kind_for(n)=="master"]
