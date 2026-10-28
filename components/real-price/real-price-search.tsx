@@ -167,12 +167,13 @@ export function RealPriceSearch(){
     }
    `}</style>
    <div className="real-price-desktop" style={{overflowX:"auto"}}>
-    <table style={{width:"100%",borderCollapse:"collapse",minWidth:670}}>
+    <table style={{width:"100%",borderCollapse:"collapse",minWidth:1060,tableLayout:"fixed"}}>
+     <colgroup><col style={{width:110}}/><col style={{width:125}}/><col style={{width:90}}/><col/><col style={{width:120}}/><col style={{width:140}}/><col style={{width:100}}/></colgroup>
      <thead><tr>{["交易日期","縣市／行政區","標的","地段地號／門牌","總價（萬元）","土地／建物坪數","明細"].map(h=><th key={h} style={{textAlign:"left",padding:10,borderBottom:"1px solid #cbd5e1"}}>{h}</th>)}</tr></thead>
      <tbody>{rows.flatMap(r=>[
        <tr key={r.id} style={{borderBottom:"1px solid #e2e8f0"}}>
-        <td style={{padding:10}}>{r.transaction_date}</td><td>{r.county} {r.district}</td><td>{categoryLabel(r.target_category)}{noteLabel(r)&&<div style={{fontSize:12,color:"#b45309"}}>{noteLabel(r)}</div>}</td>
-        <td style={{minWidth:190,overflowWrap:"anywhere"}}>{displayLocation(r.location_display||[r.road_name,r.land_section].filter(Boolean).join("／"))}</td>
+        <td style={{padding:10,whiteSpace:"nowrap",verticalAlign:"top"}}>{r.transaction_date}</td><td style={{verticalAlign:"top"}}>{r.county}<br/>{r.district}</td><td style={{whiteSpace:"nowrap",verticalAlign:"top"}}>{categoryLabel(r.target_category)}{noteLabel(r)&&<div style={{fontSize:12,color:"#b45309"}}>{noteLabel(r)}</div>}</td>
+        <td style={{overflowWrap:"anywhere",verticalAlign:"top",paddingRight:12}}>{displayLocation(r.location_display||[r.road_name,r.land_section].filter(Boolean).join("／"))}</td>
         <td>{r.total_price_ntd==null?"—":(r.total_price_ntd/10000).toLocaleString("zh-TW")}</td>
         <td>{[r.land_area_sqm,r.building_area_sqm].map(a=>a==null?"—":(a/3.305785).toFixed(2)).join("／")}</td>
         <td><button type="button" onClick={()=>setExpandedId(old=>old===r.id?null:r.id)} aria-expanded={expandedId===r.id} style={{color:"#1d4ed8",fontWeight:600,whiteSpace:"nowrap"}}>{expandedId===r.id?"收合":"查看明細"}</button></td>
