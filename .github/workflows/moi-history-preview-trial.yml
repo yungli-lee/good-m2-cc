@@ -26,8 +26,16 @@ jobs:
           python-version: '3.12'
       - name: Guard staging destination
         run: |
-          test "$STAGING_SUPABASE_URL" = 'https://niorteztdbuyusemsgwa.supabase.co'
-          test -n "$STAGING_SUPABASE_SERVICE_ROLE_KEY"
+          python - <<'PY'
+          import os
+          url=os.environ["STAGING_SUPABASE_URL"].strip().rstrip("/")
+          key=os.environ["STAGING_SUPABASE_SERVICE_ROLE_KEY"].strip()
+          if url!="https://niorteztdbuyusemsgwa.supabase.co":raise SystemExit("Unexpected staging destination after normalization")
+          if not key:raise SystemExit("Staging credential missing")
+          with open(os.environ["GITHUB_ENV"],"a") as f:
+              f.write("STAGING_SUPABASE_URL="+url+"\n")
+              f.write("STAGING_SUPABASE_SERVICE_ROLE_KEY="+key+"\n")
+          PY
       - name: Download official historical quarter with proven curl method
         run: |
           curl --fail --location --show-error --silent --retry 3 --retry-delay 5 --connect-timeout 20 --max-time 240 --output "$MOI_LOCAL_ZIP" 'https://plvr.land.moi.gov.tw/DownloadSeason?season=113S4&type=zip&fileName=lvr_landcsv.zip'
