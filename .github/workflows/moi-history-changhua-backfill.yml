@@ -1,0 +1,59 @@
+name: MOI Changhua 113-114 quarterly backfill
+on:
+  push:
+    branches: [feature/real-price-public-search-v1]
+    paths: [.github/workflows/moi-history-changhua-backfill.yml]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: moi-staging-raw-ingest
+  cancel-in-progress: false
+jobs:
+  quarterly-backfill:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    env:
+      STAGING_SUPABASE_URL: ${{ secrets.MOI_STAGING_SUPABASE_URL }}
+      STAGING_SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.MOI_STAGING_SUPABASE_SERVICE_ROLE_KEY }}
+      MOI_REGION_FILTER: n
+      MOI_BATCH_ROWS: '400'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Guard staging destination
+        run: |
+          python - <<'PY'
+          import os
+          url=os.environ["STAGING_SUPABASE_URL"].strip().rstrip("/")
+          key=os.environ["STAGING_SUPABASE_SERVICE_ROLE_KEY"].strip()
+          if url!="https://niorteztdbuyusemsgwa.supabase.co":raise SystemExit("Unexpected staging destination after normalization")
+          if not key:raise SystemExit("Staging credential missing")
+          with open(os.environ["GITHUB_ENV"],"a") as f:
+              f.write("STAGING_SUPABASE_URL="+url+"\n")
+              f.write("STAGING_SUPABASE_SERVICE_ROLE_KEY="+key+"\n")
+          PY
+      - name: Download, reconcile and expose each quarterly archive
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/moi-changhua-backfill
+          for season in 114S4 114S3 114S2 114S1 113S3 113S2 113S1; do
+            echo "::group::${season} Changhua backfill"
+            export MOI_LOCAL_ZIP="/tmp/moi-changhua-backfill/${season}.zip"
+            curl --fail --location --show-error --silent --retry 3 --retry-delay 5 --connect-timeout 20 --max-time 240 --output "$MOI_LOCAL_ZIP" "https://plvr.land.moi.gov.tw/DownloadSeason?season=${season}&type=zip&fileName=lvr_landcsv.zip"
+            MOI_CHECK_ONLY=1 python scripts/moi_auto_raw_import.py
+            python scripts/moi_auto_raw_import.py
+            python scripts/moi_preview_archive_import.py | tee "/tmp/moi-changhua-backfill/${season}-preview.jsonl"
+            echo "${season}: source and searchable masters completed" >> "$GITHUB_STEP_SUMMARY"
+            echo "::endgroup::"
+          done
+      - name: Preserve archives and per-quarter import summaries
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: moi-changhua-113-114-backfill
+          path: /tmp/moi-changhua-backfill/
+          retention-days: 7

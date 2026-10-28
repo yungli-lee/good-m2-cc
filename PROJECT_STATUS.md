@@ -184,3 +184,9 @@ Legacy Static Cleanup 完成代表：
 - Added a push-triggered GitHub trial for official 113S4, restricted to 彰化縣 (n). It downloads with curl, validates CSVs, preserves the source ZIP as an Action artifact, and reconciles RAW rows.
 - The first searchable batch includes sale master rows only. Every master is validated before writes; existing transaction source keys are preserved so historical data cannot overwrite newer records. Land/building/parking detail coverage remains pending and the Preview notice still applies.
 - A successful workflow and front-end date/location query are required before reporting this batch as available.
+
+### Changhua 113–114 quarterly backfill — 2026-10-28
+- First 113S4 batch completed: 18,351 RAW rows in 11 files reconciled; 3,660 sale transaction masters appended. Browser query for 秀水鄉, 1100101–1131231, 房地＋土地 returned 105 records.
+- Next batch processes 114S4→114S1 and 113S3→113S1 sequentially. Each quarter validates ZIP/CSV, reconciles RAW rows, then exposes sale masters to Preview; already present master source keys remain unchanged.
+- The shared ingestion concurrency group prevents overlap. A failure stops subsequent quarters; completed source files/transaction keys allow safe reruns. Archives and summaries are retained as workflow artifacts.
+- Coverage is not complete until every quarter succeeds; presale/rental masters and detailed ownership/parking coverage are separate pending work.
