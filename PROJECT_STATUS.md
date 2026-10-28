@@ -200,3 +200,7 @@ Legacy Static Cleanup 完成代表：
 - Staging only; production publication gates remain in place. Full national historical completion requires successful job reports for every quarter, not merely a workflow launch.
 - Browser verified 臺北市士林區天玉街13號九樓: parking 坡道平面 / 地下二樓 / 32.96㎡ / 300萬元 and land share 3422/200000.
 - UI verification exposed legacy `moi:<county>:<dataset>:<official-id>` aliases beside the canonical key. A service-only SECURITY INVOKER Preview view suppresses an alias only when that exact canonical source key exists; it preserves raw rows and does not deduplicate merely by date/address/price. Filtering/count/pagination use this view.
+
+### Official transaction notes only — 2026-10-28
+- Removed inferred「特殊交易」classification from both API and UI. Desktop/mobile result labels use only「交易備註」when the official 備註 field is nonempty; expanded details display the original text, including its line breaks.
+- No keyword-based special-transaction flag or「特殊交易：是」is generated. If the official note itself contains those words, they remain unchanged as part of the source text.

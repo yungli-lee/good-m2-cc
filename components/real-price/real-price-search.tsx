@@ -6,13 +6,13 @@ import { hasExplicitLane } from "@/lib/real-price/road-search";
 
 const counties=["彰化縣","臺北市","新北市","桃園市","臺中市","臺南市","高雄市","基隆市","新竹市","嘉義市","新竹縣","苗栗縣","南投縣","雲林縣","嘉義縣","屏東縣","宜蘭縣","花蓮縣","臺東縣","澎湖縣","金門縣","連江縣"];
 type Detail={ownership_share_numerator?:number|null;ownership_share_denominator?:number|null;parking_type?:string|null;parking_price_ntd?:number|null;parking_floor?:string|null;share_warning?:string|null;detail_type:string;section_name?:string|null;parcel_number?:string|null;building_number?:string|null;detail_area_sqm?:number|null};
-type Result={history_lookup_key?:string|null;official_note?:string|null;special_status?:"special"|"note_present"|"not_assessed";details?:Detail[];id:number;county:string;district:string;transaction_date:string;target_category:string;total_price_ntd:number|null;land_area_sqm:number|null;building_area_sqm:number|null;road_name?:string|null;land_section?:string|null;location_display?:string|null;unit_price_ntd_per_sqm?:number|null;building_age_years?:number|null;building_pattern?:string|null;floor_display?:string|null};
+type Result={history_lookup_key?:string|null;official_note?:string|null;details?:Detail[];id:number;county:string;district:string;transaction_date:string;target_category:string;total_price_ntd:number|null;land_area_sqm:number|null;building_area_sqm:number|null;road_name?:string|null;land_section?:string|null;location_display?:string|null;unit_price_ntd_per_sqm?:number|null;building_age_years?:number|null;building_pattern?:string|null;floor_display?:string|null};
 const targetOptions=[{id:"house_land",name:"房地"},{id:"land",name:"土地"},{id:"building",name:"建物"},{id:"parking",name:"車位"}];
 const inputStyle:CSSProperties={width:"100%",minHeight:42,border:"1px solid #cbd5e1",borderRadius:8,padding:"8px 10px",background:"white",color:"#17243b"};
 const gridStyle:CSSProperties={display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(170px,1fr))",gap:12};
 const displayLocation=(value?:string|null)=>value?value.normalize("NFKC").replace(/(\\d)\\s+(?=\\d)/g,"$1").replace(/(\\d)\\s+(?=[巷弄號樓])/g,"$1"):"未提供";
 const formatParcel=(value?:string|null)=>{if(!value)return "";const m=/^(\d{4})(\d{4})$/.exec(value);return m?String(Number(m[1]))+(Number(m[2])?"-"+Number(m[2]):""):value;};
-const specialLabel=(r:Result)=>r.special_status==="special"?"特殊交易":r.special_status==="note_present"?"交易備註":"";
+const noteLabel=(r:Result)=>r.official_note?.trim()?"交易備註":"";
 const categoryLabel=(v:string)=>({house_land:"房地",land:"土地",building:"建物",parking:"車位"} as Record<string,string>)[v]||v;
 export function RealPriceSearch(){
  const [county,setCounty]=useState(""),[district,setDistrict]=useState("");
@@ -88,8 +88,7 @@ export function RealPriceSearch(){
    <p style={{margin:"9px 0"}}><b>總價：</b>{r.total_price_ntd==null?"未提供":(r.total_price_ntd/10000).toLocaleString("zh-TW")+" 萬元"}</p>
    <p style={{margin:"9px 0"}}><b>面積：</b>土地 {r.land_area_sqm==null?"未提供":(r.land_area_sqm/3.305785).toFixed(2)+" 坪"}／建物 {r.building_area_sqm==null?"未提供":(r.building_area_sqm/3.305785).toFixed(2)+" 坪"}</p>
    <p style={{margin:"9px 0"}}><b>建物：</b>{r.building_pattern||"類型未提供"}｜屋齡 {r.building_age_years==null?"未提供":r.building_age_years+" 年"}｜樓層 {r.floor_display||"未提供"}</p>
-   {r.special_status==="special"&&<p style={{margin:"9px 0"}}><b>特殊交易：</b>是</p>}
-   {r.official_note&&<p style={{margin:"9px 0",color:r.special_status==="special"?"#92400e":"#475569"}}>交易備註：{r.official_note}</p>}
+   {r.official_note&&<p style={{margin:"9px 0",color:"#475569",whiteSpace:"pre-wrap"}}>交易備註：{r.official_note}</p>}
    {r.details&&r.details.length>1&&<p style={{margin:"9px 0",fontSize:13,color:"#64748b"}}>本次含 {r.details.filter(d=>d.detail_type==="land").length} 筆土地、{r.details.filter(d=>d.detail_type==="building").length} 筆建物、{r.details.filter(d=>d.detail_type==="parking").length} 筆車位；總價為整筆交易，不代表個別標的價格。</p>}
    {r.details&&r.details.length>0&&<div style={{marginTop:14}}>
     <strong>土地、建物與車位明細（{r.details.length}筆）</strong>
@@ -170,7 +169,7 @@ export function RealPriceSearch(){
      <thead><tr>{["交易日期","縣市／行政區","標的","地段地號／門牌","總價（萬元）","土地／建物坪數","明細"].map(h=><th key={h} style={{textAlign:"left",padding:10,borderBottom:"1px solid #cbd5e1"}}>{h}</th>)}</tr></thead>
      <tbody>{rows.flatMap(r=>[
        <tr key={r.id} style={{borderBottom:"1px solid #e2e8f0"}}>
-        <td style={{padding:10}}>{r.transaction_date}</td><td>{r.county} {r.district}</td><td>{categoryLabel(r.target_category)}{specialLabel(r)&&<div style={{fontSize:12,color:"#b45309"}}>{specialLabel(r)}</div>}</td>
+        <td style={{padding:10}}>{r.transaction_date}</td><td>{r.county} {r.district}</td><td>{categoryLabel(r.target_category)}{noteLabel(r)&&<div style={{fontSize:12,color:"#b45309"}}>{noteLabel(r)}</div>}</td>
         <td style={{minWidth:190,overflowWrap:"anywhere"}}>{displayLocation(r.location_display||[r.road_name,r.land_section].filter(Boolean).join("／"))}</td>
         <td>{r.total_price_ntd==null?"—":(r.total_price_ntd/10000).toLocaleString("zh-TW")}</td>
         <td>{[r.land_area_sqm,r.building_area_sqm].map(a=>a==null?"—":(a/3.305785).toFixed(2)).join("／")}</td>
@@ -183,7 +182,7 @@ export function RealPriceSearch(){
    <div className="real-price-mobile">
     {rows.map(r=><article key={r.id} style={{border:"1px solid #cbd5e1",borderRadius:12,padding:14,background:"white",minWidth:0,overflowWrap:"anywhere"}}>
       <div style={{display:"flex",justifyContent:"space-between",gap:8,flexWrap:"wrap"}}>
-       <strong>{r.transaction_date}</strong><span>{categoryLabel(r.target_category)}｜{r.county} {r.district}</span>{specialLabel(r)&&<span style={{width:"100%",fontSize:13,color:"#b45309"}}>{specialLabel(r)}</span>}
+       <strong>{r.transaction_date}</strong><span>{categoryLabel(r.target_category)}｜{r.county} {r.district}</span>{noteLabel(r)&&<span style={{width:"100%",fontSize:13,color:"#b45309"}}>{noteLabel(r)}</span>}
       </div>
       <p style={{margin:"10px 0",fontWeight:650}}>{displayLocation(r.location_display||[r.road_name,r.land_section].filter(Boolean).join("／"))}</p>
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,fontSize:14}}>

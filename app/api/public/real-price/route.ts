@@ -99,11 +99,10 @@ export async function GET(request: Request) {
         const addr=typeof row.address_display==="string"?row.address_display.trim():"";
         const location_display=[...sectionParcels, ...(addr && !sectionParcels.some(x=>addr.replace(/\s/g,"")===x.replace(/\s/g,""))?[addr]:[])].join("／");
         const raw=row.raw_record&&typeof row.raw_record==="object"?row.raw_record as Record<string,unknown>:{};
-        const note=typeof raw["備註"]==="string"?raw["備註"].trim():"";
-        const special=/(親友|員工|共有人|特殊關係|急買急賣|債權債務|法院|拍賣|瑕疵|未登記|增建|持分|含裝潢|非市場|特殊交易)/.test(note);
+        const note=typeof raw["備註"]==="string"&&raw["備註"].trim()?raw["備註"]:"";
         const {raw_record:ignoredRaw,...safeRow}=row;
         void ignoredRaw;
-        return {...safeRow,location_display:location_display||null,details:detailsByTransaction.get(Number(row.id))||[],official_note:note||null,special_status:note?(special?"special":"note_present"):"not_assessed",history_lookup_key:addr?addr.normalize("NFKC").replace(/\\s/g,""):null};
+        return {...safeRow,location_display:location_display||null,details:detailsByTransaction.get(Number(row.id))||[],official_note:note||null,history_lookup_key:addr?addr.normalize("NFKC").replace(/\\s/g,""):null};
       });
     }
     return NextResponse.json({data:output,total:count??0,page,limit,preview_sample:previewStaging},{headers:{"Cache-Control":previewStaging?"no-store":"public, s-maxage=60"}});
