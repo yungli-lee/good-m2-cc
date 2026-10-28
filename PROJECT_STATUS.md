@@ -175,3 +175,7 @@ Legacy Static Cleanup 完成代表：
 - Database regex filtering happens before count/pagination. The verified dataset retains its existing `road_name` source; it does not currently expose complete addresses for lane filtering. Complete address coverage remains a prerequisite for production rollout.
 - Regression checks cover sections 1–8, section aliases, lane inclusion/exclusion, explicit lane/alley matching, full-width numbers, and unsafe input. Read-only staging SQL recovered both reported records and a 彰鹿路五段 lane record.
 - This change targets `feature/real-price-public-search-v1` Preview.
+
+### Custom transaction dates — 2026-10-28 Preview
+- 交易期間新增「自訂日期區間」；接受民國7碼（1100101）及西元ISO（2021-01-01）。起訖日均包含當日。
+- UI rejects invalid dates and reversed ranges; the API independently validates actual calendar dates. Existing recent-year presets remain available.

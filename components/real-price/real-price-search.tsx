@@ -1,6 +1,7 @@
 "use client";
 import {useEffect, useState, type FormEvent, type CSSProperties, type ReactNode} from "react";
 
+import { parseSearchDate } from "@/lib/real-price/date-range";
 import { hasExplicitLane } from "@/lib/real-price/road-search";
 
 const counties=["彰化縣","臺北市","新北市","桃園市","臺中市","臺南市","高雄市","基隆市","新竹市","嘉義市","新竹縣","苗栗縣","南投縣","雲林縣","嘉義縣","屏東縣","宜蘭縣","花蓮縣","臺東縣","澎湖縣","金門縣","連江縣"];
@@ -21,6 +22,8 @@ export function RealPriceSearch(){
  const [districtLoading,setDistrictLoading]=useState(false),[districtFallback,setDistrictFallback]=useState(false);
  const [dataset,setDataset]=useState("sale"),[targets,setTargets]=useState<string[]>(["house_land","land"]);
  const [road,setRoad]=useState(""),[section,setSection]=useState(""),[period,setPeriod]=useState("3");
+ const [dateFrom,setDateFrom]=useState(""),[dateTo,setDateTo]=useState("");
+ const [dateError,setDateError]=useState("");
  const [includeLanes,setIncludeLanes]=useState(true);
  const explicitLane=hasExplicitLane(road);
  const [priceMin,setPriceMin]=useState(""),[priceMax,setPriceMax]=useState("");
@@ -64,7 +67,13 @@ export function RealPriceSearch(){
    if(district)p.set("district",district);
    targets.forEach(x=>p.append("target",x));
    if(road.trim()){p.set("road",road.trim());p.set("include_lanes",String(includeLanes));}if(section.trim())p.set("section",section.trim());
-   if(period!=="all"){const date=new Date();date.setFullYear(date.getFullYear()-Number(period));p.set("from",date.toISOString().slice(0,10));}
+   setDateError("");
+   if(period==="custom"){
+     const from=parseSearchDate(dateFrom),to=parseSearchDate(dateTo);
+     if(!from||!to){setDateError("請輸入有效日期，例如民國1100101或西元2021-01-01。");return;}
+     if(from>to){setDateError("起始日期不可晚於結束日期。");return;}
+     p.set("from",from);p.set("to",to);
+   } else if(period!=="all"){const date=new Date();date.setFullYear(date.getFullYear()-Number(period));p.set("from",date.toISOString().slice(0,10));}
    if(priceMin)p.set("min_price",String(Number(priceMin)*10000));
    if(priceMax)p.set("max_price",String(Number(priceMax)*10000));
    if(areaMin)p.set("min_area_sqm",String(Number(areaMin)*3.305785));
@@ -96,8 +105,16 @@ export function RealPriceSearch(){
     {f("資料類型",<select style={inputStyle} value={dataset} onChange={e=>setDataset(e.target.value)}><option value="sale">不動產買賣</option><option value="presale">預售屋</option><option value="rental">租賃</option></select>)}
     {f("縣市",<select style={inputStyle} value={county} onChange={e=>{setCounty(e.target.value);setDistrict("");}}><option value="">全國（全部縣市）</option>{counties.map(c=><option key={c} value={c}>{c}</option>)}</select>)}
     {f("鄉鎮市區",!county?<input style={inputStyle} value={district} onChange={e=>setDistrict(e.target.value)} placeholder="全國全部行政區（可輸入名稱）" maxLength={80}/>:districtLoading?<select style={inputStyle} disabled><option>讀取行政區中…</option></select>:districtFallback?<input style={inputStyle} value={district} onChange={e=>setDistrict(e.target.value)} placeholder="行政區服務暫時無法使用，請輸入區名" maxLength={80}/>:<select style={inputStyle} value={district} onChange={e=>setDistrict(e.target.value)}><option value="">全部鄉鎮市區</option>{districtOptions.map(d=><option key={d} value={d}>{d}</option>)}</select>)}
-    {f("交易期間",<select style={inputStyle} value={period} onChange={e=>setPeriod(e.target.value)}>{["1","2","3","5","10","all"].map(v=><option value={v} key={v}>{v==="all"?"全部已發布資料":`近 ${v} 年`}</option>)}</select>)}
+    {f("交易期間",<select style={inputStyle} value={period} onChange={e=>setPeriod(e.target.value)}>{["1","2","3","5","10","all","custom"].map(v=><option value={v} key={v}>{v==="custom"?"自訂日期區間":v==="all"?"全部已發布資料":`近 ${v} 年`}</option>)}</select>)}
    </div>
+   {period==="custom"&&<div>
+    <div style={gridStyle}>
+     {f("起始日期（含當日）",<input style={inputStyle} value={dateFrom} onChange={e=>setDateFrom(e.target.value)} placeholder="1100101 或 2021-01-01" maxLength={10} required aria-describedby="real-price-date-help"/>)}
+     {f("結束日期（含當日）",<input style={inputStyle} value={dateTo} onChange={e=>setDateTo(e.target.value)} placeholder="1131231 或 2024-12-31" maxLength={10} required aria-describedby="real-price-date-help"/>)}
+    </div>
+    <p id="real-price-date-help" style={{fontSize:12,color:"#64748b",marginTop:8}}>可輸入民國7碼或西元日期。例如1100101～1131231，即2021/01/01～2024/12/31。</p>
+    {dateError&&<p role="alert" style={{color:"#b91c1c"}}>{dateError}</p>}
+   </div>}
    <fieldset style={{border:0,padding:0}}>
     <legend style={{fontWeight:700,marginBottom:8}}>交易標的（可複選）</legend>
     <div style={{display:"flex",gap:24,flexWrap:"wrap"}}>{targetOptions.map(t=><label key={t.id} style={{display:"inline-flex",alignItems:"center",gap:6}}><input type="checkbox" checked={targets.includes(t.id)} onChange={e=>setTargets(old=>e.target.checked?[...old,t.id]:old.filter(x=>x!==t.id))}/>{t.name}</label>)}</div>
