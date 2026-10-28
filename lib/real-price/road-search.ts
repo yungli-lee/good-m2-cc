@@ -19,7 +19,7 @@ function tokenNumber(s: string, unit: string) {
 export function roadSearchPattern(input: string, includeLanes = true): string {
   const value = input.normalize("NFKC").replace(/\s/g, "");
   if (!value || value.length > 80 || !/^[\p{Script=Han}0-9之-]+$/u.test(value)) throw new Error("bad road");
-  const road = /^(.*?(?:大道|路|街))(.*)$/.exec(value);
+  const road = /^(.*?(?:大道|路|街|巷|弄))(.*)$/.exec(value);
   if (!road) throw new Error("bad road");
   const tokens = [...road[2].matchAll(/([0-9一二三四五六七八九十百零〇]+(?:[之-][0-9一二三四五六七八九十百零〇]+)?)(段|巷|弄|號)/g)];
   if (tokens.map(t => t[0]).join("") !== road[2]) throw new Error("bad road");
