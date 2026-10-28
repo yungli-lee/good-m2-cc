@@ -22,13 +22,16 @@ def decode(data):
         try:return data.decode(encoding)
         except UnicodeDecodeError:pass
     raise ValueError('unknown encoding')
-def read_csv(z,name):
+def read_csv(z,name,issues=None):
     rows=list(csv.reader(io.StringIO(decode(z.read(name)))))
     if len(rows)<2:raise ValueError('missing CSV headers: '+name)
     headers=rows[0]
     if len(set(headers))!=len(headers):raise ValueError('duplicate headers: '+name)
     for index,row in enumerate(rows[2:],3):
-        if len(row)!=len(headers):raise ValueError(f'CSV width {name}:{index}')
+        if len(row)!=len(headers):
+            if issues is None:raise ValueError(f'CSV width {name}:{index}')
+            issues.append({'file':name,'row':index,'reason':'csv_width_mismatch','expected_columns':len(headers),'actual_columns':len(row),'headers':headers,'original_values':row})
+            continue
         if any('\x00' in value for value in row):raise ValueError(f'NUL in {name}:{index}')
         yield index,dict(zip(headers,row))
 def detail(raw,kind,name,index):
@@ -75,7 +78,7 @@ def parse_archive(path):
             if not match:continue
             region,code=match.groups()
             if region not in COUNTIES:raise ValueError('unknown county '+region)
-            masters=list(read_csv(z,name));details=collections.defaultdict(list);available=[]
+            masters=list(read_csv(z,name,issues));details=collections.defaultdict(list);available=[]
             ids=[r.get('編號') or r.get('序號') for _,r in masters]
             idset=set(ids)
             if len(idset)!=len(ids):raise ValueError('duplicate source IDs in '+base)
@@ -83,7 +86,7 @@ def parse_archive(path):
                 db=base[:-4]+'_'+suffix+'.csv'
                 if db not in names:continue
                 available.append(kind)
-                for index,raw in read_csv(z,names[db]):
+                for index,raw in read_csv(z,names[db],issues):
                     rid=raw.get('編號') or raw.get('序號')
                     if rid not in idset:issues.append({'file':db,'row':index,'reason':'orphan_detail'});continue
                     try:

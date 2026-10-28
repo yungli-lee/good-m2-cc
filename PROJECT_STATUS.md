@@ -208,3 +208,7 @@ Legacy Static Cleanup 完成代表：
 ### Result page navigation — 2026-10-28
 - Added 首頁/末頁 and a bounded integer page input with 跳頁. Previous/next and current/total pages remain visible; controls wrap on mobile.
 - Searching new criteria resets page input to 1. Server pagination accepts safe integer offsets beyond page 1,000, so national-result last pages are reachable.
+
+### National backfill source-width recovery
+- 115S1 stopped on an official 32-column row under a 31-column header. Malformed-width rows are now quarantined with original header and values; no guessed merging or data fabrication. Valid neighboring records can continue, and coverage remains incomplete while reports contain exceptions.
+- Full 115S1 offline validation now processes 129,056 valid masters and 460,950 linked detail rows with four reported source exceptions. Existing newer-period protections and the 7GB checkpoint remain unchanged.

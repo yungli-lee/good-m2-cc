@@ -1,3 +1,4 @@
+# Preserve malformed source rows in quarantine reports; resume valid rows.
 name: MOI national masters and detail backfill
 on:
   push:
