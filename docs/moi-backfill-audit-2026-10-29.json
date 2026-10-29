@@ -1,0 +1,152 @@
+{
+  "checked_at": "2026-10-29T10:53:29Z",
+  "project": "niorteztdbuyusemsgwa",
+  "run_id": 40639000903,
+  "attempt": 6,
+  "all_job_pages_read": 2,
+  "total_jobs": 58,
+  "successful_jobs": 9,
+  "cancelled_jobs": 49,
+  "database_bytes": 4857523347,
+  "last_chunk_id": 11665,
+  "last_append_at": "2026-10-29T10:48:00.038068Z",
+  "coverage_complete": false,
+  "quarters": [
+    {
+      "archive": "113S4",
+      "period": "2024-12-31",
+      "archive_sha256": "4bb63c1858d5bc6f821280a7d7dfa81b6daefa610e5dc47cb7f4fb53e330b913",
+      "expected_chunks": 1565,
+      "matched_chunks": 1565,
+      "missing_chunks": 0,
+      "other_prior_chunk_logs": 37,
+      "validated_masters": 153189,
+      "linked_details": 515918,
+      "source_issues": {
+        "csv_width_mismatch": 2,
+        "orphan_detail": 7,
+        "invalid_official_share": 1
+      }
+    },
+    {
+      "archive": "moi-national-115S2",
+      "period": "2026-06-30",
+      "archive_sha256": "6b4c148bad106a235dddf214001d605ff9ffa45ac50561f7125c6d7fa795d4da",
+      "expected_chunks": 1350,
+      "matched_chunks": 1350,
+      "missing_chunks": 0,
+      "other_prior_chunk_logs": 0,
+      "validated_masters": 131580,
+      "linked_details": 442654,
+      "source_issues": {
+        "invalid_official_share": 2
+      }
+    },
+    {
+      "archive": "moi-national-114S2",
+      "period": "2025-06-30",
+      "archive_sha256": "9562aa1e268bb13698a3118bfaae366edf4499745a637456a953584e5ed2a23c",
+      "expected_chunks": 1388,
+      "matched_chunks": 1388,
+      "missing_chunks": 0,
+      "other_prior_chunk_logs": 30,
+      "validated_masters": 135915,
+      "linked_details": 450503,
+      "source_issues": {
+        "invalid ROC date": 1
+      }
+    },
+    {
+      "archive": "moi-national-115S3",
+      "period": "2026-09-30",
+      "archive_sha256": "f051aa476927cc419689cc0aa3c204748efeb2e870e42069dc7ca31abed7d26a",
+      "expected_chunks": 1542,
+      "matched_chunks": 1542,
+      "missing_chunks": 0,
+      "other_prior_chunk_logs": 0,
+      "validated_masters": 150572,
+      "linked_details": 494404,
+      "source_issues": {
+        "missing identity": 1
+      }
+    },
+    {
+      "archive": "moi-national-114S4",
+      "period": "2025-12-31",
+      "archive_sha256": "68315c006fa367834eaacf032ceccb22a114fc8798d87b8dac23cf5eb64030ab",
+      "expected_chunks": 1311,
+      "matched_chunks": 1311,
+      "missing_chunks": 0,
+      "other_prior_chunk_logs": 27,
+      "validated_masters": 127554,
+      "linked_details": 422159,
+      "source_issues": {
+        "invalid_official_share": 1
+      }
+    },
+    {
+      "archive": "moi-national-114S1",
+      "period": "2025-03-31",
+      "archive_sha256": "c541074f34f4c5ecde81e4926823d664a9eb9d09c2b020ba7179604c88bdeb2a",
+      "expected_chunks": 1317,
+      "matched_chunks": 1317,
+      "missing_chunks": 0,
+      "other_prior_chunk_logs": 38,
+      "validated_masters": 127954,
+      "linked_details": 434562,
+      "source_issues": {
+        "invalid_official_share": 1
+      }
+    },
+    {
+      "archive": "moi-national-115S1",
+      "period": "2026-03-31",
+      "archive_sha256": "8d0bfbaea4fe56d7aa9876b8d587d51d6f69f3419ba1d4e5bab59ec198fe9fe2",
+      "expected_chunks": 1321,
+      "matched_chunks": 1321,
+      "missing_chunks": 0,
+      "other_prior_chunk_logs": 0,
+      "validated_masters": 129056,
+      "linked_details": 460950,
+      "source_issues": {
+        "csv_width_mismatch": 1,
+        "orphan_detail": 2,
+        "invalid ROC date": 1
+      }
+    },
+    {
+      "archive": "moi-national-current",
+      "period": "2026-10-28",
+      "archive_sha256": "8295980ee1a16117dd9fbb76a4242736b9acae5774d8a876363d9e66113aaf5b",
+      "expected_chunks": 163,
+      "matched_chunks": 163,
+      "missing_chunks": 0,
+      "other_prior_chunk_logs": 2,
+      "validated_masters": 12817,
+      "linked_details": 39783,
+      "source_issues": {}
+    },
+    {
+      "archive": "moi-national-114S3",
+      "period": "2025-09-30",
+      "archive_sha256": "a3b3b51c7cdc9b9790a51a78f232fb3875ca5e1ff2f12a32644109dd4ba962bc",
+      "expected_chunks": 1428,
+      "matched_chunks": 1428,
+      "missing_chunks": 0,
+      "other_prior_chunk_logs": 29,
+      "validated_masters": 139510,
+      "linked_details": 454559,
+      "source_issues": {
+        "csv_width_mismatch": 1,
+        "orphan_detail": 66
+      }
+    }
+  ],
+  "repair_state": "parser_prepared_not_applied",
+  "pending_source_repairs": {
+    "recoverable_masters": 5,
+    "recoverable_details": 76,
+    "invalid_dates_quarantined": 2
+  },
+  "preview_verification": "unavailable: browser timeout and public HTTP 403; no additional ingestion started"
+}
