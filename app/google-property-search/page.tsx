@@ -65,7 +65,7 @@ export default function GooglePropertySearchPage(){
    </div>
    <label style={fieldLabel}>其他關鍵字<input style={fieldStyle} value={keyword} onChange={e=>setKeyword(e.target.value)} placeholder="路名、社區、特色等"/></label>
    {error&&<p role="alert" style={{color:"#b3261e"}}>最低值不可大於最高值，請調整範圍。</p>}
-   <button type="submit" disabled={error} style={{background:"#a52727",color:"#fff",fontWeight:700,border:0,borderRadius:8,padding:13,opacity:error?.5:1,cursor:"pointer"}}>開啟 Google 搜尋（四個網站）</button>
+   <button type="submit" disabled={error} style={{background:"#a52727",color:"#fff",fontWeight:700,border:0,borderRadius:8,padding:13,opacity: error ? 0.5 : 1,cursor:"pointer"}}>開啟 Google 搜尋（四個網站）</button>
   </form>
   <h2 style={{fontSize:22,fontWeight:700,margin:"26px 0 12px"}}>依來源網站搜尋</h2>
   <div style={{display:"flex",gap:10,flexWrap:"wrap"}}>{portals.map(p=><a key={p.name} href={error?undefined:google(p.domain)} onClick={e=>{if(error)e.preventDefault()}} target="_blank" rel="noopener noreferrer" style={{border:"1px solid #ccc",borderRadius:8,padding:"10px 14px",textDecoration:"none"}}>{p.name} ↗</a>)}</div>
