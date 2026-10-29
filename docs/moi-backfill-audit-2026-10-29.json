@@ -1,14 +1,14 @@
 {
-  "checked_at": "2026-10-29T11:31:00Z",
+  "checked_at": "2026-10-29T14:26:40Z",
   "project": "niorteztdbuyusemsgwa",
   "run_id": 40639000903,
   "attempt": 8,
   "all_job_pages_read": 2,
   "total_jobs": 58,
-  "successful_jobs": 10,
+  "successful_jobs": 11,
   "cancelled_jobs": 47,
-  "database_bytes": 5669555347,
-  "last_chunk_id": 13692,
+  "database_bytes": 6278876307,
+  "last_chunk_id": 15531,
   "last_append_at": "2026-10-29T11:28:19.90322Z",
   "coverage_complete": false,
   "quarters": [
@@ -155,6 +155,24 @@
       "source_issues": {},
       "report_artifact_id": 12899280573,
       "sha_set_verified": true
+    },
+    {
+      "archive": "113S2",
+      "period": "2024-06-30",
+      "archive_sha256": "e247d0f20365b790685b5e63a2197d40200e0f436ceb14f3ee88e16ecd095972",
+      "expected_chunks": 1839,
+      "matched_chunks": 1839,
+      "missing_chunks": 0,
+      "extra_current_run_chunks": 0,
+      "validated_masters": 180310,
+      "linked_details": 616679,
+      "source_issues": {
+        "invalid_official_share": 1
+      },
+      "report_complete": false,
+      "source_exception_disposition": "official share 7/5 preserved verbatim in raw_record; normalized ownership numerator/denominator null, DB verified",
+      "report_artifact_id": 12902733416,
+      "sha_set_verified": true
     }
   ],
   "repair_state": "113S4_selected_sources_applied_other_repairs_pending",
@@ -188,24 +206,22 @@
     "db_counts_and_official_notes_verified": true
   },
   "latest_check": {
-    "checked_at": "2026-10-29T13:29:57Z",
-    "database_bytes": 5669555347,
-    "last_chunk_id": 13692,
+    "checked_at": "2026-10-29T14:26:40Z",
+    "database_bytes": 6278876307,
+    "last_chunk_id": 15531,
     "preview_read_ok": true,
     "project_status": "ACTIVE_HEALTHY",
     "public_query_verified": true,
-    "cross_period_history_verified": true,
-    "other_active_queries_before_start": 0
+    "cross_period_history_verified": true
   },
-  "active_quarter": {
-    "archive": "113S2",
-    "run_id": 40639000903,
-    "attempt": 8,
-    "job_id": 123477089076,
-    "started_at": "2026-10-29T13:29:31Z",
-    "status": "in_progress",
-    "parser_commit": "23adff7e51e94818b02bbbf94610ceb36f1c58e3",
-    "final_report_verified": false
-  },
-  "in_progress_jobs": 1
+  "active_quarter": null,
+  "in_progress_jobs": 0,
+  "ingestion_pause": {
+    "reason": "near_7GB_capacity_limit",
+    "limit_bytes": 7000000000,
+    "remaining_bytes": 721123693,
+    "next_quarter": "113S1",
+    "resume_requires": "storage plan within existing authorized capacity; no automatic quota increases, production changes or deletion",
+    "automation_paused": true
+  }
 }
