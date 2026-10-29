@@ -2,13 +2,13 @@
   "checked_at": "2026-10-29T11:31:00Z",
   "project": "niorteztdbuyusemsgwa",
   "run_id": 40639000903,
-  "attempt": 6,
+  "attempt": 8,
   "all_job_pages_read": 2,
   "total_jobs": 58,
-  "successful_jobs": 9,
-  "cancelled_jobs": 49,
-  "database_bytes": 4857531539,
-  "last_chunk_id": 11667,
+  "successful_jobs": 10,
+  "cancelled_jobs": 47,
+  "database_bytes": 5669555347,
+  "last_chunk_id": 13692,
   "last_append_at": "2026-10-29T11:28:19.90322Z",
   "coverage_complete": false,
   "quarters": [
@@ -140,6 +140,21 @@
         "csv_width_mismatch": 1,
         "orphan_detail": 66
       }
+    },
+    {
+      "archive": "113S3",
+      "period": "2024-09-30",
+      "archive_sha256": "87ffdebbeb59c51b1bb9cbaddeeedac27fbecd57e9024e53615b5ae33b80e5e0",
+      "expected_chunks": 2025,
+      "matched_chunks": 2025,
+      "missing_chunks": 0,
+      "extra_current_run_chunks": 0,
+      "other_prior_chunk_logs": 41,
+      "validated_masters": 199333,
+      "linked_details": 686910,
+      "source_issues": {},
+      "report_artifact_id": 12899280573,
+      "sha_set_verified": true
     }
   ],
   "repair_state": "113S4_selected_sources_applied_other_repairs_pending",
@@ -173,23 +188,24 @@
     "db_counts_and_official_notes_verified": true
   },
   "latest_check": {
-    "checked_at": "2026-10-29T12:19:36Z",
-    "database_bytes": 4865264787,
-    "last_chunk_id": 11696,
+    "checked_at": "2026-10-29T13:29:57Z",
+    "database_bytes": 5669555347,
+    "last_chunk_id": 13692,
     "preview_read_ok": true,
     "project_status": "ACTIVE_HEALTHY",
     "public_query_verified": true,
     "cross_period_history_verified": true,
-    "ui_examples_verified_by_user": true
+    "other_active_queries_before_start": 0
   },
   "active_quarter": {
-    "archive": "113S3",
+    "archive": "113S2",
     "run_id": 40639000903,
-    "attempt": 7,
-    "job_id": 123441695682,
-    "started_at": "2026-10-29T12:18:23Z",
+    "attempt": 8,
+    "job_id": 123477089076,
+    "started_at": "2026-10-29T13:29:31Z",
     "status": "in_progress",
     "parser_commit": "23adff7e51e94818b02bbbf94610ceb36f1c58e3",
     "final_report_verified": false
-  }
+  },
+  "in_progress_jobs": 1
 }
