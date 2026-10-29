@@ -27,7 +27,6 @@ const categoryLabel=(v:string)=>({house_land:"房地",land:"土地",building:"�
 export function RealPriceSearch(){
  const [county,setCounty]=useState(""),[district,setDistrict]=useState("");
  const [expandedId,setExpandedId]=useState<number|null>(null);
- const [historyId,setHistoryId]=useState<number|null>(null);
  const [districtOptions,setDistrictOptions]=useState<string[]>([]);
  const [districtLoading,setDistrictLoading]=useState(false),[districtFallback,setDistrictFallback]=useState(false);
  const [dataset,setDataset]=useState("sale"),[targets,setTargets]=useState<string[]>(["house_land","land"]);
@@ -70,7 +69,7 @@ export function RealPriceSearch(){
     if(response.status===503 && payload.error==="not_ready"){setRows([]);setTotal(0);setStatus("unavailable");return;}
     if(!response.ok)throw new Error(payload.message||"查詢暫時無法使用");
     const list=Array.isArray(payload.data)?payload.data:[];
-    setRows(list);setExpandedId(null);setHistoryId(null);setTotal(payload.total??0);setPreviewSample(payload.preview_sample===true);setStatus(list.length?"ok":"empty");
+    setRows(list);setExpandedId(null);setTotal(payload.total??0);setPreviewSample(payload.preview_sample===true);setStatus(list.length?"ok":"empty");
   }catch(e){setRows([]);setTotal(0);setMessage(e instanceof Error?e.message:"查詢服務暫時無法使用");setStatus("error");}
  }
  function submit(e:FormEvent<HTMLFormElement>){
@@ -115,10 +114,7 @@ export function RealPriceSearch(){
     </div>
     <p style={{fontSize:12,color:"#64748b",marginTop:6}}>依官方明細列示；面積沿用官方申報值，不再乘上持分。部分期別可能未提供所有類型明細。</p>
    </div>}
-   {r.history_lookup_key&&<div style={{marginTop:12,borderTop:"1px solid #cbd5e1",paddingTop:10}}>
-    <button type="button" onClick={()=>setHistoryId(old=>old===r.id?null:r.id)} style={{color:"#1d4ed8",fontWeight:700}}>{historyId===r.id?"收合歷史交易":"查看歷史交易"}</button>
-    {historyId===r.id&&<p style={{marginTop:8,fontSize:13,color:"#475569"}}>目前驗收資料尚未涵蓋此物件完整歷史成交；不能據此判斷沒有歷史交易。</p>}
-   </div>}
+
   </div>;
  const f=(label:string,element:ReactNode)=><label style={{display:"grid",gap:5,fontSize:14,fontWeight:600}}>{label}{element}</label>;
  return <main style={{maxWidth:1120,margin:"0 auto",padding:"32px 16px 80px",color:"#1e293b"}}>
@@ -168,7 +164,7 @@ export function RealPriceSearch(){
    {status==="unavailable"&&<div role="status" style={{padding:18,background:"#eff6ff",border:"1px solid #bfdbfe",borderRadius:10}}><strong>查詢介面已開放預覽，成交資料尚未開放</strong><p style={{margin:"8px 0 0",color:"#475569"}}>目前可以操作篩選條件並檢查版面。資料完成驗證與發布後，才會顯示真實成交紀錄。</p></div>}
    {status==="error"&&<p role="alert" style={{padding:15,border:"1px solid #fecaca",borderRadius:8}}>{message}</p>}
    {status==="empty"&&<p>在本次可查詢的資料範圍內，沒有符合條件的紀錄。</p>}
-   {status==="ok"&&<>{previewSample&&<p role="status" style={{padding:12,background:"#fff7ed",border:"1px solid #fdba74",borderRadius:8}}>Preview 驗收資料：已開放部分當期與歷史成交資料；全國各期與明細持續補入中，尚非完整市場資料。</p>}<p>符合條件：{total.toLocaleString("zh-TW")} 筆</p><style>{`
+   {status==="ok"&&<>{previewSample&&<p role="status" style={{padding:12,background:"#fff7ed",border:"1px solid #fdba74",borderRadius:8}}>資料範圍提醒：目前提供已匯入的當期及部分歷史資料，尚未涵蓋全國全部年度；查無結果不代表沒有交易。</p>}<p>符合條件：{total.toLocaleString("zh-TW")} 筆</p><style>{`
     .real-price-desktop{display:block}
     .real-price-mobile{display:none}
     @media(max-width:720px){

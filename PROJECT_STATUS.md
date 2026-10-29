@@ -212,3 +212,8 @@ Legacy Static Cleanup 完成代表：
 ### National backfill source-width recovery
 - 115S1 stopped on an official 32-column row under a 31-column header. Malformed-width rows are now quarantined with original header and values; no guessed merging or data fabrication. Valid neighboring records can continue, and coverage remains incomplete while reports contain exceptions.
 - Full 115S1 offline validation now processes 129,056 valid masters and 460,950 linked detail rows with four reported source exceptions. Existing newer-period protections and the 7GB checkpoint remain unchanged.
+
+### Front-end query finalization — 2026-10-29
+- User paused historical backfill monitoring to prioritize query acceptance; historical archives will be coordinated separately. Not all 57 official quarter downloads have been verified.
+- Removed the placeholder property-history button; this release does not implement same-property transaction history.
+- Updated Preview coverage notice to describe partial imported data without claiming that ingestion is running. Road/lane matching, dates, pagination and original official notes remain available.
