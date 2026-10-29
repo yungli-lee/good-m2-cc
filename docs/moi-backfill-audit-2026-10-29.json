@@ -1,5 +1,5 @@
 {
-  "checked_at": "2026-10-29T10:53:29Z",
+  "checked_at": "2026-10-29T11:31:00Z",
   "project": "niorteztdbuyusemsgwa",
   "run_id": 40639000903,
   "attempt": 6,
@@ -7,9 +7,9 @@
   "total_jobs": 58,
   "successful_jobs": 9,
   "cancelled_jobs": 49,
-  "database_bytes": 4857523347,
-  "last_chunk_id": 11665,
-  "last_append_at": "2026-10-29T10:48:00.038068Z",
+  "database_bytes": 4857531539,
+  "last_chunk_id": 11667,
+  "last_append_at": "2026-10-29T11:28:19.90322Z",
   "coverage_complete": false,
   "quarters": [
     {
@@ -142,11 +142,34 @@
       }
     }
   ],
-  "repair_state": "parser_prepared_not_applied",
+  "repair_state": "113S4_selected_sources_applied_other_repairs_pending",
   "pending_source_repairs": {
-    "recoverable_masters": 5,
-    "recoverable_details": 76,
+    "recoverable_masters": 3,
+    "recoverable_details": 69,
     "invalid_dates_quarantined": 2
   },
-  "preview_verification": "unavailable: browser timeout and public HTTP 403; no additional ingestion started"
+  "preview_verification": {
+    "public_query_verified": true,
+    "returned_rows": 13,
+    "history_response_verified": true,
+    "history_verified": true,
+    "cross_period_history_verified": true,
+    "history_groups": 1,
+    "browser_ui_verified": false,
+    "public_ids_only": true
+  },
+  "initial_checked_at": "2026-10-29T10:53:29Z",
+  "selected_source_repair": {
+    "run_id": 40865549847,
+    "commit": "ff570bccf50d07c338842ccb936e7e1870b4657d",
+    "archive": "113S4",
+    "report_artifact_id": 12893511793,
+    "import_scope": "selected_source_keys",
+    "import_complete": true,
+    "complete": false,
+    "applied_masters": 2,
+    "applied_details": 7,
+    "unresolved_issues": 0,
+    "db_counts_and_official_notes_verified": true
+  }
 }
