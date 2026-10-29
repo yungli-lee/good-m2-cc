@@ -40,7 +40,10 @@ function identity(row:HistoryMaster,details:HistoryDetail[]):string|null {
   // Without a registered building number, changed sale areas cannot establish
   // that the same rights (rather than a partial/bundled sale) changed hands.
   if(row.land_area_sqm==null||row.building_area_sqm==null)return null;
-  return JSON.stringify([row.county,row.district,"home",normalized(address),/[樓層]/.test(address)?null:normalized(row.floor_display||""),parcels,Number(row.land_area_sqm).toFixed(2),Number(row.building_area_sqm).toFixed(2)]);
+  const rawFloor=normalized(row.floor_display||"");
+  const wholeBuilding=/^全(?:棟|部)?(?:[／/][0-9一二三四五六七八九十]+[樓層])?$/.test(rawFloor);
+  const floor=/[樓層]/.test(address)?null:wholeBuilding?"全":rawFloor;
+  return JSON.stringify([row.county,row.district,"home",normalized(address),floor,parcels,Number(row.land_area_sqm).toFixed(2),Number(row.building_area_sqm).toFixed(2)]);
 }
 const canonicalSource=(key:string)=>key.replace(/^moi:a:n:/,"n:a:").replace(/^moi:/,"");
 export function buildHistoryGroups(anchors:HistoryMaster[],candidates:HistoryMaster[],details:HistoryDetail[]):Record<string,HistoryEntry[]> {

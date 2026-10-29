@@ -18,6 +18,11 @@ for(const extra of [{address_display:"彰化縣彰化市測試路1號五樓"},{a
 assert.deepEqual(buildHistoryGroups([a],[a,b],[land(1),land(2,"00020000")]),{},"different land bundles at one address are separate");
 assert.equal(buildHistoryGroups([a],[a,b],[land(1,"00010002"),land(2,"1-2")])[1].length,2,"official padded parcel and displayed parcel represent the same lot");
 assert.deepEqual(buildHistoryGroups([a],[a,row(2,b.transaction_date,{building_area_sqm:40})],[land(1),land(2)]),{},"a partial or changed building bundle cannot establish the same property");
+const fullHouse=row(9,'2026-09-02',{address_display:'測試路1號',building_pattern:'透天厝',floor_display:'全棟／2層'});
+const priorHouse=row(10,'2026-06-07',{address_display:'測試路1號',building_pattern:'透天厝',floor_display:'全'});
+assert.equal(buildHistoryGroups([fullHouse],[fullHouse,priorHouse],[land(9),land(10)])[9].length,2,'whole-building labels 全棟/2層 and 全 identify the same transferred scope');
+assert.deepEqual(buildHistoryGroups([fullHouse],[fullHouse,{...priorHouse,floor_display:'一層'}],[land(9),land(10)]),{},'a partial floor remains different from a whole-building sale');
+assert.deepEqual(buildHistoryGroups([fullHouse],[fullHouse,{...priorHouse,floor_display:'非全棟'}],[land(9),land(10)]),{},'only explicit whole-building labels are normalized');
 assert.deepEqual(buildHistoryGroups([a],[a,b],[]),{},"missing identity evidence must not show history");
 assert.equal(eligibleHistoryAddress(row(6,"2020-01-01",{address_display:"測試路1號",building_pattern:"住宅大樓"})),null);
 assert.equal(eligibleHistoryAddress(row(6,"2020-01-01",{target_category:"parking"})),null,"same building address cannot identify a parking space");
