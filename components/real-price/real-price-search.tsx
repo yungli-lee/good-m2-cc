@@ -1,5 +1,5 @@
 "use client";
-import {useEffect, useState, type FormEvent, type CSSProperties, type ReactNode} from "react";
+import {useEffect,useRef, useState, type FormEvent, type CSSProperties, type ReactNode} from "react";
 
 import { parseSearchDate } from "@/lib/real-price/date-range";
 import { hasExplicitLane } from "@/lib/real-price/road-search";
@@ -60,17 +60,24 @@ export function RealPriceSearch(){
      }).finally(()=>{if(!controller.signal.aborted)setDistrictLoading(false);});
    return ()=>controller.abort();
  },[county]);
+ const searchRequest=useRef<AbortController|null>(null);
+ useEffect(()=>()=>searchRequest.current?.abort(),[]);
  async function load(query:string,nextPage:number){
+  searchRequest.current?.abort();
+  const controller=new AbortController();searchRequest.current=controller;
+  const timeout=setTimeout(()=>controller.abort(),20000);
   setStatus("loading");setMessage("");
   const p=new URLSearchParams(query);p.set("page",String(nextPage));
   try{
-    const response=await fetch("/api/public/real-price?"+p.toString(),{cache:"no-store"});
+    const response=await fetch("/api/public/real-price?"+p.toString(),{cache:"no-store",signal:controller.signal});
     const payload=await response.json() as {data?:Result[];total?:number;message?:string;error?:string;preview_sample?:boolean};
     if(response.status===503 && payload.error==="not_ready"){setRows([]);setTotal(0);setStatus("unavailable");return;}
     if(!response.ok)throw new Error(payload.message||"查詢暫時無法使用");
+    if(searchRequest.current!==controller)return;
     const list=Array.isArray(payload.data)?payload.data:[];
     setRows(list);setExpandedId(null);setTotal(payload.total??0);setPreviewSample(payload.preview_sample===true);setStatus(list.length?"ok":"empty");
-  }catch(e){setRows([]);setTotal(0);setMessage(e instanceof Error?e.message:"查詢服務暫時無法使用");setStatus("error");}
+  }catch(e){if(searchRequest.current!==controller)return;setRows([]);setTotal(0);setMessage(controller.signal.aborted?"查詢超過20秒，服務目前回應緩慢，請稍後再試。這不代表沒有符合的交易。":e instanceof Error?e.message:"查詢服務暫時無法使用");setStatus("error");}
+  finally{clearTimeout(timeout);}
  }
  function submit(e:FormEvent<HTMLFormElement>){
    e.preventDefault(); const p=new URLSearchParams({dataset});

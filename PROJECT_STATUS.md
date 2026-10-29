@@ -217,3 +217,6 @@ Legacy Static Cleanup 完成代表：
 - User paused historical backfill monitoring to prioritize query acceptance; historical archives will be coordinated separately. Not all 57 official quarter downloads have been verified.
 - Removed the placeholder property-history button; this release does not implement same-property transaction history.
 - Updated Preview coverage notice to describe partial imported data without claiming that ingestion is running. Road/lane matching, dates, pagination and original official notes remain available.
+
+### Query wait handling — 2026-10-29
+- Search cancels after 20 seconds with an explicit service-delay message; timeout is never reported as zero transactions. New searches cancel older requests and ignore stale responses. Database connectivity remains a separate unresolved issue.
