@@ -1,0 +1,80 @@
+name: MOI Preview verification and selected source repair
+on:
+  push:
+    branches: [feature/real-price-public-search-v1]
+    paths: [.github/workflows/moi-preview-source-repair.yml]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: moi-staging-raw-ingest
+  cancel-in-progress: false
+jobs:
+  verify-public-preview:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Verify public query without private database inputs
+        run: python scripts/verify_moi_public_preview.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: moi-preview-public-verification
+          path: /tmp/moi-preview-verification.json
+          retention-days: 7
+  repair-113S4-selected:
+    needs: verify-public-preview
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      STAGING_SUPABASE_URL: ${{ secrets.MOI_STAGING_SUPABASE_URL }}
+      STAGING_SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.MOI_STAGING_SUPABASE_SERVICE_ROLE_KEY }}
+      MOI_LOCAL_ZIP: /tmp/moi-source-repair-113S4.zip
+      MOI_REPORT_PATH: /tmp/moi-source-repair-113S4-report.json
+      MOI_SOURCE_PERIOD: '2024-12-31'
+      MOI_ONLY_SOURCE_KEYS: '["e:b:RPRNMLLKJIJGFFE87DB","m:b:RPQNMLOJJIJGFDM58DB"]'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Guard staging destination and exact selected scope
+        run: |
+          python - <<'PY'
+          import os,json
+          if os.environ['STAGING_SUPABASE_URL'].strip().rstrip('/')!='https://niorteztdbuyusemsgwa.supabase.co':raise SystemExit('Unexpected destination')
+          if not os.environ['STAGING_SUPABASE_SERVICE_ROLE_KEY'].strip():raise SystemExit('Missing staging credential')
+          if len(json.loads(os.environ['MOI_ONLY_SOURCE_KEYS']))!=2:raise SystemExit('Unexpected repair scope')
+          PY
+      - name: Download and verify exact reviewed official archive
+        run: |
+          set -euo pipefail
+          curl --fail --location --show-error --silent --retry 2 --retry-delay 5 --connect-timeout 20 --max-time 300 --output "$MOI_LOCAL_ZIP" 'https://plvr.land.moi.gov.tw/DownloadSeason?season=113S4&type=zip&fileName=lvr_landcsv.zip'
+          python - <<'PY'
+          import hashlib,os
+          if hashlib.sha256(open(os.environ['MOI_LOCAL_ZIP'],'rb').read()).hexdigest()!='4bb63c1858d5bc6f821280a7d7dfa81b6daefa610e5dc47cb7f4fb53e330b913':raise SystemExit('Source archive differs from reviewed source; no writes allowed')
+          PY
+      - name: Apply only two reviewed masters and their authoritative details
+        # The existing RPC preserves newer sources and enforces the 7GB check.
+        run: python scripts/moi_national_import.py
+      - name: Reconcile selected-scope acknowledgements
+        run: |
+          python - <<'PY'
+          import json,os
+          report=json.load(open(os.environ['MOI_REPORT_PATH']))
+          if report.get('import_scope')!='selected_source_keys' or report.get('complete') is not False:raise SystemExit('Unexpected coverage declaration')
+          if set(report.get('selected_source_keys',[]))!=set(json.loads(os.environ['MOI_ONLY_SOURCE_KEYS'])):raise SystemExit('Selected identity mismatch')
+          if sum(batch.get('processed',0) for batch in report.get('batches',[]))!=2:raise SystemExit('Selected count mismatch')
+          print(json.dumps({'selected_records':2,'acknowledged_records':2,'archive_complete':False}))
+          PY
+      - name: Preserve selected-scope repair report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: moi-source-repair-113S4-selected
+          path: /tmp/moi-source-repair-113S4-report.json
+          retention-days: 7

@@ -4,6 +4,14 @@
 
 實際公開查詢確認主列表可讀取，但歷史比對因舊來源「全棟／2層」與官方來源「全」的文字差異漏掉同一整棟成交。新增明確整棟標示的相容規則；「一層」及「非全棟」不會被併為整棟。仍保留完整門牌、地號組合與面積比對。新增真實格式回歸案例，部署後再核對跨日期歷史API；未將空的歷史回應當作功能已通過。
 
+## 2026-10-29 公開Preview驗證及113S4小範圍修復流程
+
+新增 `.github/workflows/moi-preview-source-repair.yml`：以沒有資料庫憑證的獨立job，使用一般行政區與日期篩選讀取公開Preview；歷史驗證的ID僅取自同一公開列表回應，不使用從私有DB查得的地址或ID。使用誠實CI User-Agent，不偽裝瀏覽器、不調低Cloudflare保護。若公開查詢失敗，後續修復job不執行。
+
+403的body已確認為Cloudflare1010；依[官方文件](https://developers.cloudflare.com/support/troubleshooting/http-status-codes/cloudflare-1xxx-errors/error-1010/)使用明確識別應用程式的User-Agent後，只讀公開查詢已成功返回13筆9月交易。這是正常API客戶端設定，沒有關閉或略過保護；沒有再執行先前被拒絕的私有地址/ID外傳測試。
+
+只有公開查詢成功才依序下載、核對原始113S4 ZIP SHA，使用最新parser與`MOI_ONLY_SOURCE_KEYS`修復指定2筆主檔（最多7筆連結明細）；並核對每筆RPC回覆。與既有匯入共用concurrency鎖、staging目的地保護、保留新期及7GB RPC檢查。不是重跑全國或整個季度。歷史API驗證另記狀態，不將尚未驗證的UI功能混報通過。此流程狀態以實際Actions報告為準。
+
 ## 2026-10-29 18:53 全國歷史回補對帳與來源修復準備
 
 run `40639000903` attempt6 的全部58項jobs（兩頁）已讀取：9項成功、49項取消；113S4於18:48完成本次續跑。已下載當期及113S4～115S3共9份最新對帳報告，從原始季度ZIP用舊版parser重建每個預期chunk SHA，逐一與資料庫批次紀錄核對，9份均無遺漏chunk。此結論只表示舊parser接受的資料已寫入，不代表來源異常列或其餘49季完成。完整數字見 `docs/moi-backfill-audit-2026-10-29.json`；跨來源批次或筆數不可相加當作去重後成交筆數。
