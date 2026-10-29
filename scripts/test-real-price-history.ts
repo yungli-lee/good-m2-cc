@@ -16,6 +16,7 @@ for(const extra of [{address_display:"彰化縣彰化市測試路1號五樓"},{a
  assert.deepEqual(buildHistoryGroups([a],[a,row(2,b.transaction_date,extra)],[land(1),land(2)]),{},"other units/areas/datasets cannot be merged");
 }
 assert.deepEqual(buildHistoryGroups([a],[a,b],[land(1),land(2,"00020000")]),{},"different land bundles at one address are separate");
+assert.equal(buildHistoryGroups([a],[a,b],[land(1,"00010002"),land(2,"1-2")])[1].length,2,"official padded parcel and displayed parcel represent the same lot");
 assert.deepEqual(buildHistoryGroups([a],[a,row(2,b.transaction_date,{building_area_sqm:40})],[land(1),land(2)]),{},"a partial or changed building bundle cannot establish the same property");
 assert.deepEqual(buildHistoryGroups([a],[a,b],[]),{},"missing identity evidence must not show history");
 assert.equal(eligibleHistoryAddress(row(6,"2020-01-01",{address_display:"測試路1號",building_pattern:"住宅大樓"})),null);

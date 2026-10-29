@@ -8,6 +8,13 @@ export type HistoryMaster = {
 export type HistoryDetail = {transaction_id:number;detail_type:string;section_name:string|null;parcel_number:string|null;ownership_share_numerator:number|null;ownership_share_denominator:number|null};
 export type HistoryEntry = {id:number;transaction_date:string;total_price_ntd:number|null;land_area_sqm:number|null;building_area_sqm:number|null;official_note:string|null};
 const normalized=(s:string)=>s.normalize("NFKC").replace(/\s/g,"");
+const parcelIdentity=(value:string)=>{
+  const text=normalized(value).replace(/地號$/,"");
+  const padded=/^(\d{4})(\d{4})$/.exec(text);
+  if(padded)return `${Number(padded[1])}:${Number(padded[2])}`;
+  const displayed=/^(\d+)(?:-(\d+))?$/.exec(text);
+  return displayed?`${Number(displayed[1])}:${Number(displayed[2]||0)}`:text;
+};
 export function eligibleHistoryAddress(row:HistoryMaster):string|null {
   const address=row.address_display?.trim();
   if(row.dataset_type!=="sale"||!address||/[／/、,，;；~～]/.test(address)||/[0-9０-９一二三四五六七八九十]至[0-9０-９一二三四五六七八九十]/.test(address))return null;
@@ -22,12 +29,12 @@ function identity(row:HistoryMaster,details:HistoryDetail[]):string|null {
   const lands=details.filter(d=>d.transaction_id===row.id&&d.detail_type==="land");
   if(!address||!lands.length||lands.some(d=>!d.section_name||!d.parcel_number))return null;
   // Do not merge different land bundles at the same door number.
-  const parcels=[...new Set(lands.map(d=>normalized(d.section_name!)+":"+normalized(d.parcel_number!)))].sort();
+  const parcels=[...new Set(lands.map(d=>normalized(d.section_name!)+":"+parcelIdentity(d.parcel_number!)))].sort();
   if(row.target_category==="land"){
     // A sale of a different share is not evidence of reselling the same interest.
     if(lands.some(d=>d.ownership_share_numerator==null||!d.ownership_share_denominator))return null;
     const gcd=(a:number,b:number):number=>b?gcd(b,a%b):a;
-    const shares=lands.map(d=>{const n=d.ownership_share_numerator!,v=d.ownership_share_denominator!,g=gcd(n,v);return `${normalized(d.section_name!)}:${normalized(d.parcel_number!)}:${n/g}/${v/g}`;}).sort();
+    const shares=lands.map(d=>{const n=d.ownership_share_numerator!,v=d.ownership_share_denominator!,g=gcd(n,v);return `${normalized(d.section_name!)}:${parcelIdentity(d.parcel_number!)}:${n/g}/${v/g}`;}).sort();
     return JSON.stringify([row.county,row.district,"land",normalized(address),shares]);
   }
   // Without a registered building number, changed sale areas cannot establish
