@@ -1,0 +1,28 @@
+import assert from "node:assert/strict";
+import {buildHistoryGroups,eligibleHistoryAddress,type HistoryMaster,type HistoryDetail} from "../lib/real-price/history.ts";
+const row=(id:number,date:string,extra:Partial<HistoryMaster>={}):HistoryMaster=>({id,county:"彰化縣",district:"彰化市",dataset_type:"sale",target_category:"house_land",address_display:"彰化縣彰化市測試路1號四樓",floor_display:"四層",building_pattern:"華廈",source_record_key:`n:a:${id}`,source_period_date:"2026-09-30",transaction_date:date,total_price_ntd:id*1000000,land_area_sqm:20,building_area_sqm:80,raw_record:{備註:"官方原文；"},...extra});
+const land=(id:number,parcel="00010000"):HistoryDetail=>({transaction_id:id,detail_type:"land",section_name:"測試段",parcel_number:parcel,ownership_share_numerator:1,ownership_share_denominator:10});
+const a=row(1,"2026-08-23"),b=row(2,"2020-01-01"),c=row(3,"2014-03-01");
+const history=buildHistoryGroups([a],[a,b,c],[land(1),land(2),land(3)]);
+assert.equal(history[1].length,3,"one visible anchor must discover all three sales across all dates");
+assert.deepEqual(history[1].map(r=>r.transaction_date),["2026-08-23","2020-01-01","2014-03-01"]);
+assert.equal(history[1][0].official_note,"官方原文；");
+assert.deepEqual(buildHistoryGroups([a],[a],[land(1)]),{},"a single sale must not get a button");
+const duplicate=row(4,a.transaction_date,{source_record_key:"moi:a:n:1",total_price_ntd:a.total_price_ntd});
+assert.deepEqual(buildHistoryGroups([a],[a,duplicate],[land(1),land(4)]),{},"legacy aliases/duplicate imports are one event");
+const duplicateEvent=row(5,a.transaction_date,{total_price_ntd:a.total_price_ntd});
+assert.deepEqual(buildHistoryGroups([a],[a,duplicateEvent],[land(1),land(5)]),{},"identical sale facts cannot create history");
+for(const extra of [{address_display:"彰化縣彰化市測試路1號五樓"},{address_display:"彰化縣彰化市測試路2號四樓"},{county:"臺中市"},{dataset_type:"rental"}]){
+ assert.deepEqual(buildHistoryGroups([a],[a,row(2,b.transaction_date,extra)],[land(1),land(2)]),{},"other units/areas/datasets cannot be merged");
+}
+assert.deepEqual(buildHistoryGroups([a],[a,b],[land(1),land(2,"00020000")]),{},"different land bundles at one address are separate");
+assert.deepEqual(buildHistoryGroups([a],[a,row(2,b.transaction_date,{building_area_sqm:40})],[land(1),land(2)]),{},"a partial or changed building bundle cannot establish the same property");
+assert.deepEqual(buildHistoryGroups([a],[a,b],[]),{},"missing identity evidence must not show history");
+assert.equal(eligibleHistoryAddress(row(6,"2020-01-01",{address_display:"測試路1號",building_pattern:"住宅大樓"})),null);
+assert.equal(eligibleHistoryAddress(row(6,"2020-01-01",{target_category:"parking"})),null,"same building address cannot identify a parking space");
+assert.equal(eligibleHistoryAddress(row(6,"2020-01-01",{address_display:"測試路1至9號"})),null);
+assert.equal(eligibleHistoryAddress(row(6,"2020-01-01",{address_display:"至善路1號四樓"})),"至善路1號四樓","a street name containing 至 is not an address range");
+const la=row(7,"2020-01-01",{target_category:"land",address_display:"測試段1地號"}),lb=row(8,"2010-01-01",{target_category:"land",address_display:"測試段1地號"});
+assert.deepEqual(buildHistoryGroups([la],[la,lb],[land(7),{...land(8),ownership_share_denominator:20}]),{},"different ownership interests are separate");
+assert.equal(buildHistoryGroups([la],[la,lb],[land(7),{...land(8),ownership_share_numerator:2,ownership_share_denominator:20}])[7].length,2,"equivalent ownership fractions match");
+console.log("Property history identity, all-period lookup and deduplication regression cases passed");

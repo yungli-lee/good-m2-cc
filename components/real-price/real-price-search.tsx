@@ -3,6 +3,7 @@ import {useEffect,useRef, useState, type FormEvent, type CSSProperties, type Rea
 
 import { parseSearchDate } from "@/lib/real-price/date-range";
 import { hasExplicitLane } from "@/lib/real-price/road-search";
+import type { HistoryEntry } from "@/lib/real-price/history";
 
 const counties=["彰化縣","臺北市","新北市","桃園市","臺中市","臺南市","高雄市","基隆市","新竹市","嘉義市","新竹縣","苗栗縣","南投縣","雲林縣","嘉義縣","屏東縣","宜蘭縣","花蓮縣","臺東縣","澎湖縣","金門縣","連江縣"];
 type Detail={ownership_share_numerator?:number|null;ownership_share_denominator?:number|null;parking_type?:string|null;parking_price_ntd?:number|null;parking_floor?:string|null;share_warning?:string|null;detail_type:string;section_name?:string|null;parcel_number?:string|null;building_number?:string|null;detail_area_sqm?:number|null};
@@ -59,8 +60,23 @@ export function RealPriceSearch(){
  const [pageInput,setPageInput]=useState("1");
  const [previewSample,setPreviewSample]=useState(false);
  const [queryString,setQueryString]=useState(""),[rows,setRows]=useState<Result[]>([]),[total,setTotal]=useState(0);
+ const [histories,setHistories]=useState<Record<string,HistoryEntry[]>>({}),[historyId,setHistoryId]=useState<number|null>(null);
+ const [historyStatus,setHistoryStatus]=useState<"idle"|"loading"|"ready"|"unavailable">("idle");
  const totalPages=Math.max(1,Math.ceil(total/20));
  const [status,setStatus]=useState<"idle"|"loading"|"ok"|"empty"|"unavailable"|"error">("idle"),[message,setMessage]=useState("");
+ useEffect(()=>{
+   setHistories({});setHistoryId(null);
+   if(status!=="ok"||!previewSample||!rows.length){setHistoryStatus("idle");return;}
+   const controller=new AbortController();let active=true;
+   const timer=setTimeout(()=>controller.abort(),13000);
+   setHistoryStatus("loading");
+   fetch("/api/public/real-price-history",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({ids:rows.map(row=>row.id)}),signal:controller.signal,cache:"no-store"})
+     .then(async response=>{if(!response.ok)throw new Error("history_unavailable");return response.json() as Promise<{histories:Record<string,HistoryEntry[]>}>;})
+     .then(payload=>{if(active){setHistories(payload.histories);setHistoryStatus("ready");}})
+     .catch(()=>{if(active)setHistoryStatus("unavailable");})
+     .finally(()=>clearTimeout(timer));
+   return ()=>{active=false;clearTimeout(timer);controller.abort();};
+ },[rows,status,previewSample]);
  useEffect(()=>{
    if(!county){setDistrictOptions([]);setDistrictFallback(false);setDistrictLoading(false);return;}
    const controller=new AbortController();
@@ -141,6 +157,16 @@ export function RealPriceSearch(){
    </div>}
 
   </div>;
+ const historyButton=(r:Result)=>histories[r.id]?.length>1?<button type="button" aria-expanded={historyId===r.id} onClick={()=>setHistoryId(old=>old===r.id?null:r.id)} style={{color:"#1d4ed8",fontWeight:700,display:"block",minHeight:32,marginTop:8,whiteSpace:"nowrap"}}>{historyId===r.id?"收合歷史交易":`歷史交易（${histories[r.id].length}筆）`}</button>:null;
+ const historyPanel=(r:Result)=><section aria-label="同物件歷次成交" style={{margin:"12px 0",padding:14,background:"#eff6ff",border:"1px solid #bfdbfe",borderRadius:8}}>
+  <strong>同一物件歷次成交（已匯入資料，共{histories[r.id]?.length||0}筆）</strong>
+  <p style={{fontSize:13,color:"#475569",margin:"8px 0"}}>包含本筆，依成交日期排序，不受目前查詢期間及篩選條件限制。歷年資料仍在補入，以下不代表完整交易沿革。</p>
+  <ol style={{listStyle:"none",padding:0,margin:0,display:"grid",gap:8}}>{(histories[r.id]||[]).map(entry=><li key={entry.id} style={{background:"white",borderRadius:8,padding:12,overflowWrap:"anywhere"}}>
+   <div style={{display:"flex",justifyContent:"space-between",gap:8,flexWrap:"wrap"}}><b>{entry.transaction_date}{entry.id===r.id?"（本筆）":""}</b><b>{entry.total_price_ntd==null?"總價未提供":(entry.total_price_ntd/10000).toLocaleString("zh-TW")+" 萬元"}</b></div>
+   <div style={{fontSize:14,marginTop:5}}>土地／建物：{[entry.land_area_sqm,entry.building_area_sqm].map(area=>area==null?"未提供":(area/3.305785).toFixed(2)).join("／")} 坪</div>
+   {entry.official_note&&<p style={{whiteSpace:"pre-wrap",fontSize:13,color:"#475569",marginTop:5}}>交易備註：{entry.official_note}</p>}
+  </li>)}</ol>
+ </section>;
  const f=(label:string,element:ReactNode)=><label style={{display:"grid",gap:5,fontSize:14,fontWeight:600}}>{label}{element}</label>;
  return <main style={{maxWidth:1120,margin:"0 auto",padding:"32px 16px 80px",color:"#1e293b"}}>
   <h1 style={{fontSize:"clamp(25px,4vw,36px)",fontWeight:750}}>全國實價登錄查詢</h1>
@@ -207,9 +233,11 @@ export function RealPriceSearch(){
       .real-price-mobile{display:grid;gap:12px}
     }
    `}</style>
+   {historyStatus==="loading"&&<p style={{fontSize:13,color:"#64748b"}}>正在核對全部已匯入資料的歷次成交…</p>}
+   {historyStatus==="unavailable"&&<p role="status" style={{fontSize:13,color:"#92400e"}}>歷史交易確認暫時無法完成；本次未顯示歷史按鈕，不代表物件沒有其他成交紀錄。</p>}
    <div className="real-price-desktop" style={{overflowX:"auto"}}>
-    <table style={{width:"100%",borderCollapse:"collapse",minWidth:1060,tableLayout:"fixed"}}>
-     <colgroup><col style={{width:110}}/><col style={{width:125}}/><col style={{width:90}}/><col/><col style={{width:120}}/><col style={{width:140}}/><col style={{width:100}}/></colgroup>
+    <table style={{width:"100%",borderCollapse:"collapse",minWidth:1110,tableLayout:"fixed"}}>
+     <colgroup><col style={{width:110}}/><col style={{width:125}}/><col style={{width:90}}/><col/><col style={{width:120}}/><col style={{width:140}}/><col style={{width:150}}/></colgroup>
      <thead><tr>{["交易日期","縣市／行政區","標的","地段地號／門牌","總價（萬元）","土地／建物坪數","明細"].map(h=><th key={h} style={{textAlign:"left",padding:10,borderBottom:"1px solid #cbd5e1"}}>{h}</th>)}</tr></thead>
      <tbody>{rows.flatMap(r=>[
        <tr key={r.id} style={{borderBottom:"1px solid #e2e8f0"}}>
@@ -217,9 +245,9 @@ export function RealPriceSearch(){
         <td style={{overflowWrap:"anywhere",verticalAlign:"top",paddingRight:12}}><span>{compactLocation(r).main}</span>{compactLocation(r).summary&&<div style={{fontSize:12,color:"#64748b",marginTop:4}}>{compactLocation(r).summary}</div>}</td>
         <td>{r.total_price_ntd==null?"—":(r.total_price_ntd/10000).toLocaleString("zh-TW")}</td>
         <td>{[r.land_area_sqm,r.building_area_sqm].map(a=>a==null?"—":(a/3.305785).toFixed(2)).join("／")}</td>
-        <td><button type="button" onClick={()=>setExpandedId(old=>old===r.id?null:r.id)} aria-expanded={expandedId===r.id} style={{color:"#1d4ed8",fontWeight:600,whiteSpace:"nowrap"}}>{expandedId===r.id?"收合":"查看明細"}</button></td>
+        <td><button type="button" onClick={()=>setExpandedId(old=>old===r.id?null:r.id)} aria-expanded={expandedId===r.id} style={{color:"#1d4ed8",fontWeight:600,whiteSpace:"nowrap"}}>{expandedId===r.id?"收合":"查看明細"}</button>{historyButton(r)}</td>
        </tr>,
-       ...(expandedId===r.id?[<tr key={String(r.id)+"-detail"}><td colSpan={7}>{details(r)}</td></tr>]:[])
+       ...(expandedId===r.id||historyId===r.id?[<tr key={String(r.id)+"-detail"}><td colSpan={7}>{expandedId===r.id&&details(r)}{historyId===r.id&&historyPanel(r)}</td></tr>]:[])
       ])}</tbody>
     </table>
    </div>
@@ -235,6 +263,8 @@ export function RealPriceSearch(){
       </div>
       <button type="button" onClick={()=>setExpandedId(old=>old===r.id?null:r.id)} aria-expanded={expandedId===r.id} style={{marginTop:12,color:"#1d4ed8",fontWeight:700}}>{expandedId===r.id?"收合明細 ▲":"查看交易組合明細 ▼"}</button>
       {expandedId===r.id&&<div style={{marginTop:10}}>{details(r)}</div>}
+      <div>{historyButton(r)}</div>
+      {historyId===r.id&&historyPanel(r)}
     </article>)}
    </div><nav aria-label="成交紀錄分頁" style={{display:"flex",gap:12,alignItems:"center",flexWrap:"wrap",marginTop:18}}>
     <button type="button" disabled={page<=1} onClick={()=>changePage(1)}>首頁</button>
