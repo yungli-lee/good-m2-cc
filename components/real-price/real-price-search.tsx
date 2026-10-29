@@ -31,6 +31,22 @@ export function RealPriceSearch(){
  const [districtLoading,setDistrictLoading]=useState(false),[districtFallback,setDistrictFallback]=useState(false);
  const [dataset,setDataset]=useState("sale"),[targets,setTargets]=useState<string[]>(["house_land","land"]);
  const [road,setRoad]=useState(""),[section,setSection]=useState(""),[period,setPeriod]=useState("3");
+ const [sectionOptions,setSectionOptions]=useState<string[]>([]);
+ const [sectionLoading,setSectionLoading]=useState(false),[sectionUnavailable,setSectionUnavailable]=useState(false);
+ const filteredSections=sectionOptions.filter(name=>name.includes(section.trim()));
+ useEffect(()=>{
+   setSection("");setSectionOptions([]);setSectionUnavailable(false);
+   if(!county||!district){setSectionLoading(false);return;}
+   const controller=new AbortController();
+   const timer=setTimeout(()=>{setSectionLoading(false);setSectionUnavailable(true);controller.abort();},9000);
+   setSectionLoading(true);
+   fetch("/api/public/real-price-sections?"+new URLSearchParams({county,district}),{signal:controller.signal})
+     .then(async response=>{if(!response.ok)throw new Error("sections_unavailable");return response.json() as Promise<{sections?:string[]}>;})
+     .then(payload=>{if(!controller.signal.aborted){if(!payload.sections?.length)throw new Error("sections_missing");setSectionOptions(payload.sections);}})
+     .catch(()=>{if(!controller.signal.aborted)setSectionUnavailable(true);})
+     .finally(()=>{clearTimeout(timer);if(!controller.signal.aborted)setSectionLoading(false);});
+   return ()=>{clearTimeout(timer);controller.abort();};
+ },[county,district]);
  const [dateFrom,setDateFrom]=useState(""),[dateTo,setDateTo]=useState("");
  const [dateError,setDateError]=useState("");
  const [includeLanes,setIncludeLanes]=useState(true);
@@ -153,7 +169,17 @@ export function RealPriceSearch(){
      <label style={{display:"flex",alignItems:"center",gap:6,fontSize:14}}><input type="checkbox" checked={includeLanes} disabled={explicitLane} onChange={e=>setIncludeLanes(e.target.checked)}/>包含巷弄</label>
      <span style={{fontSize:12,color:"#64748b"}}>{explicitLane?"已指定巷弄，依輸入範圍查詢。":"未指定路段時，查詢全部路段。"}</span>
     </div>
-    {f("地段",<input style={inputStyle} value={section} maxLength={80} placeholder="例如：秀水段" onChange={e=>setSection(e.target.value)}/>)}
+    <div style={{display:"grid",gap:8,alignContent:"start"}}>
+     {f("地段（可輸入或選擇）",<input style={inputStyle} value={section} maxLength={80} placeholder="輸入部分段名，例如：秀水、復興" aria-describedby="section-help" onChange={e=>setSection(e.target.value)}/>)}
+     <label style={{display:"grid",gap:5,fontSize:13}}>挑選段名
+      <select style={inputStyle} value="" disabled={!county||!district||sectionLoading||!sectionOptions.length} onChange={e=>{if(e.target.value)setSection(e.target.value);}}>
+       <option value="">{sectionLoading?"讀取段名中…":!county||!district?"先選縣市與鄉鎮市區":filteredSections.length?`選擇段名（${filteredSections.length}個）`:"沒有符合的選項，可修改關鍵字"}</option>
+       {filteredSections.map(name=><option key={name} value={name}>{name}</option>)}
+      </select>
+     </label>
+     <span id="section-help" role="status" style={{fontSize:12,color:"#64748b"}}>{sectionUnavailable?"段名清單暫時無法讀取，仍可直接輸入或留空查詢。":"不知道段名可留空；選好行政區後可下拉挑選，輸入文字可縮小選項。官方段名清單不代表每段皆有已匯入交易。"}</span>
+     {section&&<button type="button" onClick={()=>setSection("")} style={{justifySelf:"start",fontSize:13,color:"#1d4ed8"}}>清除段名，查看全部選項</button>}
+    </div>
    </div>
    <button type="button" aria-expanded={advanced} onClick={()=>setAdvanced(x=>!x)} style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:12,textAlign:"left",color:"#1d4ed8",background:"#eaf1ff",border:"1px solid #c7d7f7",borderRadius:9,padding:"11px 14px",fontWeight:700,cursor:"pointer"}}><span>進階條件（總價／面積／屋齡）</span><span aria-hidden="true">{advanced?"−":"＋"}</span></button>
    {advanced&&<div style={{...gridStyle,padding:"12px 2px 4px"}}>

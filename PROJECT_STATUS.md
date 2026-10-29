@@ -1,5 +1,9 @@
 # Project Status
 
+## 2026-10-29 Preview 實價查詢段名提示
+
+`feature/real-price-public-search-v1`：地段欄位保留自由輸入，新增依縣市及鄉鎮市區載入的官方段名下拉清單；輸入部分段名可篩選選項，切換行政區會清除原段名。清單來自國土測繪中心 ListTown / ListLandSection，獨立於交易資料庫，不代表各段均已有匯入交易。上游有逾時限制及每日快取，讀取失敗仍可手動輸入或留空。Production 未變更；歷年資料完整性及 Preview 首頁穩定性不在本次變更驗收範圍。
+
 ## 2026-10-12 銷售 LINE 第二階段（待驗證）
 
 PR #48/#49 已合併，正式後台手機基本操作已由阿勇確認正常。第二階段準備 Production LINE Webhook、獨立 Cron Worker 與通知啟用時間；正式通知尚未啟用，Cloudflare 管理設定與端到端送達驗證尚待完成。設定、驗收與回退以 [docs/SALES_LINE_PRODUCTION_RELEASE.md](docs/SALES_LINE_PRODUCTION_RELEASE.md) 為準。以下舊 Sprint 盤點保留作歷史背景，不代表本次部署狀態。
