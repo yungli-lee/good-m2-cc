@@ -38,7 +38,7 @@ export function RealPriceSearch(){
    setSection("");setSectionOptions([]);setSectionUnavailable(false);
    if(!county||!district){setSectionLoading(false);return;}
    const controller=new AbortController();
-   const timer=setTimeout(()=>{setSectionLoading(false);setSectionUnavailable(true);controller.abort();},9000);
+   const timer=setTimeout(()=>{setSectionLoading(false);setSectionUnavailable(true);controller.abort();},21000);
    setSectionLoading(true);
    fetch("/api/public/real-price-sections?"+new URLSearchParams({county,district}),{signal:controller.signal})
      .then(async response=>{if(!response.ok)throw new Error("sections_unavailable");return response.json() as Promise<{sections?:string[]}>;})

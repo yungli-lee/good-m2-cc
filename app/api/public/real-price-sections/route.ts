@@ -22,7 +22,7 @@ export async function GET(request:Request){
   const code=countyCodes[county];
   if(!code||!district||district.length>80)return NextResponse.json({error:"invalid_area"},{status:400});
   try{
-    const signal=AbortSignal.timeout(8000);
+    const signal=AbortSignal.timeout(20000);
     const towns=await officialXml(`ListTown/${code}`,signal);
     const town=[...towns.matchAll(/<townItem>([\s\S]*?)<\/townItem>/gi)].find(m=>decode(m[1].match(/<townname>([^<]+)<\/townname>/i)?.[1]||"")===district);
     const townCode=town?.[1].match(/<towncode>([A-Z][0-9]{2})<\/towncode>/i)?.[1];
