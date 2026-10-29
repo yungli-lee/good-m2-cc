@@ -24,6 +24,8 @@ const compactLocation=(r:Result)=>{
 };
 const noteLabel=(r:Result)=>r.official_note?.trim()?"交易備註":"";
 const categoryLabel=(v:string)=>({house_land:"房地",land:"土地",building:"建物",parking:"車位"} as Record<string,string>)[v]||v;
+// A zero parking price still represents a parking space when an official detail exists.
+const parkingBadge=(r:Result)=>(r.target_category==="parking"||r.details?.some(d=>d.detail_type==="parking"))?<span role="img" aria-label="含車位" title="含車位（依交易標的或官方車位明細確認）" style={{marginLeft:5}}>🚗</span>:null;
 export function RealPriceSearch(){
  const [county,setCounty]=useState(""),[district,setDistrict]=useState("");
  const [expandedId,setExpandedId]=useState<number|null>(null);
@@ -211,7 +213,7 @@ export function RealPriceSearch(){
      <thead><tr>{["交易日期","縣市／行政區","標的","地段地號／門牌","總價（萬元）","土地／建物坪數","明細"].map(h=><th key={h} style={{textAlign:"left",padding:10,borderBottom:"1px solid #cbd5e1"}}>{h}</th>)}</tr></thead>
      <tbody>{rows.flatMap(r=>[
        <tr key={r.id} style={{borderBottom:"1px solid #e2e8f0"}}>
-        <td style={{padding:10,whiteSpace:"nowrap",verticalAlign:"top"}}>{r.transaction_date}</td><td style={{verticalAlign:"top"}}>{r.county}<br/>{r.district}</td><td style={{whiteSpace:"nowrap",verticalAlign:"top"}}>{categoryLabel(r.target_category)}{noteLabel(r)&&<div style={{fontSize:12,color:"#b45309"}}>{noteLabel(r)}</div>}</td>
+        <td style={{padding:10,whiteSpace:"nowrap",verticalAlign:"top"}}>{r.transaction_date}</td><td style={{verticalAlign:"top"}}>{r.county}<br/>{r.district}</td><td style={{whiteSpace:"nowrap",verticalAlign:"top"}}>{categoryLabel(r.target_category)}{parkingBadge(r)}{noteLabel(r)&&<div style={{fontSize:12,color:"#b45309"}}>{noteLabel(r)}</div>}</td>
         <td style={{overflowWrap:"anywhere",verticalAlign:"top",paddingRight:12}}><span>{compactLocation(r).main}</span>{compactLocation(r).summary&&<div style={{fontSize:12,color:"#64748b",marginTop:4}}>{compactLocation(r).summary}</div>}</td>
         <td>{r.total_price_ntd==null?"—":(r.total_price_ntd/10000).toLocaleString("zh-TW")}</td>
         <td>{[r.land_area_sqm,r.building_area_sqm].map(a=>a==null?"—":(a/3.305785).toFixed(2)).join("／")}</td>
@@ -224,7 +226,7 @@ export function RealPriceSearch(){
    <div className="real-price-mobile">
     {rows.map(r=><article key={r.id} style={{border:"1px solid #cbd5e1",borderRadius:12,padding:14,background:"white",minWidth:0,overflowWrap:"anywhere"}}>
       <div style={{display:"flex",justifyContent:"space-between",gap:8,flexWrap:"wrap"}}>
-       <strong>{r.transaction_date}</strong><span>{categoryLabel(r.target_category)}｜{r.county} {r.district}</span>{noteLabel(r)&&<span style={{width:"100%",fontSize:13,color:"#b45309"}}>{noteLabel(r)}</span>}
+       <strong>{r.transaction_date}</strong><span>{categoryLabel(r.target_category)}{parkingBadge(r)}｜{r.county} {r.district}</span>{noteLabel(r)&&<span style={{width:"100%",fontSize:13,color:"#b45309"}}>{noteLabel(r)}</span>}
       </div>
       <p style={{margin:"10px 0",fontWeight:650}}><span>{compactLocation(r).main}</span>{compactLocation(r).summary&&<div style={{fontSize:12,color:"#64748b",marginTop:4}}>{compactLocation(r).summary}</div>}</p>
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,fontSize:14}}>
