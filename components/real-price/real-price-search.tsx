@@ -171,13 +171,13 @@ export function RealPriceSearch(){
     </div>
     <div style={{display:"grid",gap:8,alignContent:"start"}}>
      {f("地段（可輸入或選擇）",<input style={inputStyle} value={section} maxLength={80} placeholder="輸入部分段名，例如：秀水、復興" aria-describedby="section-help" onChange={e=>setSection(e.target.value)}/>)}
-     <label style={{display:"grid",gap:5,fontSize:13}}>挑選段名
-      <select style={inputStyle} value="" disabled={!county||!district||sectionLoading||!sectionOptions.length} onChange={e=>{if(e.target.value)setSection(e.target.value);}}>
-       <option value="">{sectionLoading?"讀取段名中…":!county||!district?"先選縣市與鄉鎮市區":filteredSections.length?`選擇段名（${filteredSections.length}個）`:"沒有符合的選項，可修改關鍵字"}</option>
-       {filteredSections.map(name=><option key={name} value={name}>{name}</option>)}
-      </select>
-     </label>
-     <span id="section-help" role="status" style={{fontSize:12,color:"#64748b"}}>{sectionUnavailable?"段名清單暫時無法讀取，仍可直接輸入或留空查詢。":"不知道段名可留空；選好行政區後可下拉挑選，輸入文字可縮小選項。官方段名清單不代表每段皆有已匯入交易。"}</span>
+     <div style={{fontSize:13}}>
+      <div aria-live="polite" style={{marginBottom:6}}>{sectionLoading?"讀取段名中…":!county||!district?"先選縣市與鄉鎮市區，即可顯示備選段名。":sectionUnavailable?"備選段名暫時無法讀取。":filteredSections.length?`備選段名（${filteredSections.length}個），點一下即可帶入` :"沒有符合的備選段名，可修改文字或直接查詢。"}</div>
+      {!sectionLoading&&!sectionUnavailable&&filteredSections.length>0&&<div role="group" aria-label="備選段名" style={{display:"flex",flexWrap:"wrap",gap:8,maxHeight:184,overflowY:"auto",padding:2}}>
+       {filteredSections.map(name=><button key={name} type="button" aria-pressed={section===name} onClick={()=>setSection(name)} style={{minHeight:40,padding:"7px 12px",borderRadius:8,border:"1px solid #c7d7f7",background:section===name?"#1d4ed8":"white",color:section===name?"white":"#1d4ed8",cursor:"pointer"}}>{name}</button>)}
+      </div>}
+     </div>
+     <span id="section-help" style={{fontSize:12,color:"#64748b"}}>{sectionUnavailable?"仍可直接輸入段名或留空查詢。":"輸入部分段名，下方會立即顯示符合的選項；不知道段名可留空。官方段名清單不代表每段皆有已匯入交易。"}</span>
      {section&&<button type="button" onClick={()=>setSection("")} style={{justifySelf:"start",fontSize:13,color:"#1d4ed8"}}>清除段名，查看全部選項</button>}
     </div>
    </div>
