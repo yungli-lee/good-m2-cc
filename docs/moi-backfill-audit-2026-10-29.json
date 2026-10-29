@@ -171,5 +171,25 @@
     "applied_details": 7,
     "unresolved_issues": 0,
     "db_counts_and_official_notes_verified": true
+  },
+  "latest_check": {
+    "checked_at": "2026-10-29T12:19:36Z",
+    "database_bytes": 4865264787,
+    "last_chunk_id": 11696,
+    "preview_read_ok": true,
+    "project_status": "ACTIVE_HEALTHY",
+    "public_query_verified": true,
+    "cross_period_history_verified": true,
+    "ui_examples_verified_by_user": true
+  },
+  "active_quarter": {
+    "archive": "113S3",
+    "run_id": 40639000903,
+    "attempt": 7,
+    "job_id": 123441695682,
+    "started_at": "2026-10-29T12:18:23Z",
+    "status": "in_progress",
+    "parser_commit": "23adff7e51e94818b02bbbf94610ceb36f1c58e3",
+    "final_report_verified": false
   }
 }
