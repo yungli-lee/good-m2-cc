@@ -60,7 +60,11 @@ export default async function SocialPostsPage({ searchParams }: { searchParams?:
     const safe = keyword.replace(/[(),\\\"%*]/g, " ").replace(/\s+/g, " ").trim();
     if (safe) {
       const value = '"*' + safe + '*"';
-      query = query.or(["title", "body", "link_url", "facebook_post_id"].map(column => column + ".ilike." + value).join(","));
+      const conditions = ["title", "body", "link_url", "facebook_post_id"].map(column => column + ".ilike." + value);
+      if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(keyword)) {
+        conditions.push("id.eq." + keyword);
+      }
+      query = query.or(conditions.join(","));
     }
   }
   if (sort === "scheduled") query = query.order("facebook_scheduled_for", { ascending: true, nullsFirst: false }).order("created_at", { ascending: false });
