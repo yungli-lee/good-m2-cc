@@ -64,11 +64,19 @@ export async function deleteFacebookPost(id: string) {
     .eq("id",id).eq("author_id",current.user.id).single();
   if(error || !post || post.facebook_page_id!==PAGE_ID || !post.facebook_post_id ||
      post.facebook_deleted_at || !/^284090174797562_[0-9]+$/.test(post.facebook_post_id)) throw new Error("無法刪除：缺少有效的粉專貼文紀錄。");
-  const result = await callFacebook("DELETE",post.facebook_post_id,token);
-  if (result.success !== true) throw new Error("Facebook 尚未確認刪除成功。");
+  let result: {success?:boolean};
+  try {
+    result = await callFacebook("DELETE",post.facebook_post_id,token);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "";
+    if (message.includes("190")) return {ok:false,message:"Facebook 粉專權杖無效或已過期（190）。請更新 Preview 的 Page Token，並確認原文還在；尚未刪除，也不會更改後台紀錄。"};
+    return {ok:false,message:"Facebook 刪文未確認成功。請先至粉專核對原文狀態，再檢查 Cloudflare 後端錯誤；後台紀錄未更改。"};
+  }
+  if (result.success !== true) return {ok:false,message:"Facebook 沒有確認刪除成功，請先核對原文。"};
   const {error:updateError}=await db.from("social_posts").update({
     status:"archived",facebook_deleted_at:new Date().toISOString(),updated_at:new Date().toISOString()
   }).eq("id",id).eq("author_id",current.user.id);
-  if(updateError) throw new Error("Facebook 已刪除，但後台紀錄更新失敗。");
+  if(updateError) return {ok:false,message:"Facebook 已刪除，但後台紀錄更新失敗；請勿重複刪除，需人工核對紀錄。"};
   revalidatePath("/admin/social-posts");
+  return {ok:true,message:"Facebook 原文已刪除，後台紀錄已更新。"};
 }
