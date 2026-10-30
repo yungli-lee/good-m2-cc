@@ -1,5 +1,5 @@
 {
-  "checked_at": "2026-10-30 19:07:34.66974+00",
+  "checked_at": "2026-10-30 20:52:17.714592+00",
   "project": "niorteztdbuyusemsgwa",
   "keep": {
     "county": "彰化縣",
@@ -33,7 +33,7 @@
   "run_batches": 0,
   "run_deleted_masters": 0,
   "run_deleted_details": 0,
-  "stop_reason": "read_only_diagnostics_query_cancelled_broad_sale_503",
+  "stop_reason": "sale_parking_case_passed_broad_sale_remains_unresolved",
   "last_batch_elapsed_ms": 4903,
   "preview_read_ok": true,
   "previous_residual_check": {
@@ -56,7 +56,7 @@
     }
   },
   "guard_observation": {
-    "checked_at": "2026-10-30 19:07:34.66974+00",
+    "checked_at": "2026-10-30 20:52:17.714592+00",
     "db_bytes": 6279687315,
     "other_active_sql": 0,
     "active_cleanup_queries": 0,
@@ -128,7 +128,7 @@
     ]
   },
   "acceptance_pending": [
-    "Broad sale query still returns 503 and logs show query cancellation. Dated sale details/official-note fields and cross-period history pass; sale parking case not covered by this 13-row sample. Presale details/parking/note fields previously passed."
+    "Broad sale query remains unresolved after prior repeated 503/query-cancel evidence. Bounded sale parking/details/note fields now pass. No same failing broad query repeated in this run; no cleanup, import, schema/API, vacuum, or analyze mutations."
   ],
   "public_broad_query_verified": false,
   "last_public_acceptance": {
@@ -163,5 +163,37 @@
     "explain_only": true,
     "plan_summary": "Limit -> Sort -> Bitmap Heap Scan on sale plus canonical alias subplans; estimated 35005 rows before LIMIT20. EXPLAIN without ANALYZE, no query execution.",
     "conclusion": "Query cancellation is confirmed; exact cancellation cause not established. Not evidence of quota exhaustion."
-  }
+  },
+  "public_sale_parking_verified": true,
+  "last_sale_parking_acceptance": {
+    "checked_at": "2026-10-30T20:51:07Z",
+    "district": "秀水鄉",
+    "from": "2026-08-01",
+    "to": "2026-08-31",
+    "verified": true,
+    "rows": 3,
+    "detail_rows": 8,
+    "parking_rows": 1,
+    "official_notes": 1
+  },
+  "maintenance_observation": [
+    {
+      "relname": "moi_real_price_transactions",
+      "n_live_tup": 39922,
+      "n_dead_tup": 2955,
+      "last_vacuum": null,
+      "last_autovacuum": "2026-10-30 16:44:25.321987+00",
+      "last_analyze": "2026-10-28 14:25:30.239666+00",
+      "last_autoanalyze": "2026-10-30 16:44:33.392292+00"
+    },
+    {
+      "relname": "moi_transaction_details",
+      "n_live_tup": 116367,
+      "n_dead_tup": 0,
+      "last_vacuum": null,
+      "last_autovacuum": "2026-10-30 16:45:09.044+00",
+      "last_analyze": "2026-10-28 14:25:38.913815+00",
+      "last_autoanalyze": "2026-10-30 16:44:45.068786+00"
+    }
+  ]
 }

@@ -1,5 +1,16 @@
 # Project Status
 
+## 2026-10-31 04:52 買賣車位案例補驗通過
+
+本輪只讀，未DELETE/匯入或改API/schema。先讀最新checkpoint，確認無執行/排隊workflow，staging ACTIVE_HEALTHY；預檢與收尾其他active SQL=0、清理SQL=0、Preview view可讀，DB6279687315 bytes。
+
+以公開行政區/日期條件查彰化sale、秀水鄉、2026-08-01～2026-08-31（未傳私有DB地址/ID），回3筆交易、8筆對應明細，含1筆車位及1筆有官方備註，縣市/資料類型正確。補足前次13筆日期樣本沒有車位的案例缺口。這是API資料案例，不擴大聲稱重新完成所有UI或原始來源對帳。
+
+讀pg_stat_user_tables確認主檔在16:44:25Z自動vacuum、16:44:33Z自動analyze；明細16:45:09Z自動vacuum、16:44:45Z自動analyze。統計n_live_tup/n_dead_tup僅為估值，不取代前次精確40676主檔/111071明細核對。本輪沒有手動執行vacuum或analyze。前次log查詢新增嘗試body欄，工具回Field body does not exist，故仍只能確認先前57014取消，未確認確切取消原因，不循環猜欄位。
+
+較廣sale查詢已連續多輪503且有取消證據，本輪不再重送相同失敗請求。待驗收仍為較廣sale正常；sale車位/明細/備註欄位、預售及跨期間history已有具體通過案例。cleanup_complete維持false，任務保持啟用，禁止宣告完成或恢復歷史追加。cursor1504397、範圍外/孤兒0是前次全表核對；Production、欄位、版面、7GB保護、來源ZIP及對帳紀錄不變。
+
+
 ## 2026-10-31 03:08 唯讀查證確認Preview查詢取消
 
 本輪只讀，未DELETE、匯入或改API/schema。staging ACTIVE_HEALTHY、無執行/排隊workflow，預檢與收尾其他active SQL=0、清理SQL=0、Preview view可讀，DB6279687315 bytes。
