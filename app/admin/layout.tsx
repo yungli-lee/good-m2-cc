@@ -30,6 +30,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
             <Link href="/admin/people">客戶 / People</Link>
             <Link href="/admin/crm/requirements">客需管理</Link>
             <Link href="/admin/knowledge">知識管理</Link>
+            <Link href="/admin/social-posts">社群發文</Link>
             <Link href="/admin/media">媒體中心</Link>
             <Link href="/admin/property-collections">物件分享主題</Link>
             <Link href="/admin/home-campaigns">首頁 Campaign</Link>
