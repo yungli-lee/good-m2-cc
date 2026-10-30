@@ -1,5 +1,16 @@
 # Project Status
 
+## 2026-10-31 05:42 唯讀驗收受阻，暫停檢查等待查詢修復授權
+
+本輪先讀最新checkpoint及Supabase技能，確認無執行/排隊workflow、staging ACTIVE_HEALTHY、其他active SQL=0/清理SQL=0/Preview可讀，DB6279687315 bytes。未DELETE/匯入、改API/view/index、提高timeout或調整配額。
+
+進一步只讀確認公開API每頁都使用select(...,{count:"exact"})，較廣sale的計數EXPLAIN（不執行ANALYZE）為Aggregate -> Bitmap Heap Scan，包含canonical alias去重子查詢，估算35005筆。角色設定可讀得anon3s、authenticated8s、authenticator8s；service_role未有獨立statement_timeout設定列。這些設定與先前57014查詢取消是效能查證線索，仍不足以確定實際生效取消來源；沒有將「調高timeout」當作修復，也不聲稱容量超額。
+
+範圍刪除目標已於前輪耗盡cursor1504397，前次精確核對只剩彰化sale36053/presale4623、111071明細，範圍外及孤兒0。買賣/預售明細、車位、官方備註欄位與跨期間history已有具體通過案例；較廣sale連續多輪503仍未排除。本輪不再重送同一失敗請求，不把既有案例或清理完成視為完整驗收完成。
+
+目前任務被限定為只讀查證，不能在本輪擅自改變查詢去重/計數路徑；等待狀態已非單次短暫錯誤。需要阿勇另行授權Preview查詢效能修復，且須維持去重語義、精確筆數/分頁、官方備註、明細對應、安全權限與所有既有限制。依執行規則，將本清理檢查暫停並只通知這個阻礙一次；cleanup_complete保持false，不能發「彰化範圍整理完成」。歷史回補尚未完成且仍禁止恢復追加。Production、資料庫欄位、前台layout、7GB線、原檔與對帳紀錄不變。
+
+
 ## 2026-10-31 04:52 買賣車位案例補驗通過
 
 本輪只讀，未DELETE/匯入或改API/schema。先讀最新checkpoint，確認無執行/排隊workflow，staging ACTIVE_HEALTHY；預檢與收尾其他active SQL=0、清理SQL=0、Preview view可讀，DB6279687315 bytes。

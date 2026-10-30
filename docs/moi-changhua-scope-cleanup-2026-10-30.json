@@ -1,5 +1,5 @@
 {
-  "checked_at": "2026-10-30 20:52:17.714592+00",
+  "checked_at": "2026-10-30 21:41:11.139323+00",
   "project": "niorteztdbuyusemsgwa",
   "keep": {
     "county": "彰化縣",
@@ -33,7 +33,7 @@
   "run_batches": 0,
   "run_deleted_masters": 0,
   "run_deleted_details": 0,
-  "stop_reason": "sale_parking_case_passed_broad_sale_remains_unresolved",
+  "stop_reason": "blocked_by_read_only_scope_preview_query_repair_required",
   "last_batch_elapsed_ms": 4903,
   "preview_read_ok": true,
   "previous_residual_check": {
@@ -56,7 +56,7 @@
     }
   },
   "guard_observation": {
-    "checked_at": "2026-10-30 20:52:17.714592+00",
+    "checked_at": "2026-10-30 21:41:11.139323+00",
     "db_bytes": 6279687315,
     "other_active_sql": 0,
     "active_cleanup_queries": 0,
@@ -128,7 +128,7 @@
     ]
   },
   "acceptance_pending": [
-    "Broad sale query remains unresolved after prior repeated 503/query-cancel evidence. Bounded sale parking/details/note fields now pass. No same failing broad query repeated in this run; no cleanup, import, schema/API, vacuum, or analyze mutations."
+    "Preview broad sale query remains unresolved. Completing acceptance requires a separately authorized repair of Preview query/deduplication/count path beyond current read-only validation scope. Keep Production, schema columns, layout, quota, 7GB guard and historical ingestion untouched."
   ],
   "public_broad_query_verified": false,
   "last_public_acceptance": {
@@ -195,5 +195,29 @@
       "last_analyze": "2026-10-28 14:25:38.913815+00",
       "last_autoanalyze": "2026-10-30 16:44:45.068786+00"
     }
-  ]
+  ],
+  "automation_paused": true,
+  "user_action_required": true,
+  "blocker_notification_recorded": true,
+  "query_path_observation": {
+    "api_count": "exact on each page",
+    "role_timeout_settings": [
+      {
+        "rolname": "anon",
+        "setting": "statement_timeout=3s"
+      },
+      {
+        "rolname": "authenticated",
+        "setting": "statement_timeout=8s"
+      },
+      {
+        "rolname": "authenticator",
+        "setting": "statement_timeout=8s"
+      }
+    ],
+    "count_explain_only": true,
+    "count_estimated_rows": 35005,
+    "count_plan_summary": "Aggregate -> Bitmap Heap Scan and canonical alias deduplication subplans",
+    "interpretation": "Repeated broad sale cancellations plus exact-count scan indicate a query-path performance issue; the effective cancellation source is not conclusively established. No timeout settings changed."
+  }
 }
