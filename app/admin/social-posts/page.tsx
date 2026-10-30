@@ -3,17 +3,19 @@ import { requireRole } from "@/lib/auth";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createSocialPost, editSocialPost, updateSocialPost, deleteSocialPost } from "./actions";
 import { CopyPostButton } from "./copy-button";
+import { publishFacebookPost } from "./facebook-actions";
+import { DeleteFacebookButton } from "./delete-facebook-button";
 
 export const runtime = "edge";
 export const dynamic = "force-dynamic";
 const categories: Record<string,string> = {property:"物件推薦",knowledge:"知識／政策",daily:"生活分享",general:"自由貼文"};
-const statuses: Record<string,string> = {draft:"草稿",ready:"待發布",posted:"已手動發布",archived:"封存"};
+const statuses: Record<string,string> = {draft:"草稿",ready:"待發布",posted:"已手動發布",archived:"封存",publishing:"發布中",publish_unknown:"發文結果待核對"};
 
 export default async function SocialPostsPage() {
   const current = await requireRole(["editor","admin","owner"]);
   const supabase = await createSupabaseServerClient();
   const { data: posts, error } = await supabase.from("social_posts")
-    .select("id,title,body,category,status,destination_notes,created_at")
+    .select("id,title,body,category,status,destination_notes,facebook_post_id,facebook_deleted_at,created_at")
     .eq("author_id",current.user.id).order("created_at",{ascending:false}).limit(100);
   return <main className="section"><div className="container">
     <div className="admin-page-header"><div><p className="eyebrow">Social Publishing</p><h1>社群發文管理</h1>
@@ -48,8 +50,11 @@ export default async function SocialPostsPage() {
             <div><button className="button" type="submit">儲存修改</button></div>
           </form>
         </details> : null}
+        {post.facebook_post_id ? <p className="muted">Facebook 貼文 ID：{post.facebook_post_id} · {post.facebook_deleted_at ? "已刪除" : "已發布"}　<a href={"https://www.facebook.com/"+post.facebook_post_id.replace("_","/posts/")} target="_blank" rel="noopener noreferrer">查看原文</a></p> : null}
         <div className="admin-actions" style={{flexWrap:"wrap"}}>
           <CopyPostButton body={post.body||""} />
+          {((post.status==="draft"||post.status==="ready") && !post.facebook_post_id) ? <form action={publishFacebookPost.bind(null,post.id)}><button className="button" disabled={process.env.FACEBOOK_PUBLISH_ENABLED !== "true"} type="submit">發布到阿勇不動產顧問</button></form> : null}
+          {post.facebook_post_id && !post.facebook_deleted_at && (current.profile.role==="admin"||current.profile.role==="owner") ? <DeleteFacebookButton id={post.id}/> : null}
           <a className="button ghost" href="https://www.facebook.com/" target="_blank" rel="noopener noreferrer">開啟 Facebook</a>
           <form action={updateSocialPost.bind(null,post.id)}><select className="input" name="status" defaultValue={post.status}>{Object.entries(statuses).map(([value,label])=><option value={value} key={value}>{label}</option>)}</select><button className="button ghost" type="submit">更新狀態</button></form>
           <form action={deleteSocialPost.bind(null,post.id)}><button className="button danger" type="submit">刪除</button></form>
