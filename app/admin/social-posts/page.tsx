@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { requireRole } from "@/lib/auth";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { createSocialPost, updateSocialPost, deleteSocialPost } from "./actions";
+import { createSocialPost, editSocialPost, updateSocialPost, deleteSocialPost } from "./actions";
 import { CopyPostButton } from "./copy-button";
 
 export const runtime = "edge";
@@ -37,6 +37,17 @@ export default async function SocialPostsPage() {
         <div className="actions" style={{justifyContent:"space-between"}}><strong>{post.title}</strong><span className="muted">{statuses[post.status]||post.status} · {categories[post.category]||post.category}</span></div>
         <p style={{whiteSpace:"pre-wrap",overflowWrap:"anywhere"}}>{post.body||"（尚未輸入文案）"}</p>
         {post.destination_notes ? <p className="muted" style={{whiteSpace:"pre-wrap"}}>目的地：{post.destination_notes}</p> : null}
+        {(post.status === "draft" || post.status === "ready") ? <details style={{marginBottom:12}}>
+          <summary style={{cursor:"pointer",fontWeight:600}}>編輯草稿</summary>
+          <form action={editSocialPost.bind(null,post.id)} style={{display:"grid",gap:12,marginTop:12}}>
+            <label className="field"><span>標題</span><input className="input" name="title" defaultValue={post.title} required maxLength={200}/></label>
+            <label className="field"><span>分類</span><select className="input" name="category" defaultValue={post.category}>
+              {Object.entries(categories).map(([value,label])=><option key={value} value={value}>{label}</option>)}</select></label>
+            <label className="field"><span>貼文內容</span><textarea className="input" name="body" rows={6} defaultValue={post.body||""} maxLength={20000}/></label>
+            <label className="field"><span>目的地備註</span><textarea className="input" name="destination_notes" rows={2} defaultValue={post.destination_notes||""} maxLength={4000}/></label>
+            <div><button className="button" type="submit">儲存修改</button></div>
+          </form>
+        </details> : null}
         <div className="admin-actions" style={{flexWrap:"wrap"}}>
           <CopyPostButton body={post.body||""} />
           <a className="button ghost" href="https://www.facebook.com/" target="_blank" rel="noopener noreferrer">開啟 Facebook</a>
