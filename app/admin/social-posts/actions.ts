@@ -46,7 +46,7 @@ export async function updateSocialPost(id: string, formData: FormData) {
 export async function deleteSocialPost(id: string) {
   const current = await requireRole(["editor", "admin", "owner"]);
   const supabase = await createSupabaseServerClient();
-  const { error } = await supabase.from("social_posts").delete().eq("id", id).eq("author_id", current.user.id);
+  const { error } = await supabase.from("social_posts").delete().eq("id", id).eq("author_id", current.user.id).is("facebook_post_id",null);
   if (error) throw new Error("刪除貼文失敗");
   revalidatePath("/admin/social-posts");
 }
