@@ -1,5 +1,5 @@
 {
-  "checked_at": "2026-10-30 11:11:06.310519+00",
+  "checked_at": "2026-10-30 12:31:59.991734+00",
   "project": "niorteztdbuyusemsgwa",
   "keep": {
     "county": "彰化縣",
@@ -10,11 +10,11 @@
   },
   "delete_predicate": "county IS DISTINCT FROM '彰化縣' OR dataset_type='rental'",
   "snapshot_max_id": 1504397,
-  "last_verified_cursor": 1059450,
+  "last_verified_cursor": 1160145,
   "residual_at_or_below_cursor": null,
   "active_cleanup_queries": 0,
-  "confirmed_deleted_masters_lower_bound": 996000,
-  "confirmed_deleted_details_lower_bound": 3306038,
+  "confirmed_deleted_masters_lower_bound": 1096000,
+  "confirmed_deleted_details_lower_bound": 3662740,
   "additional_committed_batch": {
     "expected_masters": 25000,
     "details_unknown": true
@@ -25,16 +25,16 @@
   "project_healthy": true,
   "public_query_verified": true,
   "history_api_verified": true,
-  "database_bytes": 6279498899,
+  "database_bytes": 6279548051,
   "batch_size": 1000,
   "layout_or_schema_changed": false,
   "production_changed": false,
   "notes": "Partial cleanup only. Existing import logs remain historical evidence and must not be treated as full-national row coverage after pruning.",
-  "run_batches": 20,
-  "run_deleted_masters": 20000,
-  "run_deleted_details": 64977,
-  "stop_reason": "other_active_sql_detected_at_batch_20",
-  "last_batch_elapsed_ms": 4732,
+  "run_batches": 100,
+  "run_deleted_masters": 100000,
+  "run_deleted_details": 356702,
+  "stop_reason": "100_batch_limit",
+  "last_batch_elapsed_ms": 6317,
   "preview_read_ok": true,
   "previous_residual_check": {
     "cursor": 847588,
@@ -56,9 +56,9 @@
     }
   },
   "guard_observation": {
-    "checked_at": "2026-10-30 11:10:49.308329+00",
-    "db_bytes": 6279498899,
-    "other_active_sql": 1,
+    "checked_at": "2026-10-30 12:31:41.309962+00",
+    "db_bytes": 6279548051,
+    "other_active_sql": 0,
     "preview_readable": true
   },
   "post_stop_other_active_sql": 0
