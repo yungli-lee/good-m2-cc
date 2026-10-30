@@ -71,6 +71,14 @@ export async function GET(request: Request) {
     }
     if(section)q=q.ilike("land_section",`%${section}%`);
     const {data,error,count}=await q.order("transaction_date",{ascending:false}).order("id",{ascending:false}).range((page-1)*limit,page*limit-1);
+    if(previewStaging && error?.code==="PGRST103"){
+      // PostgREST rejects an offset beyond an exact count. Read the same
+      // filtered first ID to recover that count, without repeating the offset.
+      const first=await q.range(0,0);
+      if(!first.error && first.count!==null && (page-1)*limit>=first.count){
+        return NextResponse.json({data:[],total:first.count,page,limit,preview_sample:true},{headers:{"Cache-Control":"no-store"}});
+      }
+    }
     if(error) {console.error("real_price_query_error",error.code);return NextResponse.json({error:"query_unavailable"},{status:503});}
     // Page-level duplicate suppression is intentionally not applied here: it would
     // invalidate total counts and pagination. Deduplicate at ingestion/database

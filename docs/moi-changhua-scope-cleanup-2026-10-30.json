@@ -221,7 +221,7 @@
     "interpretation": "Repeated broad sale cancellations plus exact-count scan indicate a query-path performance issue; the effective cancellation source is not conclusively established. No timeout settings changed."
   },
   "preview_repair": {
-    "status": "implementation_validation_pending",
+    "status": "boundary_fix_deployment_pending",
     "authorized": true,
     "index": "moi_preview_county_dataset_date_cover_idx",
     "migration": "20261030225546",
@@ -235,6 +235,37 @@
     "implementation": "Preview-only ID-first pagination with exact count and canonical view; fetch complete rows only for selected IDs; reject mismatched page rows",
     "production_path_changed": false,
     "timeout_changed": false,
-    "history_import_resumed": false
+    "history_import_resumed": false,
+    "implementation_commit": "82dc16bf5e0512e03c4be40134c25e5af3343ea4",
+    "typecheck": "passed",
+    "eslint": "passed",
+    "build": "passed with existing Supabase Edge runtime warning",
+    "deep_id_query_execution_ms": 271.481,
+    "sample_master_and_full_detail_fingerprints_unchanged": true,
+    "scope_audit": {
+      "masters": 40676,
+      "details": 111071,
+      "out_of_scope": 0,
+      "orphan_details": 0,
+      "other_active_sql": 0
+    },
+    "advisor_names_and_levels_unchanged": true,
+    "broad_sale_after_first_deployment": {
+      "page_1": {
+        "rows": 20,
+        "seconds": 7.164
+      },
+      "page_2": {
+        "rows": 20,
+        "seconds": 5.598
+      },
+      "page_1793": {
+        "rows": 5,
+        "seconds": 6.105
+      },
+      "total": 35845
+    },
+    "boundary_issue": "Beyond-last page returned HTTP503; stopped acceptance. Added Preview-only PGRST103 handling using same filtered first-ID count, without repeating failing offset.",
+    "route_scenarios_passed": 7
   }
 }
