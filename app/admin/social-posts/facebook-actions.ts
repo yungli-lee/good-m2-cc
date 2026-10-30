@@ -111,7 +111,7 @@ export async function scheduleFacebookPost(id:string, scheduledLocal:string) {
   if(!Number.isFinite(ms) || ms-Date.now()<11*60*1000 || ms-Date.now()>29*24*3600*1000) {
     return {ok:false,message:"請選擇至少 11 分鐘後、29 天內的預約時間（使用台灣時間）。"};
   }
-  const token=getPageToken();
+  const token=await resolveFacebookPageToken();
   const db=await createSupabaseServerClient();
   const {data:post,error}=await db.from("social_posts").select("id,body,link_url,status,facebook_post_id")
     .eq("id",id).eq("author_id",current.user.id).single();
