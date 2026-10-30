@@ -8,6 +8,7 @@ import { DeleteFacebookButton } from "./delete-facebook-button";
 import { FacebookConnectionCheck } from "./facebook-connection-check";
 import { ScheduleFacebookButton } from "./schedule-facebook-button";
 import { SyncFacebookStatusButton } from "./sync-facebook-status-button";
+import { reconcileDueFacebookPosts } from "./reconcile-due-facebook-posts";
 import { UploadPostImage } from "./upload-post-image";
 import { DiagnoseImagesButton } from "./diagnose-images-button";
 import { MetaPhotoTestButton } from "./meta-photo-test-button";
@@ -42,6 +43,8 @@ export default async function SocialPostsPage({ searchParams }: { searchParams?:
   };
   const current = await requireRole(["editor","admin","owner"]);
   const supabase = await createSupabaseServerClient();
+  // Only reconciles already-due posts, never publishes or deletes anything.
+  await reconcileDueFacebookPosts(supabase, current.user.id);
   // Filter before pagination so deleted Facebook posts do not consume page slots.
   let query = supabase.from("social_posts")
     .select("id,title,body,category,status,destination_notes,facebook_post_id,facebook_deleted_at,facebook_scheduled_for,link_url,created_at", { count: "exact" })
