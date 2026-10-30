@@ -48,7 +48,9 @@ export async function GET(request: Request) {
     }
     const db=createSupabaseAdminClient();
     const columns="id,county,district,dataset_type,transaction_date,target_category,total_price_ntd,unit_price_ntd_per_sqm,land_area_sqm,building_area_sqm,building_age_years,road_name,land_section,building_pattern"+(previewStaging?",address_display,raw_record,floor_display":"");
-    let q=db.from(previewStaging?"moi_preview_transactions":"moi_verified_transactions").select(columns,{count:"exact"})
+    // Preview pages IDs first so deep offsets do not fetch discarded wide rows.
+    // The same canonical view still supplies every filter and the exact count.
+    let q=db.from(previewStaging?"moi_preview_transactions":"moi_verified_transactions").select(previewStaging?"id":columns,{count:"exact"})
       .eq("dataset_type",dataset);
     if(county)q=q.eq("county",county);
     if(district)q=q.eq("district",district);
@@ -76,6 +78,13 @@ export async function GET(request: Request) {
     let output=(data||[]) as unknown as Array<Record<string,unknown>>;
     if(previewStaging && output.length){
       const ids=output.map(row=>Number(row.id));
+      const pageRows=await db.from("moi_preview_transactions").select(columns).in("id",ids).order("transaction_date",{ascending:false}).order("id",{ascending:false});
+      const fullRows=(pageRows.data||[]) as unknown as Array<Record<string,unknown>>;
+      if(pageRows.error || fullRows.length!==ids.length || fullRows.some((row,index)=>Number(row.id)!==ids[index])){
+        console.error("real_price_page_rows_error",pageRows.error?.code||"page_changed");
+        return NextResponse.json({error:"query_unavailable"},{status:503});
+      }
+      output=fullRows;
       const allDetails:Array<Record<string,unknown>>=[];
       for(let offset=0;;offset+=1000){
         const detail=await db.from("moi_transaction_details").select("transaction_id,detail_type,section_name,parcel_number,building_number,detail_area_sqm,ownership_share_numerator,ownership_share_denominator,parking_type,parking_price_ntd,parking_floor,raw_record").in("transaction_id",ids).order("id").range(offset,offset+999);

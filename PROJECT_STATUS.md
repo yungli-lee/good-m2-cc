@@ -519,3 +519,8 @@ Legacy Static Cleanup 完成代表：
 
 ### Query wait handling — 2026-10-29
 - Search cancels after 20 seconds with an explicit service-delay message; timeout is never reported as zero transactions. New searches cancel older requests and ignore stale responses. Database connectivity remains a separate unresolved issue.
+
+
+
+### Preview 查詢修復（2026-10-30 UTC）
+使用者已明確授權 staging / Preview 後端、SQL 與索引修復。已在 niorteztdbuyusemsgwa 新增 covering index（5,234,688 bytes），DB 6,284,938,387 bytes；未改欄位、view、權限、timeout、Production、layout 或 7GB 保護。精確 sale canonical count 35,845，EXPLAIN ANALYZE 約 1.09 秒；公開首頁/第二頁通過，但末頁仍因寬資料 OFFSET 失敗，因此 Preview API 改為先查該頁 ID 與精確總數，再讀最多 20 筆完整內容。所有篩選及去重仍由同一 view 處理；完整列不符預選頁時回 503。部署後尚待公開深頁、篩選、明細及歷史驗收；cleanup_complete 仍 false。歷史追加仍暫停，未再 DELETE。

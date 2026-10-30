@@ -197,7 +197,7 @@
     }
   ],
   "automation_paused": true,
-  "user_action_required": true,
+  "user_action_required": false,
   "blocker_notification_recorded": true,
   "query_path_observation": {
     "api_count": "exact on each page",
@@ -219,5 +219,22 @@
     "count_estimated_rows": 35005,
     "count_plan_summary": "Aggregate -> Bitmap Heap Scan and canonical alias deduplication subplans",
     "interpretation": "Repeated broad sale cancellations plus exact-count scan indicate a query-path performance issue; the effective cancellation source is not conclusively established. No timeout settings changed."
+  },
+  "preview_repair": {
+    "status": "implementation_validation_pending",
+    "authorized": true,
+    "index": "moi_preview_county_dataset_date_cover_idx",
+    "migration": "20261030225546",
+    "index_bytes": 5234688,
+    "database_bytes": 6284938387,
+    "count_execution_ms": 1089.701,
+    "canonical_sale_total": 35845,
+    "first_page_seconds": 8.799,
+    "second_page_seconds": 6.921,
+    "deep_page_before_code_fix": "HTTP503; wide-row OFFSET remains expensive",
+    "implementation": "Preview-only ID-first pagination with exact count and canonical view; fetch complete rows only for selected IDs; reject mismatched page rows",
+    "production_path_changed": false,
+    "timeout_changed": false,
+    "history_import_resumed": false
   }
 }
