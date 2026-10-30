@@ -99,6 +99,7 @@ export default async function AdminIndexPage() {
             <p className="muted">登入：{email}（{role}）</p>
             <div className="actions">
               <Link className="button secondary" href="/admin/knowledge">知識管理</Link>
+              <Link className="button secondary" href="/admin/social-posts">社群發文管理</Link>
               <Link className="button secondary" href="/admin/property-collections">物件分享主題</Link>
               <Link className="button secondary" href="/admin/home-campaigns">首頁 Campaign</Link>
               <Link className="button secondary" href="/admin/site-pages">靜態頁面</Link>
