@@ -1,5 +1,5 @@
 {
-  "checked_at": "2026-10-30 14:42:36.472965+00",
+  "checked_at": "2026-10-30 15:47:00.215626+00",
   "project": "niorteztdbuyusemsgwa",
   "keep": {
     "county": "彰化縣",
@@ -10,11 +10,11 @@
   },
   "delete_predicate": "county IS DISTINCT FROM '彰化縣' OR dataset_type='rental'",
   "snapshot_max_id": 1504397,
-  "last_verified_cursor": 1361307,
+  "last_verified_cursor": 1461307,
   "residual_at_or_below_cursor": null,
   "active_cleanup_queries": 0,
-  "confirmed_deleted_masters_lower_bound": 1296000,
-  "confirmed_deleted_details_lower_bound": 4352416,
+  "confirmed_deleted_masters_lower_bound": 1396000,
+  "confirmed_deleted_details_lower_bound": 4696666,
   "additional_committed_batch": {
     "expected_masters": 25000,
     "details_unknown": true
@@ -25,16 +25,16 @@
   "project_healthy": true,
   "public_query_verified": true,
   "history_api_verified": true,
-  "database_bytes": 6279597203,
+  "database_bytes": 6279679123,
   "batch_size": 1000,
   "layout_or_schema_changed": false,
   "production_changed": false,
   "notes": "Partial cleanup only. Existing import logs remain historical evidence and must not be treated as full-national row coverage after pruning.",
   "run_batches": 100,
   "run_deleted_masters": 100000,
-  "run_deleted_details": 342612,
+  "run_deleted_details": 344250,
   "stop_reason": "100_batch_limit",
-  "last_batch_elapsed_ms": 5889,
+  "last_batch_elapsed_ms": 5691,
   "preview_read_ok": true,
   "previous_residual_check": {
     "cursor": 847588,
@@ -56,8 +56,8 @@
     }
   },
   "guard_observation": {
-    "checked_at": "2026-10-30 14:41:50.464117+00",
-    "db_bytes": 6279597203,
+    "checked_at": "2026-10-30 15:46:17.551881+00",
+    "db_bytes": 6279662739,
     "other_active_sql": 0,
     "preview_readable": true
   },
@@ -65,74 +65,74 @@
   "run_health_checks": [
     {
       "batch": 10,
-      "checked_at": "2026-10-30 14:32:00.564438+00",
-      "db_bytes": 6279531667,
+      "checked_at": "2026-10-30 15:36:15.400885+00",
+      "db_bytes": 6279629971,
       "other_active_sql": 0,
       "preview_readable": true
     },
     {
       "batch": 20,
-      "checked_at": "2026-10-30 14:33:14.146342+00",
-      "db_bytes": 6279531667,
+      "checked_at": "2026-10-30 15:37:19.97345+00",
+      "db_bytes": 6279629971,
       "other_active_sql": 0,
       "preview_readable": true
     },
     {
       "batch": 30,
-      "checked_at": "2026-10-30 14:34:15.42648+00",
-      "db_bytes": 6279531667,
+      "checked_at": "2026-10-30 15:38:31.819839+00",
+      "db_bytes": 6279629971,
       "other_active_sql": 0,
       "preview_readable": true
     },
     {
       "batch": 40,
-      "checked_at": "2026-10-30 14:35:16.504221+00",
-      "db_bytes": 6279531667,
+      "checked_at": "2026-10-30 15:39:40.586646+00",
+      "db_bytes": 6279638163,
       "other_active_sql": 0,
       "preview_readable": true
     },
     {
       "batch": 50,
-      "checked_at": "2026-10-30 14:36:18.022561+00",
-      "db_bytes": 6279548051,
+      "checked_at": "2026-10-30 15:40:46.535222+00",
+      "db_bytes": 6279638163,
       "other_active_sql": 0,
       "preview_readable": true
     },
     {
       "batch": 60,
-      "checked_at": "2026-10-30 14:37:25.944148+00",
-      "db_bytes": 6279597203,
+      "checked_at": "2026-10-30 15:41:56.636625+00",
+      "db_bytes": 6279646355,
       "other_active_sql": 0,
       "preview_readable": true
     },
     {
       "batch": 70,
-      "checked_at": "2026-10-30 14:38:29.445373+00",
-      "db_bytes": 6279597203,
+      "checked_at": "2026-10-30 15:43:00.614219+00",
+      "db_bytes": 6279646355,
       "other_active_sql": 0,
       "preview_readable": true
     },
     {
       "batch": 80,
-      "checked_at": "2026-10-30 14:39:34.945527+00",
-      "db_bytes": 6279597203,
+      "checked_at": "2026-10-30 15:44:12.319887+00",
+      "db_bytes": 6279662739,
       "other_active_sql": 0,
       "preview_readable": true
     },
     {
       "batch": 90,
-      "checked_at": "2026-10-30 14:40:42.860312+00",
-      "db_bytes": 6279597203,
+      "checked_at": "2026-10-30 15:45:13.150672+00",
+      "db_bytes": 6279662739,
       "other_active_sql": 0,
       "preview_readable": true
     },
     {
       "batch": 100,
-      "checked_at": "2026-10-30 14:41:50.464117+00",
-      "db_bytes": 6279597203,
+      "checked_at": "2026-10-30 15:46:17.551881+00",
+      "db_bytes": 6279662739,
       "other_active_sql": 0,
       "preview_readable": true
     }
   ],
-  "max_batch_elapsed_ms": 10762
+  "max_batch_elapsed_ms": 10077
 }
