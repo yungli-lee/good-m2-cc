@@ -1,0 +1,418 @@
+{
+  "version": "changhua-sale-presale-through-2023-v1",
+  "scope": {
+    "county": "彰化縣",
+    "datasets": [
+      "sale",
+      "presale"
+    ]
+  },
+  "season": "114S4",
+  "period": "2025-12-31",
+  "archive_sha256": "68315c006fa367834eaacf032ceccb22a114fc8798d87b8dac23cf5eb64030ab",
+  "inventory": [
+    {
+      "file": "n_lvr_land_a.csv",
+      "source_masters": 2641,
+      "parsed_masters": 2641,
+      "valid_masters": 2641,
+      "detail_types_available": [
+        "land",
+        "building",
+        "parking"
+      ],
+      "linked_details": 7606
+    },
+    {
+      "file": "n_lvr_land_b.csv",
+      "source_masters": 198,
+      "parsed_masters": 198,
+      "valid_masters": 198,
+      "detail_types_available": [
+        "land",
+        "parking"
+      ],
+      "linked_details": 661
+    }
+  ],
+  "batches": [
+    {
+      "file": "n_lvr_land_a.csv",
+      "start": 0,
+      "chunk_sha256": "d78e6849248144d0b7d83c66940dfcd3a0568a84794e94bcc64c22340e723355",
+      "expected_masters": 100,
+      "expected_details": 198,
+      "status": "verified",
+      "response": {
+        "status": "applied",
+        "applied": 100,
+        "details": 198,
+        "processed": 100,
+        "preserved_newer": 0
+      },
+      "elapsed_seconds": 2.763,
+      "verification": {
+        "verified": 100,
+        "preserved_newer": 0
+      }
+    },
+    {
+      "file": "n_lvr_land_a.csv",
+      "start": 100,
+      "chunk_sha256": "abe37aea0d87c91bd322bba1538c913d991f05e7f93606a9ec5bbd7b46903d9e",
+      "expected_masters": 100,
+      "expected_details": 222,
+      "status": "verified",
+      "response": {
+        "status": "applied",
+        "applied": 100,
+        "details": 222,
+        "processed": 100,
+        "preserved_newer": 0
+      },
+      "elapsed_seconds": 2.474,
+      "verification": {
+        "verified": 100,
+        "preserved_newer": 0
+      }
+    },
+    {
+      "file": "n_lvr_land_a.csv",
+      "start": 200,
+      "chunk_sha256": "f50be1611c130ed041936fee4af6b9a7bfe16e57ffd56f27136fc601cf298099",
+      "expected_masters": 100,
+      "expected_details": 209,
+      "status": "verified",
+      "response": {
+        "status": "applied",
+        "applied": 100,
+        "details": 209,
+        "processed": 100,
+        "preserved_newer": 0
+      },
+      "elapsed_seconds": 2.11,
+      "verification": {
+        "verified": 100,
+        "preserved_newer": 0
+      }
+    },
+    {
+      "file": "n_lvr_land_a.csv",
+      "start": 300,
+      "chunk_sha256": "621dda1620f3ea6780cb4e863aa79165ba291edac2296716c7612280e26614b0",
+      "expected_masters": 100,
+      "expected_details": 212,
+      "status": "verified",
+      "response": {
+        "status": "applied",
+        "applied": 100,
+        "details": 212,
+        "processed": 100,
+        "preserved_newer": 0
+      },
+      "elapsed_seconds": 2.579,
+      "verification": {
+        "verified": 100,
+        "preserved_newer": 0
+      }
+    },
+    {
+      "file": "n_lvr_land_a.csv",
+      "start": 400,
+      "chunk_sha256": "764dc1914d311339a510cc131b9e7ab18274928ed2449b3d2f3c9ccd2ba3359f",
+      "expected_masters": 100,
+      "expected_details": 225,
+      "status": "verified",
+      "response": {
+        "status": "applied",
+        "applied": 100,
+        "details": 225,
+        "processed": 100,
+        "preserved_newer": 0
+      },
+      "elapsed_seconds": 2.219,
+      "verification": {
+        "verified": 100,
+        "preserved_newer": 0
+      }
+    },
+    {
+      "file": "n_lvr_land_a.csv",
+      "start": 500,
+      "chunk_sha256": "975a77ec0b84c675cdce6e0f05d18e100a6325fbb560bd2d7e45802c221b26db",
+      "expected_masters": 100,
+      "expected_details": 243,
+      "status": "verified",
+      "response": {
+        "status": "applied",
+        "applied": 100,
+        "details": 243,
+        "processed": 100,
+        "preserved_newer": 0
+      },
+      "elapsed_seconds": 2.521,
+      "verification": {
+        "verified": 100,
+        "preserved_newer": 0
+      }
+    },
+    {
+      "file": "n_lvr_land_a.csv",
+      "start": 600,
+      "chunk_sha256": "d1b6ec6b050baecd07d1cb60382969c57aa1b920d6ea565e17e512843e64e46c",
+      "expected_masters": 100,
+      "expected_details": 205,
+      "status": "verified",
+      "response": {
+        "status": "applied",
+        "applied": 100,
+        "details": 205,
+        "processed": 100,
+        "preserved_newer": 0
+      },
+      "elapsed_seconds": 2.627,
+      "verification": {
+        "verified": 100,
+        "preserved_newer": 0
+      }
+    },
+    {
+      "file": "n_lvr_land_a.csv",
+      "start": 700,
+      "chunk_sha256": "ec2ee22a97d458c76dd5b88489a645ad063e233e0f528ccfff3130db21e88658",
+      "expected_masters": 100,
+      "expected_details": 198,
+      "status": "verified",
+      "response": {
+        "status": "applied",
+        "applied": 100,
+        "details": 198,
+        "processed": 100,
+        "preserved_newer": 0
+      },
+      "elapsed_seconds": 1.734,
+      "verification": {
+        "verified": 100,
+        "preserved_newer": 0
+      }
+    },
+    {
+      "file": "n_lvr_land_a.csv",
+      "start": 800,
+      "chunk_sha256": "08574289b30b2b7d15f9d1d0d011976e57bbd2b892be6f5160d68be39403a7e3",
+      "expected_masters": 100,
+      "expected_details": 230,
+      "status": "verified",
+      "response": {
+        "status": "applied",
+        "applied": 100,
+        "details": 230,
+        "processed": 100,
+        "preserved_newer": 0
+      },
+      "elapsed_seconds": 2.047,
+      "verification": {
+        "verified": 100,
+        "preserved_newer": 0
+      }
+    },
+    {
+      "file": "n_lvr_land_a.csv",
+      "start": 900,
+      "chunk_sha256": "fb5a5c37f2f6d9198d402b2a1ab78117f69e984c3f05181e5ddb6f009cdc0c26",
+      "expected_masters": 100,
+      "expected_details": 251,
+      "status": "verified",
+      "response": {
+        "status": "applied",
+        "applied": 100,
+        "details": 251,
+        "processed": 100,
+        "preserved_newer": 0
+      },
+      "elapsed_seconds": 1.995,
+      "verification": {
+        "verified": 100,
+        "preserved_newer": 0
+      }
+    },
+    {
+      "file": "n_lvr_land_a.csv",
+      "start": 1000,
+      "chunk_sha256": "220a001f57c65cd2bfde400cc61f4e2f97d564c0cadeeb1a75a55a8fc18ef798",
+      "expected_masters": 100,
+      "expected_details": 270,
+      "status": "verified",
+      "response": {
+        "status": "applied",
+        "applied": 100,
+        "details": 270,
+        "processed": 100,
+        "preserved_newer": 0
+      },
+      "elapsed_seconds": 2.362,
+      "verification": {
+        "verified": 100,
+        "preserved_newer": 0
+      }
+    },
+    {
+      "file": "n_lvr_land_a.csv",
+      "start": 1100,
+      "chunk_sha256": "941d12a2de61c31ce502c986e99c09420e238474056c304eca2fc27839f5f99f",
+      "expected_masters": 100,
+      "expected_details": 246,
+      "status": "verified",
+      "response": {
+        "status": "applied",
+        "applied": 100,
+        "details": 246,
+        "processed": 100,
+        "preserved_newer": 0
+      },
+      "elapsed_seconds": 2.465,
+      "verification": {
+        "verified": 100,
+        "preserved_newer": 0
+      }
+    },
+    {
+      "file": "n_lvr_land_a.csv",
+      "start": 1200,
+      "chunk_sha256": "4be2bf1ca6ab2988c3ad7c1c2ff6afefd5fc6ff565540b66d301b32a97dc801a",
+      "expected_masters": 100,
+      "expected_details": 201,
+      "status": "verified",
+      "response": {
+        "status": "applied",
+        "applied": 100,
+        "details": 201,
+        "processed": 100,
+        "preserved_newer": 0
+      },
+      "elapsed_seconds": 2.014,
+      "verification": {
+        "verified": 100,
+        "preserved_newer": 0
+      }
+    },
+    {
+      "file": "n_lvr_land_a.csv",
+      "start": 1300,
+      "chunk_sha256": "bce687b3509878b662d413c390bcad53fcf240c4006b46d1aab95e2ce02accd4",
+      "expected_masters": 100,
+      "expected_details": 263,
+      "status": "verified",
+      "response": {
+        "status": "applied",
+        "applied": 100,
+        "details": 263,
+        "processed": 100,
+        "preserved_newer": 0
+      },
+      "elapsed_seconds": 2.148,
+      "verification": {
+        "verified": 100,
+        "preserved_newer": 0
+      }
+    },
+    {
+      "file": "n_lvr_land_a.csv",
+      "start": 1400,
+      "chunk_sha256": "cee39be21563202c155c2df61f6efbbde2370fc9a7622b72f416409764085208",
+      "expected_masters": 100,
+      "expected_details": 238,
+      "status": "verified",
+      "response": {
+        "status": "applied",
+        "applied": 100,
+        "details": 238,
+        "processed": 100,
+        "preserved_newer": 0
+      },
+      "elapsed_seconds": 1.978,
+      "verification": {
+        "verified": 100,
+        "preserved_newer": 0
+      }
+    },
+    {
+      "file": "n_lvr_land_a.csv",
+      "start": 1500,
+      "chunk_sha256": "c6fd922c260bc54f89b56c4b6a7e02566a6cdd44286f921e534e0b6930e1004b",
+      "expected_masters": 100,
+      "expected_details": 263,
+      "status": "verified",
+      "response": {
+        "status": "applied",
+        "applied": 100,
+        "details": 263,
+        "processed": 100,
+        "preserved_newer": 0
+      },
+      "elapsed_seconds": 2.291,
+      "verification": {
+        "verified": 100,
+        "preserved_newer": 0
+      }
+    },
+    {
+      "file": "n_lvr_land_a.csv",
+      "start": 1600,
+      "chunk_sha256": "81fbe39a1f080e9b4c5723bbffed51894d86f3f3a9ddc7d86e77a885299cffa3",
+      "expected_masters": 100,
+      "expected_details": 251,
+      "status": "verified",
+      "response": {
+        "status": "applied",
+        "applied": 100,
+        "details": 251,
+        "processed": 100,
+        "preserved_newer": 0
+      },
+      "elapsed_seconds": 2.134,
+      "verification": {
+        "verified": 100,
+        "preserved_newer": 0
+      }
+    },
+    {
+      "file": "n_lvr_land_a.csv",
+      "start": 1700,
+      "chunk_sha256": "4d674b96678e375030545fa79945697b4b5c4f26c25132732e150b5151b47371",
+      "expected_masters": 100,
+      "expected_details": 253,
+      "status": "verified",
+      "response": {
+        "status": "applied",
+        "applied": 100,
+        "details": 253,
+        "processed": 100,
+        "preserved_newer": 0
+      },
+      "elapsed_seconds": 2.089,
+      "verification": {
+        "verified": 100,
+        "preserved_newer": 0
+      }
+    },
+    {
+      "file": "n_lvr_land_a.csv",
+      "start": 1800,
+      "chunk_sha256": "798dc8a25aed10632b213357b05754c83309be8d50148f14139a93c232d79489",
+      "expected_masters": 100,
+      "expected_details": 495,
+      "status": "sending"
+    }
+  ],
+  "import_complete": false,
+  "complete": false,
+  "unresolved_issues": 0,
+  "implementation_sha": "e886f039fd22c404ca11f6a807b635ece55be8ed",
+  "source_backup": "GitHub Actions artifact changhua-source-114S4-41145120303-1",
+  "source_backup_retention_days": 90,
+  "long_term_backup_pending": true,
+  "source_issue_counts": {
+    "invalid_official_share": 1
+  }
+}
