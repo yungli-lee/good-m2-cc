@@ -42,3 +42,18 @@ export async function deleteSocialPost(id: string) {
   if (error) throw new Error("刪除貼文失敗");
   revalidatePath("/admin/social-posts");
 }
+
+export async function editSocialPost(id: string, formData: FormData) {
+  const current = await requireRole(["editor", "admin", "owner"]);
+  const title = String(formData.get("title") || "").trim().slice(0, 200);
+  const body = String(formData.get("body") || "").trim().slice(0, 20000);
+  const category = String(formData.get("category") || "general");
+  const destination_notes = String(formData.get("destination_notes") || "").trim().slice(0, 4000);
+  if (!title || !permitted.includes(category)) throw new Error("請填寫標題與有效分類");
+  const supabase = await createSupabaseServerClient();
+  const { error } = await supabase.from("social_posts").update({
+    title, body, category, destination_notes, updated_at: new Date().toISOString()
+  }).eq("id", id).eq("author_id", current.user.id).in("status", ["draft", "ready"]);
+  if (error) throw new Error("編輯草稿失敗");
+  revalidatePath("/admin/social-posts");
+}
