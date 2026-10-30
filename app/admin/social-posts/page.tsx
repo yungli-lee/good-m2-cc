@@ -29,7 +29,7 @@ export default async function SocialPostsPage() {
     {!facebookReady ? <div className="notice" role="status" style={{marginBottom:18}}>Facebook 直接發布尚未啟用：Preview 伺服器缺少啟用設定或粉專權杖。草稿仍可儲存、編輯，但目前不會發送到 Facebook。請先由管理者設定 Preview 的 FACEBOOK_PAGE_ACCESS_TOKEN（伺服器加密環境變數）及 FACEBOOK_PUBLISH_ENABLED=true，再重新部署。不要將 Token 複製到網站欄位或聊天中。</div> : <div className="success" role="status" style={{marginBottom:18}}>Facebook 發布服務設定已載入。實際發布前請確認目標粉專及內容。</div>}
     {(current.profile.role === "admin" || current.profile.role === "owner") ? <FacebookConnectionCheck/> : null}
     <section className="card" style={{marginBottom:24}}><div className="card-body">
-      <h2>新增發文草稿</h2>
+      <h2>新增發文草稿</h2><p className="muted">第一步：先儲存草稿。第二步：在下方「我的貼文」找到該草稿，使用拖拉圖片上傳區新增照片，確認後再立即或預約發布。</p>
       <form action={createSocialPost} style={{display:"grid",gap:14}}>
         <label className="field"><span>貼文標題（僅供後台辨識）</span><input className="input" name="title" maxLength={200} required placeholder="例如：週末早安分享"/></label>
         <label className="field"><span>內容分類</span><select className="input" name="category" defaultValue="general">
