@@ -553,3 +553,9 @@ Legacy Static Cleanup 完成代表：
 
 ### 阿勇最新指示：每個完整年度完成先暫停
 改為年度分段，不再自動一路跨年到2023。現115S3、115S2 worker已成功，115S1執行中；新增年度邊界控制 workflow，在115S1 job結束時取消原run剩餘季度，停止自動進入114年。115年只有已公布S1～S3，S4尚未公布，不稱全年四季完整。後續年度續補需再確認。保留原範圍、備份、7GB與異常停止保護。控制狀態以新workflow實際執行為準。
+
+
+### 2026-10-31 新授權：只接續114年（2025）完整四季後暫停
+阿勇授權往前一年度回補，本輪僅114S4→114S1，四季完成對帳後停止，不得自動進入113年。新增獨立 workflow moi-changhua-year114.yml，僅4個明確串接job，沿用已驗證彰化 sale/presale scoped worker與新chunk版本。原15季run41145120303已cancelled，年度停止控制run41145682955成功，115S3/S2/S1均成功；目前無匯入/排隊、ACTIVE_HEALTHY、其他active SQL=0、Preview view及公開日期列表13筆/跨期history通過。DB6,285,814,931 bytes，7GB線不變。
+上一輪停止控制生效前114S4曾寫入部分資料：repo報告18批verified、第19批sending。已獨立以原SHA68315c...查驗DB：19個chunk均已提交，log主檔合計1,900，最後不確定批次也已提交；不是未寫入，也不盲目重送。新run相同scope/SHA/chunk會走already_applied，並重驗來源主檔與完整明細指紋集合，再續未完成部分。上述數為該批次log applied數，非新增交易總數。原始114年ZIP四個季度SHA已重新讀原檔核對，114S4與下載來源一致；其他季度待下載後再匹配。
+保持僅niorteztdbuyusemsgwa、彰化sale/presale，保留較新來源、備註原文、明細對應與原檔/raw/log/CMS；不改Production、layout、欄位、配額、timeout與7GB線，不重跑舊national。不宣稱114年已完成；狀態依新run與逐季repo checkpoint。

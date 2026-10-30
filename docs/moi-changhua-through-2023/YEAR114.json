@@ -1,0 +1,37 @@
+{
+  "year_roc": 114,
+  "year_ad": 2025,
+  "authorized": true,
+  "scope": {
+    "project": "niorteztdbuyusemsgwa",
+    "county": "彰化縣",
+    "datasets": [
+      "sale",
+      "presale"
+    ]
+  },
+  "seasons": [
+    "114S4",
+    "114S3",
+    "114S2",
+    "114S1"
+  ],
+  "stop_after": "114S1",
+  "continue_113_automatically": false,
+  "complete": false,
+  "previous_run": 41145120303,
+  "previous_run_stopped": true,
+  "prior_partial_114S4_reconciled": {
+    "confirmed_chunks": 19,
+    "logged_applied_masters": 1900,
+    "last_sending_chunk_committed": true,
+    "source_sha256": "68315c006fa367834eaacf032ceccb22a114fc8798d87b8dac23cf5eb64030ab"
+  },
+  "baseline_database_bytes": 6285814931,
+  "capacity_guard_bytes": 7000000000,
+  "tests": {
+    "scoped_python": 6,
+    "public_listing_rows": 13,
+    "cross_period_history": true
+  }
+}
