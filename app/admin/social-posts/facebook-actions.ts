@@ -56,17 +56,22 @@ export async function publishFacebookPost(id: string) {
     .eq("id",id).eq("author_id",current.user.id).eq("status",post.status).is("facebook_post_id",null).select("id").maybeSingle();
   if (claimError || !claimed) throw new Error("貼文正在處理中，請勿重複送出。");
   let result: {id?:string};
+  let phase: "photos" | "feed" = "photos";
   try {
     const body = new URLSearchParams({message:post.body});
     if (post.link_url) body.set("link",post.link_url);
     await attachPhotos(db,id,token,body,post.link_url);
+    phase = "feed";
     result = await callFacebook("POST",PAGE_ID+"/feed",token,body);
-  } catch {
-    // Unknown outcome: never automatically retry POST (could duplicate a successful publish).
-    await db.from("social_posts").update({status:"publish_unknown",facebook_error:"請先到 Facebook 核對是否已發文；禁止直接重試。"})
+  } catch (error) {
+    // Never automatically resend: Facebook may have accepted some photos or the final post.
+    const code = error instanceof Error ? error.message.match(/Facebook API 未完成操作：(\\d+)/)?.[1] : undefined;
+    const detail = phase==="photos" ? "圖片上傳至 Meta 階段未完成" : "建立 Facebook 貼文階段未確認";
+    await db.from("social_posts").update({status:"publish_unknown",
+      facebook_error:detail+(code ? "，API 錯誤碼 "+code : "，網路或其他錯誤")+"；先核對粉專，禁止直接重試"})
       .eq("id",id).eq("author_id",current.user.id).eq("status","publishing");
     revalidatePath("/admin/social-posts");
-    throw new Error("Facebook 回應未確認。請檢查粉專是否已有貼文，再處理，不要重複發布。");
+    throw new Error(detail+(code ? "（錯誤碼 "+code+"）" : "")+"。請檢查 Facebook 粉專，勿重複發布。");
   }
   if (!result.id || !result.id.startsWith(PAGE_ID+"_")) throw new Error("Facebook 未回傳預期貼文編號，請人工確認。");
   const {error: updateError} = await db.from("social_posts").update({
