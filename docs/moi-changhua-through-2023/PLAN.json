@@ -1,0 +1,48 @@
+{
+  "version": "changhua-sale-presale-through-2023-v1",
+  "authorized": true,
+  "project": "niorteztdbuyusemsgwa",
+  "branch": "feature/real-price-public-search-v1",
+  "county": "彰化縣",
+  "datasets": [
+    "sale",
+    "presale"
+  ],
+  "seasons": [
+    "115S3",
+    "115S2",
+    "115S1",
+    "114S4",
+    "114S3",
+    "114S2",
+    "114S1",
+    "113S4",
+    "113S3",
+    "113S2",
+    "113S1",
+    "112S4",
+    "112S3",
+    "112S2",
+    "112S1"
+  ],
+  "stop_after": "112S1",
+  "goal": "Reconcile official archives through all four quarters of 2023, then pause. Not a guarantee of every historical transaction date.",
+  "baseline_database_bytes": 6284938387,
+  "capacity_guard_bytes": 7000000000,
+  "cleanup_complete_checkpoint": "de323026ee5258499cd4effa2838b8f35cf98718",
+  "new_chunk_version_required": true,
+  "national_workflow_resumed": false,
+  "batch_size": 100,
+  "retry_automatically": false,
+  "source_backup_before_write": true,
+  "artifact_retention_days": 90,
+  "long_term_source_backup_required_before_completion": true,
+  "complete": false,
+  "tests": {
+    "new_scoped": 6,
+    "existing_source": 6,
+    "typecheck": "passed",
+    "eslint": "passed",
+    "build": "passed"
+  }
+}

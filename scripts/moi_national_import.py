@@ -86,7 +86,7 @@ def master(raw,region,code,details):
         'raw_record':raw,'source_fingerprint':fingerprint(raw)}
     if resolutions:result['source_resolutions']=resolutions
     return result
-def parse_archive(path):
+def parse_archive(path,allowed_master_files=None):
     groups=[];issues=[];inventory=[]
     with zipfile.ZipFile(path) as z:
         if z.testzip() is not None:raise ValueError('ZIP CRC failed')
@@ -94,6 +94,7 @@ def parse_archive(path):
         for base,name in sorted(names.items()):
             match=re.fullmatch(r'([a-z])_lvr_land_([abc])\.csv',base)
             if not match:continue
+            if allowed_master_files is not None and base not in allowed_master_files:continue
             region,code=match.groups()
             if region not in COUNTIES:raise ValueError('unknown county '+region)
             masters=list(read_csv(z,name,issues));details=collections.defaultdict(list);available=[]

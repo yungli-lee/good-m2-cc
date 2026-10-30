@@ -535,3 +535,12 @@ Legacy Static Cleanup 完成代表：
 全表重新精確核對：範圍外 0、快照上限外 0、孤兒明細 0；保留彰化 sale 36,053／presale 4,623，共 40,676 主檔；土地 70,412／建物 30,379／車位 10,280，共 111,071 明細。canonical sale 35,845 與原始 sale 差 208 是既有 view alias 去重語意，未改 view 或刪除保留資料。ACTIVE_HEALTHY、其他 active SQL=0，DB 6,284,938,387 bytes；新增索引 5,234,688 bytes，未調 timeout／配額／7GB 保護，未改 Production、資料庫欄位、layout。累計已確認刪除下限 1,438,127 主檔／4,822,474 明細維持；先前額外 25,000 主檔批次未知明細仍另記，不編造精確刪除總數。
 一次只讀對帳工具回 MCP -32603 Internal error，完整回應已存 checkpoint；確認健康與無執行中工作後改用較精簡的聚合雜湊對帳成功，未盲目重送原查詢，不推論 DB timeout 或容量問題。7 組 route 執行測試、TypeScript、ESLint、build 通過（既有 Supabase Edge runtime warning 保留）。cleanup_complete=true；清理檢查 6ae178b105a08191a74779a7b28bb4f1 已確認 is_enabled=false。
 **歷史回補尚未完成且仍暫停。** 原始 ZIP、moi_raw_csv_rows、moi_append_chunk_log 與其他對帳/CMS 紀錄保留；append log 僅代表歷史作業紀錄，不表示全國資料完整。未來只能另以明確彰化 sale/presale scope、新 chunk 版本及容量/健康檢查安排回補，本任務未恢復匯入或再 DELETE。
+
+
+### 2026-10-31 彰化限定回補至 2023 年啟動授權
+
+
+阿勇明確授權現在恢復回補，直到 2023 年官方四季完整匯入後暫停。僅 staging niorteztdbuyusemsgwa、彰化縣 sale/presale；不恢復任何舊 national workflow，不改 Production、欄位、layout、配額、timeout 或 7GB 保護。清理完成 checkpoint de32302 維持歷史紀錄。
+新版本 changhua-sale-presale-through-2023-v1 明確涵蓋 115S3→112S1 共 15 季：先重新核對已匯入季度彰化來源，再補 113S1 與 112 年四季。新 chunk 包含 scope、版本、原始 ZIP SHA，舊全國 chunk log 不作完整證明。每批最多 100 主檔，序列 RPC、無自動重試、20 秒逾時或慢批停止；保留既有較新來源保護與原始官方備註／完整明細。每批獨立核對來源指紋與完整明細集合；每 10 批及每季前後讀取 Preview，任一失敗阻擋後續季度。
+先上傳逐位元原始 ZIP 備份至 90 天 artifact，再開始該季 DB 寫入；每季報告另存 repo docs/moi-changhua-through-2023，完整報告／例外也保存 artifact。90 天 artifact 不是長期備份，完成前仍須將新來源保存至使用者檔案並記 SHA。現有年度 ZIP 與 raw/chunk/CMS/對帳紀錄全部保留。
+預檢 ACTIVE_HEALTHY、無執行/排隊 workflow、其他 active SQL=0，DB 6,284,938,387 bytes，公開日期列表 13 筆與跨期 history 通過。使用者已有 113 年 ZIP 的 113S1 離線核對：sale 3,239／8,404 明細、presale 746／2,099 明細，無未解來源異常。這是來源筆數，未聲稱已新增或去重後總筆數。6 個新 scope/版本/錯誤/對帳測試與6個既有來源修復測試通過。啟動狀態以新 workflow 及季度 checkpoint 為準，尚未宣告回補完成。
