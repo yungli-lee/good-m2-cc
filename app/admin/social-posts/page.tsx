@@ -10,6 +10,7 @@ import { ScheduleFacebookButton } from "./schedule-facebook-button";
 import { SyncFacebookStatusButton } from "./sync-facebook-status-button";
 import { UploadPostImage } from "./upload-post-image";
 import { DiagnoseImagesButton } from "./diagnose-images-button";
+import { MetaPhotoTestButton } from "./meta-photo-test-button";
 
 export const runtime = "edge";
 export const dynamic = "force-dynamic";
@@ -50,7 +51,7 @@ export default async function SocialPostsPage() {
         {post.link_url ? <p className="muted">分享連結：<a href={post.link_url} target="_blank" rel="noopener noreferrer">{post.link_url}</a></p> : null}
         {post.destination_notes ? <p className="muted" style={{whiteSpace:"pre-wrap"}}>目的地：{post.destination_notes}</p> : null}
         {(post.status === "draft" || post.status === "ready") ? <UploadPostImage id={post.id}/> : null}
-        {post.status === "publish_unknown" ? <DiagnoseImagesButton id={post.id}/> : null}
+        {post.status === "publish_unknown" ? <><DiagnoseImagesButton id={post.id}/>{(current.profile.role==="admin"||current.profile.role==="owner")?<MetaPhotoTestButton id={post.id}/>:null}</> : null}
         {(post.status === "draft" || post.status === "ready") ? <details style={{marginBottom:12}}>
           <summary style={{cursor:"pointer",fontWeight:600}}>編輯草稿</summary>
           <form action={editSocialPost.bind(null,post.id)} style={{display:"grid",gap:12,marginTop:12}}>
