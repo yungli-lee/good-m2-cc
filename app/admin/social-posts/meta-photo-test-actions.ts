@@ -1,10 +1,12 @@
 "use server";
 import {requireRole} from "@/lib/auth";
 import {createSupabaseServerClient} from "@/lib/supabase/server";
+import {resolveFacebookPageToken} from "./facebook-page-token";
 const PAGE="284090174797562";
 export async function testMetaPhoto(id:string):Promise<{ok:boolean;message:string}>{
  const user=await requireRole(["admin","owner"]);
- if(process.env.FACEBOOK_PUBLISH_ENABLED!=="true"||!process.env.FACEBOOK_PAGE_ACCESS_TOKEN)return {ok:false,message:"Preview 尚未啟用 Facebook 權杖"};
+ let token:string;
+ try{token=await resolveFacebookPageToken();}catch(e){return {ok:false,message:e instanceof Error?e.message:"粉專權杖驗證失敗"};}
  const db=await createSupabaseServerClient();
  const {data:post}=await db.from("social_posts").select("id").eq("id",id).eq("author_id",user.user.id).single();
  if(!post)return {ok:false,message:"無法讀取這篇貼文"};
@@ -14,7 +16,7 @@ export async function testMetaPhoto(id:string):Promise<{ok:boolean;message:strin
  const payload=new URLSearchParams({url:data.publicUrl,published:"false"});
  try{
   const res=await fetch("https://graph.facebook.com/v26.0/"+PAGE+"/photos",{
-   method:"POST",headers:{"Authorization":"Bearer "+process.env.FACEBOOK_PAGE_ACCESS_TOKEN,"Content-Type":"application/x-www-form-urlencoded"},
+   method:"POST",headers:{"Authorization":"Bearer "+token,"Content-Type":"application/x-www-form-urlencoded"},
    body:payload.toString(),cache:"no-store",signal:AbortSignal.timeout(20000)
   });
   const raw=await res.json() as {id?:string;error?:{message?:string;code?:number;error_subcode?:number;type?:string}};
