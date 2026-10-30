@@ -6,7 +6,7 @@
 
 Preview staging主查詢API未帶縣市時明確套用彰化縣；外縣市或租賃回400 scope_unavailable，不再落入全國查詢。此API限制只在原feature分支＋staging＋Pages host保護條件內生效，不更動Production的既有發布開關及查詢邏輯。Preview專用歷史API的anchor亦限彰化縣，歷史仍對全部已匯入期間比對。
 
-TypeScript、ESLint、build已通過。部署後須核對公開標題、選單、彰化sale/presale查詢、缺省縣市行為及範圍外拒絕。資料刪除尚未全部完成，歷史回補仍暫停，不能把文字範圍調整解讀為資料已完整。
+TypeScript、ESLint、build已通過。83896b5已部署至32571364.good-m2-cc.pages.dev，公開HTML標題與選單驗證通過；未帶county的彰化市9月sale回13筆、presale回8筆且全部為彰化縣，外縣市與租賃回400 scope_unavailable。穩定Preview公開列表與跨期間歷史API再次通過。資料刪除尚未全部完成，歷史回補仍暫停，不能把文字範圍調整解讀為資料已完整。
 
 ## 2026-10-30 10:24 小批清理checkpoint
 
