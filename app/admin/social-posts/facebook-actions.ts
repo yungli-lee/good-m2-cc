@@ -24,6 +24,24 @@ async function callFacebook(method: "POST" | "DELETE", route: string, token: str
   if (!response.ok || result.error) throw new Error("Facebook API 未完成操作：" + (result.error?.code || response.status));
   return result;
 }
+
+async function attachPhotos(db: Awaited<ReturnType<typeof createSupabaseServerClient>>, postId:string, token:string, params:URLSearchParams, linkUrl:string|null) {
+ const {data:images,error}=await db.from("social_post_images").select("storage_path,position").eq("post_id",postId).order("position",{ascending:true}).limit(11);
+ if(error)throw new Error("圖片清單讀取失敗");
+ if(!images?.length)return false;
+ if(images.length>10)throw new Error("每篇最多十張圖片");
+ if(linkUrl){params.delete("link");params.set("message",(params.get("message")||"")+"\n"+linkUrl);}
+ for(const [index,item] of images.entries()){
+   const {data}=db.storage.from("social-post-images").getPublicUrl(item.storage_path);
+   if(!data?.publicUrl)throw new Error("缺少圖片網址");
+   const upload=new URLSearchParams({url:data.publicUrl,published:"false"});
+   const photo=await callFacebook("POST",PAGE_ID+"/photos",token,upload);
+   if(!photo.id)throw new Error("Meta 沒有回傳圖片 ID");
+   params.set("attached_media["+index+"]",JSON.stringify({media_fbid:photo.id}));
+ }
+ return true;
+}
+
 export async function publishFacebookPost(id: string) {
   const current = await requireRole(["editor","admin","owner"]);
   const token = getPageToken();
@@ -41,6 +59,7 @@ export async function publishFacebookPost(id: string) {
   try {
     const body = new URLSearchParams({message:post.body});
     if (post.link_url) body.set("link",post.link_url);
+    await attachPhotos(db,id,token,body,post.link_url);
     result = await callFacebook("POST",PAGE_ID+"/feed",token,body);
   } catch {
     // Unknown outcome: never automatically retry POST (could duplicate a successful publish).
@@ -102,6 +121,8 @@ export async function scheduleFacebookPost(id:string, scheduledLocal:string) {
     const body=new URLSearchParams({message:post.body||"",published:"false",
       scheduled_publish_time:String(Math.floor(ms/1000))});
     if(post.link_url)body.set("link",post.link_url);
+    const hasPhotos=await attachPhotos(db,id,token,body,post.link_url);
+    if(hasPhotos)body.set("unpublished_content_type","SCHEDULED");
     fb=await callFacebook("POST",PAGE_ID+"/feed",token,body);
   }catch{
     await db.from("social_posts").update({status:"publish_unknown",facebook_error:"預約結果待核對，禁止直接重試"})
