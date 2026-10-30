@@ -17,12 +17,61 @@ export const dynamic = "force-dynamic";
 const categories: Record<string,string> = {property:"物件推薦",knowledge:"知識／政策",daily:"生活分享",general:"自由貼文"};
 const statuses: Record<string,string> = {draft:"草稿",ready:"待發布",posted:"已發布",archived:"封存",publishing:"發布中",publish_unknown:"發文結果待核對",scheduled:"已預約"};
 
-export default async function SocialPostsPage() {
+type SearchParams = { q?: string; status?: string; sort?: string; from?: string; to?: string; page?: string };
+const PAGE_SIZE = 20;
+const filterStatuses = ["all", "draft", "ready", "scheduled", "posted", "publishing", "publish_unknown", "archived"];
+const filterSorts = ["newest", "oldest", "scheduled"];
+
+export default async function SocialPostsPage({ searchParams }: { searchParams?: Promise<SearchParams> }) {
+  const params = (await searchParams) || {};
+  const keyword = (typeof params.q === "string" ? params.q : "").trim().slice(0, 120);
+  const statusFilter = filterStatuses.includes(params.status || "") ? params.status! : "all";
+  const sort = filterSorts.includes(params.sort || "") ? params.sort! : "newest";
+  const from = typeof params.from === "string" && /^\d{4}-\d{2}-\d{2}$/.test(params.from) && !Number.isNaN(Date.parse(params.from)) ? params.from : "";
+  const to = typeof params.to === "string" && /^\d{4}-\d{2}-\d{2}$/.test(params.to) && !Number.isNaN(Date.parse(params.to)) ? params.to : "";
+  const page = typeof params.page === "string" && /^[1-9]\d{0,5}$/.test(params.page) ? Number(params.page) : 1;
+  const pageUrl = (number: number) => {
+    const query = new URLSearchParams();
+    if (keyword) query.set("q", keyword);
+    if (statusFilter !== "all") query.set("status", statusFilter);
+    if (sort !== "newest") query.set("sort", sort);
+    if (from) query.set("from", from);
+    if (to) query.set("to", to);
+    query.set("page", String(number));
+    return "/admin/social-posts?" + query.toString();
+  };
   const current = await requireRole(["editor","admin","owner"]);
   const supabase = await createSupabaseServerClient();
-  const { data: posts, error } = await supabase.from("social_posts")
-    .select("id,title,body,category,status,destination_notes,facebook_post_id,facebook_deleted_at,facebook_scheduled_for,link_url,created_at")
-    .eq("author_id",current.user.id).order("created_at",{ascending:false}).limit(100);
+  // Filter before pagination so deleted Facebook posts do not consume page slots.
+  let query = supabase.from("social_posts")
+    .select("id,title,body,category,status,destination_notes,facebook_post_id,facebook_deleted_at,facebook_scheduled_for,link_url,created_at", { count: "exact" })
+    .eq("author_id", current.user.id)
+    .is("facebook_deleted_at", null);
+  if (statusFilter !== "all") query = query.eq("status", statusFilter);
+  if (from) query = query.gte("created_at", from + "T00:00:00+08:00");
+  if (to) {
+    const exclusiveEnd = new Date(to + "T00:00:00+08:00");
+    exclusiveEnd.setUTCDate(exclusiveEnd.getUTCDate() + 1);
+    query = query.lt("created_at", exclusiveEnd.toISOString());
+  }
+  if (keyword) {
+    // PostgREST OR filters use a quoted value; remove filter grammar characters
+    // rather than interpolating them into the expression.
+    const safe = keyword.replace(/[(),\\\"%*]/g, " ").replace(/\s+/g, " ").trim();
+    if (safe) {
+      const value = '"*' + safe + '*"';
+      const conditions = ["title", "body", "link_url", "facebook_post_id"].map(column => column + ".ilike." + value);
+      if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(keyword)) {
+        conditions.push("id.eq." + keyword);
+      }
+      query = query.or(conditions.join(","));
+    }
+  }
+  if (sort === "scheduled") query = query.order("facebook_scheduled_for", { ascending: true, nullsFirst: false }).order("created_at", { ascending: false });
+  else query = query.order("created_at", { ascending: sort === "oldest" });
+  const { data: posts, error, count } = await query.range((page - 1) * PAGE_SIZE, page * PAGE_SIZE - 1);
+  const total = count || 0;
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const facebookReady = process.env.FACEBOOK_PUBLISH_ENABLED === "true" && Boolean(process.env.FACEBOOK_PAGE_ACCESS_TOKEN);
   return <main className="section"><div className="container">
     <div className="admin-page-header"><div><p className="eyebrow">Social Publishing</p><h1>社群發文管理</h1>
@@ -42,7 +91,26 @@ export default async function SocialPostsPage() {
         <div className="admin-actions"><button className="button" type="submit">儲存草稿</button></div>
       </form>
     </div></section>
-    <h2>我的貼文（最近 100 筆）</h2>
+    <h2>我的貼文</h2>
+    <form method="get" action="/admin/social-posts" className="card" style={{marginBottom:18}}>
+      <div className="card-body" style={{display:"grid",gap:12}}>
+        <label className="field"><span>搜尋貼文索引</span><input className="input" type="search" name="q" defaultValue={keyword} maxLength={120} placeholder="標題、內文、網址或 Facebook 貼文 ID"/></label>
+        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(170px,1fr))",gap:12}}>
+          <label className="field"><span>發布狀態</span><select className="input" name="status" defaultValue={statusFilter}>
+            <option value="all">全部狀態</option>
+            {Object.entries(statuses).map(([value,label])=><option key={value} value={value}>{label}</option>)}
+          </select></label>
+          <label className="field"><span>排序</span><select className="input" name="sort" defaultValue={sort}>
+            <option value="newest">最新優先</option><option value="oldest">最舊優先</option><option value="scheduled">預約時間優先</option>
+          </select></label>
+          <label className="field"><span>建立日期起</span><input className="input" type="date" name="from" defaultValue={from}/></label>
+          <label className="field"><span>建立日期迄</span><input className="input" type="date" name="to" defaultValue={to}/></label>
+        </div>
+        <div className="admin-actions"><button className="button" type="submit">搜尋貼文</button><Link className="button ghost" href="/admin/social-posts">清除條件</Link></div>
+        <p className="muted" style={{margin:0}}>搜尋涵蓋全部歷史貼文，預設不顯示 Facebook 已刪除的紀錄；每頁 20 筆。</p>
+      </div>
+    </form>
+    {!error ? <p className="muted" role="status">符合條件共 {total} 筆 · 第 {Math.min(page,totalPages)} / {totalPages} 頁</p> : null}
     {error ? <div className="notice">目前無法讀取貼文資料。請確認 social_posts 資料表已部署到測試資料庫。</div> : null}
     <div style={{display:"grid",gap:14}}>
       {(posts||[]).map(post=><article className="card" key={post.id}><div className="card-body">
@@ -77,7 +145,12 @@ export default async function SocialPostsPage() {
           {!post.facebook_post_id ? <form action={deleteSocialPost.bind(null,post.id)}><button className="button danger" type="submit">刪除草稿</button></form> : null}
         </div>
       </div></article>)}
-      {!error&&!posts?.length ? <p className="muted">尚無草稿。從上方新增第一篇貼文。</p> : null}
+      {!error&&!posts?.length ? <p className="muted">{page > totalPages ? "此頁沒有貼文，請返回上一頁。" : "沒有符合條件的貼文。"}</p> : null}
     </div>
+    {!error && totalPages > 1 ? <nav aria-label="貼文分頁" className="admin-actions" style={{marginTop:18,flexWrap:"wrap"}}>
+      {page > 1 ? <Link className="button ghost" href={pageUrl(page-1)}>上一頁</Link> : null}
+      <span className="muted">第 {Math.min(page,totalPages)} / {totalPages} 頁</span>
+      {page < totalPages ? <Link className="button ghost" href={pageUrl(page+1)}>下一頁</Link> : null}
+    </nav> : null}
   </div></main>;
 }
