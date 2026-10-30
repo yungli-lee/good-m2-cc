@@ -27,9 +27,9 @@ export default async function SocialPostsPage({ searchParams }: { searchParams?:
   const keyword = (typeof params.q === "string" ? params.q : "").trim().slice(0, 120);
   const statusFilter = filterStatuses.includes(params.status || "") ? params.status! : "all";
   const sort = filterSorts.includes(params.sort || "") ? params.sort! : "newest";
-  const from = typeof params.from === "string" && /^\\d{4}-\\d{2}-\\d{2}$/.test(params.from) && !Number.isNaN(Date.parse(params.from)) ? params.from : "";
-  const to = typeof params.to === "string" && /^\\d{4}-\\d{2}-\\d{2}$/.test(params.to) && !Number.isNaN(Date.parse(params.to)) ? params.to : "";
-  const page = typeof params.page === "string" && /^[1-9]\\d{0,5}$/.test(params.page) ? Number(params.page) : 1;
+  const from = typeof params.from === "string" && /^\d{4}-\d{2}-\d{2}$/.test(params.from) && !Number.isNaN(Date.parse(params.from)) ? params.from : "";
+  const to = typeof params.to === "string" && /^\d{4}-\d{2}-\d{2}$/.test(params.to) && !Number.isNaN(Date.parse(params.to)) ? params.to : "";
+  const page = typeof params.page === "string" && /^[1-9]\d{0,5}$/.test(params.page) ? Number(params.page) : 1;
   const pageUrl = (number: number) => {
     const query = new URLSearchParams();
     if (keyword) query.set("q", keyword);
@@ -57,7 +57,7 @@ export default async function SocialPostsPage({ searchParams }: { searchParams?:
   if (keyword) {
     // PostgREST OR filters use a quoted value; remove filter grammar characters
     // rather than interpolating them into the expression.
-    const safe = keyword.replace(/[(),\\\"%*]/g, " ").replace(/\\s+/g, " ").trim();
+    const safe = keyword.replace(/[(),\\\"%*]/g, " ").replace(/\s+/g, " ").trim();
     if (safe) {
       const value = '"*' + safe + '*"';
       query = query.or(["title", "body", "link_url", "facebook_post_id"].map(column => column + ".ilike." + value).join(","));
