@@ -1,5 +1,16 @@
 # Project Status
 
+## 2026-10-31 02:42 預售公開驗收通過，較廣買賣仍503
+
+本輪只讀，未DELETE或匯入。先讀最新checkpoint並確認無執行/排隊workflow，staging ACTIVE_HEALTHY；預檢與收尾其他active SQL=0、清理SQL=0、Preview view可讀，DB6279687315 bytes。
+
+為補足尚未到達的預售驗收，先用一般公開條件查詢彰化presale（不帶私有DB地址/ID）。回傳20筆、總數4623，縣市/資料類型均吻合，含48筆明細、8筆車位明細、2筆有官方備註，10.279秒通過。接著較廣彰化sale查詢仍於11.508秒回HTTP503，原始本文 `{"error":"query_unavailable"}`；停止未自動重試。此結果不可擴大成完整公開驗收通過。
+
+已嘗試只讀查前次錯誤時間窗17:39:50Z～17:41:10Z的Supabase logs：來源有postgres_logs1、postgrest_logs2、edge_logs7。event_message/parsed鍵均空白，wildcard結果欄被工具限制，未得到足以判定503原因的訊息；沒有據此斷言容量或連線問題，也未盲目反覆查log。一般日期列表/跨期歷史先前通過，本輪未在503後重試或重驗。
+
+範圍清理已耗盡cursor1504397，前次全表範圍外/孤兒均0；保留40676主檔及111071明細，累計刪除下限1438127主檔/4822474明細與先前未知批次另記，均維持。cleanup_complete仍false，任務維持啟用，只讀接續待完成的買賣明細/車位/官方備註與查詢驗收。禁止恢復歷史追加；Production、schema、layout、7GB保護、原檔與對帳紀錄未變。
+
+
 ## 2026-10-31 01:41 唯讀驗收仍遇較廣查詢503
 
 先讀最新checkpoint，確認範圍清理已於上一輪耗盡，游標1504397，不再執行DELETE。本輪無匯入/清理workflow、staging ACTIVE_HEALTHY，預檢與收尾其他active SQL=0、清理SQL=0、Preview view可讀，DB6279687315 bytes。
