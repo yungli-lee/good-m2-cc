@@ -13,7 +13,7 @@ export async function POST(request:Request){
     const ids:unknown=parsed&&typeof parsed==="object"&&"ids" in parsed?parsed.ids:null;
     if(!Array.isArray(ids)||ids.length<1||ids.length>20||ids.some(id=>!Number.isSafeInteger(id)||id<1))return NextResponse.json({error:"invalid_ids"},{status:400});
     const db=createSupabaseAdminClient(),signal=AbortSignal.timeout(12000);
-    const anchorResult=await db.from("moi_preview_transactions").select(columns).in("id",[...new Set(ids)]).abortSignal(signal);
+    const anchorResult=await db.from("moi_preview_transactions").select(columns).eq("county","彰化縣").in("id",[...new Set(ids)]).abortSignal(signal);
     if(anchorResult.error)throw new Error("anchors_unavailable");
     const anchors=(anchorResult.data||[]) as unknown as HistoryMaster[];
     const areas=new Map<string,HistoryMaster[]>();

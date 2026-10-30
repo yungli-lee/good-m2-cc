@@ -5,7 +5,7 @@ import { parseSearchDate } from "@/lib/real-price/date-range";
 import { hasExplicitLane } from "@/lib/real-price/road-search";
 import type { HistoryEntry } from "@/lib/real-price/history";
 
-const counties=["彰化縣","臺北市","新北市","桃園市","臺中市","臺南市","高雄市","基隆市","新竹市","嘉義市","新竹縣","苗栗縣","南投縣","雲林縣","嘉義縣","屏東縣","宜蘭縣","花蓮縣","臺東縣","澎湖縣","金門縣","連江縣"];
+const counties=["彰化縣"];
 type Detail={ownership_share_numerator?:number|null;ownership_share_denominator?:number|null;parking_type?:string|null;parking_price_ntd?:number|null;parking_floor?:string|null;share_warning?:string|null;detail_type:string;section_name?:string|null;parcel_number?:string|null;building_number?:string|null;detail_area_sqm?:number|null};
 type Result={history_lookup_key?:string|null;official_note?:string|null;details?:Detail[];id:number;county:string;district:string;transaction_date:string;target_category:string;total_price_ntd:number|null;land_area_sqm:number|null;building_area_sqm:number|null;road_name?:string|null;land_section?:string|null;location_display?:string|null;unit_price_ntd_per_sqm?:number|null;building_age_years?:number|null;building_pattern?:string|null;floor_display?:string|null};
 const targetOptions=[{id:"house_land",name:"房地"},{id:"land",name:"土地"},{id:"building",name:"建物"},{id:"parking",name:"車位"}];
@@ -28,7 +28,7 @@ const categoryLabel=(v:string)=>({house_land:"房地",land:"土地",building:"�
 // A zero parking price still represents a parking space when an official detail exists.
 const parkingBadge=(r:Result)=>(r.target_category==="parking"||r.details?.some(d=>d.detail_type==="parking"))?<span role="img" aria-label="含車位" title="含車位（依交易標的或官方車位明細確認）" style={{marginLeft:5}}>🚗</span>:null;
 export function RealPriceSearch(){
- const [county,setCounty]=useState(""),[district,setDistrict]=useState("");
+ const [county,setCounty]=useState("彰化縣"),[district,setDistrict]=useState("");
  const [expandedId,setExpandedId]=useState<number|null>(null);
  const [districtOptions,setDistrictOptions]=useState<string[]>([]);
  const [districtLoading,setDistrictLoading]=useState(false),[districtFallback,setDistrictFallback]=useState(false);
@@ -169,13 +169,13 @@ export function RealPriceSearch(){
  </section>;
  const f=(label:string,element:ReactNode)=><label style={{display:"grid",gap:5,fontSize:14,fontWeight:600}}>{label}{element}</label>;
  return <main style={{maxWidth:1120,margin:"0 auto",padding:"32px 16px 80px",color:"#1e293b"}}>
-  <h1 style={{fontSize:"clamp(25px,4vw,36px)",fontWeight:750}}>全國實價登錄查詢</h1>
-  <p style={{color:"#64748b",margin:"8px 0 22px"}}>全國各縣市皆可查詢｜可依地區篩選｜買賣・預售屋・租賃</p>
+  <h1 style={{fontSize:"clamp(25px,4vw,36px)",fontWeight:750}}>彰化縣實價登錄查詢</h1>
+  <p style={{color:"#64748b",margin:"8px 0 22px"}}>彰化縣各鄉鎮市區｜買賣・預售屋</p>
   <form onSubmit={submit} autoComplete="off" style={{padding:20,background:"#f8fafc",border:"1px solid #e2e8f0",borderRadius:12,display:"grid",gap:17}}>
    <div style={gridStyle}>
-    {f("資料類型",<select style={inputStyle} value={dataset} onChange={e=>setDataset(e.target.value)}><option value="sale">不動產買賣</option><option value="presale">預售屋</option><option value="rental">租賃</option></select>)}
-    {f("縣市",<select style={inputStyle} value={county} onChange={e=>{setCounty(e.target.value);setDistrict("");}}><option value="">全國（全部縣市）</option>{counties.map(c=><option key={c} value={c}>{c}</option>)}</select>)}
-    {f("鄉鎮市區",!county?<input style={inputStyle} value={district} onChange={e=>setDistrict(e.target.value)} placeholder="全國全部行政區（可輸入名稱）" maxLength={80}/>:districtLoading?<select style={inputStyle} disabled><option>讀取行政區中…</option></select>:districtFallback?<input style={inputStyle} value={district} onChange={e=>setDistrict(e.target.value)} placeholder="行政區服務暫時無法使用，請輸入區名" maxLength={80}/>:<select style={inputStyle} value={district} onChange={e=>setDistrict(e.target.value)}><option value="">全部鄉鎮市區</option>{districtOptions.map(d=><option key={d} value={d}>{d}</option>)}</select>)}
+    {f("資料類型",<select style={inputStyle} value={dataset} onChange={e=>setDataset(e.target.value)}><option value="sale">不動產買賣</option><option value="presale">預售屋</option></select>)}
+    {f("縣市",<select style={inputStyle} value={county} onChange={e=>{setCounty(e.target.value);setDistrict("");}}>{counties.map(c=><option key={c} value={c}>{c}</option>)}</select>)}
+    {f("鄉鎮市區",!county?<input style={inputStyle} value={district} onChange={e=>setDistrict(e.target.value)} placeholder="彰化縣全部鄉鎮市區（可輸入名稱）" maxLength={80}/>:districtLoading?<select style={inputStyle} disabled><option>讀取行政區中…</option></select>:districtFallback?<input style={inputStyle} value={district} onChange={e=>setDistrict(e.target.value)} placeholder="行政區服務暫時無法使用，請輸入區名" maxLength={80}/>:<select style={inputStyle} value={district} onChange={e=>setDistrict(e.target.value)}><option value="">全部鄉鎮市區</option>{districtOptions.map(d=><option key={d} value={d}>{d}</option>)}</select>)}
     {f("交易期間",<select style={inputStyle} value={period} onChange={e=>setPeriod(e.target.value)}>{["1","2","3","5","10","all","custom"].map(v=><option value={v} key={v}>{v==="custom"?"自訂日期區間":v==="all"?"全部已發布資料":`近 ${v} 年`}</option>)}</select>)}
    </div>
    {period==="custom"&&<div>
@@ -225,7 +225,7 @@ export function RealPriceSearch(){
    {status==="unavailable"&&<div role="status" style={{padding:18,background:"#eff6ff",border:"1px solid #bfdbfe",borderRadius:10}}><strong>查詢介面已開放預覽，成交資料尚未開放</strong><p style={{margin:"8px 0 0",color:"#475569"}}>目前可以操作篩選條件並檢查版面。資料完成驗證與發布後，才會顯示真實成交紀錄。</p></div>}
    {status==="error"&&<p role="alert" style={{padding:15,border:"1px solid #fecaca",borderRadius:8}}>{message}</p>}
    {status==="empty"&&<p>在本次可查詢的資料範圍內，沒有符合條件的紀錄。</p>}
-   {status==="ok"&&<>{previewSample&&<p role="status" style={{padding:12,background:"#fff7ed",border:"1px solid #fdba74",borderRadius:8}}>資料範圍提醒：目前提供已匯入的當期及部分歷史資料，尚未涵蓋全國全部年度；查無結果不代表沒有交易。</p>}<p>符合條件：{total.toLocaleString("zh-TW")} 筆</p><style>{`
+   {status==="ok"&&<>{previewSample&&<p role="status" style={{padding:12,background:"#fff7ed",border:"1px solid #fdba74",borderRadius:8}}>資料範圍提醒：目前提供彰化縣已匯入的當期及部分歷史買賣、預售資料，歷年資料尚未補齊；查無結果不代表沒有交易。</p>}<p>符合條件：{total.toLocaleString("zh-TW")} 筆</p><style>{`
     .real-price-desktop{display:block}
     .real-price-mobile{display:none}
     @media(max-width:720px){

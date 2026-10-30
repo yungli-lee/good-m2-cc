@@ -20,10 +20,12 @@ export async function GET(request: Request) {
   if(!previewStaging && !publicEnabled) return NextResponse.json({error:"not_ready",message:"實價登錄資料尚未開放查詢"},{status:503,headers:{"Cache-Control":"no-store"}});
   try {
     const p=new URL(request.url).searchParams;
-    const county=textFilter(p.get("county"));
+    const requestedCounty=textFilter(p.get("county"));
+    const county=previewStaging?(requestedCounty||"彰化縣"):requestedCounty;
     const district=textFilter(p.get("district")); const road=textFilter(p.get("road")); const section=textFilter(p.get("section"));
     const dataset=p.get("dataset")||"sale";
     if(!["sale","presale","rental"].includes(dataset)) throw new Error("dataset");
+    if(previewStaging&&(county!=="彰化縣"||dataset==="rental"))return NextResponse.json({error:"scope_unavailable",message:"目前提供彰化縣買賣及預售屋查詢"},{status:400,headers:{"Cache-Control":"no-store"}});
     const targets=[...new Set(p.getAll("target").flatMap(x=>x.split(",")).filter(Boolean))];
     if(targets.some(x=>!TARGETS.has(x))) throw new Error("target");
     const from=dateFilter(p.get("from")),to=dateFilter(p.get("to"));
