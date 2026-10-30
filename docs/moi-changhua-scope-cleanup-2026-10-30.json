@@ -1,5 +1,5 @@
 {
-  "checked_at": "2026-10-30 08:32:53.788304+00",
+  "checked_at": "2026-10-30 09:17:11.803388+00",
   "project": "niorteztdbuyusemsgwa",
   "keep": {
     "county": "彰化縣",
@@ -10,11 +10,11 @@
   },
   "delete_predicate": "county IS DISTINCT FROM '彰化縣' OR dataset_type='rental'",
   "snapshot_max_id": 1504397,
-  "last_verified_cursor": 848588,
+  "last_verified_cursor": 938588,
   "residual_at_or_below_cursor": null,
   "active_cleanup_queries": 0,
-  "confirmed_deleted_masters_lower_bound": 786000,
-  "confirmed_deleted_details_lower_bound": 2598220,
+  "confirmed_deleted_masters_lower_bound": 876000,
+  "confirmed_deleted_details_lower_bound": 2905577,
   "additional_committed_batch": {
     "expected_masters": 25000,
     "details_unknown": true
@@ -25,16 +25,16 @@
   "project_healthy": true,
   "public_query_verified": true,
   "history_api_verified": true,
-  "database_bytes": 6279392403,
+  "database_bytes": 6279400595,
   "batch_size": 1000,
   "layout_or_schema_changed": false,
   "production_changed": false,
   "notes": "Partial cleanup only. Existing import logs remain historical evidence and must not be treated as full-national row coverage after pruning.",
-  "run_batches": 1,
-  "run_deleted_masters": 1000,
-  "run_deleted_details": 2189,
-  "stop_reason": "tool_error_on_second_batch_no_retry",
-  "last_batch_elapsed_ms": 7936,
+  "run_batches": 90,
+  "run_deleted_masters": 90000,
+  "run_deleted_details": 307357,
+  "stop_reason": "other_active_sql_detected_at_batch_90",
+  "last_batch_elapsed_ms": 4081,
   "preview_read_ok": true,
   "previous_residual_check": {
     "cursor": 847588,
@@ -47,6 +47,19 @@
     "remaining_targets": 1000,
     "active_cleanup_queries": 0,
     "conclusion": "Next 1000 eligible rows remain present; failed batch did not delete those masters. No retry in this run.",
-    "error_details": "Tool returned isError; original error body was not retained. Do not classify as timeout or approval rejection without evidence."
-  }
+    "error_details": "Tool returned isError; original error body was not retained. Do not classify as timeout or approval rejection without evidence.",
+    "resolved_by_later_run": {
+      "first_completed_batch_last_id": 849588,
+      "deleted_masters": 1000,
+      "deleted_details": 2545,
+      "note": "Previously uncommitted target batch completed only after fresh health and public read verification; original error cause remains unclassified."
+    }
+  },
+  "guard_observation": {
+    "checked_at": "2026-10-30 09:16:49.281366+00",
+    "db_bytes": 6279400595,
+    "other_active_sql": 1,
+    "preview_readable": true
+  },
+  "post_stop_other_active_sql": 0
 }
