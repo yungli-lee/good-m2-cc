@@ -1,5 +1,5 @@
 {
-  "checked_at": "2026-10-30 18:41:52.589831+00",
+  "checked_at": "2026-10-30 19:07:34.66974+00",
   "project": "niorteztdbuyusemsgwa",
   "keep": {
     "county": "彰化縣",
@@ -33,7 +33,7 @@
   "run_batches": 0,
   "run_deleted_masters": 0,
   "run_deleted_details": 0,
-  "stop_reason": "presale_passed_broad_sale_503",
+  "stop_reason": "read_only_diagnostics_query_cancelled_broad_sale_503",
   "last_batch_elapsed_ms": 4903,
   "preview_read_ok": true,
   "previous_residual_check": {
@@ -56,7 +56,7 @@
     }
   },
   "guard_observation": {
-    "checked_at": "2026-10-30 18:41:52.589831+00",
+    "checked_at": "2026-10-30 19:07:34.66974+00",
     "db_bytes": 6279687315,
     "other_active_sql": 0,
     "active_cleanup_queries": 0,
@@ -128,30 +128,40 @@
     ]
   },
   "acceptance_pending": [
-    "Broad sale request still returns HTTP 503 query_unavailable. Broad presale list/detail/parking/note fields passed; historical and dated sale successes retained from previous checks, not retested after the 503."
+    "Broad sale query still returns 503 and logs show query cancellation. Dated sale details/official-note fields and cross-period history pass; sale parking case not covered by this 13-row sample. Presale details/parking/note fields previously passed."
   ],
   "public_broad_query_verified": false,
   "last_public_acceptance": {
-    "checked_at": "2026-10-30T18:40:40Z",
+    "checked_at": "2026-10-30T19:06:38Z",
     "complete": false,
-    "datasets": {
-      "presale": {
-        "rows": 20,
-        "total": 4623,
-        "detail_rows": 48,
-        "parking_rows": 8,
-        "official_notes": 2,
-        "elapsed_seconds": 10.279
-      }
+    "dated_sale": {
+      "rows": 13,
+      "detail_rows": 22,
+      "parking_rows": 0,
+      "official_notes": 10
     },
-    "error": {
-      "dataset": "sale",
+    "history": {
+      "groups": 1,
+      "cross_period": true
+    },
+    "broad_error": {
       "type": "HTTPError",
       "status": 503,
-      "elapsed_seconds": 11.508,
+      "elapsed_seconds": 11.4,
       "response_body": "{\"error\":\"query_unavailable\"}"
     },
     "no_automatic_retry": true
   },
-  "public_presale_verified": true
+  "public_presale_verified": true,
+  "diagnostic_evidence": {
+    "log_window_start": "2026-10-30T18:40:30Z",
+    "log_window_end": "2026-10-30T18:41:20Z",
+    "application": "PostgREST 14.5",
+    "sql_state": "57014",
+    "severity": "ERROR",
+    "preview_query": true,
+    "explain_only": true,
+    "plan_summary": "Limit -> Sort -> Bitmap Heap Scan on sale plus canonical alias subplans; estimated 35005 rows before LIMIT20. EXPLAIN without ANALYZE, no query execution.",
+    "conclusion": "Query cancellation is confirmed; exact cancellation cause not established. Not evidence of quota exhaustion."
+  }
 }

@@ -1,5 +1,18 @@
 # Project Status
 
+## 2026-10-31 03:08 唯讀查證確認Preview查詢取消
+
+本輪只讀，未DELETE、匯入或改API/schema。staging ACTIVE_HEALTHY、無執行/排隊workflow，預檢與收尾其他active SQL=0、清理SQL=0、Preview view可讀，DB6279687315 bytes。
+
+修正前次log欄位讀取方式：先讀mapKeys(log_attributes)，確認欄位採flattened keys，例如parsed.sql_state_code。18:40:30Z～18:41:20Z的postgres log確認PostgREST 14.5、severity ERROR、SQLSTATE57014，對應moi_preview_transactions查詢。這證明查詢被取消，尚不證明確切取消來源；不能說成容量超額。
+
+僅EXPLAIN（未ANALYZE、不實際執行）較廣sale列表，計畫為Limit -> Sort -> Bitmap Heap Scan，先估算35005筆買賣並包含canonical alias去重子查詢後才LIMIT20。這是後續效能查證線索，沒有修改view、索引、timeout或放寬保護。
+
+恢復repo中的公開驗證腳本內容後，以無私有DB資料的獨立Python唯讀驗證：日期/彰化市sale回13筆、22明細、10筆有官方備註；該樣本0車位，不能當作sale車位案例通過。僅用同站公開回應IDs查history，1組跨期間且排序正確。較廣sale仍11.4秒回503 `{"error":"query_unavailable"}`，立即停止未重試。presale20筆/48明細/8車位/2備註是前輪已驗證，本輪未重做。
+
+scope_pruning_complete仍true，cursor1504397；前次全表40676主檔、111071明細、範圍外/孤兒0保留，本輪未重做全表或資料指紋。cleanup_complete仍false，任務維持啟用，尚待較廣sale正常及sale車位/備註驗收；不能宣告完成或恢復歷史追加。原檔、對帳紀錄、Production、欄位、版面、7GB保護不變。
+
+
 ## 2026-10-31 02:42 預售公開驗收通過，較廣買賣仍503
 
 本輪只讀，未DELETE或匯入。先讀最新checkpoint並確認無執行/排隊workflow，staging ACTIVE_HEALTHY；預檢與收尾其他active SQL=0、清理SQL=0、Preview view可讀，DB6279687315 bytes。
