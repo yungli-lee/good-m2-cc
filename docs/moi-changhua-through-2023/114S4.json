@@ -44,13 +44,10 @@
       "expected_details": 198,
       "status": "verified",
       "response": {
-        "status": "applied",
-        "applied": 100,
-        "details": 198,
-        "processed": 100,
-        "preserved_newer": 0
+        "status": "already_applied",
+        "processed": 100
       },
-      "elapsed_seconds": 2.763,
+      "elapsed_seconds": 1.5,
       "verification": {
         "verified": 100,
         "preserved_newer": 0
@@ -64,13 +61,10 @@
       "expected_details": 222,
       "status": "verified",
       "response": {
-        "status": "applied",
-        "applied": 100,
-        "details": 222,
-        "processed": 100,
-        "preserved_newer": 0
+        "status": "already_applied",
+        "processed": 100
       },
-      "elapsed_seconds": 2.474,
+      "elapsed_seconds": 1.365,
       "verification": {
         "verified": 100,
         "preserved_newer": 0
@@ -84,13 +78,10 @@
       "expected_details": 209,
       "status": "verified",
       "response": {
-        "status": "applied",
-        "applied": 100,
-        "details": 209,
-        "processed": 100,
-        "preserved_newer": 0
+        "status": "already_applied",
+        "processed": 100
       },
-      "elapsed_seconds": 2.11,
+      "elapsed_seconds": 1.364,
       "verification": {
         "verified": 100,
         "preserved_newer": 0
@@ -104,13 +95,10 @@
       "expected_details": 212,
       "status": "verified",
       "response": {
-        "status": "applied",
-        "applied": 100,
-        "details": 212,
-        "processed": 100,
-        "preserved_newer": 0
+        "status": "already_applied",
+        "processed": 100
       },
-      "elapsed_seconds": 2.579,
+      "elapsed_seconds": 1.291,
       "verification": {
         "verified": 100,
         "preserved_newer": 0
@@ -124,13 +112,10 @@
       "expected_details": 225,
       "status": "verified",
       "response": {
-        "status": "applied",
-        "applied": 100,
-        "details": 225,
-        "processed": 100,
-        "preserved_newer": 0
+        "status": "already_applied",
+        "processed": 100
       },
-      "elapsed_seconds": 2.219,
+      "elapsed_seconds": 1.251,
       "verification": {
         "verified": 100,
         "preserved_newer": 0
@@ -144,13 +129,10 @@
       "expected_details": 243,
       "status": "verified",
       "response": {
-        "status": "applied",
-        "applied": 100,
-        "details": 243,
-        "processed": 100,
-        "preserved_newer": 0
+        "status": "already_applied",
+        "processed": 100
       },
-      "elapsed_seconds": 2.521,
+      "elapsed_seconds": 1.346,
       "verification": {
         "verified": 100,
         "preserved_newer": 0
@@ -164,13 +146,10 @@
       "expected_details": 205,
       "status": "verified",
       "response": {
-        "status": "applied",
-        "applied": 100,
-        "details": 205,
-        "processed": 100,
-        "preserved_newer": 0
+        "status": "already_applied",
+        "processed": 100
       },
-      "elapsed_seconds": 2.627,
+      "elapsed_seconds": 1.231,
       "verification": {
         "verified": 100,
         "preserved_newer": 0
@@ -184,13 +163,10 @@
       "expected_details": 198,
       "status": "verified",
       "response": {
-        "status": "applied",
-        "applied": 100,
-        "details": 198,
-        "processed": 100,
-        "preserved_newer": 0
+        "status": "already_applied",
+        "processed": 100
       },
-      "elapsed_seconds": 1.734,
+      "elapsed_seconds": 1.225,
       "verification": {
         "verified": 100,
         "preserved_newer": 0
@@ -204,13 +180,10 @@
       "expected_details": 230,
       "status": "verified",
       "response": {
-        "status": "applied",
-        "applied": 100,
-        "details": 230,
-        "processed": 100,
-        "preserved_newer": 0
+        "status": "already_applied",
+        "processed": 100
       },
-      "elapsed_seconds": 2.047,
+      "elapsed_seconds": 1.291,
       "verification": {
         "verified": 100,
         "preserved_newer": 0
@@ -224,13 +197,10 @@
       "expected_details": 251,
       "status": "verified",
       "response": {
-        "status": "applied",
-        "applied": 100,
-        "details": 251,
-        "processed": 100,
-        "preserved_newer": 0
+        "status": "already_applied",
+        "processed": 100
       },
-      "elapsed_seconds": 1.995,
+      "elapsed_seconds": 1.273,
       "verification": {
         "verified": 100,
         "preserved_newer": 0
@@ -244,13 +214,10 @@
       "expected_details": 270,
       "status": "verified",
       "response": {
-        "status": "applied",
-        "applied": 100,
-        "details": 270,
-        "processed": 100,
-        "preserved_newer": 0
+        "status": "already_applied",
+        "processed": 100
       },
-      "elapsed_seconds": 2.362,
+      "elapsed_seconds": 0.52,
       "verification": {
         "verified": 100,
         "preserved_newer": 0
@@ -264,13 +231,10 @@
       "expected_details": 246,
       "status": "verified",
       "response": {
-        "status": "applied",
-        "applied": 100,
-        "details": 246,
-        "processed": 100,
-        "preserved_newer": 0
+        "status": "already_applied",
+        "processed": 100
       },
-      "elapsed_seconds": 2.465,
+      "elapsed_seconds": 1.292,
       "verification": {
         "verified": 100,
         "preserved_newer": 0
@@ -284,13 +248,10 @@
       "expected_details": 201,
       "status": "verified",
       "response": {
-        "status": "applied",
-        "applied": 100,
-        "details": 201,
-        "processed": 100,
-        "preserved_newer": 0
+        "status": "already_applied",
+        "processed": 100
       },
-      "elapsed_seconds": 2.014,
+      "elapsed_seconds": 0.493,
       "verification": {
         "verified": 100,
         "preserved_newer": 0
@@ -304,13 +265,10 @@
       "expected_details": 263,
       "status": "verified",
       "response": {
-        "status": "applied",
-        "applied": 100,
-        "details": 263,
-        "processed": 100,
-        "preserved_newer": 0
+        "status": "already_applied",
+        "processed": 100
       },
-      "elapsed_seconds": 2.148,
+      "elapsed_seconds": 0.875,
       "verification": {
         "verified": 100,
         "preserved_newer": 0
@@ -324,13 +282,10 @@
       "expected_details": 238,
       "status": "verified",
       "response": {
-        "status": "applied",
-        "applied": 100,
-        "details": 238,
-        "processed": 100,
-        "preserved_newer": 0
+        "status": "already_applied",
+        "processed": 100
       },
-      "elapsed_seconds": 1.978,
+      "elapsed_seconds": 0.789,
       "verification": {
         "verified": 100,
         "preserved_newer": 0
@@ -344,13 +299,10 @@
       "expected_details": 263,
       "status": "verified",
       "response": {
-        "status": "applied",
-        "applied": 100,
-        "details": 263,
-        "processed": 100,
-        "preserved_newer": 0
+        "status": "already_applied",
+        "processed": 100
       },
-      "elapsed_seconds": 2.291,
+      "elapsed_seconds": 1.277,
       "verification": {
         "verified": 100,
         "preserved_newer": 0
@@ -364,13 +316,10 @@
       "expected_details": 251,
       "status": "verified",
       "response": {
-        "status": "applied",
-        "applied": 100,
-        "details": 251,
-        "processed": 100,
-        "preserved_newer": 0
+        "status": "already_applied",
+        "processed": 100
       },
-      "elapsed_seconds": 2.134,
+      "elapsed_seconds": 1.248,
       "verification": {
         "verified": 100,
         "preserved_newer": 0
@@ -384,13 +333,10 @@
       "expected_details": 253,
       "status": "verified",
       "response": {
-        "status": "applied",
-        "applied": 100,
-        "details": 253,
-        "processed": 100,
-        "preserved_newer": 0
+        "status": "already_applied",
+        "processed": 100
       },
-      "elapsed_seconds": 2.089,
+      "elapsed_seconds": 1.224,
       "verification": {
         "verified": 100,
         "preserved_newer": 0
@@ -402,14 +348,223 @@
       "chunk_sha256": "798dc8a25aed10632b213357b05754c83309be8d50148f14139a93c232d79489",
       "expected_masters": 100,
       "expected_details": 495,
-      "status": "sending"
+      "status": "verified",
+      "response": {
+        "status": "already_applied",
+        "processed": 100
+      },
+      "elapsed_seconds": 0.592,
+      "verification": {
+        "verified": 100,
+        "preserved_newer": 0
+      }
+    },
+    {
+      "file": "n_lvr_land_a.csv",
+      "start": 1900,
+      "chunk_sha256": "0ffcbeafeeaf8f06e8d17c8b9f0590840e884c4ad88dad6cb8a0df16aa99de31",
+      "expected_masters": 100,
+      "expected_details": 353,
+      "status": "verified",
+      "response": {
+        "status": "applied",
+        "applied": 100,
+        "details": 353,
+        "processed": 100,
+        "preserved_newer": 0
+      },
+      "elapsed_seconds": 2.279,
+      "verification": {
+        "verified": 100,
+        "preserved_newer": 0
+      }
+    },
+    {
+      "file": "n_lvr_land_a.csv",
+      "start": 2000,
+      "chunk_sha256": "9195555a3bc997afa539a65372b55c242e3c296acfb59889beed52d30b93314b",
+      "expected_masters": 100,
+      "expected_details": 425,
+      "status": "verified",
+      "response": {
+        "status": "applied",
+        "applied": 100,
+        "details": 425,
+        "processed": 100,
+        "preserved_newer": 0
+      },
+      "elapsed_seconds": 2.108,
+      "verification": {
+        "verified": 100,
+        "preserved_newer": 0
+      }
+    },
+    {
+      "file": "n_lvr_land_a.csv",
+      "start": 2100,
+      "chunk_sha256": "77027fbd9c0923708224413d465ba0ead1f56c4d498d2dd24be8ad3b39b34580",
+      "expected_masters": 100,
+      "expected_details": 450,
+      "status": "verified",
+      "response": {
+        "status": "applied",
+        "applied": 100,
+        "details": 450,
+        "processed": 100,
+        "preserved_newer": 0
+      },
+      "elapsed_seconds": 1.872,
+      "verification": {
+        "verified": 100,
+        "preserved_newer": 0
+      }
+    },
+    {
+      "file": "n_lvr_land_a.csv",
+      "start": 2200,
+      "chunk_sha256": "bfc5aaa50524eb6179c501672ada81a25d13caaa65f7b06f8a6382aaccbe2956",
+      "expected_masters": 100,
+      "expected_details": 382,
+      "status": "verified",
+      "response": {
+        "status": "applied",
+        "applied": 100,
+        "details": 382,
+        "processed": 100,
+        "preserved_newer": 0
+      },
+      "elapsed_seconds": 1.185,
+      "verification": {
+        "verified": 100,
+        "preserved_newer": 0
+      }
+    },
+    {
+      "file": "n_lvr_land_a.csv",
+      "start": 2300,
+      "chunk_sha256": "134f2c2460b1c6c1b1b1ba5f5dec6a1636b4d20eb3b4da9749dfa5bfafafea47",
+      "expected_masters": 100,
+      "expected_details": 412,
+      "status": "verified",
+      "response": {
+        "status": "applied",
+        "applied": 100,
+        "details": 412,
+        "processed": 100,
+        "preserved_newer": 0
+      },
+      "elapsed_seconds": 1.817,
+      "verification": {
+        "verified": 100,
+        "preserved_newer": 0
+      }
+    },
+    {
+      "file": "n_lvr_land_a.csv",
+      "start": 2400,
+      "chunk_sha256": "51fae0218cd1467e2fe0ebc869ceca8822c6b33604293bf8bf2df2c0e8ea7779",
+      "expected_masters": 100,
+      "expected_details": 380,
+      "status": "verified",
+      "response": {
+        "status": "applied",
+        "applied": 100,
+        "details": 380,
+        "processed": 100,
+        "preserved_newer": 0
+      },
+      "elapsed_seconds": 1.895,
+      "verification": {
+        "verified": 100,
+        "preserved_newer": 0
+      }
+    },
+    {
+      "file": "n_lvr_land_a.csv",
+      "start": 2500,
+      "chunk_sha256": "33fb72856f90f7d9801d61ceb5fe4adf1c9ed174ec71d77843b81e50004b637e",
+      "expected_masters": 100,
+      "expected_details": 381,
+      "status": "verified",
+      "response": {
+        "status": "applied",
+        "applied": 100,
+        "details": 381,
+        "processed": 100,
+        "preserved_newer": 0
+      },
+      "elapsed_seconds": 2.034,
+      "verification": {
+        "verified": 100,
+        "preserved_newer": 0
+      }
+    },
+    {
+      "file": "n_lvr_land_a.csv",
+      "start": 2600,
+      "chunk_sha256": "77828a28166573a09f69a5a7d3b02686d5cf744783245e897f5039352c5850d3",
+      "expected_masters": 41,
+      "expected_details": 150,
+      "status": "verified",
+      "response": {
+        "status": "applied",
+        "applied": 41,
+        "details": 150,
+        "processed": 41,
+        "preserved_newer": 0
+      },
+      "elapsed_seconds": 1.209,
+      "verification": {
+        "verified": 41,
+        "preserved_newer": 0
+      }
+    },
+    {
+      "file": "n_lvr_land_b.csv",
+      "start": 0,
+      "chunk_sha256": "eec1c18bd6712470927a9630708fe69880b1e3d2edc9322917c7bc7a9cb8caa8",
+      "expected_masters": 100,
+      "expected_details": 307,
+      "status": "verified",
+      "response": {
+        "status": "applied",
+        "applied": 100,
+        "details": 307,
+        "processed": 100,
+        "preserved_newer": 0
+      },
+      "elapsed_seconds": 1.713,
+      "verification": {
+        "verified": 100,
+        "preserved_newer": 0
+      }
+    },
+    {
+      "file": "n_lvr_land_b.csv",
+      "start": 100,
+      "chunk_sha256": "364456345dea705c5da9e2b4a99a253b2e0bf76d4fed5a43bb0a5314644017b7",
+      "expected_masters": 98,
+      "expected_details": 354,
+      "status": "verified",
+      "response": {
+        "status": "applied",
+        "applied": 98,
+        "details": 354,
+        "processed": 98,
+        "preserved_newer": 0
+      },
+      "elapsed_seconds": 0.915,
+      "verification": {
+        "verified": 98,
+        "preserved_newer": 0
+      }
     }
   ],
-  "import_complete": false,
-  "complete": false,
+  "import_complete": true,
+  "complete": true,
   "unresolved_issues": 0,
-  "implementation_sha": "e886f039fd22c404ca11f6a807b635ece55be8ed",
-  "source_backup": "GitHub Actions artifact changhua-source-114S4-41145120303-1",
+  "implementation_sha": "24213853e880120d65c8251b855e0c858b08b026",
+  "source_backup": "GitHub Actions artifact changhua-source-114S4-41147211886-1",
   "source_backup_retention_days": 90,
   "long_term_backup_pending": true,
   "source_issue_counts": {
