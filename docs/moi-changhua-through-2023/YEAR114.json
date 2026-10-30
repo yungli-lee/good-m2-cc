@@ -33,5 +33,12 @@
     "scoped_python": 6,
     "public_listing_rows": 13,
     "cross_period_history": true
-  }
+  },
+  "implementation_commit": "24213853e880120d65c8251b855e0c858b08b026",
+  "run_id": 41147211886,
+  "automation_id": "6ae529b0384c8191b0a9510babd4060a",
+  "automation_enabled": true,
+  "status": "running",
+  "active_quarter": "114S4",
+  "first_job": 124374996326
 }
