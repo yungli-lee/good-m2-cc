@@ -1,0 +1,38 @@
+{
+  "mode": "offline_only_no_database_writes",
+  "archive_sha256": "e247d0f20365b790685b5e63a2197d40200e0f436ceb14f3ee88e16ecd095972",
+  "source_files": 63,
+  "masters": 180310,
+  "details": 616679,
+  "full_master_payload_bytes": 298207270,
+  "compact_master_payload_bytes": 134047420,
+  "full_detail_payload_bytes": 397185394,
+  "compact_detail_payload_bytes": 226288017,
+  "payload_reduction_percent": 48.18,
+  "source_issue_counts": {
+    "invalid_official_share": 1
+  },
+  "normalized_fields_and_fingerprints_unchanged": true,
+  "physical_disk_savings_measured": false,
+  "layout_or_schema_changed": false,
+  "live_import_enabled": false,
+  "requirements_before_live_use": [
+    "durable original ZIP backup with checksum and restore verification",
+    "archive-to-source provenance manifest",
+    "versioned import chunk hashes; never reuse full-raw chunk identity",
+    "read-path equivalence checks and bounded staging pilot",
+    "existing 7GB guard and newer-source preservation remain enforced"
+  ],
+  "database_read_only_samples": {
+    "masters": {
+      "rows": 10000,
+      "old_jsonb_bytes_mean": 2190,
+      "compact_jsonb_bytes_mean": 1214
+    },
+    "details": {
+      "rows": 13368,
+      "old_jsonb_bytes_mean": 851,
+      "compact_jsonb_bytes_mean": 551
+    }
+  }
+}
