@@ -1,0 +1,34 @@
+{
+  "implementation_commit": "e886f039fd22c404ca11f6a807b635ece55be8ed",
+  "run_id": 41145120303,
+  "run_url": "https://github.com/yungli-lee/good-m2-cc/actions/runs/41145120303",
+  "automation_id": "6ae529b0384c8191b0a9510babd4060a",
+  "automation_enabled": true,
+  "completed_quarters": [
+    "115S3"
+  ],
+  "active_quarter": "115S2",
+  "stop_after": "112S1",
+  "scope": {
+    "county": "彰化縣",
+    "datasets": [
+      "sale",
+      "presale"
+    ]
+  },
+  "complete": false,
+  "original_annual_zip_quarter_shas": {
+    "lvr_landcsv (11301).zip": "7c010c79421225c5b96bb0607f4d3b40ec99cf51558616589784195519ae7863",
+    "lvr_landcsv (11304).zip": "4bb63c1858d5bc6f821280a7d7dfa81b6daefa610e5dc47cb7f4fb53e330b913",
+    "lvr_landcsv (11303).zip": "87ffdebbeb59c51b1bb9cbaddeeedac27fbecd57e9024e53615b5ae33b80e5e0",
+    "lvr_landcsv (11302).zip": "e247d0f20365b790685b5e63a2197d40200e0f436ceb14f3ee88e16ecd095972",
+    "lvr_landcsv (11404).zip": "68315c006fa367834eaacf032ceccb22a114fc8798d87b8dac23cf5eb64030ab",
+    "lvr_landcsv (11403).zip": "a3b3b51c7cdc9b9790a51a78f232fb3875ca5e1ff2f12a32644109dd4ba962bc",
+    "lvr_landcsv (11402).zip": "9562aa1e268bb13698a3118bfaae366edf4499745a637456a953584e5ed2a23c",
+    "lvr_landcsv (11401).zip": "c541074f34f4c5ecde81e4926823d664a9eb9d09c2b020ba7179604c88bdeb2a",
+    "lvr_landcsv (11503).zip": "f051aa476927cc419689cc0aa3c204748efeb2e870e42069dc7ca31abed7d26a",
+    "lvr_landcsv (11502).zip": "6b4c148bad106a235dddf214001d605ff9ffa45ac50561f7125c6d7fa795d4da",
+    "lvr_landcsv (11501).zip": "8d0bfbaea4fe56d7aa9876b8d587d51d6f69f3419ba1d4e5bab59ec198fe9fe2"
+  },
+  "new_2023_source_long_term_backup_required": true
+}
