@@ -9,7 +9,7 @@ import { DeleteFacebookButton } from "./delete-facebook-button";
 export const runtime = "edge";
 export const dynamic = "force-dynamic";
 const categories: Record<string,string> = {property:"物件推薦",knowledge:"知識／政策",daily:"生活分享",general:"自由貼文"};
-const statuses: Record<string,string> = {draft:"草稿",ready:"待發布",posted:"已手動發布",archived:"封存",publishing:"發布中",publish_unknown:"發文結果待核對"};
+const statuses: Record<string,string> = {draft:"草稿",ready:"待發布",posted:"已發布",archived:"封存",publishing:"發布中",publish_unknown:"發文結果待核對"};
 
 export default async function SocialPostsPage() {
   const current = await requireRole(["editor","admin","owner"]);
@@ -38,7 +38,7 @@ export default async function SocialPostsPage() {
     {error ? <div className="notice">目前無法讀取貼文資料。請確認 social_posts 資料表已部署到測試資料庫。</div> : null}
     <div style={{display:"grid",gap:14}}>
       {(posts||[]).map(post=><article className="card" key={post.id}><div className="card-body">
-        <div className="actions" style={{justifyContent:"space-between"}}><strong>{post.title}</strong><span className="muted">{statuses[post.status]||post.status} · {categories[post.category]||post.category}</span></div>
+        <div className="actions" style={{justifyContent:"space-between"}}><strong>{post.title}</strong><span className="muted">{post.facebook_deleted_at ? "封存" : post.facebook_post_id ? "已發布" : statuses[post.status]||post.status} · {categories[post.category]||post.category}</span></div>
         <p style={{whiteSpace:"pre-wrap",overflowWrap:"anywhere"}}>{post.body||"（尚未輸入文案）"}</p>
         {post.destination_notes ? <p className="muted" style={{whiteSpace:"pre-wrap"}}>目的地：{post.destination_notes}</p> : null}
         {(post.status === "draft" || post.status === "ready") ? <details style={{marginBottom:12}}>
@@ -52,13 +52,14 @@ export default async function SocialPostsPage() {
             <div><button className="button" type="submit">儲存修改</button></div>
           </form>
         </details> : null}
-        {post.facebook_post_id ? <p className="muted">Facebook 貼文 ID：{post.facebook_post_id} · {post.facebook_deleted_at ? "已刪除" : "已發布"}　<a href={"https://www.facebook.com/"+post.facebook_post_id.replace("_","/posts/")} target="_blank" rel="noopener noreferrer">查看原文</a></p> : null}
+        <p className="muted">Facebook 發布狀態：{post.facebook_deleted_at ? "已刪除" : post.facebook_post_id ? "已發布" : post.status==="publishing" ? "發布中" : post.status==="publish_unknown" ? "結果待核對" : "未發布"}</p>
+        {post.facebook_post_id ? <p className="muted">Facebook 貼文 ID：{post.facebook_post_id}　{post.facebook_deleted_at ? <span>原文已刪除，僅保留歷史紀錄</span> : <a href={"https://www.facebook.com/"+post.facebook_post_id.replace("_","/posts/")} target="_blank" rel="noopener noreferrer">查看原文</a>}</p> : null}
         <div className="admin-actions" style={{flexWrap:"wrap"}}>
           <CopyPostButton body={post.body||""} />
           {((post.status==="draft"||post.status==="ready") && !post.facebook_post_id) ? <PublishFacebookButton id={post.id} enabled={facebookReady}/> : null}
           {post.facebook_post_id && !post.facebook_deleted_at && (current.profile.role==="admin"||current.profile.role==="owner") ? <DeleteFacebookButton id={post.id}/> : null}
           <a className="button ghost" href="https://www.facebook.com/" target="_blank" rel="noopener noreferrer">開啟 Facebook</a>
-          <form action={updateSocialPost.bind(null,post.id)}><select className="input" name="status" defaultValue={post.status}>{Object.entries(statuses).map(([value,label])=><option value={value} key={value}>{label}</option>)}</select><button className="button ghost" type="submit">更新狀態</button></form>
+          {!post.facebook_post_id && ["draft","ready","archived"].includes(post.status) ? <form action={updateSocialPost.bind(null,post.id)}><select className="input" name="status" defaultValue={post.status}>{[["draft","草稿"],["ready","待發布"],["archived","封存"]].map(([value,label])=><option value={value} key={value}>{label}</option>)}</select><button className="button ghost" type="submit">更新狀態</button></form> : null}
           <form action={deleteSocialPost.bind(null,post.id)}><button className="button danger" type="submit">刪除</button></form>
         </div>
       </div></article>)}
