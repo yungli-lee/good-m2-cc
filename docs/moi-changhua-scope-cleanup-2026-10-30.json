@@ -1,0 +1,33 @@
+{
+  "checked_at": "2026-10-30T02:07:26Z",
+  "project": "niorteztdbuyusemsgwa",
+  "keep": {
+    "county": "彰化縣",
+    "datasets": [
+      "sale",
+      "presale"
+    ]
+  },
+  "delete_predicate": "county IS DISTINCT FROM '彰化縣' OR dataset_type='rental'",
+  "snapshot_max_id": 1504397,
+  "last_verified_cursor": 247751,
+  "residual_at_or_below_cursor": 0,
+  "active_cleanup_queries": 0,
+  "confirmed_deleted_masters_lower_bound": 192000,
+  "confirmed_deleted_details_lower_bound": 586957,
+  "additional_committed_batch": {
+    "expected_masters": 25000,
+    "details_unknown": true
+  },
+  "cleanup_complete": false,
+  "verified_external_source_archives": 12,
+  "retained_sample_verified": 20,
+  "project_healthy": true,
+  "public_query_verified": true,
+  "history_api_verified": true,
+  "database_bytes": 6278876307,
+  "batch_size": 1000,
+  "layout_or_schema_changed": false,
+  "production_changed": false,
+  "notes": "Partial cleanup only. Existing import logs remain historical evidence and must not be treated as full-national row coverage after pruning."
+}
