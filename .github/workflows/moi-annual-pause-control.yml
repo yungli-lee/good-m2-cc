@@ -1,0 +1,38 @@
+name: Pause scoped backfill at annual boundary
+on:
+  push:
+    branches: [feature/real-price-public-search-v1]
+    paths: [.github/workflows/moi-annual-pause-control.yml]
+permissions:
+  actions: write
+  contents: read
+jobs:
+  pause-at-115S1:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Stop existing scoped run after current annual boundary
+        shell: python
+        run: |
+          import json,os,time,urllib.request
+          base='https://api.github.com/repos/yungli-lee/good-m2-cc/actions'
+          def api(path,method='GET'):
+              req=urllib.request.Request(base+path,method=method,headers={'Authorization':'Bearer '+os.environ['GH_TOKEN'],'Accept':'application/vnd.github+json','User-Agent':'good-m2-annual-boundary/1.0'})
+              with urllib.request.urlopen(req,timeout=20) as r:
+                  data=r.read()
+                  return json.loads(data) if data else {}
+          while True:
+              jobs=api('/runs/41145120303/jobs?per_page=100')['jobs']
+              boundary=next((j for j in jobs if j['name']=='quarter-115S1 / scoped-quarter'),None)
+              if boundary and boundary['status']=='completed':
+                  run=api('/runs/41145120303')
+                  if run['status']!='completed':api('/runs/41145120303/cancel','POST')
+                  print('Annual boundary reached; remaining run cancelled. Boundary conclusion:',boundary['conclusion'])
+                  break
+              run=api('/runs/41145120303')
+              if run['status']=='completed':
+                  print('Run already stopped; no restart')
+                  break
+              time.sleep(2)

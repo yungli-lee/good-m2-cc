@@ -1,0 +1,1 @@
+{"authorized_change":"Pause after each annual scope; no automatic cross-year continuation","current_year":115,"available_quarters":["115S3","115S2","115S1"],"note":"115S4 not yet published; do not claim full calendar 2026 complete","stop_after":"115S1","run_id":41145120303,"controller":"moi-annual-pause-control.yml","next_year_requires_resume":true}
