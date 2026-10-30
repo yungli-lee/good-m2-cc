@@ -3,7 +3,7 @@ import { requireRole } from "@/lib/auth";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createSocialPost, editSocialPost, updateSocialPost, deleteSocialPost } from "./actions";
 import { CopyPostButton } from "./copy-button";
-import { publishFacebookPost } from "./facebook-actions";
+import { PublishFacebookButton } from "./publish-facebook-button";
 import { DeleteFacebookButton } from "./delete-facebook-button";
 
 export const runtime = "edge";
@@ -55,7 +55,7 @@ export default async function SocialPostsPage() {
         {post.facebook_post_id ? <p className="muted">Facebook 貼文 ID：{post.facebook_post_id} · {post.facebook_deleted_at ? "已刪除" : "已發布"}　<a href={"https://www.facebook.com/"+post.facebook_post_id.replace("_","/posts/")} target="_blank" rel="noopener noreferrer">查看原文</a></p> : null}
         <div className="admin-actions" style={{flexWrap:"wrap"}}>
           <CopyPostButton body={post.body||""} />
-          {((post.status==="draft"||post.status==="ready") && !post.facebook_post_id) ? <form action={publishFacebookPost.bind(null,post.id)}><button className="button" disabled={!facebookReady} type="submit">{facebookReady ? "發布到阿勇不動產顧問" : "Facebook 發布尚未啟用"}</button></form> : null}
+          {((post.status==="draft"||post.status==="ready") && !post.facebook_post_id) ? <PublishFacebookButton id={post.id} enabled={facebookReady}/> : null}
           {post.facebook_post_id && !post.facebook_deleted_at && (current.profile.role==="admin"||current.profile.role==="owner") ? <DeleteFacebookButton id={post.id}/> : null}
           <a className="button ghost" href="https://www.facebook.com/" target="_blank" rel="noopener noreferrer">開啟 Facebook</a>
           <form action={updateSocialPost.bind(null,post.id)}><select className="input" name="status" defaultValue={post.status}>{Object.entries(statuses).map(([value,label])=><option value={value} key={value}>{label}</option>)}</select><button className="button ghost" type="submit">更新狀態</button></form>
