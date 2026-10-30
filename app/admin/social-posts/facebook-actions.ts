@@ -3,16 +3,10 @@ import { revalidatePath } from "next/cache";
 import { requireRole } from "@/lib/auth";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
-const PAGE_ID = "284090174797562";
+import { resolveFacebookPageToken, FACEBOOK_PAGE_ID } from "./facebook-page-token";
+
+const PAGE_ID = FACEBOOK_PAGE_ID;
 const API_VERSION = "v26.0";
-function getPageToken() {
-  // Preview-only server secret. NEVER use NEXT_PUBLIC or log the credential.
-  const token = process.env.FACEBOOK_PAGE_ACCESS_TOKEN;
-  if (process.env.FACEBOOK_PUBLISH_ENABLED !== "true" || !token) {
-    throw new Error("Facebook 尚未完成 Preview 伺服器端授權設定；沒有送出貼文。");
-  }
-  return token;
-}
 async function callFacebook(method: "POST" | "DELETE", route: string, token: string, body?: URLSearchParams) {
   const response = await fetch("https://graph.facebook.com/" + API_VERSION + "/" + route, {
     method, headers: {
@@ -20,8 +14,13 @@ async function callFacebook(method: "POST" | "DELETE", route: string, token: str
       ...(body ? {"Content-Type":"application/x-www-form-urlencoded"} : {})
     }, body: body?.toString(), cache:"no-store"
   });
-  const result = await response.json() as {id?:string;success?:boolean;error?:{code?:number;message?:string}};
-  if (!response.ok || result.error) throw new Error("Facebook API 未完成操作：" + (result.error?.code || response.status));
+  const result = await response.json() as {id?:string;success?:boolean;error?:{code?:number;error_subcode?:number;message?:string}};
+  if (!response.ok || result.error) {
+    const code = result.error?.code ?? response.status;
+    const subcode = result.error?.error_subcode;
+    throw new Error("Facebook API 未完成操作：" + code +
+      "（HTTP " + response.status + (subcode ? "，子碼 " + subcode : "") + "）");
+  }
   return result;
 }
 
@@ -44,7 +43,7 @@ async function attachPhotos(db: Awaited<ReturnType<typeof createSupabaseServerCl
 
 export async function publishFacebookPost(id: string) {
   const current = await requireRole(["editor","admin","owner"]);
-  const token = getPageToken();
+  const token = await resolveFacebookPageToken();
   const db = await createSupabaseServerClient();
   const {data: post, error} = await db.from("social_posts").select("id,body,link_url,status,facebook_post_id")
     .eq("id",id).eq("author_id",current.user.id).single();
@@ -83,7 +82,7 @@ export async function publishFacebookPost(id: string) {
 }
 export async function deleteFacebookPost(id: string) {
   const current = await requireRole(["admin","owner"]);
-  const token = getPageToken();
+  const token = await resolveFacebookPageToken();
   const db = await createSupabaseServerClient();
   const {data:post,error} = await db.from("social_posts").select("facebook_post_id,facebook_page_id,facebook_deleted_at")
     .eq("id",id).eq("author_id",current.user.id).single();
