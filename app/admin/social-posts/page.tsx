@@ -17,10 +17,12 @@ export default async function SocialPostsPage() {
   const { data: posts, error } = await supabase.from("social_posts")
     .select("id,title,body,category,status,destination_notes,facebook_post_id,facebook_deleted_at,created_at")
     .eq("author_id",current.user.id).order("created_at",{ascending:false}).limit(100);
+  const facebookReady = process.env.FACEBOOK_PUBLISH_ENABLED === "true" && Boolean(process.env.FACEBOOK_PAGE_ACCESS_TOKEN);
   return <main className="section"><div className="container">
     <div className="admin-page-header"><div><p className="eyebrow">Social Publishing</p><h1>社群發文管理</h1>
       <p className="muted">不限物件推薦。集中管理草稿、社團目的地及人工發布紀錄；不會自動發布到 Facebook。</p></div>
       <Link className="button ghost" href="/admin">返回後台</Link></div>
+    {!facebookReady ? <div className="notice" role="status" style={{marginBottom:18}}>Facebook 直接發布尚未啟用：Preview 伺服器缺少啟用設定或粉專權杖。草稿仍可儲存、編輯，但目前不會發送到 Facebook。請先由管理者設定 Preview 的 FACEBOOK_PAGE_ACCESS_TOKEN（伺服器加密環境變數）及 FACEBOOK_PUBLISH_ENABLED=true，再重新部署。不要將 Token 複製到網站欄位或聊天中。</div> : <div className="success" role="status" style={{marginBottom:18}}>Facebook 發布服務設定已載入。實際發布前請確認目標粉專及內容。</div>}
     <section className="card" style={{marginBottom:24}}><div className="card-body">
       <h2>新增發文草稿</h2>
       <form action={createSocialPost} style={{display:"grid",gap:14}}>
@@ -53,7 +55,7 @@ export default async function SocialPostsPage() {
         {post.facebook_post_id ? <p className="muted">Facebook 貼文 ID：{post.facebook_post_id} · {post.facebook_deleted_at ? "已刪除" : "已發布"}　<a href={"https://www.facebook.com/"+post.facebook_post_id.replace("_","/posts/")} target="_blank" rel="noopener noreferrer">查看原文</a></p> : null}
         <div className="admin-actions" style={{flexWrap:"wrap"}}>
           <CopyPostButton body={post.body||""} />
-          {((post.status==="draft"||post.status==="ready") && !post.facebook_post_id) ? <form action={publishFacebookPost.bind(null,post.id)}><button className="button" disabled={process.env.FACEBOOK_PUBLISH_ENABLED !== "true"} type="submit">發布到阿勇不動產顧問</button></form> : null}
+          {((post.status==="draft"||post.status==="ready") && !post.facebook_post_id) ? <form action={publishFacebookPost.bind(null,post.id)}><button className="button" disabled={!facebookReady} type="submit">{facebookReady ? "發布到阿勇不動產顧問" : "Facebook 發布尚未啟用"}</button></form> : null}
           {post.facebook_post_id && !post.facebook_deleted_at && (current.profile.role==="admin"||current.profile.role==="owner") ? <DeleteFacebookButton id={post.id}/> : null}
           <a className="button ghost" href="https://www.facebook.com/" target="_blank" rel="noopener noreferrer">開啟 Facebook</a>
           <form action={updateSocialPost.bind(null,post.id)}><select className="input" name="status" defaultValue={post.status}>{Object.entries(statuses).map(([value,label])=><option value={value} key={value}>{label}</option>)}</select><button className="button ghost" type="submit">更新狀態</button></form>
