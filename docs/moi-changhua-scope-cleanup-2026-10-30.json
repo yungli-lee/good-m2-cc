@@ -1,5 +1,5 @@
 {
-  "checked_at": "2026-10-30 07:18:44.875536+00",
+  "checked_at": "2026-10-30 08:32:53.788304+00",
   "project": "niorteztdbuyusemsgwa",
   "keep": {
     "county": "彰化縣",
@@ -10,11 +10,11 @@
   },
   "delete_predicate": "county IS DISTINCT FROM '彰化縣' OR dataset_type='rental'",
   "snapshot_max_id": 1504397,
-  "last_verified_cursor": 847588,
-  "residual_at_or_below_cursor": 0,
+  "last_verified_cursor": 848588,
+  "residual_at_or_below_cursor": null,
   "active_cleanup_queries": 0,
-  "confirmed_deleted_masters_lower_bound": 785000,
-  "confirmed_deleted_details_lower_bound": 2596031,
+  "confirmed_deleted_masters_lower_bound": 786000,
+  "confirmed_deleted_details_lower_bound": 2598220,
   "additional_committed_batch": {
     "expected_masters": 25000,
     "details_unknown": true
@@ -25,20 +25,28 @@
   "project_healthy": true,
   "public_query_verified": true,
   "history_api_verified": true,
-  "database_bytes": 6279376019,
+  "database_bytes": 6279392403,
   "batch_size": 1000,
   "layout_or_schema_changed": false,
   "production_changed": false,
   "notes": "Partial cleanup only. Existing import logs remain historical evidence and must not be treated as full-national row coverage after pruning.",
-  "run_batches": 100,
-  "run_deleted_masters": 100000,
-  "run_deleted_details": 332922,
-  "stop_reason": "100_batch_run_limit",
-  "last_batch_elapsed_ms": 7805,
+  "run_batches": 1,
+  "run_deleted_masters": 1000,
+  "run_deleted_details": 2189,
+  "stop_reason": "tool_error_on_second_batch_no_retry",
+  "last_batch_elapsed_ms": 7936,
   "preview_read_ok": true,
   "previous_residual_check": {
-    "cursor": 247751,
+    "cursor": 847588,
     "count": 0
   },
-  "cursor_verified_by_completed_batches": true
+  "cursor_verified_by_completed_batches": true,
+  "failed_batch_reconciliation": {
+    "first_id": 848589,
+    "last_id": 849588,
+    "remaining_targets": 1000,
+    "active_cleanup_queries": 0,
+    "conclusion": "Next 1000 eligible rows remain present; failed batch did not delete those masters. No retry in this run.",
+    "error_details": "Tool returned isError; original error body was not retained. Do not classify as timeout or approval rejection without evidence."
+  }
 }
