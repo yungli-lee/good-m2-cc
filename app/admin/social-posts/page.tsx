@@ -5,6 +5,7 @@ import { createSocialPost, editSocialPost, updateSocialPost, deleteSocialPost } 
 import { CopyPostButton } from "./copy-button";
 import { PublishFacebookButton } from "./publish-facebook-button";
 import { DeleteFacebookButton } from "./delete-facebook-button";
+import { FacebookConnectionCheck } from "./facebook-connection-check";
 
 export const runtime = "edge";
 export const dynamic = "force-dynamic";
@@ -23,6 +24,7 @@ export default async function SocialPostsPage() {
       <p className="muted">不限物件推薦。集中管理草稿、社團目的地及人工發布紀錄；不會自動發布到 Facebook。</p></div>
       <Link className="button ghost" href="/admin">返回後台</Link></div>
     {!facebookReady ? <div className="notice" role="status" style={{marginBottom:18}}>Facebook 直接發布尚未啟用：Preview 伺服器缺少啟用設定或粉專權杖。草稿仍可儲存、編輯，但目前不會發送到 Facebook。請先由管理者設定 Preview 的 FACEBOOK_PAGE_ACCESS_TOKEN（伺服器加密環境變數）及 FACEBOOK_PUBLISH_ENABLED=true，再重新部署。不要將 Token 複製到網站欄位或聊天中。</div> : <div className="success" role="status" style={{marginBottom:18}}>Facebook 發布服務設定已載入。實際發布前請確認目標粉專及內容。</div>}
+    {(current.profile.role === "admin" || current.profile.role === "owner") ? <FacebookConnectionCheck/> : null}
     <section className="card" style={{marginBottom:24}}><div className="card-body">
       <h2>新增發文草稿</h2>
       <form action={createSocialPost} style={{display:"grid",gap:14}}>
