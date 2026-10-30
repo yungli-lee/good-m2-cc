@@ -1,5 +1,5 @@
 {
-  "checked_at": "2026-10-30 21:41:11.139323+00",
+  "checked_at": "2026-10-30 23:17:25.575694+00",
   "project": "niorteztdbuyusemsgwa",
   "keep": {
     "county": "彰化縣",
@@ -19,21 +19,21 @@
     "expected_masters": 25000,
     "details_unknown": true
   },
-  "cleanup_complete": false,
+  "cleanup_complete": true,
   "verified_external_source_archives": 12,
   "retained_sample_verified": 20,
   "project_healthy": true,
   "public_query_verified": true,
   "history_api_verified": true,
-  "database_bytes": 6279687315,
+  "database_bytes": 6284938387,
   "batch_size": 1000,
-  "layout_or_schema_changed": false,
+  "layout_or_schema_changed": true,
   "production_changed": false,
-  "notes": "All master rows now belong to Changhua sale/presale and orphan detail count is zero. Public generic dated list/history passed, but broader public query returned HTTP 503. Do not declare cleanup complete until acceptance passes. Existing import logs remain historical evidence; historical append remains paused.",
+  "notes": "Scope cleanup and public acceptance complete. Only Changhua sale/presale remain, no out-of-scope or orphan rows. Preview repaired with one covering index and ID-first exact pagination. Historical backfill remains incomplete and paused; existing source archives/raw rows/import reconciliation logs are preserved. No further DELETE or national workflow resume.",
   "run_batches": 0,
   "run_deleted_masters": 0,
   "run_deleted_details": 0,
-  "stop_reason": "blocked_by_read_only_scope_preview_query_repair_required",
+  "stop_reason": "scope_cleanup_and_preview_acceptance_complete",
   "last_batch_elapsed_ms": 4903,
   "preview_read_ok": true,
   "previous_residual_check": {
@@ -56,8 +56,8 @@
     }
   },
   "guard_observation": {
-    "checked_at": "2026-10-30 21:41:11.139323+00",
-    "db_bytes": 6279687315,
+    "checked_at": "2026-10-30 23:17:25.575694+00",
+    "db_bytes": 6284938387,
     "other_active_sql": 0,
     "active_cleanup_queries": 0,
     "preview_readable": true
@@ -96,27 +96,23 @@
   "max_batch_elapsed_ms": 9003,
   "scope_pruning_complete": true,
   "full_scope_audit": {
-    "checked_at": "2026-10-30 16:44:59.559844+00",
+    "checked_at": "2026-10-30 23:14:56.877223+00",
     "out_of_scope_masters": 0,
     "masters_beyond_snapshot": 0,
     "orphan_details": 0,
     "retained_scope": [
       {
         "county": "彰化縣",
-        "masters": 4623,
-        "dataset_type": "presale"
+        "masters": 36053,
+        "dataset_type": "sale"
       },
       {
         "county": "彰化縣",
-        "masters": 36053,
-        "dataset_type": "sale"
+        "masters": 4623,
+        "dataset_type": "presale"
       }
     ],
     "retained_details": [
-      {
-        "details": 30379,
-        "detail_type": "building"
-      },
       {
         "details": 70412,
         "detail_type": "land"
@@ -124,8 +120,16 @@
       {
         "details": 10280,
         "detail_type": "parking"
+      },
+      {
+        "details": 30379,
+        "detail_type": "building"
       }
-    ]
+    ],
+    "canonical_public_counts": {
+      "sale": 35845,
+      "presale": 4623
+    }
   },
   "acceptance_pending": [
     "Preview broad sale query remains unresolved. Completing acceptance requires a separately authorized repair of Preview query/deduplication/count path beyond current read-only validation scope. Keep Production, schema columns, layout, quota, 7GB guard and historical ingestion untouched."
@@ -221,7 +225,7 @@
     "interpretation": "Repeated broad sale cancellations plus exact-count scan indicate a query-path performance issue; the effective cancellation source is not conclusively established. No timeout settings changed."
   },
   "preview_repair": {
-    "status": "boundary_fix_deployment_pending",
+    "status": "deployed_and_verified",
     "authorized": true,
     "index": "moi_preview_county_dataset_date_cover_idx",
     "migration": "20261030225546",
@@ -266,6 +270,125 @@
       "total": 35845
     },
     "boundary_issue": "Beyond-last page returned HTTP503; stopped acceptance. Added Preview-only PGRST103 handling using same filtered first-ID count, without repeating failing offset.",
-    "route_scenarios_passed": 7
-  }
+    "route_scenarios_passed": 7,
+    "boundary_fix_commit": "bfbb8ea0f8d7a7fde42b08b142c0f8308eec8964",
+    "deployment_url": "https://9d6f3edf.good-m2-cc.pages.dev",
+    "public_acceptance": [
+      {
+        "check": {
+          "dataset": "sale",
+          "county": "彰化縣",
+          "page": 1
+        },
+        "rows": 20,
+        "total": 35845,
+        "seconds": 7.561,
+        "details": 30,
+        "parking": 0,
+        "notes": 17
+      },
+      {
+        "check": {
+          "dataset": "sale",
+          "county": "彰化縣",
+          "page": 2
+        },
+        "rows": 20,
+        "total": 35845,
+        "seconds": 5.184,
+        "details": 34,
+        "parking": 0,
+        "notes": 9
+      },
+      {
+        "check": {
+          "dataset": "sale",
+          "county": "彰化縣",
+          "page": 1793
+        },
+        "rows": 5,
+        "total": 35845,
+        "seconds": 5.637,
+        "details": 24,
+        "parking": 0,
+        "notes": 1
+      },
+      {
+        "check": {
+          "dataset": "sale",
+          "county": "彰化縣",
+          "page": 1794
+        },
+        "rows": 0,
+        "total": 35845,
+        "seconds": 5.5,
+        "details": 0,
+        "parking": 0,
+        "notes": 0
+      },
+      {
+        "check": {
+          "dataset": "sale",
+          "county": "彰化縣",
+          "district": "秀水鄉",
+          "from": "2026-08-01",
+          "to": "2026-08-31"
+        },
+        "rows": 3,
+        "total": 3,
+        "seconds": 5.399,
+        "details": 8,
+        "parking": 1,
+        "notes": 1
+      },
+      {
+        "check": {
+          "dataset": "presale",
+          "county": "彰化縣",
+          "page": 1
+        },
+        "rows": 20,
+        "total": 4623,
+        "seconds": 5.769,
+        "details": 48,
+        "parking": 8,
+        "notes": 2
+      },
+      {
+        "public_query_verified": true,
+        "returned_rows": 13,
+        "history_response_verified": true,
+        "history_verified": true,
+        "cross_period_history_verified": true,
+        "history_groups": 1
+      }
+    ],
+    "public_samples_verified": 68,
+    "public_official_note_md5_and_detail_parking_counts_match": true,
+    "scope_guards_verified": {
+      "rental": 400,
+      "other_county": 400
+    },
+    "tests": "7 route execution scenarios, TypeScript, ESLint and Next build passed; public acceptance exit 0",
+    "history_backfill_complete": false,
+    "tool_error": {
+      "operation": "read-only public sample reconciliation",
+      "full_response": {
+        "content": [
+          {
+            "type": "text",
+            "text": "tool call error: tool call failed for `codex_apps/supabase.execute_sql`\n\nCaused by:\n    Mcp error: -32603: Internal error"
+          }
+        ],
+        "isError": true
+      },
+      "resolution": "Preserved full Internal error response; did not repeat original query. ACTIVE_HEALTHY and other active SQL=0 confirmed; a simpler aggregate checksum comparison succeeded for all 68 public samples."
+    }
+  },
+  "automation_disabled": true,
+  "automation_disabled_reason": "Completed scope cleanup and public Preview acceptance; no historical import authorization.",
+  "database_columns_changed": false,
+  "frontend_layout_changed": false,
+  "index_only_schema_change": true,
+  "public_official_notes_verified": true
 }

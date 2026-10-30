@@ -42,6 +42,7 @@ async function run(results,{production=false,page=1}={}){
   const outside=await run([{data:null,count:null,error:{code:'PGRST103'}},ok([{id:7}],21)],{page:3});
   assert.equal(outside.response.status,200);assert.equal(outside.response.body.total,21);assert.equal(outside.response.body.data.length,0);
   assert.deepEqual(outside.calls[0].operations.filter(x=>x[0]==='range'),[['range',40,59],['range',0,0]]);
+  const failedBoundary=await run([{data:null,count:null,error:{code:'PGRST103'}},{data:null,count:null,error:{code:'57014'}}],{page:3});assert.equal(failedBoundary.response.status,503);assert.equal(failedBoundary.calls.length,1);
   const error=await run([{data:null,count:null,error:{code:'57014'}}]);assert.equal(error.response.status,503);assert.equal(error.calls.length,1);
   const changed=await run([ok([{id:7}],1),ok([{...row,id:8}])]);assert.equal(changed.response.status,503);
   const production=await run([ok([row],1)],{production:true});assert.equal(production.calls[0].table,'moi_verified_transactions');assert.equal(production.calls.length,1);assert.equal(production.response.body.preview_sample,false);

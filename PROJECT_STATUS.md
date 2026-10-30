@@ -524,3 +524,14 @@ Legacy Static Cleanup 完成代表：
 
 ### Preview 查詢修復（2026-10-30 UTC）
 使用者已明確授權 staging / Preview 後端、SQL 與索引修復。已在 niorteztdbuyusemsgwa 新增 covering index（5,234,688 bytes），DB 6,284,938,387 bytes；未改欄位、view、權限、timeout、Production、layout 或 7GB 保護。精確 sale canonical count 35,845，EXPLAIN ANALYZE 約 1.09 秒；公開首頁/第二頁通過，但末頁仍因寬資料 OFFSET 失敗，因此 Preview API 改為先查該頁 ID 與精確總數，再讀最多 20 筆完整內容。所有篩選及去重仍由同一 view 處理；完整列不符預選頁時回 503。部署後尚待公開深頁、篩選、明細及歷史驗收；cleanup_complete 仍 false。歷史追加仍暫停，未再 DELETE。
+
+
+### Preview 深頁驗收與空頁邊界修正
+82dc16b 部署成功；公開 sale 首頁 20 筆／7.164 秒、第二頁 20 筆／5.598 秒、末頁第 1793 頁 5 筆／6.105 秒，精確總數皆 35,845。超出末頁仍回 HTTP503，驗收立即停止。補上僅 Preview 的 PGRST103 空頁處理，使用相同篩選第一筆查詢取得精確總數，不重送失敗 offset；真正取消與其他錯誤不重試。7 組 route 測試通過，覆蓋篩選、原文備註、車位、空頁、超頁、取消、頁面異動及 Production 隔離；TypeScript、ESLint、build 通過。全表範圍外及孤兒仍 0、40,676 主檔／111,071 明細，20 筆指紋一致。待新部署驗收，cleanup_complete 仍 false，歷史追加仍暫停。
+
+
+### 彰化範圍整理及 Preview 修復驗收完成（2026-10-31 07:17 台灣時間）
+修復部署 bfbb8ea（前置索引／ID 分頁 82dc16b）已通過公開驗收：買賣首頁 20 筆／7.561 秒、第二頁 20 筆／5.184 秒、末頁第 1793 頁 5 筆／5.637 秒；第 1794 頁正常空列表／5.500 秒，精確總數皆 35,845，前兩頁 ID 無交集、排序正確。秀水鄉 2026-08 買賣 3 筆／8 明細／1 車位／1 備註；預售首頁 20 筆、總數 4,623、48 明細／8 車位／2 備註；日期買賣 13 筆及一組跨期歷史排序通過。68 筆公開回應來源交易與 DB 的官方備註原文 MD5、完整明細筆數與車位筆數完全一致；20 筆保留主檔／完整明細指紋亦一致。租賃及外縣市 API 均 400 scope_unavailable。
+全表重新精確核對：範圍外 0、快照上限外 0、孤兒明細 0；保留彰化 sale 36,053／presale 4,623，共 40,676 主檔；土地 70,412／建物 30,379／車位 10,280，共 111,071 明細。canonical sale 35,845 與原始 sale 差 208 是既有 view alias 去重語意，未改 view 或刪除保留資料。ACTIVE_HEALTHY、其他 active SQL=0，DB 6,284,938,387 bytes；新增索引 5,234,688 bytes，未調 timeout／配額／7GB 保護，未改 Production、資料庫欄位、layout。累計已確認刪除下限 1,438,127 主檔／4,822,474 明細維持；先前額外 25,000 主檔批次未知明細仍另記，不編造精確刪除總數。
+一次只讀對帳工具回 MCP -32603 Internal error，完整回應已存 checkpoint；確認健康與無執行中工作後改用較精簡的聚合雜湊對帳成功，未盲目重送原查詢，不推論 DB timeout 或容量問題。7 組 route 執行測試、TypeScript、ESLint、build 通過（既有 Supabase Edge runtime warning 保留）。cleanup_complete=true；清理檢查 6ae178b105a08191a74779a7b28bb4f1 已確認 is_enabled=false。
+**歷史回補尚未完成且仍暫停。** 原始 ZIP、moi_raw_csv_rows、moi_append_chunk_log 與其他對帳/CMS 紀錄保留；append log 僅代表歷史作業紀錄，不表示全國資料完整。未來只能另以明確彰化 sale/presale scope、新 chunk 版本及容量/健康檢查安排回補，本任務未恢復匯入或再 DELETE。
