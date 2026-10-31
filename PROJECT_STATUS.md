@@ -655,3 +655,7 @@ ACTIVE_HEALTHY/其他active SQL0，公開日期13筆/1組跨期history通過；�
 
 ### 最新條件授權：108年度驗收後接續107年度
 阿勇明確指示「108完成後，繼續107年度」。必須先108四季有效匯入及年度來源/完整明細/chunklog、全表僅彰化sale/presale無孤兒與公開分頁/車位/備註/history驗證通過，再新啟107S4→S1獨立年度scope與版本；不重疊。107完成及驗證後暫停，不自動106。沿用100筆序列/20秒/no retry/較新來源/7GB/健康壓力停，逐輪disk與repo對帳。只staging與feature分支，Production/schema/layout/timeout/付費配額/raw/log/CMS不變，既存原檔不刪；成功append及對帳後無永久ZIP備份門檻。109/110/111年度驗收待辦保留。完成檢查已更新此授權，尚未啟動107。
+
+
+### 2026-10-31 15:23 台灣時間：恢復108S4對帳、只接續S3→S1
+run41176757504在108S4匯入成功後，GitHub checkpoint publisher PATCH ref回HTTP422，後三季skipped。完整原始joblog已保存；原publisher未讀HTTP本文，不推斷確切422原因，不是DB匯入失敗。artifact13033736850恢復報告：34批3317主檔8650明細全部verified、import_complete/complete=true、未解0；以全部34個chunk SHA及原ZIP SHA核DB log，34/3317/8650吻合，不重跑S4。新年度workflow只S3→S2→S1，YAML邊界/TS/ESLint/build通過；公開13筆及跨期history成功，ACTIVE_HEALTHY/其他SQL0/無執行排隊workflow。DB6244600979bytes，較108起點+1056768，距7GB755399021；relation數見YEAR108。回寫checkpoint失敗的恢復與後續批次分開，無不明DB提交。108年度尚未驗收，不啟動107；107條件授權及109/110/111收尾保留，既有7GB/100筆/20秒/no retry/Production/schema/layout保護不變。

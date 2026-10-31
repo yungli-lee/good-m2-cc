@@ -18,7 +18,7 @@
   ],
   "stop_after": "108S1",
   "continue_107_automatically": false,
-  "status": "in_progress",
+  "status": "resuming_S3_S1_after_checkpoint_publish_failure",
   "complete": false,
   "valid_scope_complete": false,
   "new_import_started": true,
@@ -88,5 +88,43 @@
     "unresolved_issues": 0
   },
   "run_id": 41176757504,
-  "implementation_commit": "1ede0d93258df84cf4b8afe54e35f198a2dd8d81"
+  "implementation_commit": "1ede0d93258df84cf4b8afe54e35f198a2dd8d81",
+  "completed_valid_quarters": [
+    "108S4"
+  ],
+  "pending_quarters": [
+    "108S3",
+    "108S2",
+    "108S1"
+  ],
+  "latest_checks": {
+    "checked_at": "2026-10-31T07:21:51.484931Z",
+    "database_bytes": 6244600979,
+    "delta_from_baseline_bytes": 1056768,
+    "headroom_bytes": 755399021,
+    "masters_total_bytes": 2954846208,
+    "masters_heap_bytes": 2592833536,
+    "masters_indexes_bytes": 361193472,
+    "details_total_bytes": 3132841984,
+    "details_heap_bytes": 2543689728,
+    "details_indexes_bytes": 588414976,
+    "other_active_sql": 0,
+    "project_status": "ACTIVE_HEALTHY",
+    "public_rows": 13,
+    "cross_period_history": true
+  },
+  "failure": {
+    "run": 41176757504,
+    "job": 124465804532,
+    "stage": "GitHub checkpoint publication",
+    "error": "HTTP Error 422: Unprocessable Entity",
+    "db_import_success": true,
+    "full_log": "108S4-run41176757504-job.log",
+    "body_not_recorded_in_original_publisher": true
+  },
+  "s4_chunk_log_verified": {
+    "chunks": 34,
+    "masters": 3317,
+    "details": 8650
+  }
 }

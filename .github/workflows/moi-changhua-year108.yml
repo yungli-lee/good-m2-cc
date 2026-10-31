@@ -10,13 +10,7 @@ concurrency:
   group: moi-staging-raw-ingest
   cancel-in-progress: false
 jobs:
-  quarter-108S4:
-    uses: ./.github/workflows/moi-changhua-year108-quarter.yml
-    secrets: inherit
-    with:
-      season: 108S4
   quarter-108S3:
-    needs: quarter-108S4
     uses: ./.github/workflows/moi-changhua-year108-quarter.yml
     secrets: inherit
     with:
