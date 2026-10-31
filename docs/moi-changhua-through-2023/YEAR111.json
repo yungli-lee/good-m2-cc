@@ -20,7 +20,7 @@
   "continue_110_automatically": false,
   "version": "changhua-sale-presale-year111-v1",
   "complete": false,
-  "status": "running_source_quarantine",
+  "status": "import_complete_pending_annual_acceptance",
   "capacity_guard_bytes": 7000000000,
   "disk_baseline": {
     "database_bytes": 6228823187,
@@ -118,5 +118,9 @@
       "orphan_detail": 2
     },
     "log": "111S3-run41160138992-job.log"
-  }
+  },
+  "four_quarters_import_complete": true,
+  "processed_source_masters": 17554,
+  "followup_year": 110,
+  "followup_does_not_waive_annual_acceptance_or_backup": true
 }

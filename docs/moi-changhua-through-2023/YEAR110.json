@@ -1,0 +1,49 @@
+{
+  "year_roc": 110,
+  "year_ad": 2021,
+  "authorized": true,
+  "scope": {
+    "project": "niorteztdbuyusemsgwa",
+    "county": "彰化縣",
+    "datasets": [
+      "sale",
+      "presale"
+    ]
+  },
+  "seasons": [
+    "110S4",
+    "110S3",
+    "110S2",
+    "110S1"
+  ],
+  "stop_after": "110S1",
+  "continue_109_automatically": false,
+  "version": "changhua-sale-presale-year110-v1",
+  "status": "authorized_starting",
+  "complete": false,
+  "valid_scope_complete": false,
+  "quarantine_policy": "Incomplete/invalid source masters and orphan details excluded, full originals retained; unresolved counts remain. Other errors stop.",
+  "capacity_guard_bytes": 7000000000,
+  "disk_baseline": {
+    "checked_at": "2026-10-31T02:58:36.609068Z",
+    "database_bytes": 6233836691,
+    "masters_total_bytes": 2944409600,
+    "masters_heap_bytes": 2592833536,
+    "masters_indexes_bytes": 350756864,
+    "details_total_bytes": 3132841984,
+    "details_heap_bytes": 2543689728,
+    "details_indexes_bytes": 588414976,
+    "headroom_bytes": 766163309
+  },
+  "long_term_source_backup_pending": true,
+  "previous_year_111": {
+    "effective_source_masters": 17554,
+    "all_four_import_complete": true,
+    "annual_acceptance_pending": true,
+    "long_term_source_backup_pending": true,
+    "source_run_s4": 41160138992,
+    "source_run_s3_s1": 41161402523
+  },
+  "automation_id": "6ae529b0384c8191b0a9510babd4060a",
+  "automation_enabled": true
+}

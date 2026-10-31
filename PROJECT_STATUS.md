@@ -615,3 +615,9 @@ TypeScript、ESLint、build均已通過。僅新增年度workflow與進度文件
 111S4有效4004主檔來源/41批逐批對帳已成功，原1091000仍隔離；新接續workflow僅S3→S2→S1，不重跑S4。前run41160138992的S3在寫入前遇1欄位數異常/2孤兒明細，零批寫入，完整job log另存111S3-run41160138992-job.log；本次規則允許其已隔離來源略過。年度complete仍false；有效scope與隔離統計分開，完成後僅通知有效資料已處理並列實際隔離筆數，不宣稱全年無缺。112不恢復、110不啟動。預檢ACTIVE_HEALTHY、其他active SQL0/Preview可讀、無執行中流程；DB6229937299bytes，比111年度起點增加1114112bytes，7GB保護不變。
 
 最新實作8a25a23195541269916977208786109442f2481c，新run41161402523執行中，只S3→S1；9項scope/隔離及6來源修復、TypeScript/ESLint/build、公開13筆及跨期history通過。檢查提示已更新為不全來源略過政策，原檔/未解/有效處理分開驗收；未宣稱完整。
+
+
+### 110年（2021）四季續補授權與容量基準
+阿勇明確指示「繼續append 110年度」。本輪限定110S4→S1四個序列季度，完成有效資料及對帳後暫停、不進109；僅niorteztdbuyusemsgwa good-m2-staging彰化sale/presale與對應完整明細。獨立year110 worker/publisher/reusable/annual workflow，版本changhua-sale-presale-year110-v1，不改111/112或舊national workflow。延續最新不全來源隔離不進庫政策，保留原ZIP/完整issues/未解數、不補造日期，完整有效交易繼續；無法安全定位交易的明細異常及一般RPC/指紋/健康/容量錯誤仍停。100主檔序列、no retry、20秒慢批/逾時停、RPC7GB與較新來源保護不變，每批主檔/完整土地建物車位明細集合核對、每10批與季前後Preview讀取。
+預檢ACTIVE_HEALTHY、其他active SQL0、無執行/排隊workflow、Preview view可讀。2026-10-31 10:58:36台灣時間disk基準DB6,233,836,691 bytes，距7GB766,163,309；主檔total2,944,409,600/heap2,592,833,536/index350,756,864，明細total3,132,841,984/heap2,543,689,728/index588,414,976。比111起點配置增加5,013,504 bytes，此數不是新增交易量。每輪/收尾保存實測增量，不因配置未下降而重寫表。
+111四季有效來源17,554已逐批處理核對（非新增交易數），年度公開/DB最終驗收及原檔長期備份仍待完成，不能因啟動110而遺失該工作；同一檢查須保留111收尾與110有效scope驗收/新原ZIP長期備份兩階段。112未全年完成，不恢復。110新來源逐季寫前90天artifact且SHA/CRC核對，完成前原ZIP含SHA清單長期保存使用者檔案，不能只靠artifact。Production、欄位、layout、配額、timeout/raw/log/CMS/原檔及所有對帳不變，不VACUUM FULL/重建。
