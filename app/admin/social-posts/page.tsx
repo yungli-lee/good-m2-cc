@@ -8,6 +8,8 @@ import { DeleteFacebookButton } from "./delete-facebook-button";
 import { FacebookConnectionCheck } from "./facebook-connection-check";
 import { ScheduleFacebookButton } from "./schedule-facebook-button";
 import { SyncFacebookStatusButton } from "./sync-facebook-status-button";
+import { BulkFacebookSync } from "./bulk-facebook-sync";
+import { FacebookPostEngagement } from "./facebook-post-engagement";
 import { ConfirmScheduledPublishedButton } from "./confirm-scheduled-published-button";
 import { ConfirmFacebookDeletedButton } from "./confirm-facebook-deleted-button";
 import { UploadPostImage } from "./upload-post-image";
@@ -56,6 +58,7 @@ export default async function SocialPostsPage() {
         <div className="admin-actions"><button className="button" type="submit">儲存草稿</button></div>
       </form>
     </div></section>
+    {(current.profile.role==="admin"||current.profile.role==="owner") ? <BulkFacebookSync/> : null}
     <h2>我的貼文（最近 100 筆）</h2>
     {error ? <div className="notice">目前無法讀取貼文資料。請確認 social_posts 資料表已部署到測試資料庫。</div> : null}
     <div style={{display:"grid",gap:14}}>
@@ -84,6 +87,7 @@ export default async function SocialPostsPage() {
         <p className="muted">Facebook 發布狀態：{post.facebook_deleted_at ? (post.facebook_error?.includes("Facebook 端已刪除") ? "Facebook 端已刪除（人工核對）" : "已刪除（保留紀錄）") : post.status==="scheduled" ? "已預約（未發布）" : post.facebook_post_id ? "已發布" : post.status==="publishing" ? "發布中" : post.status==="publish_unknown" ? "結果待核對" : "未發布"}</p>
         {post.facebook_scheduled_for ? <p className="muted">Facebook 預定發布：{new Date(post.facebook_scheduled_for).toLocaleString("zh-TW",{timeZone:"Asia/Taipei"})}（台灣時間）</p> : null}
         {post.facebook_post_id ? <p className="muted">Facebook 貼文 ID：{post.facebook_post_id}　{post.facebook_deleted_at ? <span>原文已刪除，後台保留原始紀錄</span> : post.status==="scheduled" ? <span>已預約，請到 Facebook 排程區管理</span> : <a href={videoByPost.has(post.id) ? "https://www.facebook.com/watch/?v="+encodeURIComponent(post.facebook_post_id) : "https://www.facebook.com/"+post.facebook_post_id.replace("_","/posts/")} target="_blank" rel="noopener noreferrer">查看原文</a>}</p> : null}
+        {post.facebook_post_id && post.status==="posted" && !post.facebook_deleted_at ? <FacebookPostEngagement id={post.id}/> : null}
         <div className="admin-actions" style={{flexWrap:"wrap"}}>
           <CopyPostButton body={post.body||""} />
           {post.facebook_post_id && !post.facebook_deleted_at ? <SyncFacebookStatusButton id={post.id}/> : null}
