@@ -49,13 +49,24 @@ class ScopedTests(unittest.TestCase):
             with self.assertRaises(RuntimeError):scoped.verify_batch(scoped.PROJECT_URL,'test',batch,report['period'])
 class QuarantineTests(unittest.TestCase):
     def report(self):
-        return {'season':'111S4','archive_sha256':'506fd6cffffde253223a531d85bd13f36b857bb729941d694a59f57b5f3862bc','unresolved_issues':1,'issues':[{'file':'n_lvr_land_a.csv','row':3156,'record_id':'RPSNMLOKIIHGFDN58DA','reason':'day is out of range for month','raw_record':{'交易年月日':'1091000'}}]}
+        return {'season':'111S4','archive_sha256':'506fd6cffffde253223a531d85bd13f36b857bb729941d694a59f57b5f3862bc','unresolved_issues':1,'issues':[{'file':'n_lvr_land_a.csv','row':3156,'record_id':'RPSNMLOKIIHGFDN58DA','reason':'day is out of range for month','disposition':'quarantined_no_invented_identity_or_date','raw_record':{'交易年月日':'1091000'}}]}
     def test_exact_exception_remains_unresolved(self):
         r=self.report();scoped.apply_authorized_quarantine(r)
         self.assertEqual(r['blocking_issues'],0);self.assertEqual(r['unresolved_issues'],1)
         self.assertEqual(r['issues'][0]['raw_record']['交易年月日'],'1091000')
-    def test_unknown_exception_is_blocking(self):
-        for field,value in [('season','111S3'),('archive_sha256','changed')]:
-            r=self.report();r[field]=value;scoped.apply_authorized_quarantine(r);self.assertEqual(r['blocking_issues'],1)
-        r=self.report();r['issues'][0]['record_id']='other';scoped.apply_authorized_quarantine(r);self.assertEqual(r['blocking_issues'],1)
+    def test_master_width_and_orphan_are_skipped_but_unknown_is_blocking(self):
+        r=self.report();r['issues']=[{'file':'n_lvr_land_a.csv','row':3,'reason':'csv_width_mismatch'},{'file':'n_lvr_land_a_land.csv','row':3,'reason':'orphan_detail'}];r['unresolved_issues']=2
+        scoped.apply_authorized_quarantine(r);self.assertEqual(r['blocking_issues'],0)
+        r['issues']=[{'file':'n_lvr_land_a_land.csv','reason':'csv_width_mismatch'}];r['unresolved_issues']=1
+        scoped.apply_authorized_quarantine(r);self.assertEqual(r['blocking_issues'],1)
+    def test_quarantined_master_and_its_details_never_enter_batches(self):
+        with tempfile.TemporaryDirectory() as folder:
+            path=Path(folder)/'bad.zip'
+            with zipfile.ZipFile(path,'w') as z:
+                for name in ['n_lvr_land_a.csv','n_lvr_land_b.csv']:
+                    z.writestr(name,'編號,鄉鎮市區,交易標的,交易年月日\nid,d,t,date\nGOOD,秀水鄉,土地,1110101\nBAD,秀水鄉,土地,1091000\n')
+            groups,r=scoped.plan(path,'111S3');scoped.apply_authorized_quarantine(r)
+            self.assertEqual(r['blocking_issues'],0)
+            self.assertTrue(all(x['master']['source_key'].endswith(':GOOD') for _,items in groups for x in items))
+            self.assertEqual(r['unresolved_issues'],2)
 if __name__=='__main__':unittest.main()

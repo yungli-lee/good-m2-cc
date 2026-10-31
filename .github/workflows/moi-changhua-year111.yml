@@ -10,13 +10,7 @@ concurrency:
   group: moi-staging-raw-ingest
   cancel-in-progress: false
 jobs:
-  quarter-111S4:
-    uses: ./.github/workflows/moi-changhua-year111-quarter.yml
-    secrets: inherit
-    with:
-      season: 111S4
   quarter-111S3:
-    needs: quarter-111S4
     uses: ./.github/workflows/moi-changhua-year111-quarter.yml
     secrets: inherit
     with:
@@ -35,3 +29,5 @@ jobs:
       season: 111S1
 
 # Resume authorized exact 111S4 quarantine; never invent its date.
+
+# Resume only S3 to S1; S4 valid rows already reconciled.

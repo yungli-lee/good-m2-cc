@@ -20,7 +20,7 @@
   "continue_110_automatically": false,
   "version": "changhua-sale-presale-year111-v1",
   "complete": false,
-  "status": "running_with_authorized_quarantine",
+  "status": "resuming_valid_rows_source_quarantine",
   "capacity_guard_bytes": 7000000000,
   "disk_baseline": {
     "database_bytes": 6228823187,
@@ -56,21 +56,8 @@
     "authorization": "這筆先隔離，後續繼續"
   },
   "disk_latest": {
-    "checked_at": "2026-10-31T02:29:05.390923Z",
-    "database_bytes": 6229232787,
-    "masters_total_bytes": 2939944960,
-    "masters_heap_bytes": 2592833536,
-    "masters_index_bytes": 346292224,
-    "details_total_bytes": 3132841984,
-    "details_heap_bytes": 2543689728,
-    "details_index_bytes": 588414976,
-    "delta_database_from_baseline_bytes": 409600,
-    "delta_masters_total_bytes": 409600,
-    "delta_details_total_bytes": 0,
-    "headroom_bytes": 770767213,
-    "project_status": "ACTIVE_HEALTHY",
-    "other_active_sql": 0,
-    "preview_readable": true
+    "database_bytes": 6229937299,
+    "delta_database_from_baseline_bytes": 1114112
   },
   "validation": {
     "scope_quarantine_tests": 8,
@@ -111,5 +98,25 @@
     "import": "in_progress",
     "overlapping_import_started": false
   },
-  "quarantine_pending": 1
+  "quarantine_pending": 1,
+  "quarantine_policy": "Incomplete or invalid source masters and orphan details are excluded from writes, retained unresolved with full originals. Reconciliation/timeout/health/capacity errors still stop.",
+  "pending_quarters": [
+    "111S3",
+    "111S2",
+    "111S1"
+  ],
+  "completed_valid_quarters": [
+    "111S4"
+  ],
+  "previous_run_failure": {
+    "run": 41160138992,
+    "job": 124416098036,
+    "season": "111S3",
+    "writes": 0,
+    "issues": {
+      "csv_width_mismatch": 1,
+      "orphan_detail": 2
+    },
+    "log": "111S3-run41160138992-job.log"
+  }
 }

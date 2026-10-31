@@ -29,15 +29,16 @@ def plan(path,season):
     return groups,{'version':VERSION,'scope':{'county':'彰化縣','datasets':['sale','presale']},'season':season,'period':period,'archive_sha256':digest,'inventory':inventory,'issues':issues,'batches':[],'import_complete':False,'complete':False,'unresolved_issues':sum(not x.get('resolved',False) for x in issues)}
 
 def apply_authorized_quarantine(report):
-    # One exact source row only. Keep the issue and original date unresolved.
+    # Source rows already rejected by the parser stay out of all RPC batches.
     approved=[]
     for issue in report['issues']:
-        if (report['season']=='111S4' and report['archive_sha256']=='506fd6cffffde253223a531d85bd13f36b857bb729941d694a59f57b5f3862bc'
-            and issue.get('file')=='n_lvr_land_a.csv' and issue.get('row')==3156
-            and issue.get('record_id')=='RPSNMLOKIIHGFDN58DA'
-            and issue.get('reason')=='day is out of range for month'
-            and issue.get('raw_record',{}).get('交易年月日')=='1091000'):
-            approved.append({'file':issue['file'],'row':issue['row'],'record_id':issue['record_id'],'raw_transaction_date':'1091000','reason':issue['reason'],'status':'authorized_quarantine_pending','authorization':'阿勇：這筆先隔離，後續繼續'})
+        if issue.get('resolved'):continue
+        master_file=issue.get('file','').split('/')[-1] in FILES
+        source_rejected=(master_file and (issue.get('reason')=='csv_width_mismatch' or issue.get('disposition')=='quarantined_no_invented_identity_or_date'))
+        orphan=issue.get('reason')=='orphan_detail'
+        if source_rejected or orphan:
+            approved.append({k:issue[k] for k in ('file','row','record_id','reason') if k in issue})
+            approved[-1].update(status='authorized_quarantine_pending',authorization='阿勇：往後資料不全的忽略不進資料庫')
     report['authorized_quarantines']=approved
     report['blocking_issues']=report['unresolved_issues']-len(approved)
 
