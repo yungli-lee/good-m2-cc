@@ -659,3 +659,7 @@ ACTIVE_HEALTHY/其他active SQL0，公開日期13筆/1組跨期history通過；�
 
 ### 2026-10-31 15:23 台灣時間：恢復108S4對帳、只接續S3→S1
 run41176757504在108S4匯入成功後，GitHub checkpoint publisher PATCH ref回HTTP422，後三季skipped。完整原始joblog已保存；原publisher未讀HTTP本文，不推斷確切422原因，不是DB匯入失敗。artifact13033736850恢復報告：34批3317主檔8650明細全部verified、import_complete/complete=true、未解0；以全部34個chunk SHA及原ZIP SHA核DB log，34/3317/8650吻合，不重跑S4。新年度workflow只S3→S2→S1，YAML邊界/TS/ESLint/build通過；公開13筆及跨期history成功，ACTIVE_HEALTHY/其他SQL0/無執行排隊workflow。DB6244600979bytes，較108起點+1056768，距7GB755399021；relation數見YEAR108。回寫checkpoint失敗的恢復與後續批次分開，無不明DB提交。108年度尚未驗收，不啟動107；107條件授權及109/110/111收尾保留，既有7GB/100筆/20秒/no retry/Production/schema/layout保護不變。
+
+
+### 2026-10-31 17:04 台灣時間：108四季有效匯入完成，公開驗收503暫停
+最新季度108S4/S3/S2/S1均import_complete/complete=true，34/38/31/32共135批全部verified，13254有效來源主檔34469完整明細，未解0；此為來源處理量非新增量。四季預售原檔未提供，非零成交。年度首次較廣sale公開首頁驗收HTTP503，原helper未保存本文，立即停止未重試，其餘分頁/末頁/空頁/車位備註/history未到達，禁止宣告年度完成，不啟動107。本輪ACTIVE_HEALTHY，其他active SQL1（未終止他人），DB6247885971bytes較108起點+4341760，距7GB752114029；主檔total2958049280/heap2592833536/index364396544，明細total3132841984/heap2543689728/index588414976。本輪未重新全表範圍/孤兒或四季chunklog驗收，待健康無工作及公開讀取恢復的新一輪再只讀接續。107條件授權與109/110/111最終驗收待辦保留；7GB/timeout/Production/schema/layout不變。

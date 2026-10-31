@@ -18,7 +18,7 @@
   ],
   "stop_after": "108S1",
   "continue_107_automatically": false,
-  "status": "resuming_S3_S1_after_checkpoint_publish_failure",
+  "status": "import_complete_paused_public_acceptance_503",
   "complete": false,
   "valid_scope_complete": false,
   "new_import_started": true,
@@ -90,28 +90,32 @@
   "run_id": 41176757504,
   "implementation_commit": "1ede0d93258df84cf4b8afe54e35f198a2dd8d81",
   "completed_valid_quarters": [
-    "108S4"
-  ],
-  "pending_quarters": [
+    "108S4",
     "108S3",
     "108S2",
     "108S1"
   ],
+  "pending_quarters": [],
   "latest_checks": {
-    "checked_at": "2026-10-31T07:21:51.484931Z",
-    "database_bytes": 6244600979,
-    "delta_from_baseline_bytes": 1056768,
-    "headroom_bytes": 755399021,
-    "masters_total_bytes": 2954846208,
+    "checked_at": "2026-10-31T09:03:41.847834Z",
+    "database_bytes": 6247885971,
+    "delta_from_baseline_bytes": 4341760,
+    "headroom_bytes": 752114029,
+    "masters_total_bytes": 2958049280,
     "masters_heap_bytes": 2592833536,
-    "masters_indexes_bytes": 361193472,
+    "masters_indexes_bytes": 364396544,
     "details_total_bytes": 3132841984,
     "details_heap_bytes": 2543689728,
     "details_indexes_bytes": 588414976,
-    "other_active_sql": 0,
+    "other_active_sql": 1,
     "project_status": "ACTIVE_HEALTHY",
-    "public_rows": 13,
-    "cross_period_history": true
+    "public_acceptance": {
+      "stage": "broad_sale_first_page",
+      "http_status": 503,
+      "no_retry": true,
+      "error_body": "not captured by existing verifier; cause unknown",
+      "remaining_checks_not_reached": true
+    }
   },
   "failure": {
     "run": 41176757504,
@@ -126,5 +130,20 @@
     "chunks": 34,
     "masters": 3317,
     "details": 8650
-  }
+  },
+  "four_quarters_import_complete": true,
+  "effective_source_totals": {
+    "masters": 13254,
+    "details": 34469,
+    "batches": 135,
+    "unresolved_issues": 0
+  },
+  "continue_107_after_acceptance": true,
+  "annual_checks_pending": [
+    "chunk_log_full_four_quarters",
+    "full_scope_and_orphans",
+    "public_sale_presale_pagination",
+    "official_note_parking_detail_match",
+    "cross_period_history"
+  ]
 }
