@@ -9,6 +9,7 @@ import { FacebookConnectionCheck } from "./facebook-connection-check";
 import { ScheduleFacebookButton } from "./schedule-facebook-button";
 import { SyncFacebookStatusButton } from "./sync-facebook-status-button";
 import { ConfirmScheduledPublishedButton } from "./confirm-scheduled-published-button";
+import { ConfirmFacebookDeletedButton } from "./confirm-facebook-deleted-button";
 import { UploadPostImage } from "./upload-post-image";
 import { UploadPostVideo } from "./upload-post-video";
 import { PublishFacebookVideoButton } from "./publish-facebook-video-button";
@@ -59,7 +60,7 @@ export default async function SocialPostsPage() {
     {error ? <div className="notice">目前無法讀取貼文資料。請確認 social_posts 資料表已部署到測試資料庫。</div> : null}
     <div style={{display:"grid",gap:14}}>
       {(posts||[]).map(post=><article className="card" key={post.id}><div className="card-body">
-        <div className="actions" style={{justifyContent:"space-between"}}><strong>{post.title}</strong><span className="muted">{post.facebook_deleted_at ? "封存" : post.status==="scheduled" ? "已預約" : post.facebook_post_id ? "已發布" : statuses[post.status]||post.status} · {categories[post.category]||post.category}</span></div>
+        <div className="actions" style={{justifyContent:"space-between"}}><strong>{post.title}</strong><span className="muted">{post.facebook_deleted_at ? "Facebook 原文已刪除" : post.status==="scheduled" ? "已預約" : post.facebook_post_id ? "已發布" : statuses[post.status]||post.status} · {categories[post.category]||post.category}</span></div>
         <p style={{whiteSpace:"pre-wrap",overflowWrap:"anywhere"}}>{post.body||"（尚未輸入文案）"}</p>
         {post.link_url ? <p className="muted">分享連結：<a href={post.link_url} target="_blank" rel="noopener noreferrer">{post.link_url}</a></p> : null}
         {post.destination_notes ? <p className="muted" style={{whiteSpace:"pre-wrap"}}>目的地：{post.destination_notes}</p> : null}
@@ -80,12 +81,13 @@ export default async function SocialPostsPage() {
             <div><button className="button" type="submit">儲存修改</button></div>
           </form>
         </details> : null}
-        <p className="muted">Facebook 發布狀態：{post.facebook_deleted_at ? "已刪除" : post.status==="scheduled" ? "已預約（未發布）" : post.facebook_post_id ? "已發布" : post.status==="publishing" ? "發布中" : post.status==="publish_unknown" ? "結果待核對" : "未發布"}</p>
+        <p className="muted">Facebook 發布狀態：{post.facebook_deleted_at ? "Facebook 原文已刪除（保留紀錄）" : post.status==="scheduled" ? "已預約（未發布）" : post.facebook_post_id ? "已發布" : post.status==="publishing" ? "發布中" : post.status==="publish_unknown" ? "結果待核對" : "未發布"}</p>
         {post.facebook_scheduled_for ? <p className="muted">Facebook 預定發布：{new Date(post.facebook_scheduled_for).toLocaleString("zh-TW",{timeZone:"Asia/Taipei"})}（台灣時間）</p> : null}
-        {post.facebook_post_id ? <p className="muted">Facebook 貼文 ID：{post.facebook_post_id}　{post.facebook_deleted_at ? <span>原文已刪除，僅保留歷史紀錄</span> : post.status==="scheduled" ? <span>已預約，請到 Facebook 排程區管理</span> : <a href={videoByPost.has(post.id) ? "https://www.facebook.com/watch/?v="+encodeURIComponent(post.facebook_post_id) : "https://www.facebook.com/"+post.facebook_post_id.replace("_","/posts/")} target="_blank" rel="noopener noreferrer">查看原文</a>}</p> : null}
+        {post.facebook_post_id ? <p className="muted">Facebook 貼文 ID：{post.facebook_post_id}　{post.facebook_deleted_at ? <span>原文已刪除，後台保留原始紀錄</span> : post.status==="scheduled" ? <span>已預約，請到 Facebook 排程區管理</span> : <a href={videoByPost.has(post.id) ? "https://www.facebook.com/watch/?v="+encodeURIComponent(post.facebook_post_id) : "https://www.facebook.com/"+post.facebook_post_id.replace("_","/posts/")} target="_blank" rel="noopener noreferrer">查看原文</a>}</p> : null}
         <div className="admin-actions" style={{flexWrap:"wrap"}}>
           <CopyPostButton body={post.body||""} />
           {post.facebook_post_id && !post.facebook_deleted_at ? <SyncFacebookStatusButton id={post.id}/> : null}
+          {post.facebook_post_id && !post.facebook_deleted_at && (post.status==="posted"||post.status==="scheduled") && (current.profile.role==="admin"||current.profile.role==="owner") ? <ConfirmFacebookDeletedButton id={post.id}/> : null}
           {post.status==="scheduled" && post.facebook_post_id && !post.facebook_deleted_at && (current.profile.role==="admin"||current.profile.role==="owner") ? <ConfirmScheduledPublishedButton id={post.id}/> : null}
           {((post.status==="draft"||post.status==="ready") && !post.facebook_post_id && !videoByPost.has(post.id)) ? <><PublishFacebookButton id={post.id} enabled={facebookReady}/><ScheduleFacebookButton id={post.id} enabled={facebookReady}/></> : null}
           {videoByPost.has(post.id) && !post.facebook_post_id && (post.status==="draft"||post.status==="ready") ? <PublishFacebookVideoButton id={post.id} enabled={facebookReady}/> : null}
