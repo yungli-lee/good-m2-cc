@@ -9,6 +9,7 @@ import { FacebookConnectionCheck } from "./facebook-connection-check";
 import { ScheduleFacebookButton } from "./schedule-facebook-button";
 import { SyncFacebookStatusButton } from "./sync-facebook-status-button";
 import { UploadPostImage } from "./upload-post-image";
+import { UploadPostVideo } from "./upload-post-video";
 import { DiagnoseImagesButton } from "./diagnose-images-button";
 import { MetaPhotoTestButton } from "./meta-photo-test-button";
 
@@ -23,6 +24,11 @@ export default async function SocialPostsPage() {
   const { data: posts, error } = await supabase.from("social_posts")
     .select("id,title,body,category,status,destination_notes,facebook_post_id,facebook_deleted_at,facebook_scheduled_for,link_url,created_at")
     .eq("author_id",current.user.id).order("created_at",{ascending:false}).limit(100);
+  const postIds=(posts||[]).map(p=>p.id);
+  const {data:videos}=postIds.length
+    ? await supabase.from("social_post_videos").select("post_id,storage_path").in("post_id",postIds)
+    : {data:[] as {post_id:string;storage_path:string}[]};
+  const videoByPost=new Map((videos||[]).map(v=>[v.post_id,v.storage_path]));
   const facebookReady = process.env.FACEBOOK_PUBLISH_ENABLED === "true" && Boolean(process.env.FACEBOOK_PAGE_ACCESS_TOKEN);
   return <main className="section"><div className="container">
     <div className="admin-page-header"><div><p className="eyebrow">Social Publishing</p><h1>社群發文管理</h1>
@@ -50,7 +56,11 @@ export default async function SocialPostsPage() {
         <p style={{whiteSpace:"pre-wrap",overflowWrap:"anywhere"}}>{post.body||"（尚未輸入文案）"}</p>
         {post.link_url ? <p className="muted">分享連結：<a href={post.link_url} target="_blank" rel="noopener noreferrer">{post.link_url}</a></p> : null}
         {post.destination_notes ? <p className="muted" style={{whiteSpace:"pre-wrap"}}>目的地：{post.destination_notes}</p> : null}
-        {(post.status === "draft" || post.status === "ready") ? <UploadPostImage id={post.id}/> : null}
+        {(post.status === "draft" || post.status === "ready") ? <>
+          {!videoByPost.has(post.id) ? <UploadPostImage id={post.id}/> : null}
+          <UploadPostVideo id={post.id} existingUrl={videoByPost.has(post.id)
+            ? supabase.storage.from("social-post-videos").getPublicUrl(videoByPost.get(post.id)!).data.publicUrl : undefined}/>
+        </> : null}
         {post.status === "publish_unknown" ? <><DiagnoseImagesButton id={post.id}/>{(current.profile.role==="admin"||current.profile.role==="owner")?<MetaPhotoTestButton id={post.id}/>:null}</> : null}
         {(post.status === "draft" || post.status === "ready") ? <details style={{marginBottom:12}}>
           <summary style={{cursor:"pointer",fontWeight:600}}>編輯草稿</summary>
@@ -70,7 +80,8 @@ export default async function SocialPostsPage() {
         <div className="admin-actions" style={{flexWrap:"wrap"}}>
           <CopyPostButton body={post.body||""} />
           {post.facebook_post_id && !post.facebook_deleted_at ? <SyncFacebookStatusButton id={post.id}/> : null}
-          {((post.status==="draft"||post.status==="ready") && !post.facebook_post_id) ? <><PublishFacebookButton id={post.id} enabled={facebookReady}/><ScheduleFacebookButton id={post.id} enabled={facebookReady}/></> : null}
+          {((post.status==="draft"||post.status==="ready") && !post.facebook_post_id && !videoByPost.has(post.id)) ? <><PublishFacebookButton id={post.id} enabled={facebookReady}/><ScheduleFacebookButton id={post.id} enabled={facebookReady}/></> : null}
+          {videoByPost.has(post.id) && !post.facebook_post_id ? <p className="notice">影片目前僅供 Preview 草稿上傳；尚未開放立即／預約發文，以免誤發純文字。</p> : null}
           {post.facebook_post_id && !post.facebook_deleted_at && post.status!=="scheduled" && (current.profile.role==="admin"||current.profile.role==="owner") ? <DeleteFacebookButton id={post.id}/> : null}
           <a className="button ghost" href="https://www.facebook.com/" target="_blank" rel="noopener noreferrer">開啟 Facebook</a>
           {!post.facebook_post_id && ["draft","ready","archived"].includes(post.status) ? <form action={updateSocialPost.bind(null,post.id)}><select className="input" name="status" defaultValue={post.status}>{[["draft","草稿"],["ready","待發布"],["archived","封存"]].map(([value,label])=><option value={value} key={value}>{label}</option>)}</select><button className="button ghost" type="submit">更新狀態</button></form> : null}
