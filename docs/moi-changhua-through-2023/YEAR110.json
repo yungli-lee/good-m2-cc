@@ -19,7 +19,7 @@
   "stop_after": "110S1",
   "continue_109_automatically": false,
   "version": "changhua-sale-presale-year110-v1",
-  "status": "authorized_starting",
+  "status": "running",
   "complete": false,
   "valid_scope_complete": false,
   "quarantine_policy": "Incomplete/invalid source masters and orphan details excluded, full originals retained; unresolved counts remain. Other errors stop.",
@@ -45,5 +45,17 @@
     "source_run_s3_s1": 41161402523
   },
   "automation_id": "6ae529b0384c8191b0a9510babd4060a",
-  "automation_enabled": true
+  "automation_enabled": true,
+  "run_id": 41162515605,
+  "implementation_commit": "9e397effe4ac74a0aba47d7b6e1d4984cca7a5f2",
+  "validation": {
+    "scope_quarantine_tests": 9,
+    "source_repair_tests": 6,
+    "four_quarter_bounds": true,
+    "typescript": true,
+    "eslint": true,
+    "build": true,
+    "public_date_rows": 13,
+    "cross_period_history": true
+  }
 }
