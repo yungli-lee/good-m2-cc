@@ -699,3 +699,7 @@ run41176757504在108S4匯入成功後，GitHub checkpoint publisher PATCH ref回
 
 ### 2026-11-01 00:34 台灣時間：首段真實ID集合只讀等價
 ACTIVE_HEALTHY/其他activeSQL0/DB6247935123bytes。同一SQL快照取主檔依ID首1000筆，最大id13607，原view與候選NOT EXISTS各保留792筆，雙向EXCEPT差異0；未將樣本稱全量驗證。SQL與原工具回應存preview-live-equivalence-first1000.json，後續完整驗證從id>13607繼續，但各輪須重新健康預檢，資料變動時不能把跨快照分段累積冒稱同一快照全量證明。未改schema/API/timeout、未重送公開503、未追加資料；107仍停，108及109/110/111驗收待辦保留。
+
+
+### 2026-11-01 01:47 台灣時間：第二段真實集合對帳
+ACTIVE_HEALTHY/其他SQL0/DB6247935123bytes。以id>13607下一1000主檔同一SQL快照對帳，至14607，原view與候選各1000筆、雙向差異0。證據preview-live-equivalence-13607-14607.json；與首段合計2000筆分段樣本，非同一快照全量證明。未重送公開查詢、未改view/schema/API/timeout或匯入。下一段從14607，仍須健康預檢；應另準備原view完整定義/安全屬性及回復腳本，避免只做樣本而無法形成可審查修復。107及各年度驗收狀態不變。
