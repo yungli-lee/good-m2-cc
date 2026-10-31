@@ -695,3 +695,7 @@ run41176757504在108S4匯入成功後，GitHub checkpoint publisher PATCH ref回
 
 ### 2026-10-31 23:25 台灣時間：Postgres合成predicate對帳
 在指定staging以純VALUES/CTE（不讀交易表、不建表、不寫入）比較原NOT(prefix AND EXISTS)與候選NOT EXISTS(prefix AND...)，441組key/prefix/NULL-safe欄位案例、差異0。此補足SQL引擎三值邏輯驗證但只用一個代表比較欄位與單canonical候選，尚非七欄完整集合/真實ID全量等價證明。未重送公開503、未改view/schema/API/timeout、未啟107。真實資料有界對帳與最終可部署/回復view定義仍待準備，108及109/110/111驗收保留。本輪沒有重新量測disk/健康，不冒用前輪值為新鮮結果。
+
+
+### 2026-11-01 00:34 台灣時間：首段真實ID集合只讀等價
+ACTIVE_HEALTHY/其他activeSQL0/DB6247935123bytes。同一SQL快照取主檔依ID首1000筆，最大id13607，原view與候選NOT EXISTS各保留792筆，雙向EXCEPT差異0；未將樣本稱全量驗證。SQL與原工具回應存preview-live-equivalence-first1000.json，後續完整驗證從id>13607繼續，但各輪須重新健康預檢，資料變動時不能把跨快照分段累積冒稱同一快照全量證明。未改schema/API/timeout、未重送公開503、未追加資料；107仍停，108及109/110/111驗收待辦保留。
