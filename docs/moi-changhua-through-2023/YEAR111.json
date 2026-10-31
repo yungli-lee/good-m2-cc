@@ -20,7 +20,7 @@
   "continue_110_automatically": false,
   "version": "changhua-sale-presale-year111-v1",
   "complete": false,
-  "status": "blocked_source_exception",
+  "status": "authorized_quarantine_resuming",
   "capacity_guard_bytes": 7000000000,
   "disk_baseline": {
     "database_bytes": 6228823187,
@@ -41,7 +41,7 @@
   "automation_id": "6ae529b0384c8191b0a9510babd4060a",
   "run_id": 41158903441,
   "implementation_commit": "6eea15996cdf9c2d4f0bf4fcc49978a47c8d9e4b",
-  "automation_enabled": false,
+  "automation_enabled": true,
   "source_exception": {
     "season": "111S4",
     "job_id": 124411786566,
@@ -51,7 +51,9 @@
     "reason": "day is out of range for month",
     "writes": 0,
     "archive_sha256": "506fd6cffffde253223a531d85bd13f36b857bb729941d694a59f57b5f3862bc",
-    "independent_sha_and_crc_verified": true
+    "independent_sha_and_crc_verified": true,
+    "disposition": "authorized_quarantine_pending",
+    "authorization": "這筆先隔離，後續繼續"
   },
   "disk_latest": {
     "database_bytes": 6228823187,
@@ -67,5 +69,6 @@
     "build": true,
     "public_date_rows": 13,
     "cross_period_history": true
-  }
+  },
+  "valid_scope_complete": false
 }

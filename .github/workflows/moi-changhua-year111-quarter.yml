@@ -43,7 +43,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          if test -f "$MOI_REPORT_PATH"; then python scripts/moi_changhua_publish_checkpoint.py; else exit 1; fi
+          if test -f "$MOI_REPORT_PATH"; then python scripts/moi_changhua_year111_publish_checkpoint.py; else exit 1; fi
       - name: Preserve complete reconciliation and source exception report
         if: always()
         uses: actions/upload-artifact@v4

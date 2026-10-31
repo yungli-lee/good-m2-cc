@@ -596,3 +596,9 @@ TypeScript、ESLint、build均已通過。僅新增年度workflow與進度文件
 核對發現112 run41158208216失敗，112S4 complete=true，112S3因1筆invalid ROC date來源例外於寫入前停止，S2/S1 skipped。112年度尚未完成，來源異常與原檔待獨立處理，不略過/不宣稱完整，不重跑成功季度。此次111為新授權獨立年度，沒有重疊匯入。只staging彰化sale/presale，Production/欄位/layout/raw/log/CMS不變。
 
 111實作6eea159已啟動run41158903441，但111S4在寫入前因一筆官方交易年月日1091000（日00）來源異常停止，S3/S2/S1 skipped。獨立下載source artifact13026415723，原ZIP SHA506fd6cffffde253223a531d85bd13f36b857bb729941d694a59f57b5f3862bc及CRC通過；不是下載損壞，不補造日期，沒有111 DB寫入。disk收尾6228823187bytes、主檔2939535360/明細3132841984，較本輪基準增量0、其他active SQL0。6個111 scope/6來源修復、四季邊界、TS/ESLint/build與公開13筆/跨期history通過。完整失敗job log另存111S4-run41158903441-job.log。YEAR111仍complete=false/blocked_source_exception，檢查暫停以免盲目重送；112未完成狀態保留。一次checkpoint ref更新遇GitHub GraphQL錯誤，已讀HEAD確認季度worker先提交至38886be，未強推舊HEAD，合併其季度檔保留後另建checkpoint。
+
+
+
+
+### 111年單筆隔離授權後接續
+阿勇明確指示「這筆先隔離，後續繼續」。僅允許原SHA506fd6cf...、111S4 n_lvr_land_a.csv第3156列、原編號RPSNMLOKIIHGFDN58DA、原交易年月日1091000及相同錯誤吻合時先隔離，保留原ZIP與完整artifact異常原文，不改日期、不寫入這筆主檔或明細。其他任何未解異常仍阻擋寫入。111S4 import_complete只代表有效資料處理完，complete仍false且unresolved_issues=1；全年必須分開標示valid_scope_complete與待處理隔離1筆，不宣稱完整。先前111S4為0批寫入，安全接續新run既有scope/chunk版本，僅111S4→S1四季，不進110、不恢復112。容量/健康及100筆/20秒/no-retry保護不變，起點DB6228823187bytes，其他active SQL0、ACTIVE_HEALTHY、Preview可讀。

@@ -33,3 +33,5 @@ jobs:
     secrets: inherit
     with:
       season: 111S1
+
+# Resume authorized exact 111S4 quarantine; never invent its date.

@@ -28,6 +28,19 @@ def plan(path,season):
             if m['county']!='彰化縣' or m['dataset_type'] not in ('sale','presale') or not m['source_key'].startswith(('n:a:','n:b:')):raise ValueError('Scope violation')
     return groups,{'version':VERSION,'scope':{'county':'彰化縣','datasets':['sale','presale']},'season':season,'period':period,'archive_sha256':digest,'inventory':inventory,'issues':issues,'batches':[],'import_complete':False,'complete':False,'unresolved_issues':sum(not x.get('resolved',False) for x in issues)}
 
+def apply_authorized_quarantine(report):
+    # One exact source row only. Keep the issue and original date unresolved.
+    approved=[]
+    for issue in report['issues']:
+        if (report['season']=='111S4' and report['archive_sha256']=='506fd6cffffde253223a531d85bd13f36b857bb729941d694a59f57b5f3862bc'
+            and issue.get('file')=='n_lvr_land_a.csv' and issue.get('row')==3156
+            and issue.get('record_id')=='RPSNMLOKIIHGFDN58DA'
+            and issue.get('reason')=='day is out of range for month'
+            and issue.get('raw_record',{}).get('交易年月日')=='1091000'):
+            approved.append({'file':issue['file'],'row':issue['row'],'record_id':issue['record_id'],'raw_transaction_date':'1091000','reason':issue['reason'],'status':'authorized_quarantine_pending','authorization':'阿勇：這筆先隔離，後續繼續'})
+    report['authorized_quarantines']=approved
+    report['blocking_issues']=report['unresolved_issues']-len(approved)
+
 def chunk_hash(report,name,batch):
     return fingerprint({'version':VERSION,'scope':report['scope'],'archive_sha256':report['archive_sha256'],'period':report['period'],'file':name,'items':batch})
 
@@ -74,6 +87,7 @@ def verify_batch(url,key,batch,period):
 def main():
     path=os.environ['MOI_LOCAL_ZIP'];season=os.environ['MOI_SEASON']
     groups,report=plan(path,season)
+    apply_authorized_quarantine(report)
     output=pathlib.Path(os.environ.get('MOI_REPORT_PATH','/tmp/changhua-report.json'))
     def save():output.write_text(json.dumps(report,ensure_ascii=False,indent=2)+'\n')
     save()
@@ -81,7 +95,7 @@ def main():
     url=os.environ.get('STAGING_SUPABASE_URL','').strip().rstrip('/');key=os.environ.get('STAGING_SUPABASE_SERVICE_ROLE_KEY','').strip()
     if url!=PROJECT_URL or not key:raise RuntimeError('Explicit staging destination required')
     try:
-        if report['unresolved_issues']:raise RuntimeError('Unresolved scoped source exceptions; stop before writes')
+        if report['blocking_issues']:raise RuntimeError('Unresolved scoped source exceptions; stop before writes')
         preview_guard(url,key)
         for name,items in groups:
             for start in range(0,len(items),100):
@@ -97,7 +111,7 @@ def main():
                 print(json.dumps({'season':season,'file':name,'start':start,'processed':len(batch),'status':'verified'}),flush=True)
                 if len(report['batches'])%10==0:preview_guard(url,key)
         preview_guard(url,key)
-        report['import_complete']=True;report['complete']=True;save()
+        report['import_complete']=True;report['complete']=report['unresolved_issues']==0;save()
     except Exception as error:
         report['error']={'type':type(error).__name__,'message':str(error)};save();raise
 
