@@ -88,7 +88,7 @@ export default async function SocialPostsPage() {
         {post.facebook_scheduled_for ? <p className="muted">Facebook 預定發布：{new Date(post.facebook_scheduled_for).toLocaleString("zh-TW",{timeZone:"Asia/Taipei"})}（台灣時間）</p> : null}
         {post.facebook_post_id ? <p className="muted">Facebook 貼文 ID：{post.facebook_post_id}　{post.facebook_deleted_at ? <span>原文已刪除，後台保留原始紀錄</span> : post.status==="scheduled" ? <span>已預約，請到 Facebook 排程區管理</span> : <a href={videoByPost.has(post.id) ? "https://www.facebook.com/watch/?v="+encodeURIComponent(post.facebook_post_id) : "https://www.facebook.com/"+post.facebook_post_id.replace("_","/posts/")} target="_blank" rel="noopener noreferrer">查看原文</a>}</p> : null}
         {post.facebook_post_id && post.status==="posted" && !post.facebook_deleted_at ? <FacebookPostEngagement id={post.id}/> : null}
-        <div className="admin-actions" style={{flexWrap:"wrap",justifyContent:"flex-end",gap:8,alignItems:"center",marginTop:12}}>
+        <div className="admin-actions" style={{display:"flex",flexDirection:"row",flexWrap:"wrap",justifyContent:"flex-end",gap:8,alignItems:"center",marginTop:12}}>
           {post.facebook_post_id && !post.facebook_deleted_at ? <SyncFacebookStatusButton id={post.id}/> : null}
           {post.facebook_post_id && !post.facebook_deleted_at && (post.status==="posted"||post.status==="scheduled") && (current.profile.role==="admin"||current.profile.role==="owner") ? <ConfirmFacebookDeletedButton id={post.id}/> : null}
           {post.status==="scheduled" && post.facebook_post_id && !post.facebook_deleted_at && (current.profile.role==="admin"||current.profile.role==="owner") ? <ConfirmScheduledPublishedButton id={post.id}/> : null}
