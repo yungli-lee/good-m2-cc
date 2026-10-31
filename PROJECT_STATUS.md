@@ -687,3 +687,7 @@ run41176757504在108S4匯入成功後，GitHub checkpoint publisher PATCH ref回
 
 ### 2026-10-31 21:49 台灣時間：候選首頁EXPLAIN保留排序索引
 只讀EXPLAIN候選predicate的ORDER BY transaction_date DESC,id DESC LIMIT20：Nested Loop Anti Join搭配既有cover索引，無Sort，cost85.86（原首頁109.18）；count候選前輪44744.14。均為估算，未ANALYZE或宣稱修復。沒有公開重試或DB寫入，ACTIVE_HEALTHY/其他SQL0，DB6247935123bytes，距7GB752064877。完整計畫存preview-canonical-page-explain.json。下一輪應完成合成語義案例及有界完整ID集合等價驗證方案，保留原view安全選項與回復SQL後才評估變更授權；本輪未改view/API/schema/timeout。107未啟、108及109/110/111年度驗收待辦不變。
+
+
+### 2026-10-31 22:53 台灣時間：離線predicate等價模型
+新增獨立Python三值邏輯模型，107163組key/prefix/七欄NULL與不一致情形membership全部相同，程式保存在docs/moi-changhua-through-2023/test_canonical_predicate_model.py。此為離線邏輯模型，未替代Postgres語義或真實完整ID集合驗證；未測多canonical集合，後續須SQL合成資料與有界真實資料對帳。沒有連線DB或公開API，本輪未實測disk/健康，沿用前輪數據不得冒稱新鮮。未改schema/view/API、未匯入；107仍暫停，108及109/110/111年度驗收保留。
