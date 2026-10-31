@@ -703,3 +703,7 @@ ACTIVE_HEALTHY/其他activeSQL0/DB6247935123bytes。同一SQL快照取主檔依I
 
 ### 2026-11-01 01:47 台灣時間：第二段真實集合對帳
 ACTIVE_HEALTHY/其他SQL0/DB6247935123bytes。以id>13607下一1000主檔同一SQL快照對帳，至14607，原view與候選各1000筆、雙向差異0。證據preview-live-equivalence-13607-14607.json；與首段合計2000筆分段樣本，非同一快照全量證明。未重送公開查詢、未改view/schema/API/timeout或匯入。下一段從14607，仍須健康預檢；應另準備原view完整定義/安全屬性及回復腳本，避免只做樣本而無法形成可審查修復。107及各年度驗收狀態不變。
+
+
+### 2026-11-01 02:21 台灣時間：原view回復定義已保存
+只讀取得pg_get_viewdef與安全屬性：owner postgres、reloptions NULL、ACL postgres及service_role，未授權anon/authenticated。原完整31欄定義與review-only回復SQL存repo，未執行CREATE。不得為修復擴增grant或改security模式；候選須保留欄位順序/型別/owner/ACL/options。下一步以此原定義建立完整候選SQL與同快照有界ID驗證，不可只以成本估算宣告可部署。107未啟、108及109/110/111驗收保留；無公開重試/匯入/設定變更，本輪未量測disk。
