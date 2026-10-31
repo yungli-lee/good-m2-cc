@@ -647,3 +647,7 @@ ACTIVE_HEALTHY/其他active SQL0，公開日期13筆/1組跨期history通過；�
 ### 108年度授權與公開history預檢暫停
 阿勇授權108四季彰化sale/presale有效資料，結束驗證後通知，僅108、不進107。四原ZIP CRC/manifest及買賣完整明細檔均核對，四季未提供彰化presale，精確SHA在YEAR108.json記錄；非零成交。ACTIVE_HEALTHY/其他SQL0/無執行workflow，DB6243544211bytes，距7GB756455789；公開日期13筆正常但history HTTPError，helper未保留本文，不能推斷原因。依保護條件本輪無DB寫入、不重試、不啟動108，下一輪新鮮預檢全過才實作專用108S4→S1序列worker/version並檢查後啟動，不改舊national。109/110/111年度最終驗收待辦保留。
 最新原檔政策依阿勇指示：成功append且完成對帳的來源ZIP不再要求另做永久備份，取消舊永久備份作為年度完成門檻；既存原檔未執行刪除，交易主檔/完整明細/raw/匯入log與問題對帳仍保留，未授權清空DB raw。7GB/timeout/Production/schema/layout不變。
+
+
+### 2026-10-31 14:28 台灣時間：108限定四季預檢通過及啟動準備
+本輪ACTIVE_HEALTHY/其他SQL0/無執行排隊workflow，公開日期13筆及1組跨期history成功，前輪錯誤未於同輪重試。DB6243544211bytes，距7GB756455789；主檔total2953830400/heap2592833536/index360177664，明細total3132841984/heap2543689728/index588414976。109有效已全部完成，不重跑；109/110/111年度最終驗收保留。108新專用worker/publisher/reusable/annual僅108S4→S1，version changhua-sale-presale-year108-v1，不進107。四原SHA+manifest缺預售例外及完整買賣明細再次離線plan確認：S4 3317/8650、S3 3795/10116、S2 3020/7642、S1 3122/8061，共13254有效主檔34469明細，未解0；來源量非新增交易量，presale未提供非零成交。12scope/隔離/來源測試、四季YAML序列邊界、TypeScript/ESLint/build通過。原ZIP寫前artifact仍保留，依新授權無永久ZIP備份完成門檻；所有SHA/issues/主檔明細指紋與log保留。100筆序列/20秒/no retry/較新來源/7GB/RPC保護不變，Production/schema/layout/timeout/配額/raw/CMS不改。實際run另核對記錄，尚未宣告108完成。

@@ -1,0 +1,54 @@
+name: Changhua year108 scoped quarter worker
+on:
+  workflow_call:
+    inputs:
+      season:
+        type: string
+        required: true
+permissions:
+  contents: write
+jobs:
+  scoped-quarter:
+    if: github.ref == 'refs/heads/feature/real-price-public-search-v1'
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    env:
+      MOI_SEASON: ${{ inputs.season }}
+      MOI_LOCAL_ZIP: /tmp/changhua-source.zip
+      MOI_REPORT_PATH: /tmp/changhua-report.json
+      STAGING_SUPABASE_URL: ${{ secrets.MOI_STAGING_SUPABASE_URL }}
+      STAGING_SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.MOI_STAGING_SUPABASE_SERVICE_ROLE_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Download official archive and validate scoped source before writes
+        run: |
+          set -euo pipefail
+          case "$MOI_SEASON" in 108S[1234]) ;; *) exit 1;; esac
+          curl --fail --location --show-error --silent --connect-timeout 20 --max-time 300 --user-agent good-m2-changhua-import/1.0 --output "$MOI_LOCAL_ZIP" "https://plvr.land.moi.gov.tw/DownloadSeason?season=${MOI_SEASON}&type=zip&fileName=lvr_landcsv.zip"
+          MOI_CHECK_ONLY=1 python scripts/moi_changhua_year108_backfill.py
+      - name: Preserve exact source before database writes
+        uses: actions/upload-artifact@v4
+        with:
+          name: changhua-source-${{ inputs.season }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: /tmp/changhua-source.zip
+          retention-days: 90
+          if-no-files-found: error
+      - name: Scoped import and per-batch master/detail fingerprint reconciliation
+        run: python scripts/moi_changhua_year108_backfill.py
+      - name: Persist quarterly checkpoint in repository
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if test -f "$MOI_REPORT_PATH"; then python scripts/moi_changhua_year108_publish_checkpoint.py; else exit 1; fi
+      - name: Preserve complete reconciliation and source exception report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: changhua-report-${{ inputs.season }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: /tmp/changhua-report.json
+          retention-days: 90
+

@@ -18,15 +18,21 @@
   ],
   "stop_after": "108S1",
   "continue_107_automatically": false,
-  "status": "authorized_paused_public_history_check",
+  "status": "preflight_passed_launching",
   "complete": false,
   "valid_scope_complete": false,
   "new_import_started": false,
   "capacity_guard_bytes": 7000000000,
   "disk_baseline": {
-    "checked_at": "2026-10-31T06:24:13.60978Z",
+    "checked_at": "2026-10-31T06:26:37.122239Z",
     "database_bytes": 6243544211,
-    "headroom_bytes": 756455789
+    "headroom_bytes": 756455789,
+    "masters_total_bytes": 2953830400,
+    "masters_heap_bytes": 2592833536,
+    "masters_indexes_bytes": 360177664,
+    "details_total_bytes": 3132841984,
+    "details_heap_bytes": 2543689728,
+    "details_indexes_bytes": 588414976
   },
   "source_availability_evidence": {
     "108S4": {
@@ -52,18 +58,33 @@
   },
   "source_backup_policy": "User waives permanent ZIP backup after successful append and reconciliation; retain reconciliation/issues/chunk logs, no raw/DB deletion authorized.",
   "preflight": {
+    "checked_at": "2026-10-31T06:26:37.122239Z",
     "project_status": "ACTIVE_HEALTHY",
     "other_active_sql": 0,
     "active_workflows": 0,
+    "queued_workflows": 0,
     "public_list_rows": 13,
-    "history_verified": false,
-    "history_error": "HTTPError",
-    "error_body": "not captured by existing verifier; cause unknown",
-    "no_retry": true
+    "history_verified": true,
+    "cross_period_history": true
   },
   "prior_years_acceptance_pending": [
     109,
     110,
     111
-  ]
+  ],
+  "version": "changhua-sale-presale-year108-v1",
+  "validation": {
+    "scope_tests": 12,
+    "four_quarter_bounds": true,
+    "typescript": true,
+    "eslint": true,
+    "build": true,
+    "public_date_rows": 13,
+    "cross_period_history": true
+  },
+  "offline_valid_source": {
+    "masters": 13254,
+    "details": 34469,
+    "unresolved_issues": 0
+  }
 }
