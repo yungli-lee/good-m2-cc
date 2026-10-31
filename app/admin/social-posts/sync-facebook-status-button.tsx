@@ -9,7 +9,7 @@ export function SyncFacebookStatusButton({id}:{id:string}){
    try{const r=await syncFacebookPostStatus(id);setNote(r.message)}
    catch{setNote("同步失敗，請確認網路及管理權限。")}
    finally{setBusy(false)}
-  }}>{busy?"核對中…":"同步 Facebook 狀態"}</button>
+  }} title="同步 Facebook 狀態" aria-label="同步 Facebook 狀態" style={{width:38,height:36,padding:0}}>{busy?"…":"↻"}</button>
   {note?<p role="status" aria-live="polite" className="muted" style={{margin:0}}>{note}</p>:null}
  </div>;
 }
