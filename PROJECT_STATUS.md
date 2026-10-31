@@ -638,3 +638,7 @@ TypeScript、ESLint、build均已通過。僅新增年度workflow與進度文件
 ### 2026-10-31 13:26 台灣時間：110四季有效匯入成功，年度收尾待驗
 接續run41169999065成功，S2 39批3811主檔/10784明細、S1 38批3752主檔/10752明細全部verified/import_complete=true，各1未解來源依授權隔離。S2 missing identity1、S1 invalid ROC date1；兩季presale為原ZIP/manifest未提供，不是零交易。合併原S4/S3，四季167批、有效來源16408主檔/43890明細，來源處理量非新增交易數。S4欄數2+孤兒明細4、S3 missing identity1仍未解；S3 invalid_official_share1為既有resolved警示，不混為隔離交易數。
 ACTIVE_HEALTHY/其他active SQL0，公開日期13筆/1組跨期history通過；全表範圍外0/孤兒明細0。本輪DB6238940307bytes，相對110起點+5103616，距7GB761059693；主檔total2949349376/heap2592833536/index355696640，明細total3132841984/heap2543689728/index588414976。不追加其他年度。110及111年度chunk log/公開分頁備註完整驗收與四原ZIP長期備份仍待完成，valid_scope_complete=false/complete=false，維持檢查，不宣告年度完成。
+
+
+### 109年度新授權：僅彰化有效來源四季後暫停
+阿勇授權「再補109年度」，只109S4→S1，不進108或恢復112/舊national。新增109專用worker/publisher/序列workflow，changhua-sale-presale-year109-v1，100主檔/20秒/no retry/較新來源/完整明細指紋/每10批Preview及7GB保護不變。109四原ZIP CRC、完整清單及manifest均無彰化presale，依精確季度+SHA證據允許sale-only並明記來源未提供（非零成交）。離線有效主檔14721/明細39321，S4/S3各1已拒絕來源隔離，S2/S1未解0；未當作已新增。12scope/來源測試、四季序列邊界、TS/ESLint/build通過；公開13筆及跨期history通過，ACTIVE_HEALTHY/其他SQL0/無執行排隊流程，起點DB6238940307bytes/距7GB761059693。110/111年度驗收及原ZIP長期備份仍待完成並保留。109原檔寫前90天artifact，年度完成前仍須長期備份與驗收。Production/schema/layout/timeout/配額/raw/log/CMS不變。

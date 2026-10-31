@@ -1,0 +1,35 @@
+name: Changhua 109 annual backfill
+on:
+  push:
+    branches: [feature/real-price-public-search-v1]
+    paths: [.github/workflows/moi-changhua-year109.yml]
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: moi-staging-raw-ingest
+  cancel-in-progress: false
+jobs:
+  quarter-109S4:
+    uses: ./.github/workflows/moi-changhua-year109-quarter.yml
+    secrets: inherit
+    with:
+      season: 109S4
+  quarter-109S3:
+    needs: quarter-109S4
+    uses: ./.github/workflows/moi-changhua-year109-quarter.yml
+    secrets: inherit
+    with:
+      season: 109S3
+  quarter-109S2:
+    needs: quarter-109S3
+    uses: ./.github/workflows/moi-changhua-year109-quarter.yml
+    secrets: inherit
+    with:
+      season: 109S2
+  quarter-109S1:
+    needs: quarter-109S2
+    uses: ./.github/workflows/moi-changhua-year109-quarter.yml
+    secrets: inherit
+    with:
+      season: 109S1

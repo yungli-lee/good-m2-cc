@@ -1,0 +1,67 @@
+{
+  "year_roc": 109,
+  "year_ad": 2020,
+  "authorized": true,
+  "scope": {
+    "project": "niorteztdbuyusemsgwa",
+    "county": "彰化縣",
+    "datasets": [
+      "sale",
+      "presale"
+    ]
+  },
+  "seasons": [
+    "109S4",
+    "109S3",
+    "109S2",
+    "109S1"
+  ],
+  "stop_after": "109S1",
+  "continue_108_automatically": false,
+  "version": "changhua-sale-presale-year109-v1",
+  "status": "authorized_preflight_passed_pending_run",
+  "complete": false,
+  "valid_scope_complete": false,
+  "capacity_guard_bytes": 7000000000,
+  "disk_baseline": {
+    "checked_at": "2026-10-31T06:02:32.83835Z",
+    "database_bytes": 6238940307,
+    "headroom_bytes": 761059693
+  },
+  "source_availability_evidence": {
+    "109S4": {
+      "sha256": "e2986aaf442bd72776428427b3ac469e17191deaeee23459066754f8319c6e23",
+      "presale_absent": true,
+      "crc": true
+    },
+    "109S3": {
+      "sha256": "d985c426b5deb98f0b3307d47080161dfa1ef15d276170492818a834e4b8d3f7",
+      "presale_absent": true,
+      "crc": true
+    },
+    "109S2": {
+      "sha256": "ddc628274d6e8edbacb3a237682b9d26207acf04b45caf1f4e0d0798b5016283",
+      "presale_absent": true,
+      "crc": true
+    },
+    "109S1": {
+      "sha256": "88dd8fc77d1e56e128b91dd798a025da259aeecf8a75a6075cfe4f7ce71f4b92",
+      "presale_absent": true,
+      "crc": true
+    }
+  },
+  "long_term_source_backup_pending": true,
+  "prior_years_pending": [
+    110,
+    111
+  ],
+  "validation": {
+    "scope_tests": 12,
+    "typescript": true,
+    "eslint": true,
+    "build": true,
+    "public_date_rows": 13,
+    "cross_period_history": true
+  },
+  "quarantine_policy": "Parser-rejected incomplete masters/orphan details excluded; unresolved retained; unsafe detail errors fatal."
+}
