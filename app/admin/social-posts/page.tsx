@@ -2,7 +2,6 @@ import Link from "next/link";
 import { requireRole } from "@/lib/auth";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createSocialPost, editSocialPost, updateSocialPost, deleteSocialPost } from "./actions";
-import { CopyPostButton } from "./copy-button";
 import { PublishFacebookButton } from "./publish-facebook-button";
 import { DeleteFacebookButton } from "./delete-facebook-button";
 import { FacebookConnectionCheck } from "./facebook-connection-check";
@@ -89,15 +88,14 @@ export default async function SocialPostsPage() {
         {post.facebook_scheduled_for ? <p className="muted">Facebook 預定發布：{new Date(post.facebook_scheduled_for).toLocaleString("zh-TW",{timeZone:"Asia/Taipei"})}（台灣時間）</p> : null}
         {post.facebook_post_id ? <p className="muted">Facebook 貼文 ID：{post.facebook_post_id}　{post.facebook_deleted_at ? <span>原文已刪除，後台保留原始紀錄</span> : post.status==="scheduled" ? <span>已預約，請到 Facebook 排程區管理</span> : <a href={videoByPost.has(post.id) ? "https://www.facebook.com/watch/?v="+encodeURIComponent(post.facebook_post_id) : "https://www.facebook.com/"+post.facebook_post_id.replace("_","/posts/")} target="_blank" rel="noopener noreferrer">查看原文</a>}</p> : null}
         {post.facebook_post_id && post.status==="posted" && !post.facebook_deleted_at ? <FacebookPostEngagement id={post.id}/> : null}
-        <div className="admin-actions" style={{flexWrap:"wrap"}}>
-          <CopyPostButton body={post.body||""} />
+        <div className="admin-actions" style={{flexWrap:"wrap",justifyContent:"flex-end",gap:8,alignItems:"center",marginTop:12}}>
           {post.facebook_post_id && !post.facebook_deleted_at ? <SyncFacebookStatusButton id={post.id}/> : null}
           {post.facebook_post_id && !post.facebook_deleted_at && (post.status==="posted"||post.status==="scheduled") && (current.profile.role==="admin"||current.profile.role==="owner") ? <ConfirmFacebookDeletedButton id={post.id}/> : null}
           {post.status==="scheduled" && post.facebook_post_id && !post.facebook_deleted_at && (current.profile.role==="admin"||current.profile.role==="owner") ? <ConfirmScheduledPublishedButton id={post.id}/> : null}
           {((post.status==="draft"||post.status==="ready") && !post.facebook_post_id && !videoByPost.has(post.id)) ? <><PublishFacebookButton id={post.id} enabled={facebookReady}/><ScheduleFacebookButton id={post.id} enabled={facebookReady}/></> : null}
           {videoByPost.has(post.id) && !post.facebook_post_id && (post.status==="draft"||post.status==="ready") ? <PublishFacebookVideoButton id={post.id} enabled={facebookReady}/> : null}
           {post.facebook_post_id && !post.facebook_deleted_at && post.status!=="scheduled" && (current.profile.role==="admin"||current.profile.role==="owner") ? <DeleteFacebookButton id={post.id}/> : null}
-          <a className="button ghost" href="https://www.facebook.com/" target="_blank" rel="noopener noreferrer">開啟 Facebook</a>
+          {post.facebook_post_id && !post.facebook_deleted_at ? <a className="button ghost" href={videoByPost.has(post.id) ? "https://www.facebook.com/watch/?v="+encodeURIComponent(post.facebook_post_id) : "https://www.facebook.com/"+post.facebook_post_id.replace("_","/posts/")} target="_blank" rel="noopener noreferrer" title="開啟 Facebook 原文" aria-label="開啟 Facebook 原文" style={{width:38,height:36,padding:0,display:"inline-flex",alignItems:"center",justifyContent:"center"}}>↗</a> : null}
           {!post.facebook_post_id && ["draft","ready","archived"].includes(post.status) ? <form action={updateSocialPost.bind(null,post.id)}><select className="input" name="status" defaultValue={post.status}>{[["draft","草稿"],["ready","待發布"],["archived","封存"]].map(([value,label])=><option value={value} key={value}>{label}</option>)}</select><button className="button ghost" type="submit">更新狀態</button></form> : null}
           {!post.facebook_post_id ? <form action={deleteSocialPost.bind(null,post.id)}><button className="button danger" type="submit">刪除草稿</button></form> : null}
         </div>
