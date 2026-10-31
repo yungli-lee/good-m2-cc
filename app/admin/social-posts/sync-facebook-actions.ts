@@ -2,6 +2,7 @@
 import { revalidatePath } from "next/cache";
 import { requireRole } from "@/lib/auth";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import {resolveFacebookPageToken} from "./facebook-page-token";
 
 const PAGE_ID="284090174797562";
 export async function syncFacebookPostStatus(postId:string):Promise<{ok:boolean;message:string}>{
@@ -13,15 +14,39 @@ export async function syncFacebookPostStatus(postId:string):Promise<{ok:boolean;
   if(error||!post||post.facebook_page_id!==PAGE_ID||!post.facebook_post_id||post.facebook_deleted_at)
     return {ok:false,message:"沒有可同步的 Facebook 貼文紀錄。"};
   if(/^\d+$/.test(post.facebook_post_id)) return {ok:false,message:"影片已取得 Meta 影片 ID；目前請至粉專確認轉碼及發布狀態，影片自動同步尚待驗證。"};
-  const token=process.env.FACEBOOK_PAGE_ACCESS_TOKEN;
-  if(!token)return {ok:false,message:"Preview 尚未設定 Facebook Page Token。"};
+  let token:string;
+  try{token=await resolveFacebookPageToken();}
+  catch{return {ok:false,message:"Facebook 粉專權杖無法驗證；後台狀態不變。"};}
   let response:Response;
   try{
     response=await fetch("https://graph.facebook.com/v26.0/"+encodeURIComponent(post.facebook_post_id)+"?fields=id,is_published,updated_time,permalink_url",{
       headers:{Authorization:"Bearer "+token},cache:"no-store",signal:AbortSignal.timeout(10000)
     });
   }catch{return {ok:false,message:"暫時無法連線 Facebook；原有狀態不變。"};}
-  const data=await response.json() as {id?:string;is_published?:boolean;error?:{code?:number}};
+  let data:{id?:string;is_published?:boolean;error?:{code?:number}};
+  try{data=await response.json() as typeof data;}catch{return {ok:false,message:"Meta 回應無法解析，原有狀態不變。"};}
+  if((!response.ok||data.error)&&data.error?.code===10&&post.status==="scheduled"){
+    // Meta may reject is_published on Page posts. Verify against published_posts instead.
+    // A scheduled/unpublished post must never be treated as published from its ID alone.
+    try{
+      let url="https://graph.facebook.com/v26.0/"+PAGE_ID+"/published_posts?fields=id&limit=100";
+      for(let page=0;page<5;page++){
+        const check=await fetch(url,{headers:{Authorization:"Bearer "+token},cache:"no-store",signal:AbortSignal.timeout(10000)});
+        const list=await check.json() as {data?:Array<{id?:string}>;paging?:{next?:string};error?:{code?:number}};
+        if(!check.ok||list.error)break;
+        if(list.data?.some(item=>item.id===post.facebook_post_id)){
+          const {error:updateError}=await db.from("social_posts").update({status:"posted",facebook_published_at:new Date().toISOString(),updated_at:new Date().toISOString()})
+            .eq("id",postId).eq("author_id",user.user.id).eq("status","scheduled").eq("facebook_post_id",post.facebook_post_id);
+          if(updateError)return {ok:false,message:"已在粉專公開貼文清單找到原文，但後台更新失敗。"};
+          revalidatePath("/admin/social-posts");
+          return {ok:true,message:"已在 Facebook 公開貼文清單確認原文，後台更新為「已發布」。"};
+        }
+        if(!list.paging?.next||!list.paging.next.startsWith("https://graph.facebook.com/"))break;
+        url=list.paging.next;
+      }
+    }catch{/* Keep status unchanged if published_posts cannot be verified. */}
+    return {ok:false,message:"Meta 不允許讀取貼文發布狀態（10），也未能從公開貼文清單確認。請由管理者核對 Facebook 原文後手動確認；原有狀態不變。"};
+  }
   if(!response.ok||data.error){
     return {ok:false,message:data.error?.code===190?
       "Facebook 授權已過期（190），請重新授權；原有狀態不變。" :
