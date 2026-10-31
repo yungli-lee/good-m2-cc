@@ -623,3 +623,9 @@ TypeScript、ESLint、build均已通過。僅新增年度workflow與進度文件
 111四季有效來源17,554已逐批處理核對（非新增交易數），年度公開/DB最終驗收及原檔長期備份仍待完成，不能因啟動110而遺失該工作；同一檢查須保留111收尾與110有效scope驗收/新原ZIP長期備份兩階段。112未全年完成，不恢復。110新來源逐季寫前90天artifact且SHA/CRC核對，完成前原ZIP含SHA清單長期保存使用者檔案，不能只靠artifact。Production、欄位、layout、配額、timeout/raw/log/CMS/原檔及所有對帳不變，不VACUUM FULL/重建。
 
 110實作9e397effe4ac74a0aba47d7b6e1d4984cca7a5f2，run41162515605已啟動，只有110S4→S1。9項scope/隔離、6來源修復、四季邊界、TypeScript、ESLint、build及公開13筆/跨期history通過；檢查已更新為110並保留111最後驗收/原ZIP長期備份待辦，不宣稱110/111整體驗收完成。
+
+
+### 110S2/S1來源檔案組成修正與預檢暫停
+獨立下載官方110S2/S1原ZIP並驗CRC成功：S2 SHA71e1d859b48e0b84fdf32d67466e9dc09de33da3c62c0183e9a6501233bf3fca；S1 SHAe9becd8691f317d8a59d8186f2d0f0ddd22d94dc7510fd5f1419c3e98c1a13dc。完整ZIP目錄及官方manifest均只有彰化a買賣/c租賃，未列n_lvr_land_b.csv，非原檔損毀；其他縣市有預售，故不能泛化為全國/該制度未發布。只對上述季度+原SHA且manifest與買賣主檔/土地建物車位檔相符時允許sale-only，報告明記presale來源未提供，非零成交。其他SHA/季度仍嚴格要求原scope，不放寬來源安全/CRC/完整明細。
+離線S2有效3811/10784明細、S1有效3752/10752明細，各1未解不全來源依阿勇政策隔離，blocking0；此為待處理來源數，非已新增。12項scope/隔離/manifest/來源組成測試及6來源修復測試通過。原110S2失敗job完整log存110S2-run41162515605-job.log，零DB批次寫入；S4/S3不重跑。
+本輪ACTIVE_HEALTHY/Preview view可讀、DB6236679315bytes，預檢其他active SQL1；公開日期sale13筆成功，但history驗證HTTPError，原helper未保留HTTP本文，不能推斷原因/timeout/容量。立即不追加、不連續重試、不終止他人SQL。僅保存worker/publisher修正與證據，年度workflow啟動檔本輪不提交，因此不觸發重跑。下一輪先新鮮健康/無重疊及公開history完整成功後，才將workflow限S2→S1安全啟動；不因本次確認缺預售檔而宣告110年完成。原ZIP長期備份、110及111年度驗收仍保留待辦，7GB/timeout/Production/schema/layout不變。

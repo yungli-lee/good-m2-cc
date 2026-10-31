@@ -8,25 +8,42 @@ PROJECT_URL='https://niorteztdbuyusemsgwa.supabase.co'
 FILES={'n_lvr_land_a.csv','n_lvr_land_b.csv'}
 SEASONS=[f'110S{quarter}' for quarter in range(4,0,-1)]
 BASE='https://feature-real-price-public-se.good-m2-cc.pages.dev'
+REVIEWED_PRESALE_ABSENCE={
+ '110S2':'71e1d859b48e0b84fdf32d67466e9dc09de33da3c62c0183e9a6501233bf3fca',
+ '110S1':'e9becd8691f317d8a59d8186f2d0f0ddd22d94dc7510fd5f1419c3e98c1a13dc',
+}
+
 
 def plan(path,season):
     if season not in SEASONS:raise ValueError('Quarter outside authorized year 110 scope')
     year,quarter=map(int,season.split('S'));year+=1911;month=quarter*3
     period=f'{year}-{month:02d}-{calendar.monthrange(year,month)[1]}'
     digest=hashlib.sha256(pathlib.Path(path).read_bytes()).hexdigest()
+    expected=FILES
+    availability={'sale':'provided','presale':'provided'}
     with zipfile.ZipFile(path) as z:
         names=[x.filename for x in z.infolist()]
         if len(names)!=len(set(names)) or any(x.startswith(('/', '\\')) or '..' in pathlib.PurePosixPath(x).parts for x in names):raise ValueError('Unsafe or duplicate ZIP paths')
         selected=[x.split('/')[-1].lower() for x in names if x.split('/')[-1].lower() in FILES]
         if len(selected)!=len(set(selected)):raise ValueError('Duplicate scoped CSV names')
         if sum(x.file_size for x in z.infolist())>4_000_000_000:raise ValueError('Archive expansion bound exceeded')
+        if REVIEWED_PRESALE_ABSENCE.get(season)==digest:
+            import csv,io
+            entries={x.split('/')[-1].lower() for x in names}
+            manifests=[x for x in names if x.split('/')[-1].lower()=='manifest.csv']
+            if len(manifests)!=1:raise ValueError('Reviewed absence requires one official manifest')
+            declared={x['name'].lower() for x in csv.DictReader(io.StringIO(z.read(manifests[0]).decode('utf-8-sig')))}
+            if 'n_lvr_land_b.csv' in entries or 'n_lvr_land_b.csv' in declared:raise ValueError('Reviewed presale absence contradicted')
+            if not {'n_lvr_land_a.csv','n_lvr_land_a_land.csv','n_lvr_land_a_build.csv','n_lvr_land_a_park.csv'}<=entries & declared:raise ValueError('Reviewed sale files incomplete')
+            expected={'n_lvr_land_a.csv'}
+            availability['presale']='not_provided_in_verified_source_and_manifest_not_zero_transactions'
     groups,issues,inventory=parse_archive(path,FILES)
-    if {name for name,_ in groups}!=FILES:raise ValueError('Both Changhua sale/presale files required')
+    if {name for name,_ in groups}!=expected:raise ValueError('Both Changhua sale/presale files required')
     for name,items in groups:
         for item in items:
             m=item['master']
             if m['county']!='彰化縣' or m['dataset_type'] not in ('sale','presale') or not m['source_key'].startswith(('n:a:','n:b:')):raise ValueError('Scope violation')
-    return groups,{'version':VERSION,'scope':{'county':'彰化縣','datasets':['sale','presale']},'season':season,'period':period,'archive_sha256':digest,'inventory':inventory,'issues':issues,'batches':[],'import_complete':False,'complete':False,'unresolved_issues':sum(not x.get('resolved',False) for x in issues)}
+    return groups,{'version':VERSION,'scope':{'county':'彰化縣','datasets':['sale','presale']},'season':season,'period':period,'archive_sha256':digest,'source_availability':availability,'inventory':inventory,'issues':issues,'batches':[],'import_complete':False,'complete':False,'unresolved_issues':sum(not x.get('resolved',False) for x in issues)}
 
 def apply_authorized_quarantine(report):
     # Source rows already rejected by the parser stay out of all RPC batches.

@@ -19,7 +19,7 @@
   "stop_after": "110S1",
   "continue_109_automatically": false,
   "version": "changhua-sale-presale-year110-v1",
-  "status": "running",
+  "status": "source_fix_ready_paused_public_history_check",
   "complete": false,
   "valid_scope_complete": false,
   "quarantine_policy": "Incomplete/invalid source masters and orphan details excluded, full originals retained; unresolved counts remain. Other errors stop.",
@@ -57,5 +57,153 @@
     "build": true,
     "public_date_rows": 13,
     "cross_period_history": true
-  }
+  },
+  "source_availability_evidence": {
+    "110S2": {
+      "archive_sha256": "71e1d859b48e0b84fdf32d67466e9dc09de33da3c62c0183e9a6501233bf3fca",
+      "archive_bytes": 14640878,
+      "zip_crc_ok": true,
+      "manifest_sha256": "fa7afb4a3a9de2f5da48519ceb47d1d6340afa34c71bda4f586971d234fb93d0",
+      "changhua_members": [
+        "n_lvr_land_a.csv",
+        "n_lvr_land_a_build.csv",
+        "n_lvr_land_a_land.csv",
+        "n_lvr_land_a_park.csv",
+        "n_lvr_land_c.csv",
+        "n_lvr_land_c_build.csv",
+        "n_lvr_land_c_land.csv",
+        "n_lvr_land_c_park.csv"
+      ],
+      "manifest_changhua_entries": [
+        {
+          "name": "n_lvr_land_a.csv",
+          "schema": "schema-main.csv",
+          "description": "彰化縣不動產買賣"
+        },
+        {
+          "name": "n_lvr_land_a_build.csv",
+          "schema": "schema-build.csv",
+          "description": "彰化縣建物不動產買賣"
+        },
+        {
+          "name": "n_lvr_land_a_land.csv",
+          "schema": "schema-land.csv",
+          "description": "彰化縣土地不動產買賣"
+        },
+        {
+          "name": "n_lvr_land_a_park.csv",
+          "schema": "schema-park.csv",
+          "description": "彰化縣停車場不動產買賣"
+        },
+        {
+          "name": "n_lvr_land_c.csv",
+          "schema": "schema-main-rent.csv",
+          "description": "彰化縣不動產租賃"
+        },
+        {
+          "name": "n_lvr_land_c_build.csv",
+          "schema": "schema-build.csv",
+          "description": "彰化縣建物不動產租賃"
+        },
+        {
+          "name": "n_lvr_land_c_land.csv",
+          "schema": "schema-land.csv",
+          "description": "彰化縣土地不動產租賃"
+        },
+        {
+          "name": "n_lvr_land_c_park.csv",
+          "schema": "schema-park.csv",
+          "description": "彰化縣停車場不動產租賃"
+        }
+      ],
+      "presale": "not_provided_not_zero_transactions"
+    },
+    "110S1": {
+      "archive_sha256": "e9becd8691f317d8a59d8186f2d0f0ddd22d94dc7510fd5f1419c3e98c1a13dc",
+      "archive_bytes": 12980622,
+      "zip_crc_ok": true,
+      "manifest_sha256": "6d769f157620b58e0226baba75e849cd1131cbfa731edf613b448fc224902bc8",
+      "changhua_members": [
+        "n_lvr_land_a.csv",
+        "n_lvr_land_a_build.csv",
+        "n_lvr_land_a_land.csv",
+        "n_lvr_land_a_park.csv",
+        "n_lvr_land_c.csv",
+        "n_lvr_land_c_build.csv",
+        "n_lvr_land_c_land.csv",
+        "n_lvr_land_c_park.csv"
+      ],
+      "manifest_changhua_entries": [
+        {
+          "name": "n_lvr_land_a.csv",
+          "schema": "schema-main.csv",
+          "description": "彰化縣不動產買賣"
+        },
+        {
+          "name": "n_lvr_land_a_build.csv",
+          "schema": "schema-build.csv",
+          "description": "彰化縣建物不動產買賣"
+        },
+        {
+          "name": "n_lvr_land_a_land.csv",
+          "schema": "schema-land.csv",
+          "description": "彰化縣土地不動產買賣"
+        },
+        {
+          "name": "n_lvr_land_a_park.csv",
+          "schema": "schema-park.csv",
+          "description": "彰化縣停車場不動產買賣"
+        },
+        {
+          "name": "n_lvr_land_c.csv",
+          "schema": "schema-main-rent.csv",
+          "description": "彰化縣不動產租賃"
+        },
+        {
+          "name": "n_lvr_land_c_build.csv",
+          "schema": "schema-build.csv",
+          "description": "彰化縣建物不動產租賃"
+        },
+        {
+          "name": "n_lvr_land_c_land.csv",
+          "schema": "schema-land.csv",
+          "description": "彰化縣土地不動產租賃"
+        },
+        {
+          "name": "n_lvr_land_c_park.csv",
+          "schema": "schema-park.csv",
+          "description": "彰化縣停車場不動產租賃"
+        }
+      ],
+      "presale": "not_provided_not_zero_transactions"
+    }
+  },
+  "pending_quarters": [
+    "110S2",
+    "110S1"
+  ],
+  "completed_valid_quarters": [
+    "110S4",
+    "110S3"
+  ],
+  "source_failure": {
+    "run_id": 41162515605,
+    "job_id": 124424063407,
+    "error": "ValueError: Both Changhua sale/presale files required",
+    "db_writes_for_110S2": 0,
+    "full_log": "110S2-run41162515605-job.log",
+    "diagnosis": "verified original ZIP and manifest do not provide Changhua presale; exact SHA allowlist added"
+  },
+  "preflight_latest": {
+    "database_bytes": 6236679315,
+    "other_active_sql": 1,
+    "preview_readable": true,
+    "public_list_rows": 13,
+    "history_verified": false,
+    "history_error": "HTTPError",
+    "history_error_body": "not captured by existing verifier; cause not determined",
+    "no_retry": true,
+    "new_import_started": false
+  },
+  "resume_plan": "After a fresh successful no-overlap/health/public-history check in a later round, modify bounded workflow to only 110S2 then 110S1; no replay of S4/S3."
 }

@@ -9,7 +9,7 @@ def api(path,payload=None,method=None):
 def main():
     if os.environ['GITHUB_REF']!='refs/heads/'+BRANCH:raise RuntimeError('Wrong branch')
     report=json.loads(Path(os.environ['MOI_REPORT_PATH']).read_text())
-    safe={k:report.get(k) for k in ['version','scope','season','period','archive_sha256','inventory','batches','import_complete','complete','unresolved_issues','blocking_issues','authorized_quarantines']}
+    safe={k:report.get(k) for k in ['version','scope','season','period','archive_sha256','inventory','batches','import_complete','complete','unresolved_issues','source_availability','blocking_issues','authorized_quarantines']}
     safe['implementation_sha']=os.environ['GITHUB_SHA']
     safe['source_backup']='GitHub Actions artifact changhua-source-'+report['season']+'-'+os.environ['GITHUB_RUN_ID']+'-'+os.environ['GITHUB_RUN_ATTEMPT']
     safe['source_backup_retention_days']=90

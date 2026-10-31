@@ -69,4 +69,29 @@ class QuarantineTests(unittest.TestCase):
             self.assertEqual(r['blocking_issues'],0)
             self.assertTrue(all(x['master']['source_key'].endswith(':GOOD') for _,items in groups for x in items))
             self.assertEqual(r['unresolved_issues'],2)
+class SourceAbsenceTests(unittest.TestCase):
+    def archive(self,folder,contradiction=False):
+        import hashlib
+        p=Path(folder)/'old.zip'
+        files=['n_lvr_land_a.csv','n_lvr_land_a_land.csv','n_lvr_land_a_build.csv','n_lvr_land_a_park.csv']
+        with zipfile.ZipFile(p,'w') as z:
+            z.writestr(files[0],'編號,鄉鎮市區,交易標的,交易年月日\nid,d,t,date\nGOOD,秀水鄉,土地,1100101\n')
+            for f in files[1:]:z.writestr(f,'編號\nid\n')
+            z.writestr('manifest.csv','name,schema,description\n'+''.join(f+',schema,test\n' for f in files+(['n_lvr_land_b.csv'] if contradiction else [])))
+        return p,hashlib.sha256(p.read_bytes()).hexdigest()
+    def test_verified_archive_absence_is_explicit_and_sale_only(self):
+        with tempfile.TemporaryDirectory() as folder:
+            p,digest=self.archive(folder)
+            with patch.object(scoped,'REVIEWED_PRESALE_ABSENCE',{'110S2':digest}):groups,r=scoped.plan(p,'110S2')
+        self.assertEqual([name for name,_ in groups],['n_lvr_land_a.csv'])
+        self.assertIn('not_zero_transactions',r['source_availability']['presale'])
+    def test_unreviewed_digest_still_requires_both_files(self):
+        with tempfile.TemporaryDirectory() as folder:
+            p,_=self.archive(folder)
+            with self.assertRaises(ValueError):scoped.plan(p,'110S2')
+    def test_manifest_cannot_claim_a_missing_presale_file(self):
+        with tempfile.TemporaryDirectory() as folder:
+            p,digest=self.archive(folder,True)
+            with patch.object(scoped,'REVIEWED_PRESALE_ABSENCE',{'110S2':digest}):
+                with self.assertRaises(ValueError):scoped.plan(p,'110S2')
 if __name__=='__main__':unittest.main()
