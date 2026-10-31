@@ -12,6 +12,7 @@ export async function syncFacebookPostStatus(postId:string):Promise<{ok:boolean;
     .eq("id",postId).eq("author_id",user.user.id).single();
   if(error||!post||post.facebook_page_id!==PAGE_ID||!post.facebook_post_id||post.facebook_deleted_at)
     return {ok:false,message:"沒有可同步的 Facebook 貼文紀錄。"};
+  if(/^\\d+$/.test(post.facebook_post_id)) return {ok:false,message:"影片已取得 Meta 影片 ID；目前請至粉專確認轉碼及發布狀態，影片自動同步尚待驗證。"};
   const token=process.env.FACEBOOK_PAGE_ACCESS_TOKEN;
   if(!token)return {ok:false,message:"Preview 尚未設定 Facebook Page Token。"};
   let response:Response;
