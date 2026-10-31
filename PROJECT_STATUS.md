@@ -629,3 +629,7 @@ TypeScript、ESLint、build均已通過。僅新增年度workflow與進度文件
 獨立下載官方110S2/S1原ZIP並驗CRC成功：S2 SHA71e1d859b48e0b84fdf32d67466e9dc09de33da3c62c0183e9a6501233bf3fca；S1 SHAe9becd8691f317d8a59d8186f2d0f0ddd22d94dc7510fd5f1419c3e98c1a13dc。完整ZIP目錄及官方manifest均只有彰化a買賣/c租賃，未列n_lvr_land_b.csv，非原檔損毀；其他縣市有預售，故不能泛化為全國/該制度未發布。只對上述季度+原SHA且manifest與買賣主檔/土地建物車位檔相符時允許sale-only，報告明記presale來源未提供，非零成交。其他SHA/季度仍嚴格要求原scope，不放寬來源安全/CRC/完整明細。
 離線S2有效3811/10784明細、S1有效3752/10752明細，各1未解不全來源依阿勇政策隔離，blocking0；此為待處理來源數，非已新增。12項scope/隔離/manifest/來源組成測試及6來源修復測試通過。原110S2失敗job完整log存110S2-run41162515605-job.log，零DB批次寫入；S4/S3不重跑。
 本輪ACTIVE_HEALTHY/Preview view可讀、DB6236679315bytes，預檢其他active SQL1；公開日期sale13筆成功，但history驗證HTTPError，原helper未保留HTTP本文，不能推斷原因/timeout/容量。立即不追加、不連續重試、不終止他人SQL。僅保存worker/publisher修正與證據，年度workflow啟動檔本輪不提交，因此不觸發重跑。下一輪先新鮮健康/無重疊及公開history完整成功後，才將workflow限S2→S1安全啟動；不因本次確認缺預售檔而宣告110年完成。原ZIP長期備份、110及111年度驗收仍保留待辦，7GB/timeout/Production/schema/layout不變。
+
+
+### 2026-10-31 12:48 台灣時間：110S2→S1限定接續預檢通過
+本輪ACTIVE_HEALTHY、其他active SQL0、無執行/排隊workflow；公開日期sale13筆及1組跨期history排序通過，未重試失敗請求。DB6236687507bytes，較110起點增加2850816bytes，距7GB763312493bytes；主檔total2947170304/heap2592833536/index353517568，明細total3132841984/heap2543689728/index588414976。僅將年度workflow限110S2→S1，不重跑已成功S4/S3、不進109/112/舊national。精確SHA+manifest來源未提供presale規則沿用11670b3，並非零交易。12scope測試、6來源修復、兩季YAML邊界、TypeScript、ESLint、build通過。111年度驗收及110/111原ZIP長期備份仍待完成；7GB/timeout/Production/schema/layout/raw/log/CMS不變。實際run另查核記錄，未宣告年度完成。

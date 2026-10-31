@@ -19,7 +19,7 @@
   "stop_after": "110S1",
   "continue_109_automatically": false,
   "version": "changhua-sale-presale-year110-v1",
-  "status": "source_fix_ready_paused_public_history_check",
+  "status": "resume_preflight_passed_pending_run",
   "complete": false,
   "valid_scope_complete": false,
   "quarantine_policy": "Incomplete/invalid source masters and orphan details excluded, full originals retained; unresolved counts remain. Other errors stop.",
@@ -195,15 +195,24 @@
     "diagnosis": "verified original ZIP and manifest do not provide Changhua presale; exact SHA allowlist added"
   },
   "preflight_latest": {
-    "database_bytes": 6236679315,
-    "other_active_sql": 1,
-    "preview_readable": true,
+    "checked_at": "2026-10-31T04:45:29.10677Z",
+    "database_bytes": 6236687507,
+    "delta_from_baseline_bytes": 2850816,
+    "headroom_bytes": 763312493,
+    "masters_total_bytes": 2947170304,
+    "masters_heap_bytes": 2592833536,
+    "masters_indexes_bytes": 353517568,
+    "details_total_bytes": 3132841984,
+    "details_heap_bytes": 2543689728,
+    "details_indexes_bytes": 588414976,
+    "other_active_sql": 0,
+    "active_workflows": 0,
+    "queued_workflows": 0,
+    "project_status": "ACTIVE_HEALTHY",
     "public_list_rows": 13,
-    "history_verified": false,
-    "history_error": "HTTPError",
-    "history_error_body": "not captured by existing verifier; cause not determined",
-    "no_retry": true,
-    "new_import_started": false
+    "history_verified": true,
+    "cross_period_history_verified": true,
+    "history_groups": 1
   },
-  "resume_plan": "After a fresh successful no-overlap/health/public-history check in a later round, modify bounded workflow to only 110S2 then 110S1; no replay of S4/S3."
+  "resume_plan": "Bounded workflow only110S2 then110S1; S4/S3 not replayed. 111 acceptance/backups and110 backups remain pending."
 }
