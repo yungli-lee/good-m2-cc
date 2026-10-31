@@ -62,7 +62,7 @@ export function HomeRenderer({ campaigns, pages, company, navigation, featuredPr
         : section.key === "featured-properties"
           ? <HomePropertyCollection kind="featured" properties={featuredProperties} autoplay={displaySettings.featured_property_autoplay} intervalSeconds={displaySettings.featured_property_interval_seconds} />
           : section.key === "property-search"
-            ? <><HomePropertySearch lineUrl={company.line_url || ""} /><HomeAudiencePaths /></>
+            ? <HomePropertySearch lineUrl={company.line_url || ""} />
             : section.key === "latest-properties"
               ? <HomePropertyCollection kind="latest" properties={latestProperties} autoplay={displaySettings.latest_property_autoplay} intervalSeconds={displaySettings.latest_property_interval_seconds} />
               : section.key === "knowledge-preview"
@@ -78,7 +78,7 @@ export function HomeRenderer({ campaigns, pages, company, navigation, featuredPr
   return (
     <>
       <HomeHeader company={company} navigation={navigation} />
-      <main>{sortHomeSections(sections).map((section) => <Fragment key={section.stableKey}>{section.node}</Fragment>)}</main>
+      <main>{sortHomeSections(sections).map((section) => <Fragment key={section.stableKey}>{section.node}{section.stableKey === "hero" ? <HomeAudiencePaths lineUrl={company.line_url} /> : null}</Fragment>)}</main>
       <HomeFooter company={company} navigation={navigation} />
       <HomeLegacyEnhancements />
     </>
