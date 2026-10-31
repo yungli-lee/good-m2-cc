@@ -81,7 +81,7 @@ export default async function SocialPostsPage() {
         </details> : null}
         <p className="muted">Facebook 發布狀態：{post.facebook_deleted_at ? "已刪除" : post.status==="scheduled" ? "已預約（未發布）" : post.facebook_post_id ? "已發布" : post.status==="publishing" ? "發布中" : post.status==="publish_unknown" ? "結果待核對" : "未發布"}</p>
         {post.facebook_scheduled_for ? <p className="muted">Facebook 預定發布：{new Date(post.facebook_scheduled_for).toLocaleString("zh-TW",{timeZone:"Asia/Taipei"})}（台灣時間）</p> : null}
-        {post.facebook_post_id ? <p className="muted">Facebook 貼文 ID：{post.facebook_post_id}　{post.facebook_deleted_at ? <span>原文已刪除，僅保留歷史紀錄</span> : post.status==="scheduled" ? <span>已預約，請到 Facebook 排程區管理</span> : <a href={"https://www.facebook.com/"+(videoByPost.has(post.id) ? "videos/"+post.facebook_post_id : post.facebook_post_id.replace("_","/posts/"))} target="_blank" rel="noopener noreferrer">查看原文</a>}</p> : null}
+        {post.facebook_post_id ? <p className="muted">Facebook 貼文 ID：{post.facebook_post_id}　{post.facebook_deleted_at ? <span>原文已刪除，僅保留歷史紀錄</span> : post.status==="scheduled" ? <span>已預約，請到 Facebook 排程區管理</span> : <a href={videoByPost.has(post.id) ? "https://www.facebook.com/watch/?v="+encodeURIComponent(post.facebook_post_id) : "https://www.facebook.com/"+post.facebook_post_id.replace("_","/posts/")} target="_blank" rel="noopener noreferrer">查看原文</a>}</p> : null}
         <div className="admin-actions" style={{flexWrap:"wrap"}}>
           <CopyPostButton body={post.body||""} />
           {post.facebook_post_id && !post.facebook_deleted_at ? <SyncFacebookStatusButton id={post.id}/> : null}
