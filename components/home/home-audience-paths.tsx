@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-export function HomeAudiencePaths({ lineUrl }: { lineUrl?: string | null }) {
+export function HomeAudiencePaths({ lineUrl, phone }: { lineUrl?: string | null; phone?: string | null }) {
   const services = [
     { title: "我要買屋／找土地", description: "告訴我們想找的地區、預算與條件，協助您釐清需求與方向。", href: "/contact?service=buy" },
     { title: "我要賣屋／賣土地", description: "先了解物件現況、行情與出售規劃，再一起決定下一步。", href: "/contact?service=sell" },
@@ -20,7 +20,7 @@ export function HomeAudiencePaths({ lineUrl }: { lineUrl?: string | null }) {
             <p>{service.description}</p>
             <div className="audience-path-actions">
               {lineUrl ? <a className="button primary" href={lineUrl} target="_blank" rel="noopener noreferrer">LINE 詢問</a> : <Link className="button primary" href={service.href}>聯絡我們</Link>}
-              <Link className="button ghost" href={service.href}>電話聯絡</Link>
+              {phone ? <a className="button ghost" href={`tel:${phone.replace(/[^\d+]/g, "")}`}>電話聯絡</a> : <Link className="button ghost" href={service.href}>聯絡方式</Link>}
             </div>
           </article>
         ))}
