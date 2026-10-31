@@ -602,3 +602,5 @@ TypeScript、ESLint、build均已通過。僅新增年度workflow與進度文件
 
 ### 111年單筆隔離授權後接續
 阿勇明確指示「這筆先隔離，後續繼續」。僅允許原SHA506fd6cf...、111S4 n_lvr_land_a.csv第3156列、原編號RPSNMLOKIIHGFDN58DA、原交易年月日1091000及相同錯誤吻合時先隔離，保留原ZIP與完整artifact異常原文，不改日期、不寫入這筆主檔或明細。其他任何未解異常仍阻擋寫入。111S4 import_complete只代表有效資料處理完，complete仍false且unresolved_issues=1；全年必須分開標示valid_scope_complete與待處理隔離1筆，不宣稱完整。先前111S4為0批寫入，安全接續新run既有scope/chunk版本，僅111S4→S1四季，不進110、不恢復112。容量/健康及100筆/20秒/no-retry保護不變，起點DB6228823187bytes，其他active SQL0、ACTIVE_HEALTHY、Preview可讀。
+
+單筆隔離實作8709ab8ccc65f3fd402a788a5bd8dd275769f842，新run41160138992已執行中；8項scope/隔離、6項來源修復、原檔SHA/CRC及4004有效來源核對、年度四季邊界、TypeScript、ESLint、build、公開13筆與跨期history通過。完成檢查已恢復，僅核對111有效回補與待處理隔離，完成後停。
