@@ -683,3 +683,7 @@ run41176757504在108S4匯入成功後，GitHub checkpoint publisher PATCH ref回
 
 ### 2026-10-31 20:57 台灣時間：anti-join候選只讀計畫
 本輪只做EXPLAIN，未ANALYZE、未重送公開503、未改view/schema/API或匯入。把prefix移入NOT EXISTS的精確canonical count候選產生兩個parallel Hash Anti Join，cost44744.14（先前514182.62）；成本非耗時，不能宣稱實測修復。候選SQL及語義/完整ID集合對帳、ordered LIMIT獨立檢查與回復條件保存preview-canonical-count-proposal.md，仍非可直接部署migration。ACTIVE_HEALTHY/其他SQL0，DB6247926931bytes，較108起點+4382720、距7GB752073069。下一步先離線語義案例與首頁計畫查證，不擅自改view或解除公開健康條件。107未啟；108與109/110/111年度驗收待辦保留。
+
+
+### 2026-10-31 21:49 台灣時間：候選首頁EXPLAIN保留排序索引
+只讀EXPLAIN候選predicate的ORDER BY transaction_date DESC,id DESC LIMIT20：Nested Loop Anti Join搭配既有cover索引，無Sort，cost85.86（原首頁109.18）；count候選前輪44744.14。均為估算，未ANALYZE或宣稱修復。沒有公開重試或DB寫入，ACTIVE_HEALTHY/其他SQL0，DB6247935123bytes，距7GB752064877。完整計畫存preview-canonical-page-explain.json。下一輪應完成合成語義案例及有界完整ID集合等價驗證方案，保留原view安全選項與回復SQL後才評估變更授權；本輪未改view/API/schema/timeout。107未啟、108及109/110/111年度驗收待辦不變。
