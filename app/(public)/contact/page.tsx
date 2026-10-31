@@ -91,8 +91,8 @@ export default async function ContactPage() {
             </div>
             <div className="contact-team-grid">
               {[
-                { name: "阿勇", role: "不動產服務顧問・買賣與風險評估", phone: "0938-137177", description: "從需求釐清、產權現況到交易流程，陪您把重要決定想清楚。" },
-                { name: "阿美", role: "不動產服務顧問・買賣需求與委託服務", phone: "0919-880903", description: "協助買方整理條件、賣方規劃委託，細心回應每一步的問題。" }
+                { name: "阿勇", role: "不動產顧問・買賣與風險評估", phone: "0938-137177", description: "從需求釐清、產權現況到交易流程，陪您把重要決定想清楚。" },
+                { name: "阿美", role: "不動產顧問・買賣需求與委託服務", phone: "0919-880903", description: "協助買方整理條件、賣方規劃委託，細心回應每一步的問題。" }
               ].map((person) => (
                 <article className="contact-team-card" key={person.name}>
                   <div className="contact-team-photo-pending" role="img" aria-label={`${person.name}真人照片待確認後上傳`}>
