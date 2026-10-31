@@ -12,6 +12,9 @@ export async function uploadSocialPostImage(id:string,formData:FormData):Promise
  const db=await createSupabaseServerClient();
  const {data:post}=await db.from("social_posts").select("id,status").eq("id",id).eq("author_id",user.user.id).single();
  if(!post||!["draft","ready"].includes(post.status))return {ok:false,message:"只能為自己的未發布草稿新增圖片。"};
+ const {data:videos,error:videoError}=await db.from("social_post_videos").select("post_id").eq("post_id",id).limit(1);
+ if(videoError)return {ok:false,message:"影片資料表尚未就緒，請先套用 Preview migration。"};
+ if(videos?.length)return {ok:false,message:"草稿已含影片；圖片與影片暫不支援同篇並存。"};
  const {data:existing,error:listError}=await db.from("social_post_images").select("id").eq("post_id",id);
  if(listError)return {ok:false,message:"圖片資料表尚未就緒。"};
  if((existing?.length||0)>=10)return {ok:false,message:"每篇貼文最多 10 張圖片。"};
