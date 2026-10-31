@@ -1,0 +1,69 @@
+{
+  "year_roc": 108,
+  "year_ad": 2019,
+  "authorized": true,
+  "scope": {
+    "project": "niorteztdbuyusemsgwa",
+    "county": "彰化縣",
+    "datasets": [
+      "sale",
+      "presale"
+    ]
+  },
+  "seasons": [
+    "108S4",
+    "108S3",
+    "108S2",
+    "108S1"
+  ],
+  "stop_after": "108S1",
+  "continue_107_automatically": false,
+  "status": "authorized_paused_public_history_check",
+  "complete": false,
+  "valid_scope_complete": false,
+  "new_import_started": false,
+  "capacity_guard_bytes": 7000000000,
+  "disk_baseline": {
+    "checked_at": "2026-10-31T06:24:13.60978Z",
+    "database_bytes": 6243544211,
+    "headroom_bytes": 756455789
+  },
+  "source_availability_evidence": {
+    "108S4": {
+      "sha256": "3e0a35cb4041c512376908601c1190b45ea828ed3a7ad46407b5e7d0b29fb5cd",
+      "presale_absent": true,
+      "crc": true
+    },
+    "108S3": {
+      "sha256": "e5265f9a87a3540ccc3ce8a24586f52b3eb9569642a1eea7f8c4c3718e4eedcf",
+      "presale_absent": true,
+      "crc": true
+    },
+    "108S2": {
+      "sha256": "4df16dade4825c296f598ae047f58250fe0bce546840b519d9a75cab6a7f803a",
+      "presale_absent": true,
+      "crc": true
+    },
+    "108S1": {
+      "sha256": "6fc785ca96b32e490c731d99c1731ace7cbe37c4ee09484c9289816365911b23",
+      "presale_absent": true,
+      "crc": true
+    }
+  },
+  "source_backup_policy": "User waives permanent ZIP backup after successful append and reconciliation; retain reconciliation/issues/chunk logs, no raw/DB deletion authorized.",
+  "preflight": {
+    "project_status": "ACTIVE_HEALTHY",
+    "other_active_sql": 0,
+    "active_workflows": 0,
+    "public_list_rows": 13,
+    "history_verified": false,
+    "history_error": "HTTPError",
+    "error_body": "not captured by existing verifier; cause unknown",
+    "no_retry": true
+  },
+  "prior_years_acceptance_pending": [
+    109,
+    110,
+    111
+  ]
+}

@@ -642,3 +642,8 @@ ACTIVE_HEALTHY/其他active SQL0，公開日期13筆/1組跨期history通過；�
 
 ### 109年度新授權：僅彰化有效來源四季後暫停
 阿勇授權「再補109年度」，只109S4→S1，不進108或恢復112/舊national。新增109專用worker/publisher/序列workflow，changhua-sale-presale-year109-v1，100主檔/20秒/no retry/較新來源/完整明細指紋/每10批Preview及7GB保護不變。109四原ZIP CRC、完整清單及manifest均無彰化presale，依精確季度+SHA證據允許sale-only並明記來源未提供（非零成交）。離線有效主檔14721/明細39321，S4/S3各1已拒絕來源隔離，S2/S1未解0；未當作已新增。12scope/來源測試、四季序列邊界、TS/ESLint/build通過；公開13筆及跨期history通過，ACTIVE_HEALTHY/其他SQL0/無執行排隊流程，起點DB6238940307bytes/距7GB761059693。110/111年度驗收及原ZIP長期備份仍待完成並保留。109原檔寫前90天artifact，年度完成前仍須長期備份與驗收。Production/schema/layout/timeout/配額/raw/log/CMS不變。
+
+
+### 108年度授權與公開history預檢暫停
+阿勇授權108四季彰化sale/presale有效資料，結束驗證後通知，僅108、不進107。四原ZIP CRC/manifest及買賣完整明細檔均核對，四季未提供彰化presale，精確SHA在YEAR108.json記錄；非零成交。ACTIVE_HEALTHY/其他SQL0/無執行workflow，DB6243544211bytes，距7GB756455789；公開日期13筆正常但history HTTPError，helper未保留本文，不能推斷原因。依保護條件本輪無DB寫入、不重試、不啟動108，下一輪新鮮預檢全過才實作專用108S4→S1序列worker/version並檢查後啟動，不改舊national。109/110/111年度最終驗收待辦保留。
+最新原檔政策依阿勇指示：成功append且完成對帳的來源ZIP不再要求另做永久備份，取消舊永久備份作為年度完成門檻；既存原檔未執行刪除，交易主檔/完整明細/raw/匯入log與問題對帳仍保留，未授權清空DB raw。7GB/timeout/Production/schema/layout不變。
