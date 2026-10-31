@@ -572,3 +572,9 @@ YEAR114.complete=true、status=complete_paused；本年度工作已停止，檢�
 最新預檢ACTIVE_HEALTHY、其他active SQL0、無執行/排隊workflow、DB6,264,220,819 bytes、Preview view可讀、公開日期列表13筆及跨期history通過。原lvr_113.zip四季逐位元來源SHA與CRC備份驗證紀錄仍在，無需重傳或重下載；新下載來源須逐季再匹配。保留全部原檔/raw/chunk/log/CMS；Production、欄位、layout、付費配額、timeout與7GB線不變。6項scoped測試及6項來源修復測試通過；啟動以新run及YEAR113.json/季度checkpoint為準，不宣稱113年已完成。
 
 TypeScript、ESLint、build及年度YAML四季序列限制檢查通過。只新增年度工作流與進度文件，既有worker/RPC/查詢程式不變。
+
+
+### 2026-10-31 09:45 113年彰化年度回補與驗收完成、已暫停
+run41153615563四個序列worker113S4/S3/S2/S1全部成功，各季complete=true、未解彰化來源異常0；187個chunk SHA與原始ZIP SHA逐筆對上DB log，每批processed及verified主檔數均等於expected、每批RPC低於20秒。年度有效來源主檔18,404、連結土地/建物/車位明細53,725逐批主檔及完整明細指紋集合核對通過，preserved_newer=0。這是來源處理量，不可當新增交易數。四季下載SHA均與使用者已保留lvr_113.zip內11301～11304原始ZIP已驗證SHA相符，CRC與長期原檔備份確認，未要求重傳/下載，未刪原檔或對帳。
+全表精確核對主檔41,422／明細121,574，範圍外交易0、孤兒明細0；ACTIVE_HEALTHY、其他active SQL0、無執行/排隊workflow，配置6,227,922,067 bytes，7GB保護未變。公開sale首頁20／第二頁20／末頁1793頁5／超頁1794頁0，精確total均35,845、前兩頁ID無交集且排序正確；秀水2026-08 sale3／8明細／1車位／1備註，presale20／48明細／8車位／2備註、total5,369；日期sale13及一組跨期history排序通過。68筆同站公開回應來源ID反向至私有DB核對官方備註原文MD5、完整明細數及車位數全相符，沒有把私有DB地址/ID送公開API。
+YEAR113.complete=true、status=complete_paused；檢查6ae529b0384c8191b0a9510babd4060a已停用。不自動進入112年，不宣稱全國、2023年或所有成交日期歷史完整。Production、欄位、layout、付費配額、timeout與7GB線不變；原ZIP、raw/log/CMS與來源/清理/匯入對帳紀錄全部保留。

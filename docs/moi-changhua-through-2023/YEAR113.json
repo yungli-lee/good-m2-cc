@@ -18,8 +18,8 @@
   ],
   "stop_after": "113S1",
   "continue_112_automatically": false,
-  "complete": false,
-  "status": "running",
+  "complete": true,
+  "status": "complete_paused",
   "baseline_database_bytes": 6264220819,
   "capacity_guard_bytes": 7000000000,
   "previous_year_complete_checkpoint": "d73daa824179ea2d1b60b3e016d949cd330e0599",
@@ -57,6 +57,123 @@
   "implementation_commit": "b1b454ff8c129b3ce34f257162d40cc01cb53f90",
   "run_id": 41153615563,
   "first_job": 124395457118,
-  "active_quarter": "113S4",
-  "automation_enabled": true
+  "active_quarter": null,
+  "automation_enabled": false,
+  "completed_seasons": [
+    "113S4",
+    "113S3",
+    "113S2",
+    "113S1"
+  ],
+  "checked_at": "2026-10-31 01:45:19.574613+00",
+  "annual_source_masters": 18404,
+  "annual_linked_details": 53725,
+  "verified_chunks": 187,
+  "unresolved_scoped_source_issues": 0,
+  "preserved_newer": 0,
+  "source_zip_sha_verified_against_preserved_user_annual": true,
+  "all_scope_and_orphan_audit": {
+    "checked_at": "2026-10-31 01:45:19.574613+00",
+    "database_bytes": 6227922067,
+    "other_active_sql": 0,
+    "out_of_scope": 0,
+    "orphan_details": 0,
+    "masters": 41422,
+    "details": 121574,
+    "project_health": "ACTIVE_HEALTHY"
+  },
+  "public_acceptance": [
+    {
+      "check": {
+        "dataset": "sale",
+        "county": "彰化縣",
+        "page": 1
+      },
+      "rows": 20,
+      "total": 35845,
+      "seconds": 7.789,
+      "details": 30,
+      "parking": 0,
+      "notes": 17
+    },
+    {
+      "check": {
+        "dataset": "sale",
+        "county": "彰化縣",
+        "page": 2
+      },
+      "rows": 20,
+      "total": 35845,
+      "seconds": 6.473,
+      "details": 34,
+      "parking": 0,
+      "notes": 9
+    },
+    {
+      "check": {
+        "dataset": "sale",
+        "county": "彰化縣",
+        "page": 1793
+      },
+      "rows": 5,
+      "total": 35845,
+      "seconds": 5.771,
+      "details": 24,
+      "parking": 0,
+      "notes": 1
+    },
+    {
+      "check": {
+        "dataset": "sale",
+        "county": "彰化縣",
+        "page": 1794
+      },
+      "rows": 0,
+      "total": 35845,
+      "seconds": 5.759,
+      "details": 0,
+      "parking": 0,
+      "notes": 0
+    },
+    {
+      "check": {
+        "dataset": "sale",
+        "county": "彰化縣",
+        "district": "秀水鄉",
+        "from": "2026-08-01",
+        "to": "2026-08-31"
+      },
+      "rows": 3,
+      "total": 3,
+      "seconds": 5.452,
+      "details": 8,
+      "parking": 1,
+      "notes": 1
+    },
+    {
+      "check": {
+        "dataset": "presale",
+        "county": "彰化縣",
+        "page": 1
+      },
+      "rows": 20,
+      "total": 5369,
+      "seconds": 5.603,
+      "details": 48,
+      "parking": 8,
+      "notes": 2
+    },
+    {
+      "public_query_verified": true,
+      "returned_rows": 13,
+      "history_response_verified": true,
+      "history_verified": true,
+      "cross_period_history_verified": true,
+      "history_groups": 1
+    }
+  ],
+  "public_note_and_detail_count_samples": {
+    "count": 68,
+    "official_note_md5_and_complete_detail_parking_counts_match": true
+  }
 }

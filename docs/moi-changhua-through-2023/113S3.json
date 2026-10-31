@@ -1103,6 +1103,14 @@
   "implementation_sha": "b1b454ff8c129b3ce34f257162d40cc01cb53f90",
   "source_backup": "GitHub Actions artifact changhua-source-113S3-41153615563-1",
   "source_backup_retention_days": 90,
-  "long_term_backup_pending": true,
-  "source_issue_counts": {}
+  "long_term_backup_pending": false,
+  "source_issue_counts": {},
+  "long_term_source_backup": {
+    "archive": "lvr_113.zip",
+    "member": "lvr_landcsv (11303).zip",
+    "sha256": "87ffdebbeb59c51b1bb9cbaddeeedac27fbecd57e9024e53615b5ae33b80e5e0",
+    "user_original_preserved": true,
+    "annual_crc_previously_verified": true,
+    "matched_downloaded_source_sha": true
+  }
 }
