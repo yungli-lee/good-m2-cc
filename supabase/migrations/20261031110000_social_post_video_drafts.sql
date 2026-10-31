@@ -1,5 +1,5 @@
 -- Preview-only social video draft assets. Apply to staging after reviewing policies.
--- Public media is required only when a user explicitly publishes to Facebook.
+-- Draft videos remain private; Facebook video upload will use a separate verified flow.
 create table if not exists public.social_post_videos (
   post_id uuid primary key references public.social_posts(id) on delete cascade,
   owner_id uuid not null references auth.users(id) on delete cascade,
@@ -21,7 +21,7 @@ create policy "social_post_videos_delete_own" on public.social_post_videos
 grant select,insert,delete on public.social_post_videos to authenticated;
 
 insert into storage.buckets(id,name,public,file_size_limit,allowed_mime_types)
- values ('social-post-videos','social-post-videos',true,20971520,array['video/mp4'])
+ values ('social-post-videos','social-post-videos',false,20971520,array['video/mp4'])
  on conflict (id) do nothing;
 -- Storage insert via short-lived signed upload URLs; only own post paths.
 create policy "social_post_videos_storage_insert_own" on storage.objects
