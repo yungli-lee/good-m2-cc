@@ -48,7 +48,11 @@ export function SitePageForm({ page, mediaAssets, existingPageTypes = [] }: Prop
   const initialAsset = mediaAssets.find((asset) => asset.id === page?.cover_media_id) || null;
   const [mediaId, setMediaId] = useState(initialAsset?.id || "");
   const [coverUrl, setCoverUrl] = useState(page?.fallback_cover_url || "");
-  const [body, setBody] = useState(page?.markdown_content || "");
+  const portraitPattern = /<!-- contact-portrait:(ayong|amei) (https:\/\/[^\s<>]+) -->/g;
+  const portraitMatches = Array.from((page?.markdown_content || "").matchAll(portraitPattern));
+  const [ayongUrl, setAyongUrl] = useState(portraitMatches.find((m) => m[1] === "ayong")?.[2] || "");
+  const [ameiUrl, setAmeiUrl] = useState(portraitMatches.find((m) => m[1] === "amei")?.[2] || "");
+  const [body, setBody] = useState((page?.markdown_content || "").replace(portraitPattern, "").trim());
   const [inlineAssetId, setInlineAssetId] = useState("");
   const [title, setTitle] = useState(page?.title || "");
   const [slug, setSlug] = useState(page?.page_key || "");
@@ -88,6 +92,13 @@ export function SitePageForm({ page, mediaAssets, existingPageTypes = [] }: Prop
     const endpoint = page?.id ? `/api/admin/site-pages/${page.id}` : "/api/admin/site-pages";
     const method = page?.id ? "PATCH" : "POST";
     const formData = new FormData(event.currentTarget);
+    if (pageType === "contact") {
+      const markers = [
+        ayongUrl ? `<!-- contact-portrait:ayong ${ayongUrl} -->` : "",
+        ameiUrl ? `<!-- contact-portrait:amei ${ameiUrl} -->` : ""
+      ].filter(Boolean).join("\n");
+      formData.set("markdown_content", [body.trim(), markers].filter(Boolean).join("\n\n"));
+    }
 
     startTransition(async () => {
       try {
