@@ -715,3 +715,7 @@ ACTIVE_HEALTHY/其他SQL0/DB6247935123bytes。以id>13607下一1000主檔同一S
 
 ### 2026-11-01 04:07 台灣時間：完整候選SQL解析通過
 對完整31欄候選SELECT執行EXPLAIN子查詢LIMIT0（無ANALYZE、無DDL），Postgres成功解析並規劃，候選projection/欄位引用無解析錯誤。此無實際取列，不能代替欄位型別/權限或真實全量等價驗證，也不能當作廣查效能數據；無篩選計畫成本不得與先前彰化sale精確count比較。完整回應存preview-full-candidate-parse-explain.json。未改view/API/timeout、無公開重試/匯入，107與年度待驗狀態不變。下一步應完成有界真實ID集合及完整七欄多canonical合成測試後形成修復審查，禁止把解析成功當部署批准。
+
+
+### 2026-11-01 05:20 台灣時間：修復審查備妥，等待view predicate例外授權
+完整候選/回復SQL及權限已保存，修復範圍/影響/未驗證事項集中preview-repair-authorization-review.md。依最新明確不改view/schema限制，不擅自套用。需要狹義staging view predicate修復授權（先完成等價驗證，通過才套用並驗收，失敗回復），不調timeout/配額/欄位/索引/Production。暫停重複檢查並一次通知阻礙；107未啟、108與109/110/111待驗保留，未宣告修復或年度完成。
