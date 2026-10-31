@@ -50,6 +50,10 @@ export async function publishFacebookPost(id: string) {
   if (error || !post || !post.body.trim() || post.facebook_post_id || !["draft","ready"].includes(post.status)) {
     throw new Error("貼文無法發布：內容為空、狀態不正確或已發布。");
   }
+  // Video drafts require a separate Meta /videos flow; never silently post text-only.
+  const {data:video,error:videoError}=await db.from("social_post_videos").select("post_id").eq("post_id",id).limit(1);
+  if(videoError)throw new Error("影片資料表尚未就緒，請先檢查 Preview migration。");
+  if(video?.length)throw new Error("這篇含影片，影片 Facebook 發布尚未啟用；不會只發布文字。");
   // Claim before calling Facebook to reduce accidental double posting.
   const {data: claimed,error: claimError} = await db.from("social_posts").update({status:"publishing",updated_at:new Date().toISOString()})
     .eq("id",id).eq("author_id",current.user.id).eq("status",post.status).is("facebook_post_id",null).select("id").maybeSingle();
@@ -117,6 +121,9 @@ export async function scheduleFacebookPost(id:string, scheduledLocal:string) {
     .eq("id",id).eq("author_id",current.user.id).single();
   if(error || !post || (!post.body?.trim()&&!post.link_url) || post.facebook_post_id || !["draft","ready"].includes(post.status))
     return {ok:false,message:"此草稿不符合預約條件，或已送出。"};
+  const {data:video,error:videoError}=await db.from("social_post_videos").select("post_id").eq("post_id",id).limit(1);
+  if(videoError)return {ok:false,message:"影片資料表尚未就緒，請先檢查 Preview migration。"};
+  if(video?.length)return {ok:false,message:"這篇含影片，影片預約發布尚未啟用；不會只預約文字。"};
   const {data:claim,error:claimError}=await db.from("social_posts").update({status:"publishing",updated_at:new Date().toISOString()})
     .eq("id",id).eq("author_id",current.user.id).eq("status",post.status).is("facebook_post_id",null).select("id").maybeSingle();
   if(claimError || !claim)return {ok:false,message:"這篇草稿已在處理，請勿重複預約。"};
