@@ -81,7 +81,7 @@ export function HomeRenderer({ campaigns, pages, company, navigation, featuredPr
   return (
     <>
       <HomeHeader company={company} navigation={navigation} />
-      <main>{sortHomeSections(sections).map((section) => <Fragment key={section.stableKey}>{section.node}{section.stableKey === "hero" ? <HomeAudiencePaths lineUrl={company.line_url} /> : null}</Fragment>)}</main>
+      <main>{sortHomeSections(sections).map((section) => <Fragment key={section.stableKey}>{section.node}{section.stableKey === "hero" ? <HomeAudiencePaths lineUrl={company.line_url} phone={company.company_phone} /> : null}</Fragment>)}</main>
       <HomeFooter company={company} navigation={navigation} />
       <HomeLegacyEnhancements />
     </>
