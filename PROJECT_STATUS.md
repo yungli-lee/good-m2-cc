@@ -651,3 +651,7 @@ ACTIVE_HEALTHY/其他active SQL0，公開日期13筆/1組跨期history通過；�
 
 ### 2026-10-31 14:28 台灣時間：108限定四季預檢通過及啟動準備
 本輪ACTIVE_HEALTHY/其他SQL0/無執行排隊workflow，公開日期13筆及1組跨期history成功，前輪錯誤未於同輪重試。DB6243544211bytes，距7GB756455789；主檔total2953830400/heap2592833536/index360177664，明細total3132841984/heap2543689728/index588414976。109有效已全部完成，不重跑；109/110/111年度最終驗收保留。108新專用worker/publisher/reusable/annual僅108S4→S1，version changhua-sale-presale-year108-v1，不進107。四原SHA+manifest缺預售例外及完整買賣明細再次離線plan確認：S4 3317/8650、S3 3795/10116、S2 3020/7642、S1 3122/8061，共13254有效主檔34469明細，未解0；來源量非新增交易量，presale未提供非零成交。12scope/隔離/來源測試、四季YAML序列邊界、TypeScript/ESLint/build通過。原ZIP寫前artifact仍保留，依新授權無永久ZIP備份完成門檻；所有SHA/issues/主檔明細指紋與log保留。100筆序列/20秒/no retry/較新來源/7GB/RPC保護不變，Production/schema/layout/timeout/配額/raw/CMS不改。實際run另核對記錄，尚未宣告108完成。
+
+
+### 最新條件授權：108年度驗收後接續107年度
+阿勇明確指示「108完成後，繼續107年度」。必須先108四季有效匯入及年度來源/完整明細/chunklog、全表僅彰化sale/presale無孤兒與公開分頁/車位/備註/history驗證通過，再新啟107S4→S1獨立年度scope與版本；不重疊。107完成及驗證後暫停，不自動106。沿用100筆序列/20秒/no retry/較新來源/7GB/健康壓力停，逐輪disk與repo對帳。只staging與feature分支，Production/schema/layout/timeout/付費配額/raw/log/CMS不變，既存原檔不刪；成功append及對帳後無永久ZIP備份門檻。109/110/111年度驗收待辦保留。完成檢查已更新此授權，尚未啟動107。
