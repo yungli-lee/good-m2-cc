@@ -559,3 +559,9 @@ Legacy Static Cleanup 完成代表：
 阿勇授權往前一年度回補，本輪僅114S4→114S1，四季完成對帳後停止，不得自動進入113年。新增獨立 workflow moi-changhua-year114.yml，僅4個明確串接job，沿用已驗證彰化 sale/presale scoped worker與新chunk版本。原15季run41145120303已cancelled，年度停止控制run41145682955成功，115S3/S2/S1均成功；目前無匯入/排隊、ACTIVE_HEALTHY、其他active SQL=0、Preview view及公開日期列表13筆/跨期history通過。DB6,285,814,931 bytes，7GB線不變。
 上一輪停止控制生效前114S4曾寫入部分資料：repo報告18批verified、第19批sending。已獨立以原SHA68315c...查驗DB：19個chunk均已提交，log主檔合計1,900，最後不確定批次也已提交；不是未寫入，也不盲目重送。新run相同scope/SHA/chunk會走already_applied，並重驗來源主檔與完整明細指紋集合，再續未完成部分。上述數為該批次log applied數，非新增交易總數。原始114年ZIP四個季度SHA已重新讀原檔核對，114S4與下載來源一致；其他季度待下載後再匹配。
 保持僅niorteztdbuyusemsgwa、彰化sale/presale，保留較新來源、備註原文、明細對應與原檔/raw/log/CMS；不改Production、layout、欄位、配額、timeout與7GB線，不重跑舊national。不宣稱114年已完成；狀態依新run與逐季repo checkpoint。
+
+
+### 2026-10-31 08:08 114年彰化年度回補驗收完成、已暫停
+run41147211886 四個序列 worker114S4/S3/S2/S1皆成功，季度 complete=true、未解來源異常0，137個新scope chunk SHA及原始ZIP SHA逐筆與DB log吻合。年度有效來源主檔13,418、連結土地/建物/車位明細38,368逐批指紋集合核對通過，preserved_newer=0。這是來源處理量，不是新增交易數；全表仍40,676主檔、111,071明細。四季來源SHA均與使用者保留lvr_114.zip內各1140Q原始ZIP的已驗證SHA相符，長期備份確認，未要求重新下載或刪原檔。
+全表範圍外主檔0、孤兒明細0；ACTIVE_HEALTHY、其他active SQL0、無執行/排隊workflow，配置6,264,220,819 bytes，7GB線未改。公開sale首頁20/第二頁20/末頁1793頁5/超頁1794頁0筆，精確total皆35,845；秀水2026-08 sale3筆/8明細/1車位/1備註，presale20筆/48明細/8車位/2備註且total4,623，日期sale13筆與一組跨期history排序通過。23筆同站公開來源ID反向至私有DB核對官方備註原文MD5、完整明細數與車位數全相符，未將私有DB地址/ID送公開API。
+YEAR114.complete=true、status=complete_paused；本年度工作已停止，檢查6ae529b0384c8191b0a9510babd4060a已停用。不續113年，不宣稱全國、2023年或全部成交日期歷史完整。Production、資料庫欄位、layout、配額、timeout與7GB保護不變；raw/log/CMS及原始ZIP/對帳全部保留。
