@@ -18,10 +18,10 @@
   ],
   "stop_after": "108S1",
   "continue_107_automatically": false,
-  "status": "preflight_passed_launching",
+  "status": "in_progress",
   "complete": false,
   "valid_scope_complete": false,
-  "new_import_started": false,
+  "new_import_started": true,
   "capacity_guard_bytes": 7000000000,
   "disk_baseline": {
     "checked_at": "2026-10-31T06:26:37.122239Z",
@@ -86,5 +86,7 @@
     "masters": 13254,
     "details": 34469,
     "unresolved_issues": 0
-  }
+  },
+  "run_id": 41176757504,
+  "implementation_commit": "1ede0d93258df84cf4b8afe54e35f198a2dd8d81"
 }
