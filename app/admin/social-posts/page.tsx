@@ -25,7 +25,7 @@ export default async function SocialPostsPage() {
   const current = await requireRole(["editor","admin","owner"]);
   const supabase = await createSupabaseServerClient();
   const { data: posts, error } = await supabase.from("social_posts")
-    .select("id,title,body,category,status,destination_notes,facebook_post_id,facebook_deleted_at,facebook_scheduled_for,link_url,created_at")
+    .select("id,title,body,category,status,destination_notes,facebook_post_id,facebook_deleted_at,facebook_scheduled_for,facebook_error,link_url,created_at")
     .eq("author_id",current.user.id).order("created_at",{ascending:false}).limit(100);
   const postIds=(posts||[]).map(p=>p.id);
   const {data:videos}=postIds.length
@@ -60,7 +60,7 @@ export default async function SocialPostsPage() {
     {error ? <div className="notice">目前無法讀取貼文資料。請確認 social_posts 資料表已部署到測試資料庫。</div> : null}
     <div style={{display:"grid",gap:14}}>
       {(posts||[]).map(post=><article className="card" key={post.id}><div className="card-body">
-        <div className="actions" style={{justifyContent:"space-between"}}><strong>{post.title}</strong><span className="muted">{post.facebook_deleted_at ? "Facebook 原文已刪除" : post.status==="scheduled" ? "已預約" : post.facebook_post_id ? "已發布" : statuses[post.status]||post.status} · {categories[post.category]||post.category}</span></div>
+        <div className="actions" style={{justifyContent:"space-between"}}><strong>{post.title}</strong><span className="muted">{post.facebook_deleted_at ? (post.facebook_error?.includes("Facebook 端已刪除") ? "Facebook 端已刪除" : "已刪除") : post.status==="scheduled" ? "已預約" : post.facebook_post_id ? "已發布" : statuses[post.status]||post.status} · {categories[post.category]||post.category}</span></div>
         <p style={{whiteSpace:"pre-wrap",overflowWrap:"anywhere"}}>{post.body||"（尚未輸入文案）"}</p>
         {post.link_url ? <p className="muted">分享連結：<a href={post.link_url} target="_blank" rel="noopener noreferrer">{post.link_url}</a></p> : null}
         {post.destination_notes ? <p className="muted" style={{whiteSpace:"pre-wrap"}}>目的地：{post.destination_notes}</p> : null}
@@ -81,7 +81,7 @@ export default async function SocialPostsPage() {
             <div><button className="button" type="submit">儲存修改</button></div>
           </form>
         </details> : null}
-        <p className="muted">Facebook 發布狀態：{post.facebook_deleted_at ? "Facebook 原文已刪除（保留紀錄）" : post.status==="scheduled" ? "已預約（未發布）" : post.facebook_post_id ? "已發布" : post.status==="publishing" ? "發布中" : post.status==="publish_unknown" ? "結果待核對" : "未發布"}</p>
+        <p className="muted">Facebook 發布狀態：{post.facebook_deleted_at ? (post.facebook_error?.includes("Facebook 端已刪除") ? "Facebook 端已刪除（人工核對）" : "已刪除（保留紀錄）") : post.status==="scheduled" ? "已預約（未發布）" : post.facebook_post_id ? "已發布" : post.status==="publishing" ? "發布中" : post.status==="publish_unknown" ? "結果待核對" : "未發布"}</p>
         {post.facebook_scheduled_for ? <p className="muted">Facebook 預定發布：{new Date(post.facebook_scheduled_for).toLocaleString("zh-TW",{timeZone:"Asia/Taipei"})}（台灣時間）</p> : null}
         {post.facebook_post_id ? <p className="muted">Facebook 貼文 ID：{post.facebook_post_id}　{post.facebook_deleted_at ? <span>原文已刪除，後台保留原始紀錄</span> : post.status==="scheduled" ? <span>已預約，請到 Facebook 排程區管理</span> : <a href={videoByPost.has(post.id) ? "https://www.facebook.com/watch/?v="+encodeURIComponent(post.facebook_post_id) : "https://www.facebook.com/"+post.facebook_post_id.replace("_","/posts/")} target="_blank" rel="noopener noreferrer">查看原文</a>}</p> : null}
         <div className="admin-actions" style={{flexWrap:"wrap"}}>
