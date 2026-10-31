@@ -88,3 +88,31 @@ export async function confirmFacebookScheduledPublished(postId:string):Promise<{
  revalidatePath("/admin/social-posts");
  return {ok:true,message:"已依管理者人工核對結果更新為「已發布」；不會再次送出 Facebook。"};
 }
+
+/**
+ * Facebook-side deletion: operator attests that the original is absent.
+ * Meta error codes 10/100/190, missing search results, and inaccessible URLs
+ * are NOT proof of deletion. This only archives the local record; no Graph DELETE.
+ */
+export async function confirmFacebookDeletedExternally(postId:string):Promise<{ok:boolean;message:string}>{
+ const user=await requireRole(["admin","owner"]);
+ const db=await createSupabaseServerClient();
+ const {data:post,error}=await db.from("social_posts")
+   .select("status,facebook_post_id,facebook_page_id,facebook_deleted_at")
+   .eq("id",postId).eq("author_id",user.user.id).single();
+ if(error||!post||post.facebook_page_id!==PAGE_ID||!post.facebook_post_id||
+    post.facebook_deleted_at||!["posted","scheduled"].includes(post.status)||
+    !(/^284090174797562_[0-9]+$/.test(post.facebook_post_id)||/^[0-9]+$/.test(post.facebook_post_id)))
+   return {ok:false,message:"此筆沒有可確認的 Facebook 原文紀錄，或已經封存。"};
+ const {data:updated,error:updateError}=await db.from("social_posts").update({
+   status:"archived",
+   facebook_deleted_at:new Date().toISOString(),
+   facebook_error:"Facebook 端已刪除（管理者人工核對；非 Meta API 自動判定）",
+   updated_at:new Date().toISOString()
+ }).eq("id",postId).eq("author_id",user.user.id).eq("status",post.status)
+   .eq("facebook_post_id",post.facebook_post_id).is("facebook_deleted_at",null)
+   .select("id").maybeSingle();
+ if(updateError||!updated)return {ok:false,message:"紀錄已變更或更新失敗，請重新整理後確認。"};
+ revalidatePath("/admin/social-posts");
+ return {ok:true,message:"已標記為「Facebook 端已刪除」，並保留原始貼文 ID、文案與發布紀錄；沒有向 Facebook 發送刪除要求。"};
+}
