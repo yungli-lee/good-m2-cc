@@ -3737,3 +3737,24 @@ td {
 
 .contact-team-photo { display:block; width:100%; height:100%; min-height:230px; object-fit:cover; object-position:center top; background:#ece7df; }
 @media(max-width:480px){ .contact-team-photo { max-height:390px; } }
+
+/* Contact portrait: preserve full portrait poster in both orientations. */
+.contact-team-card { min-width:0; }
+.contact-team-photo { width:100%; height:auto; min-height:0; max-height:none; object-fit:contain; object-position:center; align-self:start; }
+.contact-team-copy { min-width:0; overflow-wrap:anywhere; }
+.contact-team-actions { min-width:0; }
+.contact-team-actions .button { max-width:100%; }
+@media (min-width:851px) {
+  .contact-team-card { grid-template-columns:minmax(0,1fr); align-content:start; }
+  .contact-team-photo { width:100%; height:auto; }
+}
+@media (max-width:850px) {
+  .contact-team-card { grid-template-columns:minmax(0,1fr); }
+  .contact-team-photo { width:100%; height:auto; max-height:none; }
+}
+@media (max-width:480px) {
+  .contact-team-photo { max-height:none; }
+}
+/* CMS portrait media selection must fit narrow portrait-mode screens. */
+.field.full { min-width:0; }
+.field.full img { max-width:100%; }
