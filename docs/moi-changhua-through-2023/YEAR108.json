@@ -97,7 +97,7 @@
   ],
   "pending_quarters": [],
   "latest_checks": {
-    "checked_at": "2026-10-31T09:03:41.847834Z",
+    "checked_at": "2026-10-31T09:30:17.610812Z",
     "database_bytes": 6247885971,
     "delta_from_baseline_bytes": 4341760,
     "headroom_bytes": 752114029,
@@ -107,15 +107,17 @@
     "details_total_bytes": 3132841984,
     "details_heap_bytes": 2543689728,
     "details_indexes_bytes": 588414976,
-    "other_active_sql": 1,
+    "other_active_sql": 0,
     "project_status": "ACTIVE_HEALTHY",
     "public_acceptance": {
       "stage": "broad_sale_first_page",
       "http_status": 503,
+      "error_body": "{\"error\":\"query_unavailable\"}",
       "no_retry": true,
-      "error_body": "not captured by existing verifier; cause unknown",
       "remaining_checks_not_reached": true
-    }
+    },
+    "active_workflows": 0,
+    "queued_workflows": 0
   },
   "failure": {
     "run": 41176757504,
