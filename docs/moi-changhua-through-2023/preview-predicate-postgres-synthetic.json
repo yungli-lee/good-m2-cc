@@ -1,0 +1,13 @@
+{
+  "checked_at_local": "2026-10-31T23:25:00+08:00",
+  "project": "niorteztdbuyusemsgwa",
+  "method": "pure VALUES CTE; seven source keys crossed with seven canonical keys and 3x3 nullable field pairs; old/new IS TRUE membership",
+  "cases": 441,
+  "mismatches": 0,
+  "transaction_tables_accessed": false,
+  "limitations": [
+    "one representative field",
+    "one canonical candidate per case",
+    "no live-data equivalence or runtime verification"
+  ]
+}

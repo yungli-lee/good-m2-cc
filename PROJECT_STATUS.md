@@ -691,3 +691,7 @@ run41176757504在108S4匯入成功後，GitHub checkpoint publisher PATCH ref回
 
 ### 2026-10-31 22:53 台灣時間：離線predicate等價模型
 新增獨立Python三值邏輯模型，107163組key/prefix/七欄NULL與不一致情形membership全部相同，程式保存在docs/moi-changhua-through-2023/test_canonical_predicate_model.py。此為離線邏輯模型，未替代Postgres語義或真實完整ID集合驗證；未測多canonical集合，後續須SQL合成資料與有界真實資料對帳。沒有連線DB或公開API，本輪未實測disk/健康，沿用前輪數據不得冒稱新鮮。未改schema/view/API、未匯入；107仍暫停，108及109/110/111年度驗收保留。
+
+
+### 2026-10-31 23:25 台灣時間：Postgres合成predicate對帳
+在指定staging以純VALUES/CTE（不讀交易表、不建表、不寫入）比較原NOT(prefix AND EXISTS)與候選NOT EXISTS(prefix AND...)，441組key/prefix/NULL-safe欄位案例、差異0。此補足SQL引擎三值邏輯驗證但只用一個代表比較欄位與單canonical候選，尚非七欄完整集合/真實ID全量等價證明。未重送公開503、未改view/schema/API/timeout、未啟107。真實資料有界對帳與最終可部署/回復view定義仍待準備，108及109/110/111驗收保留。本輪沒有重新量測disk/健康，不冒用前輪值為新鮮結果。
