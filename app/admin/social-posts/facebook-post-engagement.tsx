@@ -20,7 +20,7 @@ export function FacebookPostEngagement({id}:{id:string}){
     <span>分享：<strong>{fmt(data.shares)}</strong></span>
     <span>貼文曝光：<strong>{fmt(data.impressions)}</strong></span>
     <span>影片觀看：<strong>{fmt(data.videoViews)}</strong></span>
-   </div><p className="muted">{data.note}</p><details><summary style={{cursor:"pointer",fontSize:13}}>Meta API 指標診斷</summary><div style={{display:"grid",gap:4,marginTop:8}}>{Object.entries(data.diagnostics||{}).map(([name,message])=><div key={name} className="muted" style={{fontSize:13}}>{name}：{message}</div>)}</div></details></>:null}
+   </div><p className="muted">{data.note}</p><details key={data.reactions===null&&data.comments===null&&data.shares===null&&data.impressions===null&&data.videoViews===null?"unavailable":"available"} open={data.reactions===null&&data.comments===null&&data.shares===null&&data.impressions===null&&data.videoViews===null}><summary style={{cursor:"pointer",fontSize:13}}>Meta API 指標診斷{data.reactions===null&&data.comments===null&&data.shares===null&&data.impressions===null&&data.videoViews===null?"（所有指標無法取得，已自動展開）":""}</summary><div style={{display:"grid",gap:4,marginTop:8}}>{Object.entries(data.diagnostics||{}).map(([name,message])=><div key={name} className="muted" style={{fontSize:13}}>{name}：{message}</div>)}</div></details></>:null}
   </div>
  </details>;
 }
