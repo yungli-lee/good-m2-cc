@@ -39,7 +39,7 @@ export default async function ContactPage() {
   if (!page) notFound();
   const portraitMatches = Array.from((page.markdown_content || "").matchAll(/<!-- contact-portrait:(ayong|amei) (https:\/\/[^\s<>]+) -->/g));
   const portraits = Object.fromEntries(portraitMatches.map((match) => [match[1], match[2]]));
-  const cleanMarkdown = (page.markdown_content || "").replace(/<!-- contact-portrait:(ayong|amei) (https:\/\/[^\s<>]+) -->/g, "").trim();
+  // Legacy contact Markdown contains duplicate portrait images and phone numbers.\n  // Preserve it in CMS for rollback, but the new agent cards are the single public contact presentation.
   const links = [
     ["LINE", company.line_url],
     ["Facebook", company.facebook_url],
@@ -125,7 +125,7 @@ export default async function ContactPage() {
               <div className="card-body">
                 <h2>認識阿勇與阿美，直接聯絡我們</h2>
                 <p>我不是帶你看房，我是陪你做決定。</p>
-                {cleanMarkdown ? <MarkdownContent value={cleanMarkdown} /> : <p>買屋、賣屋、貸款、稅務、簽約到交屋，每一步都清楚說明。</p>}
+                <p>買屋、賣屋、貸款、稅務、簽約到交屋，每一步都清楚說明。</p>
                 {company.company_phone ? <p>電話：<a href={`tel:${company.company_phone.replace(/[^\d+]/g, "")}`}>{company.company_phone}</a></p> : null}
                 {company.company_email ? <p>Email：<a href={`mailto:${company.company_email}`}>{company.company_email}</a></p> : null}
                 {company.company_address ? <p>服務據點：{company.company_address}</p> : null}
