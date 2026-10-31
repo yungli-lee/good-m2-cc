@@ -1,0 +1,40 @@
+{
+  "year_roc": 107,
+  "year_ad": 2018,
+  "authorized": true,
+  "seasons": [
+    "107S4",
+    "107S3",
+    "107S2",
+    "107S1"
+  ],
+  "scope": {
+    "project": "niorteztdbuyusemsgwa",
+    "county": "彰化縣",
+    "datasets": [
+      "sale",
+      "presale"
+    ]
+  },
+  "stop_after": "107S1",
+  "continue_106_automatically": false,
+  "status": "authorized_paused_public_read_503",
+  "complete": false,
+  "new_import_started": false,
+  "capacity_guard_bytes": 7000000000,
+  "preflight": {
+    "checked_at": "2026-10-31T10:06:26.792617Z",
+    "database_bytes": 6247885971,
+    "other_active_sql": 0,
+    "project_status": "ACTIVE_HEALTHY",
+    "public_status": 503,
+    "public_error_body": "{\"error\":\"query_unavailable\"}",
+    "no_retry": true
+  },
+  "prior_years_acceptance_pending": [
+    108,
+    109,
+    110,
+    111
+  ]
+}
