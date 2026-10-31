@@ -91,7 +91,7 @@ export async function deleteFacebookPost(id: string) {
   const {data:post,error} = await db.from("social_posts").select("facebook_post_id,facebook_page_id,facebook_deleted_at")
     .eq("id",id).eq("author_id",current.user.id).single();
   if(error || !post || post.facebook_page_id!==PAGE_ID || !post.facebook_post_id ||
-     post.facebook_deleted_at || !/^284090174797562_[0-9]+$/.test(post.facebook_post_id)) throw new Error("無法刪除：缺少有效的粉專貼文紀錄。");
+     post.facebook_deleted_at || !(/^284090174797562_[0-9]+$/.test(post.facebook_post_id) || /^[0-9]+$/.test(post.facebook_post_id))) throw new Error("無法刪除：缺少有效的粉專貼文紀錄。");
   let result: {success?:boolean};
   try {
     result = await callFacebook("DELETE",post.facebook_post_id,token);
