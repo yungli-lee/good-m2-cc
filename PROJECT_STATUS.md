@@ -675,3 +675,7 @@ run41176757504在108S4匯入成功後，GitHub checkpoint publisher PATCH ref回
 
 ### 2026-10-31 18:39 台灣時間：503只讀程式路徑與計畫診斷
 本輪未重送相同公開廣查，無匯入/DELETE/設定變更。ACTIVE_HEALTHY/SQL0/DB6247885971bytes不變。讀取最新Preview API：ID首頁與count:exact同一請求，canonical view含兩個alias EXISTS子查詢；query_unavailable可來自ID/count、頁列或明細階段，回應本文本身不辨階段。僅EXPLAIN未ANALYZE：首頁LIMIT20已使用moi_preview_county_dataset_date_cover_idx Index Only Scan，cost109.18；相同canonical精確count估94511列、cost514182.62，仍逐列alias過濾。此為精確總數成本可能較大的證據，不是已證實目前503原因，也不能將過往57014直接當本輪日誌。未改view/index/schema/API/timeout/配額，不移除精確count或alias以偽造成功。下一步應取得當前失敗階段與同時段錯誤碼，再提出保留精確總數與去重語義的最小修正，避免循環相同公開請求；107仍未啟，108及109/110/111年度驗收待辦不變。
+
+
+### 2026-10-31 19:29 台灣時間：已定位目前503失敗階段
+只讀查10:06:00Z～10:08:00Z統一postgres logs，透過已知flattened keys讀取而非猜body。10:06:44.480Z PostgREST14.5 ERROR57014查詢是moi_preview_transactions初始ID LIMIT/OFFSET與pgrst_source_count精確總數同一SQL，並非後續完整主檔/車位明細讀取階段。此為目前18:06失敗請求同時段的取消證據，不沿用前日證據；仍不能單從57014斷言容量或確切取消機制。上輪EXPLAIN count高成本為待優化候選，下一步只讀評估語義相同anti-join計畫，不移除精確總數或canonical去重，不改schema/view/timeout/Production。ACTIVE_HEALTHY（本輪已核）、其他SQL0、DB6247894163bytes，比108起點+4349952、距7GB752105837；相較上輪+8192非交易新增證明。未送公開廣查、無DB寫入、107未啟，年度驗收待辦保留。
