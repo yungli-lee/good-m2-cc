@@ -50,7 +50,10 @@ export function HomeRenderer({ campaigns, pages, company, navigation, featuredPr
   for (const section of resolved) managedByKey.set(section.key, [...(managedByKey.get(section.key) || []), section.page]);
   const publishedManagedKeys = new Set(managedByKey.keys());
 
+  // The dedicated agent service cards replace the old homepage team/contact panels.
+  // Keep the legacy content and CMS records intact for rollback; do not render them.
   const sections = legacyHomeSections.flatMap((section, index) => {
+    if (section.key === "team" || section.key === "contact") return [];
     if (!shouldRenderHomeSection(section.key, publishedManagedKeys, campaigns.length)) return [];
     const managed = managedByKey.get(section.key);
     const sortOrder = managed?.[0]?.sort_order ?? index * 100;
