@@ -65,3 +65,26 @@ export async function syncFacebookPostStatus(postId:string):Promise<{ok:boolean;
     return {ok:true,message:"Facebook 仍顯示尚未公開，保留「已預約」。"};
   return {ok:true,message:"已查詢 Facebook。沒有需要變更的後台狀態。"};
 }
+
+/** Explicit operator confirmation when Meta denies read permission. Never inferred from elapsed time. */
+export async function confirmFacebookScheduledPublished(postId:string):Promise<{ok:boolean;message:string}>{
+ const user=await requireRole(["admin","owner"]);
+ const db=await createSupabaseServerClient();
+ const {data:post,error}=await db.from("social_posts")
+   .select("status,facebook_post_id,facebook_page_id,facebook_scheduled_for,facebook_deleted_at")
+   .eq("id",postId).eq("author_id",user.user.id).single();
+ if(error||!post||post.status!=="scheduled"||post.facebook_page_id!==PAGE_ID||
+    !post.facebook_post_id||post.facebook_deleted_at||!post.facebook_scheduled_for||
+    Date.parse(post.facebook_scheduled_for)>Date.now()||
+    !(/^284090174797562_[0-9]+$/.test(post.facebook_post_id)||/^[0-9]+$/.test(post.facebook_post_id)))
+   return {ok:false,message:"此筆不符合人工確認條件，未變更紀錄。"};
+ const {data:updated,error:updateError}=await db.from("social_posts").update({
+   status:"posted",facebook_published_at:new Date().toISOString(),
+   facebook_error:"由管理者於 Facebook 粉專確認已公開（人工核對，非 API 自動驗證）",
+   updated_at:new Date().toISOString()
+ }).eq("id",postId).eq("author_id",user.user.id).eq("status","scheduled")
+   .eq("facebook_post_id",post.facebook_post_id).select("id").maybeSingle();
+ if(updateError||!updated)return {ok:false,message:"更新失敗或狀態已變更，請重新整理。"};
+ revalidatePath("/admin/social-posts");
+ return {ok:true,message:"已依管理者人工核對結果更新為「已發布」；不會再次送出 Facebook。"};
+}
