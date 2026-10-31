@@ -707,3 +707,7 @@ ACTIVE_HEALTHY/其他SQL0/DB6247935123bytes。以id>13607下一1000主檔同一S
 
 ### 2026-11-01 02:21 台灣時間：原view回復定義已保存
 只讀取得pg_get_viewdef與安全屬性：owner postgres、reloptions NULL、ACL postgres及service_role，未授權anon/authenticated。原完整31欄定義與review-only回復SQL存repo，未執行CREATE。不得為修復擴增grant或改security模式；候選須保留欄位順序/型別/owner/ACL/options。下一步以此原定義建立完整候選SQL與同快照有界ID驗證，不可只以成本估算宣告可部署。107未啟、108及109/110/111驗收保留；無公開重試/匯入/設定變更，本輪未量測disk。
+
+
+### 2026-11-01 03:41 台灣時間：完整view候選草案
+依已保存原31欄投影及NOT EXISTS候選產出preview-view-candidate-review.sql，未執行。保持原欄位順序及來源型別、owner/ACL/options，沒有GRANT或timeout語句，回復草案已存在。產生時檢查投影末欄floor_display/來源表與七欄比較末欄存在；非SQL執行驗證，不稱可部署完成。尚須完整等價/跨篩選及實測檢查，才可形成最後修復審查。無DB/公開請求，本輪無新健康/disk數據，107仍停；108及109/110/111年度驗收待辦保留。
