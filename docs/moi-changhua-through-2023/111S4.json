@@ -1,0 +1,50 @@
+{
+  "version": "changhua-sale-presale-year111-v1",
+  "scope": {
+    "county": "彰化縣",
+    "datasets": [
+      "sale",
+      "presale"
+    ]
+  },
+  "season": "111S4",
+  "period": "2022-12-31",
+  "archive_sha256": "506fd6cffffde253223a531d85bd13f36b857bb729941d694a59f57b5f3862bc",
+  "inventory": [
+    {
+      "file": "n_lvr_land_a.csv",
+      "source_masters": 3441,
+      "parsed_masters": 3441,
+      "valid_masters": 3440,
+      "detail_types_available": [
+        "land",
+        "building",
+        "parking"
+      ],
+      "linked_details": 9037
+    },
+    {
+      "file": "n_lvr_land_b.csv",
+      "source_masters": 564,
+      "parsed_masters": 564,
+      "valid_masters": 564,
+      "detail_types_available": [
+        "land",
+        "parking"
+      ],
+      "linked_details": 1551
+    }
+  ],
+  "batches": [],
+  "import_complete": false,
+  "complete": false,
+  "unresolved_issues": 1,
+  "implementation_sha": "6eea15996cdf9c2d4f0bf4fcc49978a47c8d9e4b",
+  "source_backup": "GitHub Actions artifact changhua-source-111S4-41158903441-1",
+  "source_backup_retention_days": 90,
+  "long_term_backup_pending": true,
+  "source_issue_counts": {
+    "day is out of range for month": 1
+  },
+  "error_type": "RuntimeError"
+}
