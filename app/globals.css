@@ -3716,3 +3716,21 @@ td {
  .contact-service-options, .contact-details-grid { grid-template-columns: 1fr; }
  .contact-service-options .card-body { padding: 22px; }
 }
+
+/* Contact team cards: no unapproved portraits or invented personal LINE URLs. */
+.contact-team { margin: 0 0 36px; }
+.contact-team .section-heading { margin-bottom: 20px; }
+.contact-team-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
+.contact-team-card { display: grid; grid-template-columns: minmax(120px, .7fr) minmax(0, 1.3fr); overflow: hidden; border: 1px solid #e2d8c7; border-radius: 16px; background: #fff; }
+.contact-team-photo-pending { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; min-height: 230px; padding: 18px; background: #ece7df; color: #64708a; text-align: center; }
+.contact-team-photo-pending span { font-size: 56px; opacity: .3; }
+.contact-team-photo-pending small { font-size: 12px; line-height: 1.6; }
+.contact-team-copy { display: flex; flex-direction: column; gap: 10px; padding: 22px; }
+.contact-team-copy h3 { margin: 0; font-size: 1.6rem; }
+.contact-team-copy p { margin: 0; line-height: 1.7; }
+.contact-team-role { font-weight: 700; color: #9a6a1f; }
+.contact-team-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: auto; padding-top: 10px; }
+.contact-team-actions .button { text-align: center; white-space: normal; }
+.contact-team-note { margin: 12px 0 0; color: #64708a; font-size: .85rem; line-height: 1.7; }
+@media (max-width: 850px) { .contact-team-grid { grid-template-columns: 1fr; } }
+@media (max-width: 480px) { .contact-team-card { grid-template-columns: 1fr; } .contact-team-photo-pending { min-height: 150px; } }
