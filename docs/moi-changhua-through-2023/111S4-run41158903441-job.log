@@ -1,0 +1,288 @@
+﻿2026-10-31T02:12:11.1481436Z Current runner version: '2.338.2'
+2026-10-31T02:12:11.1509027Z ##[group]Runner Image Provisioner
+2026-10-31T02:12:11.1510377Z Hosted Compute Agent
+2026-10-31T02:12:11.1511024Z Version: 20261021.618
+2026-10-31T02:12:11.1511665Z Commit: 21505ad2541d5be6135ed84fc33697146cf75b8e
+2026-10-31T02:12:11.1512502Z Build Date: 2026-10-21T00:45:21Z
+2026-10-31T02:12:11.1513202Z Worker ID: {2559bf50-47f4-47f3-960d-ba07ae02a9a5}
+2026-10-31T02:12:11.1514148Z Region: southcentralus
+2026-10-31T02:12:11.1514759Z Cloud: Azure
+2026-10-31T02:12:11.1516101Z ##[endgroup]
+2026-10-31T02:12:11.1517910Z ##[group]Operating System
+2026-10-31T02:12:11.1518660Z Ubuntu
+2026-10-31T02:12:11.1519292Z 26.04.1
+2026-10-31T02:12:11.1519821Z LTS
+2026-10-31T02:12:11.1520331Z ##[endgroup]
+2026-10-31T02:12:11.1521015Z ##[group]Runner Image
+2026-10-31T02:12:11.1521692Z Image: ubuntu-26.04
+2026-10-31T02:12:11.1522333Z Version: 20261025.179.1
+2026-10-31T02:12:11.1523654Z Included Software: https://github.com/actions/runner-images/blob/ubuntu26/20261025.179/images/ubuntu/Ubuntu2604-Readme.md
+2026-10-31T02:12:11.1525336Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu26%2F20261025.179
+2026-10-31T02:12:11.1526731Z ##[endgroup]
+2026-10-31T02:12:11.1527973Z ##[group]GITHUB_TOKEN Permissions
+2026-10-31T02:12:11.1530635Z Contents: write
+2026-10-31T02:12:11.1531377Z Metadata: read
+2026-10-31T02:12:11.1531998Z ##[endgroup]
+2026-10-31T02:12:11.1534845Z Secret source: Actions
+2026-10-31T02:12:11.1536103Z Cache mode: write
+2026-10-31T02:12:11.1537214Z Prepare workflow directory
+2026-10-31T02:12:11.2105882Z Prepare all required actions
+2026-10-31T02:12:11.2161333Z Getting action download info
+2026-10-31T02:12:11.4878184Z Download action repository 'actions/checkout@v4' (SHA:11d5960a326750d5838078e36cf38b85af677262)
+2026-10-31T02:12:11.6013028Z Download action repository 'actions/setup-python@v5' (SHA:a26af69be951a213d495a4c3e4e4022e16d87065)
+2026-10-31T02:12:11.6655816Z Download action repository 'actions/upload-artifact@v4' (SHA:ea165f8d65b6e75b540449e92b4886f43607fa02)
+2026-10-31T02:12:11.8551737Z Uses: yungli-lee/good-m2-cc/.github/workflows/moi-changhua-year111-quarter.yml@refs/heads/feature/real-price-public-search-v1 (6eea15996cdf9c2d4f0bf4fcc49978a47c8d9e4b)
+2026-10-31T02:12:11.8557456Z ##[group] Inputs
+2026-10-31T02:12:11.8558032Z   season: 111S4
+2026-10-31T02:12:11.8558508Z ##[endgroup]
+2026-10-31T02:12:11.8559042Z Complete job name: quarter-111S4 / scoped-quarter
+2026-10-31T02:12:11.9440623Z ##[group]Run actions/checkout@v4
+2026-10-31T02:12:11.9441777Z with:
+2026-10-31T02:12:11.9442291Z   repository: yungli-lee/good-m2-cc
+2026-10-31T02:12:11.9446230Z   token: ***
+2026-10-31T02:12:11.9446689Z   ssh-strict: true
+2026-10-31T02:12:11.9447150Z   ssh-user: git
+2026-10-31T02:12:11.9447624Z   persist-credentials: true
+2026-10-31T02:12:11.9448123Z   clean: true
+2026-10-31T02:12:11.9448596Z   sparse-checkout-cone-mode: true
+2026-10-31T02:12:11.9449131Z   fetch-depth: 1
+2026-10-31T02:12:11.9449574Z   fetch-tags: false
+2026-10-31T02:12:11.9450025Z   show-progress: true
+2026-10-31T02:12:11.9450522Z   lfs: false
+2026-10-31T02:12:11.9450948Z   submodules: false
+2026-10-31T02:12:11.9451412Z   set-safe-directory: true
+2026-10-31T02:12:11.9451935Z   allow-unsafe-pr-checkout: false
+2026-10-31T02:12:11.9452775Z env:
+2026-10-31T02:12:11.9453211Z   MOI_SEASON: 111S4
+2026-10-31T02:12:11.9453731Z   MOI_LOCAL_ZIP: /tmp/changhua-source.zip
+2026-10-31T02:12:11.9454402Z   MOI_REPORT_PATH: /tmp/changhua-report.json
+2026-10-31T02:12:11.9455234Z   STAGING_SUPABASE_URL: ***
+2026-10-31T02:12:11.9456200Z   STAGING_SUPABASE_SERVICE_ROLE_KEY: ***
+2026-10-31T02:12:11.9456766Z ##[endgroup]
+2026-10-31T02:12:12.2709928Z Syncing repository: yungli-lee/good-m2-cc
+2026-10-31T02:12:12.2712823Z ##[group]Getting Git version info
+2026-10-31T02:12:12.2713665Z Working directory is '/home/runner/work/good-m2-cc/good-m2-cc'
+2026-10-31T02:12:12.2714830Z [command]/usr/bin/git version
+2026-10-31T02:12:12.2743221Z git version 2.56.0
+2026-10-31T02:12:12.2767586Z ##[endgroup]
+2026-10-31T02:12:12.2783261Z Temporarily overriding HOME='/home/runner/work/_temp/c6bf3240-0de3-4dc0-9295-5dfa5545b29d' before making global git config changes
+2026-10-31T02:12:12.2785863Z Adding repository directory to the temporary git global config as a safe directory
+2026-10-31T02:12:12.2791168Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/good-m2-cc/good-m2-cc
+2026-10-31T02:12:12.2877543Z Deleting the contents of '/home/runner/work/good-m2-cc/good-m2-cc'
+2026-10-31T02:12:12.2883311Z ##[group]Initializing the repository
+2026-10-31T02:12:12.2889090Z [command]/usr/bin/git init /home/runner/work/good-m2-cc/good-m2-cc
+2026-10-31T02:12:12.3031811Z hint: Using 'master' as the name for the initial branch. This default branch name
+2026-10-31T02:12:12.3033974Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+2026-10-31T02:12:12.3036383Z hint: to use in all of your new repositories, which will suppress this warning,
+2026-10-31T02:12:12.3037836Z hint: call:
+2026-10-31T02:12:12.3038724Z hint:
+2026-10-31T02:12:12.3040026Z hint: 	git config --global init.defaultBranch <name>
+2026-10-31T02:12:12.3041268Z hint:
+2026-10-31T02:12:12.3042387Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+2026-10-31T02:12:12.3044373Z hint: 'development'. The just-created branch can be renamed via this command:
+2026-10-31T02:12:12.3046177Z hint:
+2026-10-31T02:12:12.3047191Z hint: 	git branch -m <name>
+2026-10-31T02:12:12.3048315Z hint:
+2026-10-31T02:12:12.3049671Z hint: Disable this message with "git config set advice.defaultBranchName false"
+2026-10-31T02:12:12.3051767Z Initialized empty Git repository in /home/runner/work/good-m2-cc/good-m2-cc/.git/
+2026-10-31T02:12:12.3065053Z [command]/usr/bin/git remote add origin https://github.com/yungli-lee/good-m2-cc
+2026-10-31T02:12:12.3127857Z ##[endgroup]
+2026-10-31T02:12:12.3129147Z ##[group]Disabling automatic garbage collection
+2026-10-31T02:12:12.3131872Z [command]/usr/bin/git config --local gc.auto 0
+2026-10-31T02:12:12.3175257Z ##[endgroup]
+2026-10-31T02:12:12.3177347Z ##[group]Setting up auth
+2026-10-31T02:12:12.3183617Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-10-31T02:12:12.3242009Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-10-31T02:12:12.3831893Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-10-31T02:12:12.3872472Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-10-31T02:12:12.4164799Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-10-31T02:12:12.4203879Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-10-31T02:12:12.4496457Z [command]/usr/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2026-10-31T02:12:12.4553090Z ##[endgroup]
+2026-10-31T02:12:12.4568657Z ##[group]Fetching the repository
+2026-10-31T02:12:12.4570643Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +6eea15996cdf9c2d4f0bf4fcc49978a47c8d9e4b:refs/remotes/origin/feature/real-price-public-search-v1
+2026-10-31T02:12:13.2175776Z From https://github.com/yungli-lee/good-m2-cc
+2026-10-31T02:12:13.2178593Z  * [new ref]         6eea15996cdf9c2d4f0bf4fcc49978a47c8d9e4b -> origin/feature/real-price-public-search-v1
+2026-10-31T02:12:13.2184114Z ##[endgroup]
+2026-10-31T02:12:13.2186541Z ##[group]Determining the checkout info
+2026-10-31T02:12:13.2188962Z ##[endgroup]
+2026-10-31T02:12:13.2191521Z [command]/usr/bin/git sparse-checkout disable
+2026-10-31T02:12:13.2250731Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+2026-10-31T02:12:13.2286786Z ##[group]Checking out the ref
+2026-10-31T02:12:13.2293444Z [command]/usr/bin/git checkout --progress --force -B feature/real-price-public-search-v1 refs/remotes/origin/feature/real-price-public-search-v1
+2026-10-31T02:12:13.3727468Z Switched to a new branch 'feature/real-price-public-search-v1'
+2026-10-31T02:12:13.3733101Z branch 'feature/real-price-public-search-v1' set up to track 'origin/feature/real-price-public-search-v1'.
+2026-10-31T02:12:13.3746867Z ##[endgroup]
+2026-10-31T02:12:13.3826007Z [command]/usr/bin/git log -1 --format=%H
+2026-10-31T02:12:13.3853566Z 6eea15996cdf9c2d4f0bf4fcc49978a47c8d9e4b
+2026-10-31T02:12:13.4351692Z ##[group]Run actions/setup-python@v5
+2026-10-31T02:12:13.4352981Z with:
+2026-10-31T02:12:13.4353831Z   python-version: 3.12
+2026-10-31T02:12:13.4354829Z   check-latest: false
+2026-10-31T02:12:13.4364686Z   token: ***
+2026-10-31T02:12:13.4365716Z   update-environment: true
+2026-10-31T02:12:13.4366795Z   allow-prereleases: false
+2026-10-31T02:12:13.4367853Z   freethreaded: false
+2026-10-31T02:12:13.4368767Z env:
+2026-10-31T02:12:13.4369565Z   MOI_SEASON: 111S4
+2026-10-31T02:12:13.4370574Z   MOI_LOCAL_ZIP: /tmp/changhua-source.zip
+2026-10-31T02:12:13.4371925Z   MOI_REPORT_PATH: /tmp/changhua-report.json
+2026-10-31T02:12:13.4373674Z   STAGING_SUPABASE_URL: ***
+2026-10-31T02:12:13.4375290Z   STAGING_SUPABASE_SERVICE_ROLE_KEY: ***
+2026-10-31T02:12:13.4376613Z ##[endgroup]
+2026-10-31T02:12:13.5881998Z ##[group]Installed versions
+2026-10-31T02:12:13.6012876Z (node:2474) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-10-31T02:12:13.6017849Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-10-31T02:12:13.6020780Z Successfully set up CPython (3.12.15)
+2026-10-31T02:12:13.6023665Z ##[endgroup]
+2026-10-31T02:12:13.6267756Z ##[group]Run set -euo pipefail
+2026-10-31T02:12:13.6268995Z [36;1mset -euo pipefail[0m
+2026-10-31T02:12:13.6270272Z [36;1mcase "$MOI_SEASON" in 111S[1234]) ;; *) exit 1;; esac[0m
+2026-10-31T02:12:13.6274869Z [36;1mcurl --fail --location --show-error --silent --connect-timeout 20 --max-time 300 --user-agent good-m2-changhua-import/1.0 --output "$MOI_LOCAL_ZIP" "https://plvr.land.moi.gov.tw/DownloadSeason?season=${MOI_SEASON}&type=zip&fileName=lvr_landcsv.zip"[0m
+2026-10-31T02:12:13.6281286Z [36;1mMOI_CHECK_ONLY=1 python scripts/moi_changhua_year111_backfill.py[0m
+2026-10-31T02:12:13.6355798Z shell: /usr/bin/bash -e {0}
+2026-10-31T02:12:13.6357530Z env:
+2026-10-31T02:12:13.6358831Z   MOI_SEASON: 111S4
+2026-10-31T02:12:13.6360477Z   MOI_LOCAL_ZIP: /tmp/changhua-source.zip
+2026-10-31T02:12:13.6362703Z   MOI_REPORT_PATH: /tmp/changhua-report.json
+2026-10-31T02:12:13.6365802Z   STAGING_SUPABASE_URL: ***
+2026-10-31T02:12:13.6368425Z   STAGING_SUPABASE_SERVICE_ROLE_KEY: ***
+2026-10-31T02:12:13.6370814Z   pythonLocation: /opt/hostedtoolcache/Python/3.12.15/x64
+2026-10-31T02:12:13.6374242Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.12.15/x64/lib/pkgconfig
+2026-10-31T02:12:13.6377448Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.15/x64
+2026-10-31T02:12:13.6379861Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.15/x64
+2026-10-31T02:12:13.6382576Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.15/x64
+2026-10-31T02:12:13.6385332Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.12.15/x64/lib
+2026-10-31T02:12:13.6388035Z ##[endgroup]
+2026-10-31T02:12:18.1206611Z ##[group]Run actions/upload-artifact@v4
+2026-10-31T02:12:18.1207017Z with:
+2026-10-31T02:12:18.1207306Z   name: changhua-source-111S4-41158903441-1
+2026-10-31T02:12:18.1207673Z   path: /tmp/changhua-source.zip
+2026-10-31T02:12:18.1207997Z   retention-days: 90
+2026-10-31T02:12:18.1208281Z   if-no-files-found: error
+2026-10-31T02:12:18.1208573Z   compression-level: 6
+2026-10-31T02:12:18.1208848Z   overwrite: false
+2026-10-31T02:12:18.1209126Z   include-hidden-files: false
+2026-10-31T02:12:18.1209431Z env:
+2026-10-31T02:12:18.1209666Z   MOI_SEASON: 111S4
+2026-10-31T02:12:18.1209966Z   MOI_LOCAL_ZIP: /tmp/changhua-source.zip
+2026-10-31T02:12:18.1210596Z   MOI_REPORT_PATH: /tmp/changhua-report.json
+2026-10-31T02:12:18.1211268Z   STAGING_SUPABASE_URL: ***
+2026-10-31T02:12:18.1211746Z   STAGING_SUPABASE_SERVICE_ROLE_KEY: ***
+2026-10-31T02:12:18.1212190Z   pythonLocation: /opt/hostedtoolcache/Python/3.12.15/x64
+2026-10-31T02:12:18.1212732Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.12.15/x64/lib/pkgconfig
+2026-10-31T02:12:18.1213231Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.15/x64
+2026-10-31T02:12:18.1213674Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.15/x64
+2026-10-31T02:12:18.1214124Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.15/x64
+2026-10-31T02:12:18.1214568Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.12.15/x64/lib
+2026-10-31T02:12:18.1214945Z ##[endgroup]
+2026-10-31T02:12:18.2979080Z (node:2486) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-10-31T02:12:18.2980475Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-10-31T02:12:18.3027082Z With the provided path, there will be 1 file uploaded
+2026-10-31T02:12:18.3033654Z Artifact name is valid!
+2026-10-31T02:12:18.3034593Z Root directory input is valid!
+2026-10-31T02:12:18.5954712Z Beginning upload of artifact content to blob storage
+2026-10-31T02:12:18.8997603Z (node:2486) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+2026-10-31T02:12:19.4856673Z Uploaded bytes 8388608
+2026-10-31T02:12:19.6318440Z Uploaded bytes 13180152
+2026-10-31T02:12:19.6736499Z Finished uploading artifact content to blob storage!
+2026-10-31T02:12:19.6746968Z SHA256 digest of uploaded artifact zip is 6abdc16736d8ab66141a829475f809f1890dd93a7dfc3c9011c2301509f4b616
+2026-10-31T02:12:19.6747904Z Finalizing artifact upload
+2026-10-31T02:12:20.1468635Z Artifact changhua-source-111S4-41158903441-1.zip successfully finalized. Artifact ID 13026415723
+2026-10-31T02:12:20.1470554Z Artifact changhua-source-111S4-41158903441-1 has been successfully uploaded! Final size is 13180152 bytes. Artifact ID is 13026415723
+2026-10-31T02:12:20.1476898Z Artifact download URL: https://github.com/yungli-lee/good-m2-cc/actions/runs/41158903441/artifacts/13026415723
+2026-10-31T02:12:20.1668152Z ##[group]Run python scripts/moi_changhua_year111_backfill.py
+2026-10-31T02:12:20.1668646Z [36;1mpython scripts/moi_changhua_year111_backfill.py[0m
+2026-10-31T02:12:20.1699905Z shell: /usr/bin/bash -e {0}
+2026-10-31T02:12:20.1700175Z env:
+2026-10-31T02:12:20.1700379Z   MOI_SEASON: 111S4
+2026-10-31T02:12:20.1700634Z   MOI_LOCAL_ZIP: /tmp/changhua-source.zip
+2026-10-31T02:12:20.1700966Z   MOI_REPORT_PATH: /tmp/changhua-report.json
+2026-10-31T02:12:20.1701461Z   STAGING_SUPABASE_URL: ***
+2026-10-31T02:12:20.1701859Z   STAGING_SUPABASE_SERVICE_ROLE_KEY: ***
+2026-10-31T02:12:20.1702215Z   pythonLocation: /opt/hostedtoolcache/Python/3.12.15/x64
+2026-10-31T02:12:20.1702687Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.12.15/x64/lib/pkgconfig
+2026-10-31T02:12:20.1703151Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.15/x64
+2026-10-31T02:12:20.1703555Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.15/x64
+2026-10-31T02:12:20.1703975Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.15/x64
+2026-10-31T02:12:20.1704369Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.12.15/x64/lib
+2026-10-31T02:12:20.1704711Z ##[endgroup]
+2026-10-31T02:12:20.7623890Z Traceback (most recent call last):
+2026-10-31T02:12:20.7631157Z   File "/home/runner/work/good-m2-cc/good-m2-cc/scripts/moi_changhua_year111_backfill.py", line 104, in <module>
+2026-10-31T02:12:20.7631883Z     if __name__=='__main__':main()
+2026-10-31T02:12:20.7632215Z                             ^^^^^^
+2026-10-31T02:12:20.7632879Z   File "/home/runner/work/good-m2-cc/good-m2-cc/scripts/moi_changhua_year111_backfill.py", line 84, in main
+2026-10-31T02:12:20.7634287Z     if report['unresolved_issues']:raise RuntimeError('Unresolved scoped source exceptions; stop before writes')
+2026-10-31T02:12:20.7635021Z                                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-31T02:12:20.7635946Z RuntimeError: Unresolved scoped source exceptions; stop before writes
+2026-10-31T02:12:20.7967982Z ##[error]Process completed with exit code 1.
+2026-10-31T02:12:20.8019822Z ##[group]Run if test -f "$MOI_REPORT_PATH"; then python scripts/moi_changhua_publish_checkpoint.py; else exit 1; fi
+2026-10-31T02:12:20.8020650Z [36;1mif test -f "$MOI_REPORT_PATH"; then python scripts/moi_changhua_publish_checkpoint.py; else exit 1; fi[0m
+2026-10-31T02:12:20.8051002Z shell: /usr/bin/bash -e {0}
+2026-10-31T02:12:20.8051260Z env:
+2026-10-31T02:12:20.8051466Z   MOI_SEASON: 111S4
+2026-10-31T02:12:20.8051725Z   MOI_LOCAL_ZIP: /tmp/changhua-source.zip
+2026-10-31T02:12:20.8052052Z   MOI_REPORT_PATH: /tmp/changhua-report.json
+2026-10-31T02:12:20.8052586Z   STAGING_SUPABASE_URL: ***
+2026-10-31T02:12:20.8052983Z   STAGING_SUPABASE_SERVICE_ROLE_KEY: ***
+2026-10-31T02:12:20.8053343Z   pythonLocation: /opt/hostedtoolcache/Python/3.12.15/x64
+2026-10-31T02:12:20.8053787Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.12.15/x64/lib/pkgconfig
+2026-10-31T02:12:20.8054227Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.15/x64
+2026-10-31T02:12:20.8054645Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.15/x64
+2026-10-31T02:12:20.8055029Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.15/x64
+2026-10-31T02:12:20.8055742Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.12.15/x64/lib
+2026-10-31T02:12:20.8058086Z   GH_TOKEN: ***
+2026-10-31T02:12:20.8058312Z ##[endgroup]
+2026-10-31T02:12:23.1446276Z {"checkpoint_commit": "38886be992f00374afcf030e750781f4f91aa09c", "season": "111S4", "complete": false}
+2026-10-31T02:12:23.1621293Z ##[group]Run actions/upload-artifact@v4
+2026-10-31T02:12:23.1621610Z with:
+2026-10-31T02:12:23.1621844Z   name: changhua-report-111S4-41158903441-1
+2026-10-31T02:12:23.1622168Z   path: /tmp/changhua-report.json
+2026-10-31T02:12:23.1622433Z   retention-days: 90
+2026-10-31T02:12:23.1622663Z   if-no-files-found: warn
+2026-10-31T02:12:23.1622895Z   compression-level: 6
+2026-10-31T02:12:23.1623122Z   overwrite: false
+2026-10-31T02:12:23.1623339Z   include-hidden-files: false
+2026-10-31T02:12:23.1623576Z env:
+2026-10-31T02:12:23.1623785Z   MOI_SEASON: 111S4
+2026-10-31T02:12:23.1624026Z   MOI_LOCAL_ZIP: /tmp/changhua-source.zip
+2026-10-31T02:12:23.1624334Z   MOI_REPORT_PATH: /tmp/changhua-report.json
+2026-10-31T02:12:23.1624829Z   STAGING_SUPABASE_URL: ***
+2026-10-31T02:12:23.1625232Z   STAGING_SUPABASE_SERVICE_ROLE_KEY: ***
+2026-10-31T02:12:23.1625913Z   pythonLocation: /opt/hostedtoolcache/Python/3.12.15/x64
+2026-10-31T02:12:23.1626381Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.12.15/x64/lib/pkgconfig
+2026-10-31T02:12:23.1626817Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.15/x64
+2026-10-31T02:12:23.1627207Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.15/x64
+2026-10-31T02:12:23.1627598Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.15/x64
+2026-10-31T02:12:23.1627986Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.12.15/x64/lib
+2026-10-31T02:12:23.1628322Z ##[endgroup]
+2026-10-31T02:12:23.3381486Z (node:2503) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-10-31T02:12:23.3382348Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-10-31T02:12:23.3429760Z With the provided path, there will be 1 file uploaded
+2026-10-31T02:12:23.3436221Z Artifact name is valid!
+2026-10-31T02:12:23.3437125Z Root directory input is valid!
+2026-10-31T02:12:23.6349052Z Beginning upload of artifact content to blob storage
+2026-10-31T02:12:23.6548411Z (node:2503) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+2026-10-31T02:12:23.7836144Z Uploaded bytes 1366
+2026-10-31T02:12:23.8238482Z Finished uploading artifact content to blob storage!
+2026-10-31T02:12:23.8239616Z SHA256 digest of uploaded artifact zip is 96289c80b73caec04b8ba3dbb2fa85b22067043b3880f59b56dcc41b626b5596
+2026-10-31T02:12:23.8240888Z Finalizing artifact upload
+2026-10-31T02:12:24.2514582Z Artifact changhua-report-111S4-41158903441-1.zip successfully finalized. Artifact ID 13026465653
+2026-10-31T02:12:24.2516598Z Artifact changhua-report-111S4-41158903441-1 has been successfully uploaded! Final size is 1366 bytes. Artifact ID is 13026465653
+2026-10-31T02:12:24.2522969Z Artifact download URL: https://github.com/yungli-lee/good-m2-cc/actions/runs/41158903441/artifacts/13026465653
+2026-10-31T02:12:24.2729680Z Post job cleanup.
+2026-10-31T02:12:24.3642600Z [command]/usr/bin/git version
+2026-10-31T02:12:24.3694602Z git version 2.56.0
+2026-10-31T02:12:24.3739524Z Temporarily overriding HOME='/home/runner/work/_temp/eb2428cc-607c-4d4b-919d-f632bc23604b' before making global git config changes
+2026-10-31T02:12:24.3741234Z Adding repository directory to the temporary git global config as a safe directory
+2026-10-31T02:12:24.3746452Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/good-m2-cc/good-m2-cc
+2026-10-31T02:12:24.3795196Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-10-31T02:12:24.3842105Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-10-31T02:12:24.4221555Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-10-31T02:12:24.4253619Z http.https://github.com/.extraheader
+2026-10-31T02:12:24.4270446Z [command]/usr/bin/git config --local --unset-all http.https://github.com/.extraheader
+2026-10-31T02:12:24.4317828Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-10-31T02:12:24.4641155Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-10-31T02:12:24.4686838Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-10-31T02:12:24.5148916Z Cleaning up orphan processes
+2026-10-31T02:12:24.5532340Z ##[warning]Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/checkout@v4, actions/setup-python@v5, actions/upload-artifact@v4. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/

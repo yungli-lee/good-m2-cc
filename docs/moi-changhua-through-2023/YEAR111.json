@@ -20,7 +20,7 @@
   "continue_110_automatically": false,
   "version": "changhua-sale-presale-year111-v1",
   "complete": false,
-  "status": "authorized_starting",
+  "status": "blocked_source_exception",
   "capacity_guard_bytes": 7000000000,
   "disk_baseline": {
     "database_bytes": 6228823187,
@@ -38,5 +38,34 @@
     "112S2": "skipped",
     "112S1": "skipped"
   },
-  "automation_id": "6ae529b0384c8191b0a9510babd4060a"
+  "automation_id": "6ae529b0384c8191b0a9510babd4060a",
+  "run_id": 41158903441,
+  "implementation_commit": "6eea15996cdf9c2d4f0bf4fcc49978a47c8d9e4b",
+  "automation_enabled": false,
+  "source_exception": {
+    "season": "111S4",
+    "job_id": 124411786566,
+    "file": "n_lvr_land_a.csv",
+    "row": 3156,
+    "raw_transaction_date": "1091000",
+    "reason": "day is out of range for month",
+    "writes": 0,
+    "archive_sha256": "506fd6cffffde253223a531d85bd13f36b857bb729941d694a59f57b5f3862bc",
+    "independent_sha_and_crc_verified": true
+  },
+  "disk_latest": {
+    "database_bytes": 6228823187,
+    "masters_total_bytes": 2939535360,
+    "details_total_bytes": 3132841984,
+    "delta_bytes": 0
+  },
+  "validation": {
+    "scope_tests": 6,
+    "source_repair_tests": 6,
+    "typescript": true,
+    "eslint": true,
+    "build": true,
+    "public_date_rows": 13,
+    "cross_period_history": true
+  }
 }
