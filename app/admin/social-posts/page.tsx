@@ -10,6 +10,7 @@ import { ScheduleFacebookButton } from "./schedule-facebook-button";
 import { SyncFacebookStatusButton } from "./sync-facebook-status-button";
 import { BulkFacebookSync } from "./bulk-facebook-sync";
 import { FacebookPostEngagement } from "./facebook-post-engagement";
+import { SocialPostIndex } from "./social-post-index";
 import { ConfirmScheduledPublishedButton } from "./confirm-scheduled-published-button";
 import { ConfirmFacebookDeletedButton } from "./confirm-facebook-deleted-button";
 import { UploadPostImage } from "./upload-post-image";
@@ -59,9 +60,9 @@ export default async function SocialPostsPage() {
       </form>
     </div></section>
     {(current.profile.role==="admin"||current.profile.role==="owner") ? <BulkFacebookSync/> : null}
-    <h2>我的貼文（最近 100 筆）</h2>
+
     {error ? <div className="notice">目前無法讀取貼文資料。請確認 social_posts 資料表已部署到測試資料庫。</div> : null}
-    <div style={{display:"grid",gap:14}}>
+    <SocialPostIndex items={(posts||[]).map(post=>({id:post.id,title:post.title,body:post.body||"",category:post.category,status:post.status,facebookPostId:post.facebook_post_id||null,deleted:Boolean(post.facebook_deleted_at)||post.status==="archived",searchText:[post.title,post.body,post.category,post.status,post.destination_notes,post.link_url,post.facebook_post_id].filter(Boolean).join(" ")}))}>
       {(posts||[]).map(post=><article className="card" key={post.id}><div className="card-body">
         <div className="actions" style={{justifyContent:"space-between"}}><strong>{post.title}</strong><span className="muted">{post.facebook_deleted_at ? (post.facebook_error?.includes("Facebook 端已刪除") ? "Facebook 端已刪除" : "已刪除") : post.status==="scheduled" ? "已預約" : post.facebook_post_id ? "已發布" : statuses[post.status]||post.status} · {categories[post.category]||post.category}</span></div>
         <p style={{whiteSpace:"pre-wrap",overflowWrap:"anywhere"}}>{post.body||"（尚未輸入文案）"}</p>
@@ -102,6 +103,6 @@ export default async function SocialPostsPage() {
         </div>
       </div></article>)}
       {!error&&!posts?.length ? <p className="muted">尚無草稿。從上方新增第一篇貼文。</p> : null}
-    </div>
+    </SocialPostIndex>
   </div></main>;
 }
