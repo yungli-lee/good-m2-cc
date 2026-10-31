@@ -3686,3 +3686,19 @@ td {
   .admin-property-list-table { min-width: 990px; }
   .admin-property-list-table td:first-child { min-width: 170px; }
 }
+
+/* Service-first homepage preview: place real consultation needs before property browsing. */
+.home-service-first { padding: clamp(36px, 5vw, 68px) max(20px, calc((100vw - 1120px) / 2)); background: #f8f5ed; }
+.home-service-first .section-heading { max-width: 780px; margin-bottom: 24px; }
+.home-service-first .section-heading p:last-child { line-height: 1.8; }
+.home-service-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; }
+.home-service-grid article { display: flex; flex-direction: column; min-width: 0; padding: 26px; border: 1px solid #e5ddcd; border-radius: 16px; background: #fff; box-shadow: 0 8px 22px #1023430b; }
+.home-service-grid h3 { margin: 0 0 12px; font-size: 1.35rem; color: #102343; }
+.home-service-grid p { margin: 0 0 24px; line-height: 1.8; color: #526078; flex: 1; }
+.home-service-grid .audience-path-actions { display: flex; gap: 9px; flex-wrap: wrap; }
+.home-service-grid .button { white-space: normal; text-align: center; }
+@media (max-width: 800px) {
+ .home-service-grid { grid-template-columns: 1fr; }
+ .home-service-first { padding: 36px 18px; }
+ .home-service-grid article { padding: 22px; }
+}
