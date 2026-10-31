@@ -3702,3 +3702,17 @@ td {
  .home-service-first { padding: 36px 18px; }
  .home-service-grid article { padding: 22px; }
 }
+
+/* Contact page: lead with consultation needs, keep corporate disclosure secondary. */
+.contact-service-section .section-heading { max-width: 780px; margin-bottom: 24px; }
+.contact-service-options { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; margin-bottom: 32px; }
+.contact-service-options .card-body { display: flex; flex-direction: column; height: 100%; gap: 12px; }
+.contact-service-options h3 { margin: 0; color: #102343; }
+.contact-service-options p { margin: 0; line-height: 1.75; }
+.contact-service-options .contact-prompt { color: #5b6880; font-size: .92rem; flex: 1; }
+.contact-service-options .actions { margin-top: 8px; display: flex; gap: 8px; flex-wrap: wrap; }
+.contact-details-grid { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); gap: 20px; }
+@media (max-width: 800px) {
+ .contact-service-options, .contact-details-grid { grid-template-columns: 1fr; }
+ .contact-service-options .card-body { padding: 22px; }
+}
