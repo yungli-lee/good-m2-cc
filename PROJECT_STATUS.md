@@ -671,3 +671,7 @@ run41176757504在108S4匯入成功後，GitHub checkpoint publisher PATCH ref回
 
 ### 2026-10-31 18:06 台灣時間：107續補授權及讀取保護暫停
 阿勇再次明確指示繼續107年度。僅107S4→S1彰化有效sale/presale，驗證後暫停不進106。新鮮預檢ACTIVE_HEALTHY/其他SQL0，DB6247885971bytes距7GB752114029；較廣公開sale仍HTTP503，完整本文{"error":"query_unavailable"}，停止未重試，未啟107/無DB寫入。108四季有效匯入成功與年度驗收尚未通過分開保留。應先以只讀診斷處理重複讀取失敗，不盲目循環相同驗收或用日期窄查取代較廣查詢成功證明，不調timeout/schema/配額。107授權已記YEAR107及接續檢查，全部安全條件照舊。
+
+
+### 2026-10-31 18:39 台灣時間：503只讀程式路徑與計畫診斷
+本輪未重送相同公開廣查，無匯入/DELETE/設定變更。ACTIVE_HEALTHY/SQL0/DB6247885971bytes不變。讀取最新Preview API：ID首頁與count:exact同一請求，canonical view含兩個alias EXISTS子查詢；query_unavailable可來自ID/count、頁列或明細階段，回應本文本身不辨階段。僅EXPLAIN未ANALYZE：首頁LIMIT20已使用moi_preview_county_dataset_date_cover_idx Index Only Scan，cost109.18；相同canonical精確count估94511列、cost514182.62，仍逐列alias過濾。此為精確總數成本可能較大的證據，不是已證實目前503原因，也不能將過往57014直接當本輪日誌。未改view/index/schema/API/timeout/配額，不移除精確count或alias以偽造成功。下一步應取得當前失敗階段與同時段錯誤碼，再提出保留精確總數與去重語義的最小修正，避免循環相同公開請求；107仍未啟，108及109/110/111年度驗收待辦不變。

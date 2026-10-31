@@ -36,5 +36,21 @@
     109,
     110,
     111
-  ]
+  ],
+  "diagnostic_latest": {
+    "checked_at": "2026-10-31T10:39:19.085185Z",
+    "database_bytes": 6247885971,
+    "other_active_sql": 0,
+    "project_status": "ACTIVE_HEALTHY",
+    "public_request_sent": false,
+    "api_path": "app/api/public/real-price/route.ts",
+    "finding": "Preview requests exact canonical count with paged IDs; count must scan estimated94511 rows with canonical alias subplans",
+    "explain_only": true,
+    "analyze": false,
+    "index": "moi_preview_county_dataset_date_cover_idx",
+    "page20_plan_cost": 109.18,
+    "count_plan_cost": 514182.62,
+    "inference": "Exact canonical count is a plausible bottleneck, not proven cause of current503",
+    "no_schema_api_timeout_mutation": true
+  }
 }
