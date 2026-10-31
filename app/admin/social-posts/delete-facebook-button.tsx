@@ -16,7 +16,7 @@ export function DeleteFacebookButton({id}:{id:string}) {
    } finally {setBusy(false)}
  }
  return <div style={{display:"grid",gap:6}}>
-   <button type="button" className="button danger" onClick={handleDelete} disabled={busy}>{busy?"正在確認刪除…":"刪除 Facebook 原文"}</button>
+   <button type="button" className="button ghost" style={{width:38,height:36,padding:0,color:"#b42318",border:"1px solid #e8b4b0"}} title="刪除 Facebook 原文" aria-label="刪除 Facebook 原文" onClick={handleDelete} disabled={busy}>{busy?"…":"✕"}</button>
    {notice?<p role="status" aria-live="polite" className={success?"success":"notice"} style={{margin:0}}>{notice}</p>:null}
  </div>;
 }
