@@ -106,7 +106,7 @@ export async function getFacebookPostEngagement(postId:string):Promise<FacebookE
   throw new Error("此筆尚未公開或已封存，無法取得即時成效。");
  const token=await resolveFacebookPageToken();
  const id=encodeURIComponent(p.facebook_post_id);
- const isVideo=/^\\d+$/.test(p.facebook_post_id);
+ const isVideo=/^[0-9]+$/.test(p.facebook_post_id);
  const values:FacebookEngagement={
   reactions:null,comments:null,shares:null,impressions:null,videoViews:null,
   note:"只顯示 Meta API 實際回傳的數字；無法取得不代表 0。曝光與影片觀看屬於不同指標。",
@@ -144,10 +144,9 @@ export async function getFacebookPostEngagement(postId:string):Promise<FacebookE
  ];
  if(!isVideo){
   jobs.push(readMetric("分享",[id+"?fields=shares"],r=>r.shares?.count).then(v=>{values.shares=v;}));
-  // Page insights can return either period values or a total_value object.
+  // Do not substitute media views for impressions: they measure different things.
   jobs.push(readMetric("貼文曝光",[
-   id+"/insights?metric=post_impressions",
-   id+"/insights?metric=post_media_view"
+   id+"/insights?metric=post_impressions"
   ],r=>{
    const metric=r.data?.[0];
    return metric?.values?.[0]?.value??metric?.total_value?.value;
