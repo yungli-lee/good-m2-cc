@@ -37,6 +37,9 @@ export default async function ContactPage() {
   ]);
   const page = pageResult.data;
   if (!page) notFound();
+  const portraitMatches = Array.from((page.markdown_content || "").matchAll(/<!-- contact-portrait:(ayong|amei) (https:\/\/[^\s<>]+) -->/g));
+  const portraits = Object.fromEntries(portraitMatches.map((match) => [match[1], match[2]]));
+  const cleanMarkdown = (page.markdown_content || "").replace(/<!-- contact-portrait:(ayong|amei) (https:\/\/[^\s<>]+) -->/g, "").trim();
   const links = [
     ["LINE", company.line_url],
     ["Facebook", company.facebook_url],
@@ -91,14 +94,18 @@ export default async function ContactPage() {
             </div>
             <div className="contact-team-grid">
               {[
-                { name: "阿勇", role: "不動產顧問・買賣與風險評估", phone: "0938-137177", description: "從需求釐清、產權現況到交易流程，陪您把重要決定想清楚。" },
-                { name: "阿美", role: "不動產顧問・買賣需求與委託服務", phone: "0919-880903", description: "協助買方整理條件、賣方規劃委託，細心回應每一步的問題。" }
+                { key: "ayong", name: "阿勇", role: "不動產顧問・買賣與風險評估", phone: "0938-137177", description: "從需求釐清、產權現況到交易流程，陪您把重要決定想清楚。" },
+                { key: "amei", name: "阿美", role: "不動產顧問・買賣需求與委託服務", phone: "0919-880903", description: "協助買方整理條件、賣方規劃委託，細心回應每一步的問題。" }
               ].map((person) => (
                 <article className="contact-team-card" key={person.name}>
-                  <div className="contact-team-photo-pending" role="img" aria-label={`${person.name}真人照片待確認後上傳`}>
-                    <span aria-hidden="true">◉</span>
-                    <small>真人照片確認後呈現</small>
-                  </div>
+                  {portraits[person.key] ? (
+                    <img className="contact-team-photo" src={portraits[person.key]} alt={`${person.name}不動產顧問形象照`} loading="lazy" />
+                  ) : (
+                    <div className="contact-team-photo-pending" role="img" aria-label={`${person.name}照片尚未設定`}>
+                      <span aria-hidden="true">◉</span>
+                      <small>照片尚未設定</small>
+                    </div>
+                  )}
                   <div className="contact-team-copy">
                     <h3>{person.name}</h3>
                     <p className="contact-team-role">{person.role}</p>
@@ -118,7 +125,7 @@ export default async function ContactPage() {
               <div className="card-body">
                 <h2>認識阿勇與阿美，直接聯絡我們</h2>
                 <p>我不是帶你看房，我是陪你做決定。</p>
-                {page.markdown_content ? <MarkdownContent value={page.markdown_content} /> : <p>買屋、賣屋、貸款、稅務、簽約到交屋，每一步都清楚說明。</p>}
+                {cleanMarkdown ? <MarkdownContent value={cleanMarkdown} /> : <p>買屋、賣屋、貸款、稅務、簽約到交屋，每一步都清楚說明。</p>}
                 {company.company_phone ? <p>電話：<a href={`tel:${company.company_phone.replace(/[^\d+]/g, "")}`}>{company.company_phone}</a></p> : null}
                 {company.company_email ? <p>Email：<a href={`mailto:${company.company_email}`}>{company.company_email}</a></p> : null}
                 {company.company_address ? <p>服務據點：{company.company_address}</p> : null}
