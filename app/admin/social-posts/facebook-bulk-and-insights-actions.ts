@@ -81,7 +81,20 @@ export async function syncAllFacebookPosts():Promise<{ok:boolean;message:string;
 export type FacebookEngagement={
  reactions:number|null;comments:number|null;shares:number|null;
  impressions:number|null;videoViews:number|null;note:string;
+ diagnostics:Record<string,string>;
 };
+type MetaEngagementResponse=Meta & {
+ reactions?:{summary?:{total_count?:number}};
+ comments?:{summary?:{total_count?:number}};
+ shares?:{count?:number};
+ views?:number;
+ summary?:{total_count?:number};
+ data?:Array<{name?:string;values?:Array<{value?:number}>;total_value?:{value?:number}}>;
+};
+function apiFailure(r:{ok:boolean;data:Meta;status:number}):string{
+ const code=r.data.error?.code;
+ return "Meta API "+(code??"HTTP "+r.status)+(r.data.error?.error_subcode?"（子碼 "+r.data.error.error_subcode+"）":"");
+}
 export async function getFacebookPostEngagement(postId:string):Promise<FacebookEngagement>{
  const user=await requireRole(["editor","admin","owner"]);
  const db=await createSupabaseServerClient();
@@ -93,29 +106,61 @@ export async function getFacebookPostEngagement(postId:string):Promise<FacebookE
   throw new Error("此筆尚未公開或已封存，無法取得即時成效。");
  const token=await resolveFacebookPageToken();
  const id=encodeURIComponent(p.facebook_post_id);
- const isVideo=/^\d+$/.test(p.facebook_post_id);
- const values:FacebookEngagement={reactions:null,comments:null,shares:null,impressions:null,videoViews:null,note:"未提供的指標表示 Meta API 未回傳或權限不足。"};
- // Independent requests: one denied field must not hide the other measurements.
- const fields=isVideo?
-  ["reactions.limit(0).summary(true)","comments.limit(0).summary(true)","views"]:
-  ["reactions.limit(0).summary(true)","comments.limit(0).summary(true)","shares"];
- await Promise.all(fields.map(async field=>{
-  try{
-   const r=await getMeta(id+"?fields="+encodeURIComponent(field),token);
-   if(!r.ok)return;
-   const raw=r.data as Meta & {reactions?:{summary?:{total_count?:number}};comments?:{summary?:{total_count?:number}};shares?:{count?:number};views?:number};
-   if(field.startsWith("reactions")&&typeof raw.reactions?.summary?.total_count==="number")values.reactions=raw.reactions.summary.total_count;
-   if(field.startsWith("comments")&&typeof raw.comments?.summary?.total_count==="number")values.comments=raw.comments.summary.total_count;
-   if(field==="shares"&&typeof raw.shares?.count==="number")values.shares=raw.shares.count;
-   if(field==="views"&&typeof raw.views==="number")values.videoViews=raw.views;
-  }catch{/* no fabricated zero */}
- }));
- // Page post insights may be restricted for certain post types / permissions.
- if(!isVideo)try{
-  const r=await getMeta(id+"/insights?metric=post_impressions",token);
-  const raw=r.data as {data?:Array<{name?:string;values?:Array<{value?:number}>}>};
-  const n=raw.data?.find(v=>v.name==="post_impressions")?.values?.[0]?.value;
-  if(r.ok&&typeof n==="number")values.impressions=n;
- }catch{/* unsupported or permission denied */}
+ const isVideo=/^\\d+$/.test(p.facebook_post_id);
+ const values:FacebookEngagement={
+  reactions:null,comments:null,shares:null,impressions:null,videoViews:null,
+  note:"只顯示 Meta API 實際回傳的數字；無法取得不代表 0。曝光與影片觀看屬於不同指標。",
+  diagnostics:{}
+ };
+ async function readMetric(key:string,paths:string[],parse:(raw:MetaEngagementResponse)=>number|undefined):Promise<number|null>{
+  const errors:string[]=[];
+  for(const path of paths){
+   try{
+    const r=await getMeta(path,token);
+    if(!r.ok){errors.push(apiFailure(r));continue;}
+    const n=parse(r.data as MetaEngagementResponse);
+    if(typeof n==="number"&&Number.isFinite(n)){values.diagnostics[key]="已取得";return n;}
+    errors.push("API 未回傳此指標");
+   }catch{errors.push("連線逾時或暫時失敗");}
+  }
+  values.diagnostics[key]=[...new Set(errors)].join("；")||"無法取得";
+  return null;
+ }
+ // Query individual fields so a rejected metric never suppresses other metrics.
+ // Some video objects use a different Graph edge from Page post objects.
+ const reactionPaths=[
+  id+"?fields="+encodeURIComponent("reactions.limit(0).summary(true)"),
+  id+"/reactions?limit=0&summary=true"
+ ];
+ const commentPaths=[
+  id+"?fields="+encodeURIComponent("comments.limit(0).summary(true)"),
+  id+"/comments?limit=0&summary=true"
+ ];
+ const jobs:Promise<void>[]=[
+  readMetric("心情反應",reactionPaths,r=>r.reactions?.summary?.total_count??r.summary?.total_count)
+   .then(v=>{values.reactions=v;}),
+  readMetric("留言",commentPaths,r=>r.comments?.summary?.total_count??r.summary?.total_count)
+   .then(v=>{values.comments=v;})
+ ];
+ if(!isVideo){
+  jobs.push(readMetric("分享",[id+"?fields=shares"],r=>r.shares?.count).then(v=>{values.shares=v;}));
+  // Page insights can return either period values or a total_value object.
+  jobs.push(readMetric("貼文曝光",[
+   id+"/insights?metric=post_impressions",
+   id+"/insights?metric=post_media_view"
+  ],r=>{
+   const metric=r.data?.[0];
+   return metric?.values?.[0]?.value??metric?.total_value?.value;
+  }).then(v=>{values.impressions=v;}));
+ }else{
+  values.diagnostics["分享"]="影片物件未支援此查詢";
+  values.diagnostics["貼文曝光"]="影片物件未支援此查詢";
+  jobs.push(readMetric("影片觀看",[
+   id+"?fields=views",
+   id+"/video_insights?metric=total_video_views"
+  ],r=>r.views??r.data?.[0]?.values?.[0]?.value??r.data?.[0]?.total_value?.value)
+   .then(v=>{values.videoViews=v;}));
+ }
+ await Promise.all(jobs);
  return values;
 }
