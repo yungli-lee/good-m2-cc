@@ -578,3 +578,11 @@ TypeScript、ESLint、build及年度YAML四季序列限制檢查通過。只新�
 run41153615563四個序列worker113S4/S3/S2/S1全部成功，各季complete=true、未解彰化來源異常0；187個chunk SHA與原始ZIP SHA逐筆對上DB log，每批processed及verified主檔數均等於expected、每批RPC低於20秒。年度有效來源主檔18,404、連結土地/建物/車位明細53,725逐批主檔及完整明細指紋集合核對通過，preserved_newer=0。這是來源處理量，不可當新增交易數。四季下載SHA均與使用者已保留lvr_113.zip內11301～11304原始ZIP已驗證SHA相符，CRC與長期原檔備份確認，未要求重傳/下載，未刪原檔或對帳。
 全表精確核對主檔41,422／明細121,574，範圍外交易0、孤兒明細0；ACTIVE_HEALTHY、其他active SQL0、無執行/排隊workflow，配置6,227,922,067 bytes，7GB保護未變。公開sale首頁20／第二頁20／末頁1793頁5／超頁1794頁0，精確total均35,845、前兩頁ID無交集且排序正確；秀水2026-08 sale3／8明細／1車位／1備註，presale20／48明細／8車位／2備註、total5,369；日期sale13及一組跨期history排序通過。68筆同站公開回應來源ID反向至私有DB核對官方備註原文MD5、完整明細數及車位數全相符，沒有把私有DB地址/ID送公開API。
 YEAR113.complete=true、status=complete_paused；檢查6ae529b0384c8191b0a9510babd4060a已停用。不自動進入112年，不宣稱全國、2023年或所有成交日期歷史完整。Production、欄位、layout、付費配額、timeout與7GB線不變；原ZIP、raw/log/CMS與來源/清理/匯入對帳紀錄全部保留。
+
+
+### 2026-10-31 新授權：接續112年（2023）四季後暫停
+阿勇確認繼續112年度，本輪僅112S4→112S1，只彰化sale/presale及土地/建物/車位對應明細，年度完整對帳後停止，不自動進入111年。113年已驗收checkpoint c587b78保留；新moi-changhua-year112.yml只有四個序列job，沿用既有scoped worker與新scope chunk版本，絕不重跑舊national workflow。每100主檔一批、無自動重試、20秒慢批/逾時停止，較新來源與RPC7GB保護不變；每批主檔/完整明細指紋核對，每10批及季前後讀Preview。
+預檢ACTIVE_HEALTHY、無執行/排隊workflow、其他active SQL0、DB6,227,922,067 bytes，Preview view及公開列表13筆/跨期history通過。112年新來源尚無已確認使用者長期備份：各季先CRC/ZIP安全及來源驗證、90天artifact保存，再寫DB；年度完成前必須從source artifacts取得四季逐位元原ZIP，核對SHA/CRC並包成含SHA清單的年度備份保存使用者檔案，記錄檔案身分，不得只依賴90天artifact。已提供113/114/115原檔及raw/chunk/CMS/所有對帳紀錄不刪除。
+Production、資料庫欄位、layout、付費配額、timeout與7GB線不變。6項scope及6項來源修復測試通過，年度YAML確保只112四季；實際啟動狀態以新run與YEAR112.json/季度checkpoint為準，未宣稱112年已完成。
+
+TypeScript、ESLint、build均已通過。僅新增年度workflow與進度文件，既有worker、RPC、API和前台程式不變。

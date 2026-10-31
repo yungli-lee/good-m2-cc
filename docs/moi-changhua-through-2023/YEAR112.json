@@ -1,0 +1,40 @@
+{
+  "year_roc": 112,
+  "year_ad": 2023,
+  "authorized": true,
+  "scope": {
+    "project": "niorteztdbuyusemsgwa",
+    "county": "彰化縣",
+    "datasets": [
+      "sale",
+      "presale"
+    ]
+  },
+  "seasons": [
+    "112S4",
+    "112S3",
+    "112S2",
+    "112S1"
+  ],
+  "stop_after": "112S1",
+  "continue_111_automatically": false,
+  "complete": false,
+  "status": "prepared",
+  "baseline_database_bytes": 6227922067,
+  "capacity_guard_bytes": 7000000000,
+  "previous_year_complete_checkpoint": "c587b78e1a489e23dc3ef68f3107ba14931b7b28",
+  "source_backup_before_write": "90-day exact ZIP artifact, mandatory worker step",
+  "long_term_source_backup_pending": true,
+  "long_term_source_backup_plan": "Download all four source artifacts, verify SHA/CRC, preserve exact original quarterly ZIP bytes in an annual bundle with SHA manifest in user files; record resulting file identity before annual completion.",
+  "automation_id": "6ae529b0384c8191b0a9510babd4060a",
+  "tests": {
+    "scoped_python": 6,
+    "source_repair_python": 6,
+    "annual_yaml": "112S4 -> 112S1 only",
+    "typecheck": "passed",
+    "eslint": "passed",
+    "build": "passed",
+    "public_listing_rows": 13,
+    "cross_period_history": true
+  }
+}
