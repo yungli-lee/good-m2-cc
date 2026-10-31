@@ -19,7 +19,7 @@
   "stop_after": "110S1",
   "continue_109_automatically": false,
   "version": "changhua-sale-presale-year110-v1",
-  "status": "in_progress_110S2_then_S1",
+  "status": "import_complete_pending_annual_acceptance",
   "complete": false,
   "valid_scope_complete": false,
   "quarantine_policy": "Incomplete/invalid source masters and orphan details excluded, full originals retained; unresolved counts remain. Other errors stop.",
@@ -178,13 +178,12 @@
       "presale": "not_provided_not_zero_transactions"
     }
   },
-  "pending_quarters": [
-    "110S2",
-    "110S1"
-  ],
+  "pending_quarters": [],
   "completed_valid_quarters": [
     "110S4",
-    "110S3"
+    "110S3",
+    "110S2",
+    "110S1"
   ],
   "source_failure": {
     "run_id": 41162515605,
@@ -216,5 +215,31 @@
   },
   "resume_plan": "Bounded workflow only110S2 then110S1; S4/S3 not replayed. 111 acceptance/backups and110 backups remain pending.",
   "resume_run_id": 41169999065,
-  "resume_implementation_commit": "a753eba1b2e8992874dfc0d95e88948ba5d261d6"
+  "resume_implementation_commit": "a753eba1b2e8992874dfc0d95e88948ba5d261d6",
+  "four_quarters_import_complete": true,
+  "effective_source_totals": {
+    "masters": 16408,
+    "details": 43890,
+    "batches": 167
+  },
+  "latest_checks": {
+    "checked_at": "2026-10-31T05:26:12.893672Z",
+    "database_bytes": 6238940307,
+    "delta_from_baseline_bytes": 5103616,
+    "headroom_bytes": 761059693,
+    "masters_total_bytes": 2949349376,
+    "masters_heap_bytes": 2592833536,
+    "masters_indexes_bytes": 355696640,
+    "details_total_bytes": 3132841984,
+    "details_heap_bytes": 2543689728,
+    "details_indexes_bytes": 588414976,
+    "other_active_sql": 0,
+    "status": "ACTIVE_HEALTHY",
+    "out_of_scope": 0,
+    "orphan_details": 0,
+    "public_date_rows": 13,
+    "cross_period_history": true
+  },
+  "resume_run_conclusion": "success",
+  "annual_acceptance_pending": true
 }

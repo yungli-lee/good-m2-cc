@@ -633,3 +633,8 @@ TypeScript、ESLint、build均已通過。僅新增年度workflow與進度文件
 
 ### 2026-10-31 12:48 台灣時間：110S2→S1限定接續預檢通過
 本輪ACTIVE_HEALTHY、其他active SQL0、無執行/排隊workflow；公開日期sale13筆及1組跨期history排序通過，未重試失敗請求。DB6236687507bytes，較110起點增加2850816bytes，距7GB763312493bytes；主檔total2947170304/heap2592833536/index353517568，明細total3132841984/heap2543689728/index588414976。僅將年度workflow限110S2→S1，不重跑已成功S4/S3、不進109/112/舊national。精確SHA+manifest來源未提供presale規則沿用11670b3，並非零交易。12scope測試、6來源修復、兩季YAML邊界、TypeScript、ESLint、build通過。111年度驗收及110/111原ZIP長期備份仍待完成；7GB/timeout/Production/schema/layout/raw/log/CMS不變。實際run另查核記錄，未宣告年度完成。
+
+
+### 2026-10-31 13:26 台灣時間：110四季有效匯入成功，年度收尾待驗
+接續run41169999065成功，S2 39批3811主檔/10784明細、S1 38批3752主檔/10752明細全部verified/import_complete=true，各1未解來源依授權隔離。S2 missing identity1、S1 invalid ROC date1；兩季presale為原ZIP/manifest未提供，不是零交易。合併原S4/S3，四季167批、有效來源16408主檔/43890明細，來源處理量非新增交易數。S4欄數2+孤兒明細4、S3 missing identity1仍未解；S3 invalid_official_share1為既有resolved警示，不混為隔離交易數。
+ACTIVE_HEALTHY/其他active SQL0，公開日期13筆/1組跨期history通過；全表範圍外0/孤兒明細0。本輪DB6238940307bytes，相對110起點+5103616，距7GB761059693；主檔total2949349376/heap2592833536/index355696640，明細total3132841984/heap2543689728/index588414976。不追加其他年度。110及111年度chunk log/公開分頁備註完整驗收與四原ZIP長期備份仍待完成，valid_scope_complete=false/complete=false，維持檢查，不宣告年度完成。
