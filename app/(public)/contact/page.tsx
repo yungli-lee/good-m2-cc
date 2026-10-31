@@ -83,6 +83,36 @@ export default async function ContactPage() {
               </article>
             ))}
           </div>
+          <section className="contact-team" aria-labelledby="contact-team-title">
+            <div className="section-heading">
+              <p className="eyebrow">您的不動產服務夥伴</p>
+              <h2 id="contact-team-title">認識阿勇與阿美</h2>
+              <p>兩位顧問、同一份用心。買賣不動產的疑問，歡迎直接找我們聊聊。</p>
+            </div>
+            <div className="contact-team-grid">
+              {[
+                { name: "阿勇", role: "不動產經紀人・買賣與風險評估", phone: "0938-137177", description: "從需求釐清、產權現況到交易流程，陪您把重要決定想清楚。" },
+                { name: "阿美", role: "不動產服務顧問・買賣需求與委託服務", phone: "0919-880903", description: "協助買方整理條件、賣方規劃委託，細心回應每一步的問題。" }
+              ].map((person) => (
+                <article className="contact-team-card" key={person.name}>
+                  <div className="contact-team-photo-pending" role="img" aria-label={`${person.name}真人照片待確認後上傳`}>
+                    <span aria-hidden="true">◉</span>
+                    <small>真人照片確認後呈現</small>
+                  </div>
+                  <div className="contact-team-copy">
+                    <h3>{person.name}</h3>
+                    <p className="contact-team-role">{person.role}</p>
+                    <p>{person.description}</p>
+                    <div className="contact-team-actions">
+                      <a className="button primary" href={`tel:${person.phone.replace(/[^\d+]/g, "")}`}>電話 {person.phone}</a>
+                      {company.line_url ? <a className="button ghost" href={company.line_url} target="_blank" rel="noopener noreferrer">LINE 聯絡（共用入口）</a> : null}
+                    </div>
+                  </div>
+                </article>
+              ))}
+            </div>
+            <p className="contact-team-note">LINE 目前使用網站既有共用聯絡入口，尚未確認阿勇、阿美各自的專屬 LINE 連結；不會將共用連結誤標成個人帳號。</p>
+          </section>
           <div className="contact-details-grid">
             <article className="card">
               <div className="card-body">
