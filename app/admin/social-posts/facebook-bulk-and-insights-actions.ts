@@ -113,7 +113,7 @@ export async function getFacebookPostEngagement(postId:string):Promise<FacebookE
  // Page post insights may be restricted for certain post types / permissions.
  if(!isVideo)try{
   const r=await getMeta(id+"/insights?metric=post_impressions",token);
-  const raw=r.data as Meta & {data?:Array<{name?:string;values?:Array<{value?:number}>}>};
+  const raw=r.data as {data?:Array<{name?:string;values?:Array<{value?:number}>}>};
   const n=raw.data?.find(v=>v.name==="post_impressions")?.values?.[0]?.value;
   if(r.ok&&typeof n==="number")values.impressions=n;
  }catch{/* unsupported or permission denied */}
