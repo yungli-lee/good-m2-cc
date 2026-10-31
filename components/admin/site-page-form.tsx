@@ -231,6 +231,16 @@ export function SitePageForm({ page, mediaAssets, existingPageTypes = [] }: Prop
         <span>副標 / 摘要</span>
         <input className="input" name="subtitle" defaultValue={page?.subtitle || ""} disabled={pending} />
       </label>
+      {pageType === "contact" ? (
+        <div className="field full">
+          <h2>阿勇、阿美照片（分別選擇）</h2>
+          <p className="muted">先在媒體庫上傳兩張定稿照，再分別選取。儲存後將套用到聯絡頁雙人卡片。</p>
+          <MediaPicker assets={mediaAssets} preferredUsageTypes={["general"]} selectedId={mediaAssets.find((a) => a.public_url === ayongUrl)?.id || ""} title="阿勇照片" disabled={pending} onSelect={(a) => setAyongUrl(a.public_url)} />
+          {ayongUrl ? <button type="button" className="button ghost" disabled={pending} onClick={() => setAyongUrl("")}>移除阿勇照片</button> : null}
+          <MediaPicker assets={mediaAssets} preferredUsageTypes={["general"]} selectedId={mediaAssets.find((a) => a.public_url === ameiUrl)?.id || ""} title="阿美照片" disabled={pending} onSelect={(a) => setAmeiUrl(a.public_url)} />
+          {ameiUrl ? <button type="button" className="button ghost" disabled={pending} onClick={() => setAmeiUrl("")}>移除阿美照片</button> : null}
+        </div>
+      ) : null}
       <label className="field full">
         <span>內容（Markdown）</span>
         <textarea
