@@ -13,8 +13,8 @@ export function ConfirmFacebookDeletedButton({id}:{id:string}){
   finally{setBusy(false);}
  }
  return <div style={{display:"grid",gap:6}}>
-  <button type="button" className="button ghost" disabled={busy} onClick={confirm}>
-   {busy?"更新中…":"Facebook 原文已在站外刪除"}
+  <button type="button" className="button ghost" style={{width:38,height:36,padding:0}} title="人工確認 Facebook 原文已在站外刪除" aria-label="人工確認 Facebook 原文已在站外刪除" disabled={busy} onClick={confirm}>
+   {busy?"…":"✓"}
   </button>
   {note?<p role="status" aria-live="polite" className={ok?"success":"notice"}>{note}</p>:null}
  </div>;
