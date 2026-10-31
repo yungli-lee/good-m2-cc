@@ -19,7 +19,7 @@
   "stop_after": "110S1",
   "continue_109_automatically": false,
   "version": "changhua-sale-presale-year110-v1",
-  "status": "resume_preflight_passed_pending_run",
+  "status": "in_progress_110S2_then_S1",
   "complete": false,
   "valid_scope_complete": false,
   "quarantine_policy": "Incomplete/invalid source masters and orphan details excluded, full originals retained; unresolved counts remain. Other errors stop.",
@@ -214,5 +214,7 @@
     "cross_period_history_verified": true,
     "history_groups": 1
   },
-  "resume_plan": "Bounded workflow only110S2 then110S1; S4/S3 not replayed. 111 acceptance/backups and110 backups remain pending."
+  "resume_plan": "Bounded workflow only110S2 then110S1; S4/S3 not replayed. 111 acceptance/backups and110 backups remain pending.",
+  "resume_run_id": 41169999065,
+  "resume_implementation_commit": "a753eba1b2e8992874dfc0d95e88948ba5d261d6"
 }
