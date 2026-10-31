@@ -39,7 +39,7 @@ export function UploadPostVideo({id,existingUrl}:{id:string;existingUrl?:string}
  }
  return <div style={{display:"grid",gap:8,margin:"12px 0"}}>
   <strong>影片素材（Preview 測試）</strong>
-  {saved?<><p className="muted">已上傳 1 段影片，尚未開放影片發布。</p>
+  {saved?<><p className="muted">已上傳 1 段影片。重新整理頁面後，可使用下方影片發布或預約按鈕。</p>
     {existingUrl?<video controls preload="metadata" src={existingUrl} style={{width:"100%",maxWidth:480,borderRadius:8}}/>:null}
     <div><button type="button" className="button ghost" disabled={busy} onClick={remove}>移除影片</button></div></>:
     <><label className="field"><span>選擇 MP4（20MB 以下，每篇一段；不可與圖片並存）</span>
