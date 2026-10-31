@@ -3778,3 +3778,14 @@ td {
   .contact-team-copy { padding: 20px; }
   .contact-team-actions .button { min-height: 44px; }
 }
+
+/* Compact service entry: one step from homepage to contact. */
+.home-service-first.home-service-compact { padding-top: clamp(24px, 4vw, 44px); padding-bottom: clamp(24px, 4vw, 44px); }
+.home-service-compact .section-heading { margin-bottom: 18px; }
+.home-service-compact .section-heading h2 { margin-bottom: 8px; }
+.home-service-compact .home-service-grid { gap: 14px; }
+.home-service-compact .home-service-grid > article { padding: clamp(16px, 2vw, 24px); min-height: 0; }
+.home-service-compact .home-service-grid > article h3 { margin-top: 0; margin-bottom: 8px; }
+.home-service-compact .home-service-grid > article p { margin: 0 0 14px; }
+.home-service-compact .audience-path-actions { margin-top: auto; gap: 8px; }
+@media (max-width: 700px) { .home-service-compact .home-service-grid > article { padding: 16px; } .home-service-compact .audience-path-actions { display: flex; flex-wrap: wrap; } }
