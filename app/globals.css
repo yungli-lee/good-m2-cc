@@ -3686,3 +3686,106 @@ td {
   .admin-property-list-table { min-width: 990px; }
   .admin-property-list-table td:first-child { min-width: 170px; }
 }
+
+/* Service-first homepage preview: place real consultation needs before property browsing. */
+.home-service-first { padding: clamp(36px, 5vw, 68px) max(20px, calc((100vw - 1120px) / 2)); background: #f8f5ed; }
+.home-service-first .section-heading { max-width: 780px; margin-bottom: 24px; }
+.home-service-first .section-heading p:last-child { line-height: 1.8; }
+.home-service-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; }
+.home-service-grid article { display: flex; flex-direction: column; min-width: 0; padding: 26px; border: 1px solid #e5ddcd; border-radius: 16px; background: #fff; box-shadow: 0 8px 22px #1023430b; }
+.home-service-grid h3 { margin: 0 0 12px; font-size: 1.35rem; color: #102343; }
+.home-service-grid p { margin: 0 0 24px; line-height: 1.8; color: #526078; flex: 1; }
+.home-service-grid .audience-path-actions { display: flex; gap: 9px; flex-wrap: wrap; }
+.home-service-grid .button { white-space: normal; text-align: center; }
+@media (max-width: 800px) {
+ .home-service-grid { grid-template-columns: 1fr; }
+ .home-service-first { padding: 36px 18px; }
+ .home-service-grid article { padding: 22px; }
+}
+
+/* Contact page: lead with consultation needs, keep corporate disclosure secondary. */
+.contact-service-section .section-heading { max-width: 780px; margin-bottom: 24px; }
+.contact-service-options { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; margin-bottom: 32px; }
+.contact-service-options .card-body { display: flex; flex-direction: column; height: 100%; gap: 12px; }
+.contact-service-options h3 { margin: 0; color: #102343; }
+.contact-service-options p { margin: 0; line-height: 1.75; }
+.contact-service-options .contact-prompt { color: #5b6880; font-size: .92rem; flex: 1; }
+.contact-service-options .actions { margin-top: 8px; display: flex; gap: 8px; flex-wrap: wrap; }
+.contact-details-grid { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); gap: 20px; }
+@media (max-width: 800px) {
+ .contact-service-options, .contact-details-grid { grid-template-columns: 1fr; }
+ .contact-service-options .card-body { padding: 22px; }
+}
+
+/* Contact team cards: no unapproved portraits or invented personal LINE URLs. */
+.contact-team { margin: 0 0 36px; }
+.contact-team .section-heading { margin-bottom: 20px; }
+.contact-team-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
+.contact-team-card { display: grid; grid-template-columns: minmax(120px, .7fr) minmax(0, 1.3fr); overflow: hidden; border: 1px solid #e2d8c7; border-radius: 16px; background: #fff; }
+.contact-team-photo-pending { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; min-height: 230px; padding: 18px; background: #ece7df; color: #64708a; text-align: center; }
+.contact-team-photo-pending span { font-size: 56px; opacity: .3; }
+.contact-team-photo-pending small { font-size: 12px; line-height: 1.6; }
+.contact-team-copy { display: flex; flex-direction: column; gap: 10px; padding: 22px; }
+.contact-team-copy h3 { margin: 0; font-size: 1.6rem; }
+.contact-team-copy p { margin: 0; line-height: 1.7; }
+.contact-team-role { font-weight: 700; color: #9a6a1f; }
+.contact-team-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: auto; padding-top: 10px; }
+.contact-team-actions .button { text-align: center; white-space: normal; }
+.contact-team-note { margin: 12px 0 0; color: #64708a; font-size: .85rem; line-height: 1.7; }
+@media (max-width: 850px) { .contact-team-grid { grid-template-columns: 1fr; } }
+@media (max-width: 480px) { .contact-team-card { grid-template-columns: 1fr; } .contact-team-photo-pending { min-height: 150px; } }
+
+.contact-team-photo { display:block; width:100%; height:100%; min-height:230px; object-fit:cover; object-position:center top; background:#ece7df; }
+@media(max-width:480px){ .contact-team-photo { max-height:390px; } }
+
+/* Contact portrait: preserve full portrait poster in both orientations. */
+.contact-team-card { min-width:0; }
+.contact-team-photo { width:100%; height:auto; min-height:0; max-height:none; object-fit:contain; object-position:center; align-self:start; }
+.contact-team-copy { min-width:0; overflow-wrap:anywhere; }
+.contact-team-actions { min-width:0; }
+.contact-team-actions .button { max-width:100%; }
+@media (min-width:851px) {
+  .contact-team-card { grid-template-columns:minmax(0,1fr); align-content:start; }
+  .contact-team-photo { width:100%; height:auto; }
+}
+@media (max-width:850px) {
+  .contact-team-card { grid-template-columns:minmax(0,1fr); }
+  .contact-team-photo { width:100%; height:auto; max-height:none; }
+}
+@media (max-width:480px) {
+  .contact-team-photo { max-height:none; }
+}
+/* CMS portrait media selection must fit narrow portrait-mode screens. */
+.field.full { min-width:0; }
+.field.full img { max-width:100%; }
+
+/* Agent cards: iPad portrait/landscape should not inherit oversized full-width posters. */
+@media (min-width: 701px) and (max-width: 1366px) {
+  .contact-team-grid { grid-template-columns: minmax(0, 1fr); }
+  .contact-team-card { grid-template-columns: minmax(220px, 36%) minmax(0, 1fr); align-items: stretch; }
+  .contact-team-card .contact-team-photo { width: 100%; height: 100%; max-height: 500px; object-fit: contain; object-position: center bottom; }
+  .contact-team-copy { justify-content: center; padding: clamp(18px, 3vw, 32px); }
+  .contact-team-actions { margin-top: 18px; }
+  .contact-team-actions .button { min-height: 44px; }
+}
+@media (min-width: 701px) and (max-width: 850px) {
+  .contact-team-card { grid-template-columns: minmax(200px, 38%) minmax(0, 1fr); }
+}
+@media (max-width: 700px) {
+  .contact-team-grid { grid-template-columns: minmax(0, 1fr); }
+  .contact-team-card { grid-template-columns: minmax(0, 1fr); }
+  .contact-team-card .contact-team-photo { max-height: min(70vh, 440px); width: 100%; height: auto; object-fit: contain; }
+  .contact-team-copy { padding: 20px; }
+  .contact-team-actions .button { min-height: 44px; }
+}
+
+/* Compact service entry: one step from homepage to contact. */
+.home-service-first.home-service-compact { padding-top: clamp(24px, 4vw, 44px); padding-bottom: clamp(24px, 4vw, 44px); }
+.home-service-compact .section-heading { margin-bottom: 18px; }
+.home-service-compact .section-heading h2 { margin-bottom: 8px; }
+.home-service-compact .home-service-grid { gap: 14px; }
+.home-service-compact .home-service-grid > article { padding: clamp(16px, 2vw, 24px); min-height: 0; }
+.home-service-compact .home-service-grid > article h3 { margin-top: 0; margin-bottom: 8px; }
+.home-service-compact .home-service-grid > article p { margin: 0 0 14px; }
+.home-service-compact .audience-path-actions { margin-top: auto; gap: 8px; }
+@media (max-width: 700px) { .home-service-compact .home-service-grid > article { padding: 16px; } .home-service-compact .audience-path-actions { display: flex; flex-wrap: wrap; } }

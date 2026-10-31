@@ -1,8 +1,30 @@
 import Link from "next/link";
 
-export function HomeAudiencePaths() {
-  return <section className="audience-paths" aria-labelledby="audience-paths-title"><div className="section-heading"><p className="eyebrow">Start Here</p><h2 id="audience-paths-title">您今天想處理哪一件事？</h2></div><div className="audience-path-grid">
-    <article><h3>我要買房</h3><p>從公開物件開始找，也可以先試算預算與每月負擔。</p><div className="audience-path-actions"><Link className="button primary" href="/properties">開始找房</Link><Link className="button ghost" href="/calculator">先做試算</Link></div></article>
-    <article><h3>我要賣房</h3><p>先整理物件條件、預估出售費用，再交由阿勇協助規劃。</p><div className="audience-path-actions"><Link className="button primary" href="/contact">提出委售需求</Link><Link className="button ghost" href="/calculators/owner-net-all-in">試算賣方淨拿</Link></div></article>
-  </div><div className="audience-area-entry"><div><strong>想先從地區開始找？</strong><span>查看彰化市、秀水鄉與鹿港鎮的房屋土地資訊。</span></div><Link className="button ghost" href="/areas">依地區找房</Link></div></section>;
+export function HomeAudiencePaths({ lineUrl, phone }: { lineUrl?: string | null; phone?: string | null }) {
+  const services = [
+    { title: "我要買屋／找土地", description: "告訴我們想找的地區、預算與條件，協助您釐清需求與方向。", href: "/contact?service=buy" },
+    { title: "我要賣屋／賣土地", description: "先了解物件現況、行情與出售規劃，再一起決定下一步。", href: "/contact?service=sell" },
+    { title: "我有不動產問題", description: "產權、貸款、稅務、土地使用或簽約疑問，都可以先聊聊。", href: "/contact?service=consult" },
+  ];
+  return (
+    <section className="audience-paths home-service-first home-service-compact" id="service-start" aria-labelledby="audience-paths-title">
+      <div className="section-heading">
+        <p className="eyebrow">誠摯服務</p>
+        <h2 id="audience-paths-title">今天想找我們聊什麼？</h2>
+        <p>不必先研究所有資訊，選擇您的需求，直接聯絡阿勇與阿美。</p>
+      </div>
+      <div className="audience-path-grid home-service-grid">
+        {services.map((service) => (
+          <article key={service.title}>
+            <h3>{service.title}</h3>
+            <p>{service.description}</p>
+            <div className="audience-path-actions">
+              {lineUrl ? <a className="button primary" href={lineUrl} target="_blank" rel="noopener noreferrer">LINE 詢問</a> : <Link className="button primary" href={service.href}>聯絡我們</Link>}
+              {phone ? <a className="button ghost" href={`tel:${phone.replace(/[^\d+]/g, "")}`}>電話聯絡</a> : <Link className="button ghost" href={service.href}>聯絡方式</Link>}
+            </div>
+          </article>
+        ))}
+      </div>
+    </section>
+  );
 }

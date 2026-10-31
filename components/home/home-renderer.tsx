@@ -50,7 +50,10 @@ export function HomeRenderer({ campaigns, pages, company, navigation, featuredPr
   for (const section of resolved) managedByKey.set(section.key, [...(managedByKey.get(section.key) || []), section.page]);
   const publishedManagedKeys = new Set(managedByKey.keys());
 
+  // The dedicated agent service cards replace the old homepage team/contact panels.
+  // Keep the legacy content and CMS records intact for rollback; do not render them.
   const sections = legacyHomeSections.flatMap((section, index) => {
+    if (section.key === "team" || section.key === "contact") return [];
     if (!shouldRenderHomeSection(section.key, publishedManagedKeys, campaigns.length)) return [];
     const managed = managedByKey.get(section.key);
     const sortOrder = managed?.[0]?.sort_order ?? index * 100;
@@ -62,7 +65,7 @@ export function HomeRenderer({ campaigns, pages, company, navigation, featuredPr
         : section.key === "featured-properties"
           ? <HomePropertyCollection kind="featured" properties={featuredProperties} autoplay={displaySettings.featured_property_autoplay} intervalSeconds={displaySettings.featured_property_interval_seconds} />
           : section.key === "property-search"
-            ? <><HomePropertySearch lineUrl={company.line_url || ""} /><HomeAudiencePaths /></>
+            ? <HomePropertySearch lineUrl={company.line_url || ""} />
             : section.key === "latest-properties"
               ? <HomePropertyCollection kind="latest" properties={latestProperties} autoplay={displaySettings.latest_property_autoplay} intervalSeconds={displaySettings.latest_property_interval_seconds} />
               : section.key === "knowledge-preview"
@@ -78,7 +81,7 @@ export function HomeRenderer({ campaigns, pages, company, navigation, featuredPr
   return (
     <>
       <HomeHeader company={company} navigation={navigation} />
-      <main>{sortHomeSections(sections).map((section) => <Fragment key={section.stableKey}>{section.node}</Fragment>)}</main>
+      <main>{sortHomeSections(sections).map((section) => <Fragment key={section.stableKey}>{section.node}{section.stableKey === "hero" ? <HomeAudiencePaths lineUrl={company.line_url} phone={company.company_phone} /> : null}</Fragment>)}</main>
       <HomeFooter company={company} navigation={navigation} />
       <HomeLegacyEnhancements />
     </>
