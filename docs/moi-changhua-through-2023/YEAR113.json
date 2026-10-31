@@ -19,7 +19,7 @@
   "stop_after": "113S1",
   "continue_112_automatically": false,
   "complete": false,
-  "status": "prepared",
+  "status": "running",
   "baseline_database_bytes": 6264220819,
   "capacity_guard_bytes": 7000000000,
   "previous_year_complete_checkpoint": "d73daa824179ea2d1b60b3e016d949cd330e0599",
@@ -54,14 +54,9 @@
     }
   },
   "automation_id": "6ae529b0384c8191b0a9510babd4060a",
-  "tests": {
-    "scoped_python": 6,
-    "source_repair_python": 6,
-    "annual_yaml": "four serial quarters only",
-    "typecheck": "passed",
-    "eslint": "passed",
-    "build": "passed",
-    "public_listing_rows": 13,
-    "cross_period_history": true
-  }
+  "implementation_commit": "b1b454ff8c129b3ce34f257162d40cc01cb53f90",
+  "run_id": 41153615563,
+  "first_job": 124395457118,
+  "active_quarter": "113S4",
+  "automation_enabled": true
 }
