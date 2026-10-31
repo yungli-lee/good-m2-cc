@@ -19,7 +19,7 @@
   "stop_after": "112S1",
   "continue_111_automatically": false,
   "complete": false,
-  "status": "running",
+  "status": "blocked_source_exception",
   "baseline_database_bytes": 6227922067,
   "capacity_guard_bytes": 7000000000,
   "previous_year_complete_checkpoint": "c587b78e1a489e23dc3ef68f3107ba14931b7b28",
@@ -30,6 +30,17 @@
   "implementation_commit": "9a62fd3ca1c5f75d4a3dc256c6126cfde119b195",
   "run_id": 41158208216,
   "first_job": 124409613459,
-  "active_quarter": "112S4",
-  "automation_enabled": true
+  "active_quarter": "112S3",
+  "automation_enabled": false,
+  "failure": {
+    "run": 41158208216,
+    "job": 124410120926,
+    "season": "112S3",
+    "error": "RuntimeError: Unresolved scoped source exceptions; stop before writes",
+    "source_issue_counts": {
+      "invalid ROC date": 1
+    },
+    "batches": 0,
+    "full_log": "112S3-run41158208216-job.log"
+  }
 }

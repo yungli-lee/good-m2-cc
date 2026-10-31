@@ -586,3 +586,11 @@ YEAR113.complete=true、status=complete_paused；檢查6ae529b0384c8191b0a9510ba
 Production、資料庫欄位、layout、付費配額、timeout與7GB線不變。6項scope及6項來源修復測試通過，年度YAML確保只112四季；實際啟動狀態以新run與YEAR112.json/季度checkpoint為準，未宣稱112年已完成。
 
 TypeScript、ESLint、build均已通過。僅新增年度workflow與進度文件，既有worker、RPC、API和前台程式不變。
+
+
+
+
+### 111年（2022）四季授權與disk追蹤
+阿勇最新明確授權只繼續111年度，完成先暫停，不自動進入110。獨立四季序列workflow及worker僅111S4→111S1，版本changhua-sale-presale-year111-v1，既有112以上worker與RPC不變。每100主檔序列、20秒慢批/逾時停、無自動重試、原始來源先備份、每批主檔/完整明細指紋與每10批Preview核對不變。新111來源須另驗SHA/CRC並長期保存使用者檔案後才可年度完成。
+預檢ACTIVE_HEALTHY、其他active SQL0、無執行中workflow。disk配置6,228,823,187 bytes，較112啟動前增加901,120 bytes；主檔relation含索引2,939,535,360、明細3,132,841,984 bytes。距7,000,000,000線771,176,813 bytes，既有每批RPC容量保護不變，後續檢查記錄配置及relation大小與相對基準增量，壓力/不健康立即停止追加，不調高配額/timeout、不重建表。
+核對發現112 run41158208216失敗，112S4 complete=true，112S3因1筆invalid ROC date來源例外於寫入前停止，S2/S1 skipped。112年度尚未完成，來源異常與原檔待獨立處理，不略過/不宣稱完整，不重跑成功季度。此次111為新授權獨立年度，沒有重疊匯入。只staging彰化sale/presale，Production/欄位/layout/raw/log/CMS不變。

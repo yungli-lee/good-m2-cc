@@ -1,0 +1,42 @@
+{
+  "year_roc": 111,
+  "year_ad": 2022,
+  "authorized": true,
+  "scope": {
+    "project": "niorteztdbuyusemsgwa",
+    "county": "彰化縣",
+    "datasets": [
+      "sale",
+      "presale"
+    ]
+  },
+  "seasons": [
+    "111S4",
+    "111S3",
+    "111S2",
+    "111S1"
+  ],
+  "stop_after": "111S1",
+  "continue_110_automatically": false,
+  "version": "changhua-sale-presale-year111-v1",
+  "complete": false,
+  "status": "authorized_starting",
+  "capacity_guard_bytes": 7000000000,
+  "disk_baseline": {
+    "database_bytes": 6228823187,
+    "masters_total_bytes": 2939535360,
+    "details_total_bytes": 3132841984,
+    "delta_from_112_start_bytes": 901120,
+    "headroom_bytes": 771176813
+  },
+  "long_term_source_backup_pending": true,
+  "prior_year_112": {
+    "complete": false,
+    "run_id": 41158208216,
+    "112S4": "complete",
+    "112S3": "stopped_before_writes_invalid_ROC_date_1",
+    "112S2": "skipped",
+    "112S1": "skipped"
+  },
+  "automation_id": "6ae529b0384c8191b0a9510babd4060a"
+}
