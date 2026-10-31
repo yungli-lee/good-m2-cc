@@ -76,7 +76,7 @@ export default async function ContactPage() {
                   <p className="contact-prompt">可以先這樣告訴我們：「{option.prompt}」</p>
                   <div className="actions">
                     {company.line_url ? <a className="button primary" href={company.line_url} target="_blank" rel="noopener noreferrer">LINE 詢問</a> : null}
-                    {company.company_phone ? <a className="button ghost" href={`tel:${company.company_phone.replace(/[^\\d+]/g, "")}`}>電話聯絡</a> : null}
+                    {company.company_phone ? <a className="button ghost" href={`tel:${company.company_phone.replace(/[^\d+]/g, "")}`}>電話聯絡</a> : null}
                     {!company.line_url && !company.company_phone && company.company_email ? <a className="button primary" href={`mailto:${company.company_email}`}>Email 詢問</a> : null}
                   </div>
                 </div>
@@ -89,7 +89,7 @@ export default async function ContactPage() {
                 <h2>認識阿勇與阿美，直接聯絡我們</h2>
                 <p>我不是帶你看房，我是陪你做決定。</p>
                 {page.markdown_content ? <MarkdownContent value={page.markdown_content} /> : <p>買屋、賣屋、貸款、稅務、簽約到交屋，每一步都清楚說明。</p>}
-                {company.company_phone ? <p>電話：<a href={`tel:${company.company_phone.replace(/[^\\d+]/g, "")}`}>{company.company_phone}</a></p> : null}
+                {company.company_phone ? <p>電話：<a href={`tel:${company.company_phone.replace(/[^\d+]/g, "")}`}>{company.company_phone}</a></p> : null}
                 {company.company_email ? <p>Email：<a href={`mailto:${company.company_email}`}>{company.company_email}</a></p> : null}
                 {company.company_address ? <p>服務據點：{company.company_address}</p> : null}
                 <div className="actions">{links.map(([label, href]) => <a className="button ghost" href={href} key={label} target="_blank" rel="noopener noreferrer">{label}</a>)}</div>
