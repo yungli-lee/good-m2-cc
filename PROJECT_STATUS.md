@@ -604,3 +604,7 @@ TypeScript、ESLint、build均已通過。僅新增年度workflow與進度文件
 阿勇明確指示「這筆先隔離，後續繼續」。僅允許原SHA506fd6cf...、111S4 n_lvr_land_a.csv第3156列、原編號RPSNMLOKIIHGFDN58DA、原交易年月日1091000及相同錯誤吻合時先隔離，保留原ZIP與完整artifact異常原文，不改日期、不寫入這筆主檔或明細。其他任何未解異常仍阻擋寫入。111S4 import_complete只代表有效資料處理完，complete仍false且unresolved_issues=1；全年必須分開標示valid_scope_complete與待處理隔離1筆，不宣稱完整。先前111S4為0批寫入，安全接續新run既有scope/chunk版本，僅111S4→S1四季，不進110、不恢復112。容量/健康及100筆/20秒/no-retry保護不變，起點DB6228823187bytes，其他active SQL0、ACTIVE_HEALTHY、Preview可讀。
 
 單筆隔離實作8709ab8ccc65f3fd402a788a5bd8dd275769f842，新run41160138992已執行中；8項scope/隔離、6項來源修復、原檔SHA/CRC及4004有效來源核對、年度四季邊界、TypeScript、ESLint、build、公開13筆與跨期history通過。完成檢查已恢復，僅核對111有效回補與待處理隔離，完成後停。
+
+
+### 2026-10-31 10:29 台灣時間：111年度僅監看與disk紀錄
+確認8709ab8對應新run41160138992仍執行中；111S4 worker124415673625來源驗證與寫入前原ZIP artifact均成功，目前匯入/逐批對帳中。未另啟重疊工作，未重跑舊失敗run或其他年度。季度repo JSON尚為前次失敗紀錄，須待新worker提交後再核對，不能據此稱新run失敗/完成。ACTIVE_HEALTHY、其他active SQL0、Preview view可讀。實測DB6,229,232,787 bytes，相對本年度起點增加409,600 bytes；主檔total2,939,944,960（heap2,592,833,536/index346,292,224）、明細total3,132,841,984（heap2,543,689,728/index588,414,976），明細total相對起點0增量。距7GB線770,767,213 bytes；7GB/RPC/timeout不變，不做表重寫。原1091000單筆仍授權隔離待處理，valid_scope_complete=false/complete=false；長期原檔備份及年度公開驗收尚待四季有效資料完成，檢查維持啟用。

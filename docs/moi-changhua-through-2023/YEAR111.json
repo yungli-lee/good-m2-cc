@@ -56,10 +56,21 @@
     "authorization": "這筆先隔離，後續繼續"
   },
   "disk_latest": {
-    "database_bytes": 6228823187,
-    "masters_total_bytes": 2939535360,
+    "checked_at": "2026-10-31T02:29:05.390923Z",
+    "database_bytes": 6229232787,
+    "masters_total_bytes": 2939944960,
+    "masters_heap_bytes": 2592833536,
+    "masters_index_bytes": 346292224,
     "details_total_bytes": 3132841984,
-    "delta_bytes": 0
+    "details_heap_bytes": 2543689728,
+    "details_index_bytes": 588414976,
+    "delta_database_from_baseline_bytes": 409600,
+    "delta_masters_total_bytes": 409600,
+    "delta_details_total_bytes": 0,
+    "headroom_bytes": 770767213,
+    "project_status": "ACTIVE_HEALTHY",
+    "other_active_sql": 0,
+    "preview_readable": true
   },
   "validation": {
     "scope_quarantine_tests": 8,
@@ -70,5 +81,35 @@
     "public_rows": 13,
     "cross_period_history": true
   },
-  "valid_scope_complete": false
+  "valid_scope_complete": false,
+  "disk_observations": [
+    {
+      "checked_at": "2026-10-31T02:29:05.390923Z",
+      "database_bytes": 6229232787,
+      "masters_total_bytes": 2939944960,
+      "masters_heap_bytes": 2592833536,
+      "masters_index_bytes": 346292224,
+      "details_total_bytes": 3132841984,
+      "details_heap_bytes": 2543689728,
+      "details_index_bytes": 588414976,
+      "delta_database_from_baseline_bytes": 409600,
+      "delta_masters_total_bytes": 409600,
+      "delta_details_total_bytes": 0,
+      "headroom_bytes": 770767213,
+      "project_status": "ACTIVE_HEALTHY",
+      "other_active_sql": 0,
+      "preview_readable": true
+    }
+  ],
+  "active_quarter": "111S4",
+  "last_observation": {
+    "run_id": 41160138992,
+    "job_id": 124415673625,
+    "status": "in_progress",
+    "source_validation": "success",
+    "source_artifact_backup": "success",
+    "import": "in_progress",
+    "overlapping_import_started": false
+  },
+  "quarantine_pending": 1
 }
