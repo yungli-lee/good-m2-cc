@@ -8,6 +8,7 @@ import { DeleteFacebookButton } from "./delete-facebook-button";
 import { FacebookConnectionCheck } from "./facebook-connection-check";
 import { ScheduleFacebookButton } from "./schedule-facebook-button";
 import { SyncFacebookStatusButton } from "./sync-facebook-status-button";
+import { ConfirmScheduledPublishedButton } from "./confirm-scheduled-published-button";
 import { UploadPostImage } from "./upload-post-image";
 import { UploadPostVideo } from "./upload-post-video";
 import { PublishFacebookVideoButton } from "./publish-facebook-video-button";
@@ -85,6 +86,7 @@ export default async function SocialPostsPage() {
         <div className="admin-actions" style={{flexWrap:"wrap"}}>
           <CopyPostButton body={post.body||""} />
           {post.facebook_post_id && !post.facebook_deleted_at ? <SyncFacebookStatusButton id={post.id}/> : null}
+          {post.status==="scheduled" && post.facebook_post_id && !post.facebook_deleted_at && (current.profile.role==="admin"||current.profile.role==="owner") ? <ConfirmScheduledPublishedButton id={post.id}/> : null}
           {((post.status==="draft"||post.status==="ready") && !post.facebook_post_id && !videoByPost.has(post.id)) ? <><PublishFacebookButton id={post.id} enabled={facebookReady}/><ScheduleFacebookButton id={post.id} enabled={facebookReady}/></> : null}
           {videoByPost.has(post.id) && !post.facebook_post_id && (post.status==="draft"||post.status==="ready") ? <PublishFacebookVideoButton id={post.id} enabled={facebookReady}/> : null}
           {post.facebook_post_id && !post.facebook_deleted_at && post.status!=="scheduled" && (current.profile.role==="admin"||current.profile.role==="owner") ? <DeleteFacebookButton id={post.id}/> : null}
