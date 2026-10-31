@@ -38,18 +38,17 @@
     111
   ],
   "diagnostic_latest": {
-    "checked_at": "2026-10-31T11:29:13.950149Z",
-    "database_bytes": 6247894163,
+    "checked_at": "2026-10-31T12:57:51.227176Z",
+    "database_bytes": 6247926931,
     "other_active_sql": 0,
+    "project_status": "ACTIVE_HEALTHY",
     "public_request_sent": false,
-    "log_window_start": "2026-10-31T10:06:00Z",
-    "log_window_end": "2026-10-31T10:08:00Z",
-    "sql_state": "57014",
-    "application": "PostgREST 14.5",
-    "error_at": "2026-10-31T10:06:44.480Z",
-    "confirmed_failure_stage": "initial_paged_ids_and_exact_canonical_count",
-    "query_shape": "pgrst_source ordered IDs LIMIT/OFFSET plus pgrst_source_count same canonical view; total count aggregate",
-    "not_confirmed": "Cancellation mechanism and separate contribution of page/count runtime not established",
-    "next_step": "Evaluate semantically identical anti-join count plan with EXPLAIN only; do not mutate view/schema/timeout"
+    "explain_only": true,
+    "candidate_count_cost": 44744.14,
+    "previous_view_count_cost": 514182.62,
+    "plan": "Parallel Hash Anti Joins",
+    "runtime_improvement_verified": false,
+    "proposal": "preview-canonical-count-proposal.md",
+    "next_step": "Validate synthetic equivalence and ordered LIMIT plan; no schema/view mutation authorized"
   }
 }
