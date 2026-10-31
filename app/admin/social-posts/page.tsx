@@ -29,6 +29,11 @@ export default async function SocialPostsPage() {
     ? await supabase.from("social_post_videos").select("post_id,storage_path").in("post_id",postIds)
     : {data:[] as {post_id:string;storage_path:string}[]};
   const videoByPost=new Map((videos||[]).map(v=>[v.post_id,v.storage_path]));
+  const previewUrls=await Promise.all((videos||[]).map(async v=>{
+    const {data}=await supabase.storage.from("social-post-videos").createSignedUrl(v.storage_path,3600);
+    return [v.post_id,data?.signedUrl] as const;
+  }));
+  const previewByPost=new Map(previewUrls);
   const facebookReady = process.env.FACEBOOK_PUBLISH_ENABLED === "true" && Boolean(process.env.FACEBOOK_PAGE_ACCESS_TOKEN);
   return <main className="section"><div className="container">
     <div className="admin-page-header"><div><p className="eyebrow">Social Publishing</p><h1>社群發文管理</h1>
@@ -58,8 +63,7 @@ export default async function SocialPostsPage() {
         {post.destination_notes ? <p className="muted" style={{whiteSpace:"pre-wrap"}}>目的地：{post.destination_notes}</p> : null}
         {(post.status === "draft" || post.status === "ready") ? <>
           {!videoByPost.has(post.id) ? <UploadPostImage id={post.id}/> : null}
-          <UploadPostVideo id={post.id} existingUrl={videoByPost.has(post.id)
-            ? supabase.storage.from("social-post-videos").getPublicUrl(videoByPost.get(post.id)!).data.publicUrl : undefined}/>
+          <UploadPostVideo id={post.id} existingUrl={previewByPost.get(post.id)}/>
         </> : null}
         {post.status === "publish_unknown" ? <><DiagnoseImagesButton id={post.id}/>{(current.profile.role==="admin"||current.profile.role==="owner")?<MetaPhotoTestButton id={post.id}/>:null}</> : null}
         {(post.status === "draft" || post.status === "ready") ? <details style={{marginBottom:12}}>
