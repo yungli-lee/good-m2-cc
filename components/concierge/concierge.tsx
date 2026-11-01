@@ -1,6 +1,5 @@
 "use client";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
 import { AssistantPortrait } from "@/components/concierge/assistant-portrait";
 import { contactPhoneSchema } from "@/lib/inquiries/schema";
 import { readPublicJson, requestChatJson } from "@/lib/concierge/public-response";
@@ -17,8 +16,8 @@ type Reply = { viewingTime?: string; focusedProperty?: Card | null; action?: str
 type Message = { role: "user" | "assistant"; text: string; reply?: Reply; character?: "amei" | "ayong" };
 type Turnstile = { render(element: HTMLElement, options: Record<string, unknown>): string; remove(id: string): void; reset(id: string): void };
 function turnstile() { return (window as unknown as { turnstile?: Turnstile }).turnstile; }
-export function Concierge({ aiEnabled, siteKey, phone, lineUrl, initialProperty, embedded = false, character = "amei", active = true }: { aiEnabled: boolean; siteKey: string; phone: string; lineUrl: string; initialProperty?: Card; embedded?: boolean; character?: "amei" | "ayong"; active?: boolean }) {
-  const intentParam = useSearchParams().get("intent");
+export function Concierge({ aiEnabled, siteKey, phone, lineUrl, initialProperty, embedded = false, character = "amei", active = true, initialIntent = "" }: { aiEnabled: boolean; siteKey: string; phone: string; lineUrl: string; initialProperty?: Card; embedded?: boolean; character?: "amei" | "ayong"; active?: boolean; initialIntent?: string }) {
+  const intentParam = initialIntent;
   const initialPrompt = intentParam === "buy" ? "我想買屋或找土地，想先整理地區、預算和必要條件。" : intentParam === "sell" ? "我有房屋或土地想出售，想先了解行情與委託規劃。" : intentParam === "consult" ? "我有不動產問題，想請教產權、貸款、稅務或交易流程。" : "";
   const inputId = useId();
   const leadTitleId = useId();
