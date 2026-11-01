@@ -727,3 +727,7 @@ ACTIVE_HEALTHY/其他SQL0/DB6247935123bytes。以id>13607下一1000主檔同一S
 
 ### 2026-11-01 授權修復實際套用後驗收失敗，已回復
 新鮮ACTIVE_HEALTHY/activeSQL0，原view定義/ACL/options與備份一致。依阿勇授權套用NOT EXISTS predicate，DDL成功，ACL/options未變。公開分頁script執行首個broad_sale首頁仍HTTP503，停止未重試，錯誤本文未由原helper保存；不能判定取消原因。已立即CREATE OR REPLACE回復保存原定義，工具成功回應。此次候選未解決503，不保留未通過變更、不啟107。全表等價107192/107192差異0證據保留；Production/timeout/配額/7GB未改。下一步應定位本次候選下當前失敗statement與生效角色/取消來源，不再循環同一修復。
+
+
+### 2026-11-01 14:31 台灣時間：催辦歷年回補與上線，定位候選試用錯誤
+阿勇要求盡快補齊歷年資料並上線，沿用既有staging與健康/完整驗收保護，不據此解除Production限制或跳過108驗收。新鮮DB6247967891bytes/其他SQL0。查06:15至06:32Z日誌定位06:17:16.422Z PostgREST14.5 57014，仍為初始paged IDs+精確count同statement，非明細階段；證實候選試用時失敗階段未改變，不能以EXPLAIN估算宣稱問題已解。未重送廣查、未匯入。使用者截圖9c927f8f部署秀水末頁含2012/2016/2017個別日期，不能當年度來源完整證明。下步應比較PostgREST實際角色/參數化同statement計畫，避免重試相同候選；107與108/109/110/111驗收待辦保留。
