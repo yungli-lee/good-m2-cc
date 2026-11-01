@@ -6,13 +6,24 @@ import {resolveFacebookPageToken,FACEBOOK_PAGE_ID} from "./facebook-page-token";
 
 const GRAPH="https://graph.facebook.com/v26.0/";
 const MAX_BYTES=20*1024*1024;
-const DIAG_VERSION="VIDEO-DIAG-2";
+const DIAG_VERSION="VIDEO-DIAG-3";
 type Result={ok:boolean;message:string};
 type MetaVideoReply={id?:unknown;error?:{code?:number;error_subcode?:number;type?:string;message?:string}};
-/** Keep only allowlisted diagnostic fields; never persist signed file URLs or credentials. */
+/** Strip URLs, emails and credential-like strings before recording Meta's short explanation. */
+function safeMetaExplanation(value:unknown):string{
+ if(typeof value!=="string")return "none";
+ return value
+  .replace(/https?:\/\/[^\s"'<>]+/gi,"[URL]")
+  .replace(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi,"[EMAIL]")
+  .replace(/\b(?:EAA|EAAG)[A-Za-z0-9_-]{12,}\b/g,"[TOKEN]")
+  .replace(/[A-Za-z0-9_\-]{48,}/g,"[REDACTED]")
+  .replace(/[\r\n\t]/g," ")
+  .slice(0,220);
+}
+/** Persist bounded diagnostics only; never persist signed file URLs or credentials. */
 function metaVideoFailure(httpStatus:number,reply:MetaVideoReply):string{
  const err=reply.error;
- if(err)return "META_API_ERROR http="+httpStatus+" code="+(err.code??"unknown")+" subcode="+(err.error_subcode??"none")+" type="+(err.type??"unknown").slice(0,40);
+ if(err)return "META_API_ERROR http="+httpStatus+" code="+(err.code??"unknown")+" subcode="+(err.error_subcode??"none")+" type="+(err.type??"unknown").slice(0,40)+" reason="+safeMetaExplanation(err.message);
  if(!Number.isInteger(httpStatus)||httpStatus<200||httpStatus>=300)return "META_HTTP_"+httpStatus;
  if(typeof reply.id!=="string"||!/^\d+$/.test(reply.id))return "META_MISSING_VIDEO_ID http="+httpStatus+" id_type="+typeof reply.id;
  return "META_UNEXPECTED_RESPONSE http="+httpStatus;
@@ -87,13 +98,13 @@ export async function publishFacebookVideo(id:string,scheduledIso?:string):Promi
  }catch(error){
    const code=error instanceof Error?error.message:"UNKNOWN";
    await db.from("social_posts").update({status:"publish_unknown",
-     facebook_error:"["+DIAG_VERSION+"] 影片送往 Meta 結果待核對 ("+code.slice(0,160)+")；禁止直接重試",
+     facebook_error:"["+DIAG_VERSION+"] 影片送往 Meta 結果待核對 ("+code.slice(0,380)+")；禁止直接重試",
      updated_at:new Date().toISOString()})
      .eq("id",id).eq("author_id",user.user.id).eq("status","publishing");
    revalidatePath("/admin/social-posts");
    const permissionDenied=code.includes("META_API_ERROR http=403 code=200");
    return {ok:false,message:permissionDenied
-     ? "["+DIAG_VERSION+"] Meta 拒絕影片發布（HTTP 403、權限錯誤碼 200）。請使用上方「檢查 Facebook 連線與發布權限」核對授權與粉專內容建立任務；勿重複發布。"
-     : "["+DIAG_VERSION+"] 影片送出結果無法確認（診斷："+code.slice(0,160)+"）。請先查看 Facebook 粉專與排程區，勿重複發布。"};
+     ? "["+DIAG_VERSION+"] Meta 拒絕影片發布（HTTP 403、錯誤碼 200）："+code.slice(0,300)+"。請勿重複發布。"
+     : "["+DIAG_VERSION+"] 影片送出結果無法確認（診斷："+code.slice(0,300)+"）。請先查看 Facebook 粉專與排程區，勿重複發布。"};
  }
 }
