@@ -48,7 +48,11 @@ export function SitePageForm({ page, mediaAssets, existingPageTypes = [] }: Prop
   const initialAsset = mediaAssets.find((asset) => asset.id === page?.cover_media_id) || null;
   const [mediaId, setMediaId] = useState(initialAsset?.id || "");
   const [coverUrl, setCoverUrl] = useState(page?.fallback_cover_url || "");
-  const [body, setBody] = useState(page?.markdown_content || "");
+  const portraitPattern = /<!-- contact-portrait:(ayong|amei) (https:\/\/[^\s<>]+) -->/g;
+  const portraitMatches = Array.from((page?.markdown_content || "").matchAll(portraitPattern));
+  const [ayongUrl, setAyongUrl] = useState(portraitMatches.find((m) => m[1] === "ayong")?.[2] || "");
+  const [ameiUrl, setAmeiUrl] = useState(portraitMatches.find((m) => m[1] === "amei")?.[2] || "");
+  const [body, setBody] = useState((page?.markdown_content || "").replace(portraitPattern, "").trim());
   const [inlineAssetId, setInlineAssetId] = useState("");
   const [title, setTitle] = useState(page?.title || "");
   const [slug, setSlug] = useState(page?.page_key || "");
@@ -88,6 +92,13 @@ export function SitePageForm({ page, mediaAssets, existingPageTypes = [] }: Prop
     const endpoint = page?.id ? `/api/admin/site-pages/${page.id}` : "/api/admin/site-pages";
     const method = page?.id ? "PATCH" : "POST";
     const formData = new FormData(event.currentTarget);
+    if (pageType === "contact") {
+      const markers = [
+        ayongUrl ? `<!-- contact-portrait:ayong ${ayongUrl} -->` : "",
+        ameiUrl ? `<!-- contact-portrait:amei ${ameiUrl} -->` : ""
+      ].filter(Boolean).join("\n");
+      formData.set("markdown_content", [body.trim(), markers].filter(Boolean).join("\n\n"));
+    }
 
     startTransition(async () => {
       try {
@@ -220,6 +231,16 @@ export function SitePageForm({ page, mediaAssets, existingPageTypes = [] }: Prop
         <span>副標 / 摘要</span>
         <input className="input" name="subtitle" defaultValue={page?.subtitle || ""} disabled={pending} />
       </label>
+      {pageType === "contact" ? (
+        <div className="field full">
+          <h2>阿勇、阿美照片（分別選擇）</h2>
+          <p className="muted">先在媒體庫上傳兩張定稿照，再分別選取。儲存後將套用到聯絡頁雙人卡片。</p>
+          <MediaPicker assets={mediaAssets} preferredUsageTypes={["general"]} selectedId={mediaAssets.find((a) => a.public_url === ayongUrl)?.id || ""} title="阿勇照片" disabled={pending} onSelect={(a) => setAyongUrl(a.public_url)} />
+          {ayongUrl ? <button type="button" className="button ghost" disabled={pending} onClick={() => setAyongUrl("")}>移除阿勇照片</button> : null}
+          <MediaPicker assets={mediaAssets} preferredUsageTypes={["general"]} selectedId={mediaAssets.find((a) => a.public_url === ameiUrl)?.id || ""} title="阿美照片" disabled={pending} onSelect={(a) => setAmeiUrl(a.public_url)} />
+          {ameiUrl ? <button type="button" className="button ghost" disabled={pending} onClick={() => setAmeiUrl("")}>移除阿美照片</button> : null}
+        </div>
+      ) : null}
       <label className="field full">
         <span>內容（Markdown）</span>
         <textarea
