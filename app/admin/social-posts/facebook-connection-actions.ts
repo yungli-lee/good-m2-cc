@@ -28,10 +28,12 @@ async function debugExistingToken(token:string):Promise<string>{
   const data=json.data;
   const wanted=["pages_manage_posts","pages_read_engagement","pages_show_list","pages_manage_engagement"];
   const scopes=new Set(data.scopes||[]);
+  const granular=(data.granular_scopes||[]).filter(x=>wanted.includes(x.scope||""));
+  const targetSummary=granular.length?"；粉專範圍："+granular.map(x=>x.scope+" "+(x.target_ids?.includes(FACEBOOK_PAGE_ID)?"包含指定粉專":x.target_ids?.length?"未包含指定粉專":"未提供指定範圍")).join("、"):"；粉專範圍：Meta 未回傳 granular_scopes（不可據此判定缺權限）";
   return "有效："+(data.is_valid===true?"是":data.is_valid===false?"否":"未知")+
    "；類型："+(data.type||"未知").slice(0,35)+
    "；所屬 App："+(data.app_id===appId?"符合":"不符合或未回傳")+
-   "；授權："+wanted.map(x=>x+" "+(scopes.has(x)?"有":"未列出")).join("、");
+   "；授權："+wanted.map(x=>x+" "+(scopes.has(x)?"有":"未列出")).join("、")+targetSummary;
  }catch{return "偵錯請求失敗或逾時";}
 }
 export async function checkFacebookPageConnection():Promise<Result>{
