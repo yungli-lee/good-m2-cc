@@ -6,7 +6,7 @@ import {resolveFacebookPageToken,FACEBOOK_PAGE_ID} from "./facebook-page-token";
 
 const GRAPH="https://graph.facebook.com/v26.0/";
 const MAX_BYTES=20*1024*1024;
-const DIAG_VERSION="VIDEO-DIAG-4";
+const DIAG_VERSION="VIDEO-DIAG-5";
 type Result={ok:boolean;message:string};
 type MetaVideoReply={id?:unknown;error?:{code?:number;error_subcode?:number;type?:string;message?:string}};
 /** Strip URLs, emails and credential-like strings before recording Meta's short explanation. */
@@ -91,7 +91,7 @@ export async function publishFacebookVideo(id:string,scheduledIso?:string):Promi
      throw new Error(metaVideoFailure(response.status,result));
    // Meta accepted a video ID, but encoding and scheduling still require read-only verification.
    const {error:updateError}=await db.from("social_posts").update({
-     status:scheduledMs?"scheduled":"publish_unknown",facebook_post_id:result.id,
+     status:"publish_unknown",facebook_post_id:result.id,
      facebook_page_id:FACEBOOK_PAGE_ID,
      facebook_scheduled_for:scheduledMs?new Date(scheduledMs).toISOString():null,
      facebook_published_at:null,
@@ -105,7 +105,8 @@ export async function publishFacebookVideo(id:string,scheduledIso?:string):Promi
      "Meta 已接收影片 ID；尚未確認轉碼及公開，請按「同步 Facebook 狀態」唯讀核對。"};
  }catch(error){
    const code=error instanceof Error?error.message:"UNKNOWN";
-   const rejected=code.startsWith("META_API_ERROR http=4") || code.startsWith("META_API_ERROR http=5");
+   // A parsed 4xx Meta error is a definite rejection; 5xx and transport failures are ambiguous.
+   const rejected=/^META_API_ERROR http=4\\d\\d\\b/.test(code);
    await db.from("social_posts").update({status:"publish_unknown",
      facebook_error:"["+DIAG_VERSION+"] "+(rejected?"Meta 明確拒絕本次請求":"影片送出結果待核對")+" ("+code.slice(0,380)+")；禁止直接重試",
      updated_at:new Date().toISOString()})
@@ -113,7 +114,7 @@ export async function publishFacebookVideo(id:string,scheduledIso?:string):Promi
    revalidatePath("/admin/social-posts");
    const permissionDenied=code.includes("META_API_ERROR http=403 code=200");
    return {ok:false,message:permissionDenied
-     ? "["+DIAG_VERSION+"] Meta 拒絕影片發布（HTTP 403、錯誤碼 200）："+code.slice(0,300)+"。請勿重複發布。"
+     ? "["+DIAG_VERSION+"] Meta 明確拒絕影片發布（HTTP 403、錯誤碼 200）："+code.slice(0,300)+"。請勿重複發布。"
      : "["+DIAG_VERSION+"] 影片送出結果無法確認（診斷："+code.slice(0,300)+"）。請先查看 Facebook 粉專與排程區，勿重複發布。"};
  }
 }
