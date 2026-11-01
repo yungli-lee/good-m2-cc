@@ -7,6 +7,7 @@
 | Route | Status | Purpose | Source File |
 | --- | --- | --- | --- |
 | `/` | Existing | 首頁與既有靜態內容 | `app/page.tsx` |
+| `/contact` | Existing | 獨立聯絡頁面（阿勇、阿美顧問資料）；導覽「聯絡我們」固定前往此頁，首頁不重複顯示 `#team`，保留服務表單 | `app/(public)/contact/page.tsx` |
 | `/properties` | Existing | 公開物件列表 | `app/(public)/properties/page.tsx` |
 | `/properties/[slug]` | Existing | 公開物件詳細頁 | `app/(public)/properties/[slug]/page.tsx` |
 | `/calculator` | Planned | 試算工具入口 | 未建立 |
