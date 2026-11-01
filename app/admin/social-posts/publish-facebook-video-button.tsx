@@ -26,7 +26,7 @@ export function PublishFacebookVideoButton({id,enabled}:{id:string;enabled:boole
   <label className="field"><span>影片預約時間（瀏覽器當地時間，台灣 UTC+8）</span>
    <input type="datetime-local" className="input" value={local} disabled={busy} onChange={e=>setLocal(e.target.value)}/></label>
   <button type="button" className="button ghost" disabled={!enabled||busy||!local} onClick={()=>submit(true)}>預約 Facebook 影片發文</button>
-  <small style={{opacity:.7}}>影片發布診斷版本：VIDEO-DIAG-4（僅供 Preview 驗證）</small>
+  <small style={{opacity:.7}}>影片發布診斷版本：VIDEO-DIAG-5（僅供 Preview 驗證）</small>
   {message?<p role="status" aria-live="polite" className={ok?"success":"notice"}>{message}</p>:null}
  </div>;
 }
