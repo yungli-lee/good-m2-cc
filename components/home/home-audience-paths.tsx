@@ -1,8 +1,27 @@
 import Link from "next/link";
 
-export function HomeAudiencePaths() {
-  return <section className="audience-paths" aria-labelledby="audience-paths-title"><div className="section-heading"><p className="eyebrow">Start Here</p><h2 id="audience-paths-title">您今天想處理哪一件事？</h2></div><div className="audience-path-grid">
-    <article><h3>我要買房</h3><p>從公開物件開始找，也可以先試算預算與每月負擔。</p><div className="audience-path-actions"><Link className="button primary" href="/properties">開始找房</Link><Link className="button ghost" href="/calculator">先做試算</Link></div></article>
-    <article><h3>我要賣房</h3><p>先整理物件條件、預估出售費用，再交由阿勇協助規劃。</p><div className="audience-path-actions"><Link className="button primary" href="/contact">提出委售需求</Link><Link className="button ghost" href="/calculators/owner-net-all-in">試算賣方淨拿</Link></div></article>
-  </div><div className="audience-area-entry"><div><strong>想先從地區開始找？</strong><span>查看彰化市、秀水鄉與鹿港鎮的房屋土地資訊。</span></div><Link className="button ghost" href="/areas">依地區找房</Link></div></section>;
+export function HomeAudiencePaths({ lineUrl }: { lineUrl?: string | null; phone?: string | null }) {
+  const services = [
+    { icon: "⌂", title: "買屋・找土地", description: "整理地區、預算與條件", intent: "buy" },
+    { icon: "▤", title: "賣屋・賣土地", description: "聊行情與出售規劃", intent: "sell" },
+    { icon: "?", title: "不動產諮詢", description: "產權、貸款、稅務與交易", intent: "consult" },
+  ] as const;
+  return (
+    <section className="audience-paths home-service-first home-service-icon-first" id="service-start" aria-labelledby="audience-paths-title">
+      <div className="home-service-icon-heading">
+        <h2 id="audience-paths-title">今天想聊什麼？</h2>
+        <p>選一個方向，AI 陪你整理需求；也能留下聯絡方式，請阿勇阿美接續服務。</p>
+      </div>
+      <div className="home-service-icon-grid">
+        {services.map((service) => (
+          <Link key={service.intent} className="home-service-icon-item" href={`/guide?intent=${service.intent}#guide-start`} aria-label={`${service.title}，開啟 AI 對話並可留言`}>
+            <span className="home-service-icon-symbol" aria-hidden="true">{service.icon}</span>
+            <span className="home-service-icon-copy"><strong>{service.title}</strong><small>{service.description}</small></span>
+            <span className="home-service-icon-arrow" aria-hidden="true">→</span>
+          </Link>
+        ))}
+      </div>
+      <p className="home-service-icon-note">AI 對話不會自動留下聯絡資料；需要真人回覆時，可自行確認並送出留言。{lineUrl ? <> 或 <a href={lineUrl} target="_blank" rel="noopener noreferrer">直接 LINE 聯絡</a>。</> : null}</p>
+    </section>
+  );
 }

@@ -5,6 +5,65 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 import {resolveFacebookPageToken} from "./facebook-page-token";
 
 const PAGE_ID="284090174797562";
+type VideoStatusResponse={
+ id?:string;
+ status?:{
+  video_status?:string;
+  uploading_phase?:{status?:string};
+  processing_phase?:{status?:string};
+  publishing_phase?:{status?:string;publish_status?:string;publish_time?:string|number};
+ };
+ published?:boolean;
+ scheduled_publish_time?:string;
+ error?:{code?:number};
+};
+/** Read-only Meta lookup. Never infer publication from a numeric video ID or elapsed time. */
+async function syncFacebookVideoStatus(
+ db:Awaited<ReturnType<typeof createSupabaseServerClient>>,
+ userId:string,postId:string,videoId:string,localStatus:string
+):Promise<{ok:boolean;message:string}>{
+ let token:string;
+ try{token=await resolveFacebookPageToken();}
+ catch{return {ok:false,message:"無法驗證 Facebook Page Token；後台狀態未變。"};}
+ let response:Response;
+ try{
+  response=await fetch("https://graph.facebook.com/v26.0/"+encodeURIComponent(videoId)+
+   "?fields=id,status,published,scheduled_publish_time",{
+    headers:{Authorization:"Bearer "+token},cache:"no-store",signal:AbortSignal.timeout(10000)
+   });
+ }catch{return {ok:false,message:"影片狀態查詢逾時；未再次發布，後台狀態未變。"};}
+ let data:VideoStatusResponse;
+ try{data=await response.json() as VideoStatusResponse;}
+ catch{return {ok:false,message:"Meta 影片狀態回應無法解析；後台狀態未變。"};}
+ if(!response.ok||data.error||data.id!==videoId)
+  return {ok:false,message:"Meta 無法確認影片狀態（HTTP "+response.status+" / API "+(data.error?.code??"unknown")+"）；未再次發布。"};
+ const status=data.status;
+ const video=status?.video_status||"未知";
+ const processing=status?.processing_phase?.status||"未知";
+ const publishing=status?.publishing_phase?.publish_status||"未知";
+ const failed=["error","upload_failed","expired","failed"].includes(video)||
+  ["error","failed"].includes(processing)||["error","failed"].includes(publishing);
+ if(failed)return {ok:false,message:"Meta 影片處理異常：影片 "+video+"／轉碼 "+processing+"／發布 "+publishing+"。請人工檢查，禁止直接重送。"};
+ const confirmedPublished=publishing==="published"||data.published===true;
+ const confirmedScheduled=publishing==="scheduled"||Boolean(data.scheduled_publish_time);
+ const nextStatus=confirmedPublished?"posted":confirmedScheduled?"scheduled":null;
+ if(nextStatus&&localStatus!==nextStatus){
+  const update:{status:string;updated_at:string;facebook_error:string|null;facebook_published_at?:string;posted_at?:string}={
+   status:nextStatus,updated_at:new Date().toISOString(),facebook_error:null
+  };
+  if(nextStatus==="posted"){update.facebook_published_at=new Date().toISOString();update.posted_at=new Date().toISOString();}
+  const {data:updated,error}=await db.from("social_posts").update(update)
+   .eq("id",postId).eq("author_id",userId).eq("status",localStatus)
+   .eq("facebook_post_id",videoId).select("id").maybeSingle();
+  if(error||!updated)return {ok:false,message:"Meta 已確認影片狀態，但後台更新失敗或狀態已變動。"};
+  revalidatePath("/admin/social-posts");
+ }
+ return {ok:true,message:confirmedPublished?
+  "Meta 確認影片已公開；後台同步為已發布。":
+  confirmedScheduled?"Meta 確認影片已預約；後台保留已預約。":
+  "Meta 影片狀態：影片 "+video+"／轉碼 "+processing+"／發布 "+publishing+"。尚未確認公開或預約，未變更狀態。"};
+}
+
 export async function syncFacebookPostStatus(postId:string):Promise<{ok:boolean;message:string}>{
   const user=await requireRole(["editor","admin","owner"]);
   const db=await createSupabaseServerClient();
@@ -13,7 +72,7 @@ export async function syncFacebookPostStatus(postId:string):Promise<{ok:boolean;
     .eq("id",postId).eq("author_id",user.user.id).single();
   if(error||!post||post.facebook_page_id!==PAGE_ID||!post.facebook_post_id||post.facebook_deleted_at)
     return {ok:false,message:"沒有可同步的 Facebook 貼文紀錄。"};
-  if(/^\d+$/.test(post.facebook_post_id)) return {ok:false,message:"影片已取得 Meta 影片 ID；目前請至粉專確認轉碼及發布狀態，影片自動同步尚待驗證。"};
+  if(/^\\d+$/.test(post.facebook_post_id)) return await syncFacebookVideoStatus(db,user.user.id,postId,post.facebook_post_id,post.status);
   let token:string;
   try{token=await resolveFacebookPageToken();}
   catch{return {ok:false,message:"Facebook 粉專權杖無法驗證；後台狀態不變。"};}
