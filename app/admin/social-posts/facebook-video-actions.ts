@@ -65,9 +65,11 @@ export async function publishFacebookVideo(id:string,scheduledIso?:string):Promi
      method:"POST",headers:{Authorization:"Bearer "+token,"Content-Type":"application/x-www-form-urlencoded"},
      body:params.toString(),cache:"no-store"
    });
-   const result=await response.json() as {id?:string;error?:{code?:number;error_subcode?:number}};
-   if(!response.ok||result.error||!result.id||!/^\d+$/.test(result.id))
-     throw new Error("META_"+(result.error?.code||response.status));
+   let result:MetaVideoReply;
+   try { result=await response.json() as MetaVideoReply; }
+   catch { throw new Error("META_INVALID_JSON http="+response.status); }
+   if(!response.ok||result.error||typeof result.id!=="string"||!/^\\d+$/.test(result.id))
+     throw new Error(metaVideoFailure(response.status,result));
    // Video endpoint returns a numeric video ID, not the page_post feed ID.
    const {error:updateError}=await db.from("social_posts").update({
      status:scheduledMs?"scheduled":"posted",facebook_post_id:result.id,
