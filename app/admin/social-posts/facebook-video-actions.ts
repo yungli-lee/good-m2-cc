@@ -91,6 +91,9 @@ export async function publishFacebookVideo(id:string,scheduledIso?:string):Promi
      updated_at:new Date().toISOString()})
      .eq("id",id).eq("author_id",user.user.id).eq("status","publishing");
    revalidatePath("/admin/social-posts");
-   return {ok:false,message:"["+DIAG_VERSION+"] 影片送出結果無法確認（診斷："+code.slice(0,160)+"）。請先查看 Facebook 粉專與排程區，勿重複發布。"};
+   const permissionDenied=code.includes("META_API_ERROR http=403 code=200");
+   return {ok:false,message:permissionDenied
+     ? "["+DIAG_VERSION+"] Meta 拒絕影片發布（HTTP 403、權限錯誤碼 200）。請使用上方「檢查 Facebook 連線與發布權限」核對授權與粉專內容建立任務；勿重複發布。"
+     : "["+DIAG_VERSION+"] 影片送出結果無法確認（診斷："+code.slice(0,160)+"）。請先查看 Facebook 粉專與排程區，勿重複發布。"};
  }
 }
