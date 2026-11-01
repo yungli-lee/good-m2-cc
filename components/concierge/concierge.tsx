@@ -16,7 +16,9 @@ type Reply = { viewingTime?: string; focusedProperty?: Card | null; action?: str
 type Message = { role: "user" | "assistant"; text: string; reply?: Reply; character?: "amei" | "ayong" };
 type Turnstile = { render(element: HTMLElement, options: Record<string, unknown>): string; remove(id: string): void; reset(id: string): void };
 function turnstile() { return (window as unknown as { turnstile?: Turnstile }).turnstile; }
-export function Concierge({ aiEnabled, siteKey, phone, lineUrl, initialProperty, embedded = false, character = "amei", active = true }: { aiEnabled: boolean; siteKey: string; phone: string; lineUrl: string; initialProperty?: Card; embedded?: boolean; character?: "amei" | "ayong"; active?: boolean }) {
+export function Concierge({ aiEnabled, siteKey, phone, lineUrl, initialProperty, embedded = false, character = "amei", active = true, initialIntent = "" }: { aiEnabled: boolean; siteKey: string; phone: string; lineUrl: string; initialProperty?: Card; embedded?: boolean; character?: "amei" | "ayong"; active?: boolean; initialIntent?: string }) {
+  const intentParam = initialIntent;
+  const initialPrompt = intentParam === "buy" ? "我想買屋或找土地，想先整理地區、預算和必要條件。" : intentParam === "sell" ? "我有房屋或土地想出售，想先了解行情與委託規劃。" : intentParam === "consult" ? "我有不動產問題，想請教產權、貸款、稅務或交易流程。" : "";
   const inputId = useId();
   const leadTitleId = useId();
   const sourcePage = initialProperty ? `/properties/${initialProperty.slug}` : "/guide";
@@ -54,7 +56,7 @@ export function Concierge({ aiEnabled, siteKey, phone, lineUrl, initialProperty,
   const [focusedProperty, setFocusedProperty] = useState<Card | null>(initialProperty || null);
   const candidates = useRef<Card[]>([]);
   const [viewingTime, setViewingTime] = useState("");
-  const [input, setInput] = useState("");
+  const [input, setInput] = useState(initialPrompt);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [showLead, setShowLead] = useState(false);
@@ -236,6 +238,12 @@ export function Concierge({ aiEnabled, siteKey, phone, lineUrl, initialProperty,
           viewingPrompt === "soft" ? <><button className="button" type="button" disabled={busy || sending} onClick={() => openLead(needs, messages, viewingTime, "viewing")}>想現場確認？可安排看看</button><span>不急，先了解清楚也可以。</span></> :
           <><button className="button primary" type="button" disabled={busy || sending} onClick={() => openLead()}>{`請${role === "amei" ? "阿美" : "阿勇"}聯絡我`}</button><span>整理需求，確認後再送出</span></>}
         </div>}{!embedded && <small>需求摘要：{m.reply.summary}</small>}{m.reply.needsReview && <p>以下物件的必要條件仍待真人確認。</p>}
+          {index === lastReplyIndex && !focusedProperty && m.reply.action === "search" && m.reply.properties.length === 0 && <section className="concierge-no-match" aria-label="找不到合適物件時的協尋服務">
+            <strong>目前沒有找到完全符合條件的物件，也可以請我們繼續幫您留意。</strong>
+            <p>您的地區、預算與需求不必重新說明；AI 會先整理剛剛的對話，經您確認後再交給阿勇阿美。這不是保證一定有房源。</p>
+            <button type="button" className="button primary" disabled={busy || sending || sent} onClick={() => openLead(m.reply!.needs, messages)}>請阿勇阿美持續幫我找</button>
+            <small>送出前會顯示需求摘要與聯絡表單，需經您同意；不會自動提交。</small>
+          </section>}
           <div className="concierge-cards">{(!embedded && index === lastReplyIndex ? m.reply.properties.filter(p => !focusedProperty || p.slug === focusedProperty.slug) : []).map(p => <div className="concierge-property" key={p.id}><Link key={p.id} href={`/properties/${p.slug}`} onClick={() => { stop(); setFocusedProperty(p); if (!clicked.current.some(c => c.id === p.id)) clicked.current.push(p); }} target="_blank" rel="noopener"><strong>{p.title}</strong><span>{p.priceLabel || (p.price === null ? "價格請洽詢" : `${p.price.toLocaleString()} 萬元`)} · {p.district}</span>{p.propertyType === "storefront" && <span>店面／店住 · 居住用途待確認</span>}{p.layout && <span>{p.layout}</span>}<span>查看物件 ↗</span></Link><button className="concierge-quiet" type="button" disabled={busy || sending} onClick={() => { setFocusedProperty(p); void ask(`我想了解「${p.title}」這間物件`, p); }}>詢問這間</button></div>)}</div>
           {!focusedProperty && index === lastReplyIndex && m.reply.searchHref && <Link className="button" href={m.reply.searchHref} target="_blank" rel="noopener" onClick={stop}>查看這組條件的搜尋結果 ↗</Link>}
           {m.reply.knowledge.length > 0 && <div><p>相關知識</p>{m.reply.knowledge.map(k => <p key={k.slug}><Link href={`/knowledge/${k.slug}`} target="_blank" rel="noopener">{k.title} ↗</Link></p>)}</div>}
@@ -257,7 +265,7 @@ export function Concierge({ aiEnabled, siteKey, phone, lineUrl, initialProperty,
       </>}
     </div>
     <form className="concierge-compose" onSubmit={e => { e.preventDefault(); void ask(input); }}><label htmlFor={inputId}>告訴我你的需求</label><textarea id={inputId} value={input} onChange={e => setInput(e.target.value)} maxLength={500} rows={2} placeholder={initialProperty ? "例如：有幾個房間？設備包含哪些？" : "例如：鹿港或福興，800萬以下的住宅，需要孝親房"} required disabled={busy} /><button className="button primary" disabled={busy}>{busy ? "整理中…" : "送出提問"}</button></form>
-    <div className="concierge-direct-contact"><p>不想留下資料？可以直接打電話或加 LINE。</p><div className="concierge-actions">{phone && <a className="button" href={`tel:${phone.replace(/[^\d+]/g, "")}`} data-contact-person="阿勇" data-cta-location="concierge_direct">阿勇 {phone} · 撥打電話</a>}{lineUrl && <a className="button" href={lineUrl} target="_blank" rel="noopener noreferrer" data-contact-person="阿勇" data-cta-location="concierge_direct">加 LINE 諮詢 ↗</a>}</div></div>
+    <div className="concierge-direct-contact"><p>不想填寫聯絡表單？也可以直接打電話或加 LINE。只有確認送出後，阿勇阿美才能主動聯絡您。</p><div className="concierge-actions">{phone && <a className="button" href={`tel:${phone.replace(/[^\d+]/g, "")}`} data-contact-person="阿勇" data-cta-location="concierge_direct">阿勇 {phone} · 撥打電話</a>}{lineUrl && <a className="button" href={lineUrl} target="_blank" rel="noopener noreferrer" data-contact-person="阿勇" data-cta-location="concierge_direct">加 LINE 諮詢 ↗</a>}</div></div>
     {!sent && <div className="concierge-handoff"><span>想請我們回電？</span><button className="button primary" type="button" disabled={busy || sending} onClick={() => openLead()}>{`請${role === "amei" ? "阿美" : "阿勇"}聯絡我`}</button></div>}
     <details className="concierge-privacy"><summary>隱私與聯絡說明</summary><p className="concierge-privacy">先描述需求，不用提供完整門牌。若在聊天留下手機，會帶入聯絡表單，由你確認後才送出。{aiEnabled ? "文字問題會交由 AI 服務處理；聯絡資料在確認送出表單後才存入後台。" : "聯絡資料在確認送出表單後才存入後台。"}</p>{archive && <><p>已開啟對話保存；可隨時撤回並刪除本次已保存對話。</p><button type="button" className="button ghost" onClick={() => void revokeArchive()}>撤回同意並刪除對話</button>{archiveStatus && <p role="status">{archiveStatus}</p>}</>}</details>
     {showLead && <section ref={leadSection} className="concierge-lead" aria-labelledby={leadTitleId}><h2 id={leadTitleId}>{handoffPurpose === "viewing" ? "預約帶看｜確認聯絡方式" : "確認需求與聯絡方式"}</h2><p>{handoffPurpose === "viewing" ? "填寫希望時間即可，實際帶看時段會由阿勇、阿美再與你確認；尚未送出前都可以修改。" : "請確認這是你本人的聯絡資料。尚未送出；確認並同意後，才會通知阿勇、阿美。"}</p><form key={leadVersion} onSubmit={submit} data-form-type={handoffPurpose === "viewing" ? "concierge-viewing" : `concierge-${needs.intent}`} data-form-location="guide">
