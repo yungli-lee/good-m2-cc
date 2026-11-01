@@ -67,7 +67,7 @@ export default async function PublicSitePage({ params }: Props) {
   return (
     <main>
       <article className="section">
-        <div className="container cms-public-page">
+        <div className={`container cms-public-page${slug === "about-ayong" ? " cms-about-ayong" : ""}`}>
           <header className="cms-public-page-header">
             {page.eyebrow ? <p className="eyebrow">{page.eyebrow}</p> : null}
             <h1>{page.title}</h1>
