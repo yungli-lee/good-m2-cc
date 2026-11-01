@@ -46,7 +46,8 @@ export async function generateMetadata(): Promise<Metadata> {
     }
   };
 }
-export default async function GuidePage() {
+export default async function GuidePage({ searchParams }: { searchParams: Promise<{ intent?: string }> }) {
+  const { intent } = await searchParams;
   const [company, featuredResult, knowledge, reminders] = await Promise.all([
     getPublicCompanySettings(),
     listFeaturedProperties(3),
@@ -58,7 +59,7 @@ export default async function GuidePage() {
   const siteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || env?.NEXT_PUBLIC_TURNSTILE_SITE_KEY || "";
   return <main className="guide-landing">
     <section id="guide-start" className="section guide-landing-intro"><div className="container">
-      <Concierge aiEnabled={Boolean(conciergeEnv().key)} siteKey={siteKey} phone={company.company_phone} lineUrl={company.line_url} />
+      <Concierge aiEnabled={Boolean(conciergeEnv().key)} siteKey={siteKey} phone={company.company_phone} lineUrl={company.line_url} initialIntent={["buy", "sell", "consult"].includes(intent || "") ? intent : ""} />
     </div></section>
     <section className="section guide-landing-section" aria-labelledby="guide-featured-title"><div className="container">
       <div className="guide-landing-section-heading"><div><p className="eyebrow">先看看有沒有喜歡的</p><h2 id="guide-featured-title">目前精選物件</h2><p className="muted">以下為網站公開在售精選，想了解任何一件，都能請阿勇阿美協助。</p></div><Link href="/properties" className="button ghost">看全部物件</Link></div>
