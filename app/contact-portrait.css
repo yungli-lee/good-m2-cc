@@ -1,0 +1,80 @@
+/* Contact portraits: decorative CSS only; original CMS uploads remain unchanged. */
+.contact-team-card--ayong {
+  --portrait-wash: #fff2d8;
+  --portrait-accent: #e6bd7b;
+  --portrait-dot: rgba(201, 154, 67, .20);
+  background: radial-gradient(ellipse at 10% 88%, #f8e4be 0%, transparent 56%),
+    linear-gradient(135deg, #fffdf8 0%, #fff9ee 48%, #fff 100%);
+}
+.contact-team-card--amei {
+  --portrait-wash: #ffe5e7;
+  --portrait-accent: #e9b3b7;
+  --portrait-dot: rgba(210, 132, 143, .19);
+  background: radial-gradient(ellipse at 10% 88%, #f9dce0 0%, transparent 56%),
+    linear-gradient(135deg, #fffafb 0%, #fff2f2 48%, #fff 100%);
+}
+.contact-team-card .contact-team-portrait {
+  position: relative;
+  min-width: 0;
+  overflow: hidden;
+  isolation: isolate;
+  background: radial-gradient(ellipse 88% 70% at 20% 85%, var(--portrait-wash) 0%, transparent 100%);
+}
+.contact-team-card .contact-team-portrait::before {
+  content: "";
+  position: absolute;
+  z-index: 0;
+  width: 155%;
+  height: 105%;
+  left: -72%;
+  bottom: -34%;
+  border-radius: 50%;
+  background: linear-gradient(125deg, var(--portrait-accent), var(--portrait-wash) 72%);
+  opacity: .43;
+  transform: rotate(-17deg);
+  pointer-events: none;
+}
+.contact-team-card .contact-team-portrait::after {
+  content: "";
+  position: absolute;
+  z-index: 0;
+  left: 7%;
+  top: 28%;
+  width: 36%;
+  height: 36%;
+  background-image: radial-gradient(circle, var(--portrait-dot) 1.5px, transparent 2px);
+  background-size: 13px 13px;
+  -webkit-mask-image: radial-gradient(ellipse, #000 28%, transparent 74%);
+  mask-image: radial-gradient(ellipse, #000 28%, transparent 74%);
+  pointer-events: none;
+}
+.contact-team-card .contact-team-portrait .contact-team-photo {
+  position: relative;
+  z-index: 1;
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  max-height: none;
+  object-fit: contain;
+  object-position: center bottom;
+  /* White-background uploads blend into the decorative wash without changing image files. */
+  mix-blend-mode: multiply;
+}
+.contact-team-card .contact-team-portrait .contact-team-photo-pending {
+  position: relative;
+  z-index: 1;
+}
+.contact-team-card .contact-team-copy {
+  position: relative;
+  z-index: 1;
+}
+@media (max-width: 480px) {
+  .contact-team-card .contact-team-portrait .contact-team-photo {
+    height: auto;
+    max-height: min(70vh, 440px);
+  }
+  .contact-team-card .contact-team-portrait::after {
+    top: 18%;
+  }
+}
