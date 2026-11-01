@@ -39,8 +39,8 @@ assert.equal(resolveNavigationItem({ ...base, page_id: null, href: "/contact", s
 assert.equal(resolveNavigationItem({ ...base, page_id: null, href: "/#team", site_pages: null }, [contactPage])?.href, "/contact");
 
 const homeRenderer = readFileSync("components/home/home-renderer.tsx", "utf8");
-assert.match(homeRenderer, /section\\.key === "team" \\|\\| !shouldRenderHomeSection/);
-assert.match(readFileSync("lib/home-cms/registry.ts", "utf8"), /if \\(type === "contact" \\|\\| type === "service-form"\\) return managedKeys\\.has\\("team"\\)/);
+assert.ok(homeRenderer.includes('section.key === "team" || !shouldRenderHomeSection'));
+assert.ok(readFileSync("lib/home-cms/registry.ts", "utf8").includes('if (type === "contact" || type === "service-form") return managedKeys.has("team")'));
 
 assert.equal(navigationItemSchema.safeParse({
   item_key: "external",
