@@ -33,6 +33,15 @@ assert.equal(resolveNavigationItem({ ...base, page_id: null, href: "/#cms-previe
 assert.equal(resolveNavigationItem({ ...base, page_id: null, href: "/#missing", site_pages: null }, [base.site_pages!]), null);
 assert.equal(resolveNavigationItem({ ...base, site_pages: { ...base.site_pages!, show_as_page: false } }), null);
 
+const contactPage = { ...base.site_pages!, page_key: "contact", page_type: "contact", show_on_homepage: true, show_as_page: true };
+assert.equal(resolveNavigationItem({ ...base, site_pages: contactPage })?.href, "/contact");
+assert.equal(resolveNavigationItem({ ...base, page_id: null, href: "/contact", site_pages: null }, [contactPage])?.href, "/contact");
+assert.equal(resolveNavigationItem({ ...base, page_id: null, href: "/#team", site_pages: null }, [contactPage])?.href, "/contact");
+
+const homeRenderer = readFileSync("components/home/home-renderer.tsx", "utf8");
+assert.ok(homeRenderer.includes('section.key === "team" || !shouldRenderHomeSection'));
+assert.ok(readFileSync("lib/home-cms/registry.ts", "utf8").includes('if (type === "contact" || type === "service-form") return managedKeys.has("team")'));
+
 assert.equal(navigationItemSchema.safeParse({
   item_key: "external",
   location: "footer",

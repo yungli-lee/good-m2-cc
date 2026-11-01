@@ -76,8 +76,10 @@ function homeAnchor(page: NavigationPage) {
 
 function pageHref(page: NavigationPage) {
   if (page.status !== "published" || page.archived_at) return null;
+  // A published contact page has its own route even when also shown on the homepage.
+  if (page.page_type === "contact" && page.show_as_page) return "/contact";
   if (page.show_on_homepage) return `/#${homeAnchor(page)}`;
-  if (page.show_as_page) return page.page_type === "contact" ? "/contact" : `/${page.page_key}`;
+  if (page.show_as_page) return `/${page.page_key}`;
   return null;
 }
 
@@ -90,7 +92,8 @@ export function resolveNavigationItem(item: NavigationItem, publishedPages?: Nav
     href = managed ? pageHref(managed) : null;
   } else if (!item.page_id && publishedPages && href === "/contact") {
     const contact = publishedPages.find((candidate) => candidate.page_type === "contact");
-    href = contact ? pageHref(contact) : null;
+    // Respect the explicit /contact link instead of rewriting it to /#team.
+    href = contact?.show_as_page ? "/contact" : null;
   }
   if (!href) return null;
   return {

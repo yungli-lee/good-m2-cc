@@ -51,7 +51,8 @@ export function HomeRenderer({ campaigns, pages, company, navigation, featuredPr
   const publishedManagedKeys = new Set(managedByKey.keys());
 
   const sections = legacyHomeSections.flatMap((section, index) => {
-    if (!shouldRenderHomeSection(section.key, publishedManagedKeys, campaigns.length)) return [];
+    // The team profile lives on /contact; keep the homepage inquiry form intact.
+    if (section.key === "team" || !shouldRenderHomeSection(section.key, publishedManagedKeys, campaigns.length)) return [];
     const managed = managedByKey.get(section.key);
     const sortOrder = managed?.[0]?.sort_order ?? index * 100;
     return [{
