@@ -719,3 +719,7 @@ ACTIVE_HEALTHY/其他SQL0/DB6247935123bytes。以id>13607下一1000主檔同一S
 
 ### 2026-11-01 05:20 台灣時間：修復審查備妥，等待view predicate例外授權
 完整候選/回復SQL及權限已保存，修復範圍/影響/未驗證事項集中preview-repair-authorization-review.md。依最新明確不改view/schema限制，不擅自套用。需要狹義staging view predicate修復授權（先完成等價驗證，通過才套用並驗收，失敗回復），不調timeout/配額/欄位/索引/Production。暫停重複檢查並一次通知阻礙；107未啟、108與109/110/111待驗保留，未宣告修復或年度完成。
+
+
+### 2026-11-01：staging view predicate修復已明確授權，全量等價通過但慢查詢停
+阿勇明確授權只修staging Preview view去重寫法，先等價驗證、通過才套用，驗收失敗回復原定義。新鮮ACTIVE_HEALTHY/其他SQL0/DB6247935123。原31欄SELECT投影為ID與候選ID於同一SQL快照完整雙向EXCEPT：old_count107192/new_count107192/differences0，證據preview-full-equivalence-authorized.json。工具整體回應21.3秒，無法區分傳輸與DB耗時；保守依20秒線停止本輪，不送DDL，未改view/API/timeout/Production、不重試。授權有效保留，不再要求同一授權。下輪先新鮮健康/無其他工作，核對原view定義與安全屬性未漂移，再依已授權修復及回復流程；禁止把本次等價當公開503修復成功。107仍未啟，年度驗收待辦保留。
