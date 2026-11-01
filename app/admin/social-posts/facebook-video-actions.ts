@@ -6,7 +6,7 @@ import {resolveFacebookPageToken,FACEBOOK_PAGE_ID} from "./facebook-page-token";
 
 const GRAPH="https://graph.facebook.com/v26.0/";
 const MAX_BYTES=20*1024*1024;
-const DIAG_VERSION="VIDEO-DIAG-3";
+const DIAG_VERSION="VIDEO-DIAG-4";
 type Result={ok:boolean;message:string};
 type MetaVideoReply={id?:unknown;error?:{code?:number;error_subcode?:number;type?:string;message?:string}};
 /** Strip URLs, emails and credential-like strings before recording Meta's short explanation. */
@@ -55,6 +55,17 @@ export async function publishFacebookVideo(id:string,scheduledIso?:string):Promi
    return {ok:false,message:"影片檔案不存在或大小異常，未送出。"};
  // Resolve the credential before claiming: authentication failures must not lock the draft.
  const token=await resolveFacebookPageToken();
+ // Check the actual signed video URL before claiming the draft or contacting Meta.
+ // HEAD must be accessible to Meta without cookies, and must identify a video.
+ const {data:signed,error:signedError}=await db.storage.from("social-post-videos")
+   .createSignedUrl(video.storage_path,3600);
+ if(signedError||!signed?.signedUrl)return {ok:false,message:"影片簽署網址無法建立；未送往 Meta。"};
+ try{
+   const head=await fetch(signed.signedUrl,{method:"HEAD",cache:"no-store",signal:AbortSignal.timeout(12000)});
+   const mime=(head.headers.get("content-type")||"").toLowerCase();
+   if(!head.ok||(!mime.startsWith("video/")&&!mime.includes("octet-stream")))
+     return {ok:false,message:"影片網址預檢未通過（HTTP "+head.status+"，類型："+mime.slice(0,50)+"）；未送往 Meta。"};
+ }catch{return {ok:false,message:"影片網址預檢逾時或無法讀取；未送往 Meta。"};}
  const {data:claim,error:claimError}=await db.from("social_posts")
    .update({status:"publishing",updated_at:new Date().toISOString()})
    .eq("id",id).eq("author_id",user.user.id).eq("status",post.status)
@@ -62,9 +73,6 @@ export async function publishFacebookVideo(id:string,scheduledIso?:string):Promi
  if(claimError||!claim)return {ok:false,message:"貼文已在處理，請勿重複送出。"};
  // From here, never retry automatically: Meta may accept a video even if the response is lost.
  try{
-   const {data:signed,error:signedError}=await db.storage.from("social-post-videos")
-     .createSignedUrl(video.storage_path,3600);
-   if(signedError||!signed?.signedUrl)throw new Error("SIGNED_URL");
    const description=[post.body||"",post.link_url||""].filter(Boolean).join("\n");
    const params=new URLSearchParams({file_url:signed.signedUrl,title:post.title,
      description,published:scheduledMs?"false":"true"});
@@ -81,24 +89,25 @@ export async function publishFacebookVideo(id:string,scheduledIso?:string):Promi
    catch { throw new Error("META_INVALID_JSON http="+response.status); }
    if(!response.ok||result.error||typeof result.id!=="string"||!/^\d+$/.test(result.id))
      throw new Error(metaVideoFailure(response.status,result));
-   // Video endpoint returns a numeric video ID, not the page_post feed ID.
+   // Meta accepted a video ID, but encoding and scheduling still require read-only verification.
    const {error:updateError}=await db.from("social_posts").update({
-     status:scheduledMs?"scheduled":"posted",facebook_post_id:result.id,
+     status:scheduledMs?"scheduled":"publish_unknown",facebook_post_id:result.id,
      facebook_page_id:FACEBOOK_PAGE_ID,
      facebook_scheduled_for:scheduledMs?new Date(scheduledMs).toISOString():null,
-     facebook_published_at:scheduledMs?null:new Date().toISOString(),
-     posted_at:scheduledMs?null:new Date().toISOString(),
-     facebook_error:null,updated_at:new Date().toISOString()
+     facebook_published_at:null,
+     posted_at:null,
+     facebook_error:"Meta 已接收影片 ID；影片轉碼與公開／排程狀態尚未核實，請按「同步 Facebook 狀態」。",updated_at:new Date().toISOString()
    }).eq("id",id).eq("author_id",user.user.id).eq("status","publishing");
    if(updateError)throw new Error("DB_UPDATE code="+(updateError.code||"unknown"));
    revalidatePath("/admin/social-posts");
    return {ok:true,message:scheduledMs?
-     "Meta 已接受影片預約。請至 Facebook 排程區核對，並等待實際發布。":
-     "Meta 已接受影片，可能仍在轉碼處理；請至粉專確認公開顯示。"};
+     "Meta 已接收影片 ID；尚未確認轉碼及排程，請按「同步 Facebook 狀態」唯讀核對。":
+     "Meta 已接收影片 ID；尚未確認轉碼及公開，請按「同步 Facebook 狀態」唯讀核對。"};
  }catch(error){
    const code=error instanceof Error?error.message:"UNKNOWN";
+   const rejected=code.startsWith("META_API_ERROR http=4") || code.startsWith("META_API_ERROR http=5");
    await db.from("social_posts").update({status:"publish_unknown",
-     facebook_error:"["+DIAG_VERSION+"] 影片送往 Meta 結果待核對 ("+code.slice(0,380)+")；禁止直接重試",
+     facebook_error:"["+DIAG_VERSION+"] "+(rejected?"Meta 明確拒絕本次請求":"影片送出結果待核對")+" ("+code.slice(0,380)+")；禁止直接重試",
      updated_at:new Date().toISOString()})
      .eq("id",id).eq("author_id",user.user.id).eq("status","publishing");
    revalidatePath("/admin/social-posts");
