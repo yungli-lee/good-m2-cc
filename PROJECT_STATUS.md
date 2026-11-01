@@ -723,3 +723,7 @@ ACTIVE_HEALTHY/其他SQL0/DB6247935123bytes。以id>13607下一1000主檔同一S
 
 ### 2026-11-01：staging view predicate修復已明確授權，全量等價通過但慢查詢停
 阿勇明確授權只修staging Preview view去重寫法，先等價驗證、通過才套用，驗收失敗回復原定義。新鮮ACTIVE_HEALTHY/其他SQL0/DB6247935123。原31欄SELECT投影為ID與候選ID於同一SQL快照完整雙向EXCEPT：old_count107192/new_count107192/differences0，證據preview-full-equivalence-authorized.json。工具整體回應21.3秒，無法區分傳輸與DB耗時；保守依20秒線停止本輪，不送DDL，未改view/API/timeout/Production、不重試。授權有效保留，不再要求同一授權。下輪先新鮮健康/無其他工作，核對原view定義與安全屬性未漂移，再依已授權修復及回復流程；禁止把本次等價當公開503修復成功。107仍未啟，年度驗收待辦保留。
+
+
+### 2026-11-01 授權修復實際套用後驗收失敗，已回復
+新鮮ACTIVE_HEALTHY/activeSQL0，原view定義/ACL/options與備份一致。依阿勇授權套用NOT EXISTS predicate，DDL成功，ACL/options未變。公開分頁script執行首個broad_sale首頁仍HTTP503，停止未重試，錯誤本文未由原helper保存；不能判定取消原因。已立即CREATE OR REPLACE回復保存原定義，工具成功回應。此次候選未解決503，不保留未通過變更、不啟107。全表等價107192/107192差異0證據保留；Production/timeout/配額/7GB未改。下一步應定位本次候選下當前失敗statement與生效角色/取消來源，不再循環同一修復。
