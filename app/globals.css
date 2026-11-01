@@ -3923,3 +3923,46 @@ td {
   }
   .cms-about-ayong .cms-markdown-body img { border-radius: 10px; }
 }
+
+
+/* Five-stage color timeline for Ayong's story; no effect on other pages. */
+.cms-about-ayong .cms-markdown-body {
+  --story-green: #16805c;
+  --story-blue: #2873a7;
+  --story-purple: #8552ad;
+  --story-gold: #b68a00;
+  --story-red: #c44235;
+  position: relative;
+}
+.cms-about-ayong .cms-markdown-body h2:is(:nth-of-type(1), :nth-of-type(2), :nth-of-type(3), :nth-of-type(4), :nth-of-type(5)) {
+  position: relative;
+  border-left-width: 7px;
+  color: #22252b;
+  padding-left: 24px;
+}
+.cms-about-ayong .cms-markdown-body h2:nth-of-type(1) { border-color: var(--story-green); background: #ecf7f1; }
+.cms-about-ayong .cms-markdown-body h2:nth-of-type(2) { border-color: var(--story-blue); background: #edf5fa; }
+.cms-about-ayong .cms-markdown-body h2:nth-of-type(3) { border-color: var(--story-purple); background: #f5effa; }
+.cms-about-ayong .cms-markdown-body h2:nth-of-type(4) { border-color: var(--story-gold); background: #fbf6e5; }
+.cms-about-ayong .cms-markdown-body h2:nth-of-type(5) { border-color: var(--story-red); background: #fff0eb; }
+@media (min-width: 900px) {
+  .cms-about-ayong .cms-markdown-body { padding-left: 26px; border-left: 2px solid #e1e4e8; }
+  .cms-about-ayong .cms-markdown-body h2:nth-of-type(-n+5)::before {
+    content: "";
+    position: absolute;
+    left: -39px;
+    top: 50%;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: currentColor;
+    border: 3px solid white;
+    box-shadow: 0 0 0 2px #e1e4e8;
+    transform: translateY(-50%);
+  }
+  .cms-about-ayong .cms-markdown-body h2:nth-of-type(1)::before { color: var(--story-green); }
+  .cms-about-ayong .cms-markdown-body h2:nth-of-type(2)::before { color: var(--story-blue); }
+  .cms-about-ayong .cms-markdown-body h2:nth-of-type(3)::before { color: var(--story-purple); }
+  .cms-about-ayong .cms-markdown-body h2:nth-of-type(4)::before { color: var(--story-gold); }
+  .cms-about-ayong .cms-markdown-body h2:nth-of-type(5)::before { color: var(--story-red); }
+}
