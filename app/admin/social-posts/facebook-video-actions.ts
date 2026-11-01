@@ -106,7 +106,7 @@ export async function publishFacebookVideo(id:string,scheduledIso?:string):Promi
  }catch(error){
    const code=error instanceof Error?error.message:"UNKNOWN";
    // A parsed 4xx Meta error is a definite rejection; 5xx and transport failures are ambiguous.
-   const rejected=/^META_API_ERROR http=4\\d\\d\\b/.test(code);
+   const rejected=code.startsWith("META_API_ERROR http=4");
    await db.from("social_posts").update({status:"publish_unknown",
      facebook_error:"["+DIAG_VERSION+"] "+(rejected?"Meta 明確拒絕本次請求":"影片送出結果待核對")+" ("+code.slice(0,380)+")；禁止直接重試",
      updated_at:new Date().toISOString()})
