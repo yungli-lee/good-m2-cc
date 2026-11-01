@@ -50,11 +50,13 @@ export async function saveContactPortraitAction(formData: FormData) {
     match.startsWith(`<!-- contact-portrait:${key} `) ? "" : match
   );
   const next = `${cleaned.trimEnd()}\n${marker(key, url)}\n`;
-  const { data: saved, error: saveError } = await supabase
+  const updateQuery = supabase
     .from("site_pages")
     .update({ markdown_content: next, updated_by: current.user.id, updated_at: new Date().toISOString() })
-    .eq("id", page.id)
-    .eq("markdown_content", page.markdown_content)
+    .eq("id", page.id);
+  const { data: saved, error: saveError } = await (page.markdown_content === null
+    ? updateQuery.is("markdown_content", null)
+    : updateQuery.eq("markdown_content", page.markdown_content))
     .select("id")
     .maybeSingle();
   if (saveError || !saved) {
