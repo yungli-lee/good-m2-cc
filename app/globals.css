@@ -3865,3 +3865,61 @@ td {
   .contact-team-actions .button { min-height: 44px; }
 }
 
+
+
+/* The personal story layout is intentionally scoped to /about-ayong. */
+.cms-about-ayong { max-width: 1040px; }
+.cms-about-ayong .cms-public-page-header { display: flow-root; margin-bottom: 40px; }
+.cms-about-ayong .cms-public-page-header img {
+  width: min(100%, 360px);
+  max-height: none;
+  height: auto;
+  object-fit: contain;
+  object-position: center top;
+  float: right;
+  margin: 0 0 24px 32px;
+  background: #faf7f1;
+}
+.cms-about-ayong .cms-public-page-header h1 { color: #a32322; }
+.cms-about-ayong .cms-markdown-body { line-height: 2; }
+.cms-about-ayong .cms-markdown-body h2 {
+  clear: both;
+  padding: 16px 20px;
+  border-left: 5px solid #b53a2b;
+  border-radius: 12px;
+  background: #f8f3ea;
+  font-size: clamp(1.2rem, 2.5vw, 1.65rem);
+  line-height: 1.45;
+  margin: 48px 0 24px;
+}
+.cms-about-ayong .cms-markdown-body h2:nth-of-type(5n + 2) { border-color: #28628b; }
+.cms-about-ayong .cms-markdown-body h2:nth-of-type(5n + 3) { border-color: #6c4897; }
+.cms-about-ayong .cms-markdown-body h2:nth-of-type(5n + 4) { border-color: #b58b22; }
+.cms-about-ayong .cms-markdown-body p { margin-bottom: 1.15em; }
+.cms-about-ayong .cms-markdown-body img {
+  display: block;
+  width: 100%;
+  max-width: 920px;
+  height: auto;
+  margin: 20px auto 32px;
+  border-radius: 16px;
+  box-shadow: 0 8px 24px rgba(31, 35, 40, .1);
+}
+.cms-about-ayong .cms-markdown-body blockquote {
+  border-left: 4px solid #b53a2b;
+  padding: 12px 20px;
+  background: #fff8ec;
+  border-radius: 8px;
+}
+@media (max-width: 680px) {
+  .cms-about-ayong .cms-public-page-header img {
+    float: none;
+    margin: 18px auto 22px;
+    width: min(100%, 300px);
+  }
+  .cms-about-ayong .cms-markdown-body h2 {
+    padding: 14px 16px;
+    margin-top: 36px;
+  }
+  .cms-about-ayong .cms-markdown-body img { border-radius: 10px; }
+}
