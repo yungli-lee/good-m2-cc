@@ -14,7 +14,7 @@ function metaVideoFailure(httpStatus:number,reply:MetaVideoReply):string{
  const err=reply.error;
  if(err)return "META_API_ERROR http="+httpStatus+" code="+(err.code??"unknown")+" subcode="+(err.error_subcode??"none")+" type="+(err.type??"unknown").slice(0,40);
  if(!Number.isInteger(httpStatus)||httpStatus<200||httpStatus>=300)return "META_HTTP_"+httpStatus;
- if(typeof reply.id!=="string"||!/^\\d+$/.test(reply.id))return "META_MISSING_VIDEO_ID http="+httpStatus+" id_type="+typeof reply.id;
+ if(typeof reply.id!=="string"||!/^\d+$/.test(reply.id))return "META_MISSING_VIDEO_ID http="+httpStatus+" id_type="+typeof reply.id;
  return "META_UNEXPECTED_RESPONSE http="+httpStatus;
 }
 export async function publishFacebookVideo(id:string,scheduledIso?:string):Promise<Result>{
@@ -68,7 +68,7 @@ export async function publishFacebookVideo(id:string,scheduledIso?:string):Promi
    let result:MetaVideoReply;
    try { result=await response.json() as MetaVideoReply; }
    catch { throw new Error("META_INVALID_JSON http="+response.status); }
-   if(!response.ok||result.error||typeof result.id!=="string"||!/^\\d+$/.test(result.id))
+   if(!response.ok||result.error||typeof result.id!=="string"||!/^\d+$/.test(result.id))
      throw new Error(metaVideoFailure(response.status,result));
    // Video endpoint returns a numeric video ID, not the page_post feed ID.
    const {error:updateError}=await db.from("social_posts").update({
