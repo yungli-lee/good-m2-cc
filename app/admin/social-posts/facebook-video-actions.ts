@@ -7,6 +7,15 @@ import {resolveFacebookPageToken,FACEBOOK_PAGE_ID} from "./facebook-page-token";
 const GRAPH="https://graph.facebook.com/v26.0/";
 const MAX_BYTES=20*1024*1024;
 type Result={ok:boolean;message:string};
+type MetaVideoReply={id?:unknown;error?:{code?:number;error_subcode?:number;type?:string;message?:string}};
+/** Keep only allowlisted diagnostic fields; never persist signed file URLs or credentials. */
+function metaVideoFailure(httpStatus:number,reply:MetaVideoReply):string{
+ const err=reply.error;
+ if(err)return "META_API_ERROR http="+httpStatus+" code="+(err.code??"unknown")+" subcode="+(err.error_subcode??"none")+" type="+(err.type??"unknown").slice(0,40);
+ if(!Number.isInteger(httpStatus)||httpStatus<200||httpStatus>=300)return "META_HTTP_"+httpStatus;
+ if(typeof reply.id!=="string"||!/^\\d+$/.test(reply.id))return "META_MISSING_VIDEO_ID http="+httpStatus+" id_type="+typeof reply.id;
+ return "META_UNEXPECTED_RESPONSE http="+httpStatus;
+}
 export async function publishFacebookVideo(id:string,scheduledIso?:string):Promise<Result>{
  const user=await requireRole(["editor","admin","owner"]);
  const db=await createSupabaseServerClient();
@@ -67,7 +76,7 @@ export async function publishFacebookVideo(id:string,scheduledIso?:string):Promi
      posted_at:scheduledMs?null:new Date().toISOString(),
      facebook_error:null,updated_at:new Date().toISOString()
    }).eq("id",id).eq("author_id",user.user.id).eq("status","publishing");
-   if(updateError)throw new Error("DB_UPDATE");
+   if(updateError)throw new Error("DB_UPDATE code="+(updateError.code||"unknown"));
    revalidatePath("/admin/social-posts");
    return {ok:true,message:scheduledMs?
      "Meta 已接受影片預約。請至 Facebook 排程區核對，並等待實際發布。":
@@ -75,10 +84,10 @@ export async function publishFacebookVideo(id:string,scheduledIso?:string):Promi
  }catch(error){
    const code=error instanceof Error?error.message:"UNKNOWN";
    await db.from("social_posts").update({status:"publish_unknown",
-     facebook_error:"影片送往 Meta 結果待核對 ("+code.slice(0,60)+")；禁止直接重試",
+     facebook_error:"影片送往 Meta 結果待核對 ("+code.slice(0,160)+")；禁止直接重試",
      updated_at:new Date().toISOString()})
      .eq("id",id).eq("author_id",user.user.id).eq("status","publishing");
    revalidatePath("/admin/social-posts");
-   return {ok:false,message:"影片送出結果無法確認。請先查看 Facebook 粉專與排程區，勿重複發布。"};
+   return {ok:false,message:"影片送出結果無法確認（診斷："+code.slice(0,160)+"）。請先查看 Facebook 粉專與排程區，勿重複發布。"};
  }
 }
