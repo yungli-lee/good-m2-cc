@@ -4017,7 +4017,13 @@ td {
     margin-bottom: 10px;
   }
   .cms-about-ayong .cms-public-page-header > img {
-    display: none; /* old flying cover is not part of the biography */
+    display: block;
+    width: 100%;
+    max-width: 360px;
+    height: auto;
+    max-height: 220px;
+    object-fit: contain;
+    margin: 8px auto 12px;
   }
   .cms-about-ayong .cms-public-page-header > p:not(.eyebrow) {
     margin: 0 0 10px;
