@@ -10,7 +10,8 @@ BASE="https://feature-real-price-public-se.good-m2-cc.pages.dev"
 BASE_ARGS={"dataset":"sale","county":"彰化縣","district":"秀水鄉","from":"2025-01-01","to":"2026-10-31"}
 
 def get(road,page=1):
-    params={**BASE_ARGS,"road":road,"page":page}
+    params={**BASE_ARGS,"page":page}
+    if road:params["road"]=road
     url=BASE+"/api/public/real-price?"+urllib.parse.urlencode(params)
     req=urllib.request.Request(url,headers={"Accept":"application/json","User-Agent":"good-m2-regression/1.0"})
     try:
@@ -32,11 +33,11 @@ def norm(value):
 def main():
     report={"tests":[]}
     failures=[]
-    for road in ("古蒼","古蒼巷","安南","安南巷","彰鹿路"):
+    for road in ("","古蒼","古蒼巷","安南","安南巷","彰鹿路"):
         try:
             result=get(road)
             if result["total"]<1:raise RuntimeError(f"Unexpected empty result for {road}")
-            if any(road not in norm(r.get("location_display") or r.get("address_display")) for r in result["data"]):
+            if road and any(road not in norm(r.get("location_display") or r.get("address_display")) for r in result["data"]):
                 raise RuntimeError(f"Query returned unrelated address for {road}")
             report["tests"].append({"road":road,"total":result["total"],"page_rows":len(result["data"]),"passed":True})
         except Exception as exc:
