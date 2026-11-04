@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { createSupabaseAdminClient } from "@/lib/supabase/server";
 import { getSupabaseEnv, getRequestContext } from "@/lib/supabase/env";
 import { parseSearchDate } from "@/lib/real-price/date-range";
-import { roadSearchPattern } from "@/lib/real-price/road-search";
+import { roadSearchPattern, isBareRoadKeyword } from "@/lib/real-price/road-search";
 export const runtime = "edge";
 const TARGETS = new Set(["house_land","land","building","parking"]);
 function decimal(s: string | null) { if(!s) return undefined; if(!/^\d+(?:\.\d+)?$/.test(s)) throw new Error("bad number"); const n=Number(s); if(!Number.isFinite(n)||n>1e14) throw new Error("bad number"); return n; }
@@ -72,7 +72,7 @@ export async function GET(request: Request) {
       const locationColumn=previewStaging?"address_display":"road_name";
       // A street/road/lane name uses structural matching. A bare keyword (古蒼、安南、
       // 中山北) is a literal substring search; do not reject it as invalid syntax.
-      if(/[路街巷弄]/.test(normalizedRoad)){
+      if(!isBareRoadKeyword(normalizedRoad)){
         q=q.filter(locationColumn,"match",roadSearchPattern(normalizedRoad,includeLanes!=="false"));
       }else{
         q=q.ilike(locationColumn,`%${normalizedRoad}%`);
