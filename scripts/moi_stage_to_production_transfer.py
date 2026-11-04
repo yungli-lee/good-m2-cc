@@ -3,7 +3,7 @@
 
 - HTTPS Supabase Data API; no local database dumps, credentials never printed.
 - Production-only real-price tables; never touches existing property/CRM tables.
-- 150-master transactional chunks, source identity + source detail hash verified by RPC.
+- 30-master transactional chunks, source identity + source detail hash verified by RPC.
 - Idempotent after interruption and capped to an initial source high-watermark.
 - All staging raw_record JSONB fields are preserved without lossy conversion.
 """
@@ -11,7 +11,7 @@ import datetime, hashlib, json, os, pathlib, time, urllib.error, urllib.parse, u
 
 STAGING="https://niorteztdbuyusemsgwa.supabase.co"
 PRODUCTION="https://rlbuadkmylulieoryzal.supabase.co"
-LIMIT=150
+LIMIT=30
 REPORT=pathlib.Path("/tmp/moi-production-transfer-report.json")
 
 def api(base,key,path,payload=None,prefer=None):
@@ -23,7 +23,7 @@ def api(base,key,path,payload=None,prefer=None):
     req=urllib.request.Request(base+path,data=None if payload is None else json.dumps(payload,ensure_ascii=False,separators=(",",":")).encode(),headers=headers,method="POST" if payload is not None else "GET")
     for attempt in range(4):
         try:
-            with urllib.request.urlopen(req,timeout=90) as resp:
+            with urllib.request.urlopen(req,timeout=65) as resp:
                 raw=resp.read()
                 return json.loads(raw) if raw else []
         except urllib.error.HTTPError as error:
@@ -31,7 +31,7 @@ def api(base,key,path,payload=None,prefer=None):
             if error.code not in (429,500,502,503,504) or attempt==3:raise RuntimeError(f"HTTP {error.code}: {msg[:250]}") from error
         except (TimeoutError, OSError):
             if attempt==3:raise
-        time.sleep(2**attempt*3)
+        time.sleep(2**attempt*5)
     raise RuntimeError("API did not respond")
 
 def select(source_key,table,params):
@@ -67,7 +67,24 @@ def main():
             "copied_master_rows":0,"copied_detail_rows":0,"completed":False,"destination":"Production real-price isolated tables"}
     def save():REPORT.write_text(json.dumps(report,ensure_ascii=False,indent=2)+"\n")
     save()
-    cursor=0
+    # Production contains only the isolated real-price transfer in this rollout.
+    # On retry, resume after the last successfully committed official ID.
+    # Check exact prefix counts to reject partially copied or gapped datasets.
+    live=api(PRODUCTION,prod_key,"/rest/v1/moi_real_price_transactions?select=id&order=id.desc&limit=1")
+    cursor=int(live[0]["id"]) if live else 0
+    if cursor:
+        def prefix_count(base,key):
+            req=urllib.request.Request(base+"/rest/v1/moi_real_price_transactions?select=id&id=lte."+str(cursor)+"&limit=1",
+                headers={"apikey":key,"Prefer":"count=exact","Accept":"application/json"})
+            if key.startswith("eyJ"):req.add_header("Authorization","Bearer "+key)
+            with urllib.request.urlopen(req,timeout=45) as result:
+                return int(result.headers["Content-Range"].split("/")[-1])
+        stage_prefix=prefix_count(STAGING,stage_key)
+        prod_prefix=prefix_count(PRODUCTION,prod_key)
+        if stage_prefix!=prod_prefix:
+            raise RuntimeError("Source/Production prefix mismatch; refuse unsafe resume")
+    report["resumed_after_source_id"]=cursor
+    save()
     while True:
         masters=select(stage_key,"moi_real_price_transactions",{
             "select":"*","id":"gt."+str(cursor),"and":"(id.lte."+str(high)+")",
@@ -93,9 +110,15 @@ def main():
         save()
         if report["copied_master_rows"]%300==0:
             print(json.dumps({"master_rows":report["copied_master_rows"],"detail_rows":report["copied_detail_rows"]}),flush=True)
-    # Use a source high-watermark that ensures late inserts don't corrupt the initial snapshot.
+    # Validate totals from the full source high-watermark (including previously copied rows).
+    # The finalizer receives independently audited original snapshot totals.
+    # These must be supplied after a source-side count reconciliation.
+    expected_masters=int(os.getenv("MOI_EXPECTED_MASTER_COUNT","0"))
+    expected_details=int(os.getenv("MOI_EXPECTED_DETAIL_COUNT","0"))
+    if not expected_masters or not expected_details:
+        raise RuntimeError("Full source master/detail counts required before enabling publication")
     response=api(PRODUCTION,prod_key,"/rest/v1/rpc/moi_finalize_transfer_sequences",
-       {"p_expected_masters":report["copied_master_rows"],"p_expected_details":report["copied_detail_rows"]})
+       {"p_expected_masters":expected_masters,"p_expected_details":expected_details})
     if not response.get("complete"):raise RuntimeError("Production transfer totals not verified")
     report["completed"]=True
     report["finished_at"]=datetime.datetime.now(datetime.timezone.utc).isoformat()
