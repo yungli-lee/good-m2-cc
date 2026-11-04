@@ -1,0 +1,31 @@
+name: Hidden real price release validation
+on:
+  push:
+    branches: [release/hidden-real-price-production]
+    paths: [.github/workflows/moi-hidden-real-price-typecheck.yml]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Enable pinned pnpm
+        run: |
+          corepack enable
+          corepack prepare pnpm@11.10.0 --activate
+      - name: Install without changing the lockfile
+        run: pnpm install --frozen-lockfile
+      - name: Typecheck new isolated route
+        run: pnpm exec tsc --noEmit
+      - name: Verify no navigation link or sitemap entry
+        shell: bash
+        run: |
+          set -euo pipefail
+          ! grep -Eq '(real-price|實價登錄)' app/sitemap.ts
+          ! grep -Eq '(real-price|實價登錄)' app/robots.ts
