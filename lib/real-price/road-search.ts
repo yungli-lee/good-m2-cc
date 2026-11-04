@@ -1,4 +1,6 @@
 // Shared by the UI and API. Only address characters are accepted, never raw regex.
+// Bare location keywords are accepted as literal address substrings.
+export const isBareRoadKeyword = (value: string) => !/[路街巷弄]/.test(value);
 export const hasExplicitLane = (value: string) => /[巷弄]/.test(value);
 const numeral = "[0-9０-９一二三四五六七八九十百零〇]+";
 const number = numeral + "([之-]" + numeral + ")?";
