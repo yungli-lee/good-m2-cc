@@ -3,7 +3,7 @@
 
 - HTTPS Supabase Data API; no local database dumps, credentials never printed.
 - Production-only real-price tables; never touches existing property/CRM tables.
-- 30-master transactional chunks, source identity + source detail hash verified by RPC.
+- 150-master transactional chunks, source identity + source detail hash verified by RPC.
 - Idempotent after interruption and capped to an initial source high-watermark.
 - All staging raw_record JSONB fields are preserved without lossy conversion.
 """
@@ -11,7 +11,7 @@ import datetime, hashlib, json, os, pathlib, time, urllib.error, urllib.parse, u
 
 STAGING="https://niorteztdbuyusemsgwa.supabase.co"
 PRODUCTION="https://rlbuadkmylulieoryzal.supabase.co"
-LIMIT=30
+LIMIT=150
 REPORT=pathlib.Path("/tmp/moi-production-transfer-report.json")
 
 def api(base,key,path,payload=None,prefer=None):
