@@ -4,7 +4,7 @@
 Read-only, no credentials and no database writes. Exit nonzero if a required
 query is broken; do not confuse missing data with a successful check.
 """
-import json, urllib.parse, urllib.request, unicodedata
+import json, urllib.parse, urllib.request, urllib.error, unicodedata
 
 BASE="https://feature-real-price-public-se.good-m2-cc.pages.dev"
 BASE_ARGS={"dataset":"sale","county":"彰化縣","district":"秀水鄉","from":"2025-01-01","to":"2026-10-31"}
@@ -13,9 +13,14 @@ def get(road,page=1):
     params={**BASE_ARGS,"road":road,"page":page}
     url=BASE+"/api/public/real-price?"+urllib.parse.urlencode(params)
     req=urllib.request.Request(url,headers={"Accept":"application/json","User-Agent":"good-m2-regression/1.0"})
-    with urllib.request.urlopen(req,timeout=55) as response:
-        if response.status!=200:raise RuntimeError(f"HTTP {response.status} road={road}")
-        body=json.load(response)
+    try:
+        with urllib.request.urlopen(req,timeout=55) as response:
+            if response.status!=200:raise RuntimeError(f"HTTP {response.status} road={road}")
+            body=json.load(response)
+    except urllib.error.HTTPError as exc:
+        # Public response only; no credentials or private database data.
+        raw=exc.read(2000).decode("utf-8","replace")
+        raise RuntimeError(f"Preview HTTP {exc.code} road={road}: {raw[:500]}") from exc
     if body.get("preview_sample") is not True:raise RuntimeError("Expected staging Preview response")
     rows=body.get("data")
     if not isinstance(rows,list) or not isinstance(body.get("total"),int):raise RuntimeError(f"Malformed list road={road}")
