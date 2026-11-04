@@ -71,6 +71,11 @@ def main():
     save()
     if len(selected)>MAX_NEW:
         raise RuntimeError("New-record count exceeds bounded daily import, review before writing")
+    if os.getenv("MOI_CHECK_ONLY")=="1":
+        report.update({"completed":False,"dry_run":True,"database_bytes_before":initial_bytes})
+        save()
+        print(json.dumps({"status":"dry_run","source_records":len(full),"existing_records":len(existing),"new_records":len(selected),"capacity_bytes":initial_bytes},ensure_ascii=False),flush=True)
+        return
     if not selected:
         report.update({"completed":True,"database_bytes_before":initial_bytes,"message":"No new source IDs"});save()
         print(json.dumps({"status":"no_new_records","records_checked":len(full)},ensure_ascii=False),flush=True)
