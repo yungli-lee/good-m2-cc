@@ -1,8 +1,5 @@
 name: MOI one-time isolated staging-to-production transfer
 on:
-  push:
-    branches: [main]
-    paths: [.github/workflows/moi-one-time-production-transfer.yml]
   workflow_dispatch:
 permissions:
   contents: read
@@ -16,10 +13,12 @@ jobs:
     env:
       MOI_STAGING_SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.MOI_STAGING_SUPABASE_SERVICE_ROLE_KEY }}
       MOI_PRODUCTION_SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.MOI_PRODUCTION_SUPABASE_SERVICE_ROLE_KEY || secrets.PRODUCTION_SUPABASE_SERVICE_ROLE_KEY }}
+      MOI_EXPECTED_MASTER_COUNT: '107684'
+      MOI_EXPECTED_DETAIL_COUNT: '298650'
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: 9e338041144e8d084e4c2a2d33e483dcaff8708c
+          ref: 21f918a6ab856aeb72284c56ad933bf663dd2efe
           persist-credentials: false
       - uses: actions/setup-python@v5
         with:
