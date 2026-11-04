@@ -1,5 +1,8 @@
 name: MOI one-time isolated staging-to-production transfer
 on:
+  push:
+    branches: [main]
+    paths: [.github/workflows/moi-one-time-production-transfer.yml]
   workflow_dispatch:
 permissions:
   contents: read
@@ -16,7 +19,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: 9381d76492ac715973ce312e4c9339be46e68302
+          ref: 9e338041144e8d084e4c2a2d33e483dcaff8708c
           persist-credentials: false
       - uses: actions/setup-python@v5
         with:
