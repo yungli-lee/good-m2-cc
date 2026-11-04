@@ -1,0 +1,66 @@
+name: MOI staging current Changhua update
+on:
+  push:
+    branches: [main]
+    paths: [.github/workflows/moi-current-changhua-update.yml]
+  workflow_dispatch:
+  schedule:
+    # Daily at 09:20 Asia/Taipei, including delayed releases after 1/11/21.
+    - cron: '20 1 * * *'
+permissions:
+  contents: read
+concurrency:
+  group: moi-staging-current-changhua-update
+  cancel-in-progress: false
+jobs:
+  current-changhua:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      STAGING_SUPABASE_URL: ${{ secrets.MOI_STAGING_SUPABASE_URL }}
+      STAGING_SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.MOI_STAGING_SUPABASE_SERVICE_ROLE_KEY }}
+      MOI_LOCAL_ZIP: /tmp/moi-current-changhua.zip
+      MOI_REPORT_PATH: /tmp/moi-current-changhua-report.json
+    steps:
+      # This workflow alone lives on main. Pin the reviewed ingestion implementation
+      # to a commit on the real-price feature branch; NEVER check out main app code.
+      - uses: actions/checkout@v4
+        with:
+          ref: 186a28050abec8114ee5d5e4a35a2a0a5f8f1ae7
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Verify Staging-only destination
+        run: |
+          test "$STAGING_SUPABASE_URL" = 'https://niorteztdbuyusemsgwa.supabase.co'
+          test -n "$STAGING_SUPABASE_SERVICE_ROLE_KEY"
+      - name: Download latest official CSV ZIP
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --location --show-error --silent --retry 3 --retry-delay 5 \
+            --connect-timeout 20 --max-time 240 --output "$MOI_LOCAL_ZIP" \
+            'https://plvr.land.moi.gov.tw/Download?type=zip&fileName=lvr_landcsv.zip'
+          python - <<'PY'
+          import os,zipfile
+          p=os.environ["MOI_LOCAL_ZIP"]
+          if not zipfile.is_zipfile(p):raise SystemExit("Official response is not a ZIP")
+          with zipfile.ZipFile(p) as z:
+              if z.testzip() is not None:raise SystemExit("ZIP CRC mismatch")
+          PY
+      - name: Check new source records and storage capacity without writing
+        env:
+          MOI_CHECK_ONLY: '1'
+        run: python scripts/moi_current_changhua_update.py
+      - name: Import only new Changhua transactions and detail rows to Staging
+        env:
+          MOI_CHECK_ONLY: '0'
+        run: python scripts/moi_current_changhua_update.py
+      - name: Preserve validation and import report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: moi-current-changhua-${{ github.run_id }}
+          path: /tmp/moi-current-changhua-report.json
+          retention-days: 90
