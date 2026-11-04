@@ -67,7 +67,16 @@ export async function GET(request: Request) {
     if(road) {
       const includeLanes=p.get("include_lanes");
       if(includeLanes!==null && !["true","false"].includes(includeLanes))throw new Error("bad lanes");
-      q=q.filter(previewStaging?"address_display":"road_name","match",roadSearchPattern(road,includeLanes!=="false"));
+      const normalizedRoad=road.normalize("NFKC").replace(/\\s/g,"");
+      if(!/^[\\p{Script=Han}0-9之-]+$/u.test(normalizedRoad))throw new Error("bad road");
+      const locationColumn=previewStaging?"address_display":"road_name";
+      // A street/road/lane name uses structural matching. A bare keyword (古蒼、安南、
+      // 中山北) is a literal substring search; do not reject it as invalid syntax.
+      if(/[路街巷弄]/.test(normalizedRoad)){
+        q=q.filter(locationColumn,"match",roadSearchPattern(normalizedRoad,includeLanes!=="false"));
+      }else{
+        q=q.ilike(locationColumn,`%${normalizedRoad}%`);
+      }
     }
     if(section)q=q.ilike("land_section",`%${section}%`);
     const {data,error,count}=await q.order("transaction_date",{ascending:false}).order("id",{ascending:false}).range((page-1)*limit,page*limit-1);
