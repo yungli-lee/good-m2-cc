@@ -15,7 +15,9 @@ LIMIT=30
 REPORT=pathlib.Path("/tmp/moi-production-transfer-report.json")
 
 def api(base,key,path,payload=None,prefer=None):
-    headers={"apikey":key,"Authorization":"Bearer "+key,"Accept":"application/json","User-Agent":"good-m2-verified-transfer/1.0"}
+    headers={"apikey":key,"Accept":"application/json","User-Agent":"good-m2-verified-transfer/1.0"}
+    # Legacy service_role is a JWT; modern sb_secret keys are not JWTs.
+    if key.startswith("eyJ"):headers["Authorization"]="Bearer "+key
     if payload is not None:headers["Content-Type"]="application/json"
     if prefer:headers["Prefer"]=prefer
     req=urllib.request.Request(base+path,data=None if payload is None else json.dumps(payload,ensure_ascii=False,separators=(",",":")).encode(),headers=headers,method="POST" if payload is not None else "GET")
