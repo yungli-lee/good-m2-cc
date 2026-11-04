@@ -1,0 +1,41 @@
+name: MOI one-time isolated staging-to-production transfer
+on:
+  push:
+    branches: [main]
+    paths: [.github/workflows/moi-one-time-production-transfer.yml]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: moi-one-time-production-transfer
+  cancel-in-progress: false
+jobs:
+  transfer:
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    env:
+      MOI_STAGING_SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.MOI_STAGING_SUPABASE_SERVICE_ROLE_KEY }}
+      MOI_PRODUCTION_SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.MOI_PRODUCTION_SUPABASE_SERVICE_ROLE_KEY || secrets.PRODUCTION_SUPABASE_SERVICE_ROLE_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: acee188922a57fee02282f997e89a6aab6f736b8
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Check both API credentials without printing them
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$MOI_STAGING_SUPABASE_SERVICE_ROLE_KEY" || { echo 'Staging key missing'; exit 1; }
+          test -n "$MOI_PRODUCTION_SUPABASE_SERVICE_ROLE_KEY" || { echo 'Production key missing. Configure repository secret MOI_PRODUCTION_SUPABASE_SERVICE_ROLE_KEY.'; exit 1; }
+      - name: Copy and verify all existing official Changhua masters and details
+        run: python scripts/moi_stage_to_production_transfer.py
+      - name: Preserve count reconciliation and progress report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: moi-production-transfer-${{ github.run_id }}
+          path: /tmp/moi-production-transfer-report.json
+          retention-days: 90
