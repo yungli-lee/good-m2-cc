@@ -1,4 +1,5 @@
 # Public API diagnostics only; no credentials or database writes.
+# Survey every target road in a single run.
 name: MOI Preview road search regression
 on:
   push:
