@@ -1,3 +1,4 @@
+# Public API diagnostics only; no credentials or database writes.
 name: MOI Preview road search regression
 on:
   push:
