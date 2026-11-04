@@ -18,5 +18,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+      - name: Local road parser and keyword regression
+        run: node --experimental-strip-types scripts/test-real-price-road-search.ts
       - name: Validate road keyword searches, canonical duplicate, and pagination (read-only)
         run: python scripts/verify_moi_search_cases.py
