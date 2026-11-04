@@ -1,0 +1,20 @@
+name: MOI Preview road search regression
+on:
+  push:
+    branches: [feature/real-price-public-search-v1]
+    paths: [.github/workflows/moi-preview-road-regression.yml]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  public-preview:
+    if: github.ref == 'refs/heads/feature/real-price-public-search-v1'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Validate road keyword searches, canonical duplicate, and pagination (read-only)
+        run: python scripts/verify_moi_search_cases.py
