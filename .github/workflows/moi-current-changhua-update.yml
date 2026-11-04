@@ -33,8 +33,14 @@ jobs:
           python-version: '3.12'
       - name: Verify Staging-only destination
         run: |
-          test "$STAGING_SUPABASE_URL" = 'https://niorteztdbuyusemsgwa.supabase.co'
-          test -n "$STAGING_SUPABASE_SERVICE_ROLE_KEY"
+          python - <<'PY'
+          import os
+          url=os.environ.get("STAGING_SUPABASE_URL","").strip().rstrip("/")
+          key=os.environ.get("STAGING_SUPABASE_SERVICE_ROLE_KEY","").strip()
+          if url!="https://niorteztdbuyusemsgwa.supabase.co":
+              raise SystemExit("Refusing a non-staging database destination")
+          if not key:raise SystemExit("Staging credentials missing")
+          PY
       - name: Download latest official CSV ZIP
         shell: bash
         run: |
