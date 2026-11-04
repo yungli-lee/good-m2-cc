@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import {roadSearchPattern} from '../lib/real-price/road-search.ts';
+import {roadSearchPattern,isBareRoadKeyword} from '../lib/real-price/road-search.ts';
 const matches=(query:string,address:string,lanes=true)=>new RegExp(roadSearchPattern(query,lanes).replaceAll('[[:space:]　]*','\\s*')).test(address);
 assert(matches('民族路','彰化縣彰化市民族路１２９巷１４號'));
 assert(matches('古蒼巷','彰化縣秀水鄉古蒼巷5之5號'));
@@ -25,4 +25,6 @@ assert(!matches('民族路','新民族路14號'));
 assert(matches(' 民族路１２９巷 ','彰化縣彰化市民族路１２９巷１４號'));
 assert.throws(()=>roadSearchPattern('民族路.*'));
 assert.throws(()=>roadSearchPattern('民族路5弄129巷'));
+for(const term of ['古蒼','安南','中山北']) assert(isBareRoadKeyword(term),term);
+for(const term of ['古蒼巷','安南巷','彰鹿路','彰鹿路一段']) assert(!isBareRoadKeyword(term),term);
 console.log('Road search regression cases passed');
