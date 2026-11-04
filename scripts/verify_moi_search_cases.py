@@ -31,12 +31,19 @@ def norm(value):
 
 def main():
     report={"tests":[]}
+    failures=[]
     for road in ("古蒼","古蒼巷","安南","安南巷","彰鹿路"):
-        result=get(road)
-        if result["total"]<1:raise RuntimeError(f"Unexpected empty result for {road}")
-        if any(road not in norm(r.get("location_display") or r.get("address_display")) for r in result["data"]):
-            raise RuntimeError(f"Query returned unrelated address for {road}")
-        report["tests"].append({"road":road,"total":result["total"],"page_rows":len(result["data"])})
+        try:
+            result=get(road)
+            if result["total"]<1:raise RuntimeError(f"Unexpected empty result for {road}")
+            if any(road not in norm(r.get("location_display") or r.get("address_display")) for r in result["data"]):
+                raise RuntimeError(f"Query returned unrelated address for {road}")
+            report["tests"].append({"road":road,"total":result["total"],"page_rows":len(result["data"]),"passed":True})
+        except Exception as exc:
+            report["tests"].append({"road":road,"passed":False,"error":str(exc)[:500]})
+            failures.append(road)
+    print(json.dumps(report,ensure_ascii=False),flush=True)
+    if failures:raise RuntimeError("Failing query cases: "+",".join(failures))
     # A known official 2025/09/27 transaction must appear only once after
     # source-prefix deduplication; test across page boundaries, not only one page.
     first=get("古蒼")
