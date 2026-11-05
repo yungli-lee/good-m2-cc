@@ -1,9 +1,9 @@
 name: MOI Production paced resume (200 records maximum)
 on:
-  push:
-    branches: [main]
-    paths: [.github/workflows/moi-production-paced-resume.yml]
   workflow_dispatch:
+  schedule:
+    # 02:15 Asia/Taipei every day; capped to 200 rows per run, fail-closed.
+    - cron: '15 18 * * *'
 permissions:
   contents: read
 concurrency:
