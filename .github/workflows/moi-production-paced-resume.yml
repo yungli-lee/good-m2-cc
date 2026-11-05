@@ -2,8 +2,9 @@ name: MOI Production paced resume (200 records maximum)
 on:
   workflow_dispatch:
   schedule:
-    # 02:15 Asia/Taipei every day; capped to 200 rows per run, fail-closed.
-    - cron: '15 18 * * *'
+    # 00:07-07:52 Asia/Taipei, every 15 minutes (32 runs/day, max 6400/day).
+    # GitHub cron is UTC; staggering offsets avoids top-of-hour load.
+    - cron: '7,22,37,52 16-23 * * *'
 permissions:
   contents: read
 concurrency:
