@@ -1,0 +1,41 @@
+name: MOI Production paced resume (200 records maximum)
+on:
+  push:
+    branches: [main]
+    paths: [.github/workflows/moi-production-paced-resume.yml]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: moi-one-time-production-transfer
+  cancel-in-progress: false
+jobs:
+  paced-resume:
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    env:
+      MOI_STAGING_SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.MOI_STAGING_SUPABASE_SERVICE_ROLE_KEY }}
+      MOI_PRODUCTION_SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.MOI_PRODUCTION_SUPABASE_SERVICE_ROLE_KEY || secrets.PRODUCTION_SUPABASE_SERVICE_ROLE_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: 8e4d7ebdc2d2e07bd527f3954de57de6fdbf55b0
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Preflight credentials (never print values)
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$MOI_STAGING_SUPABASE_SERVICE_ROLE_KEY"
+          test -n "$MOI_PRODUCTION_SUPABASE_SERVICE_ROLE_KEY"
+      - name: Resume at most 200 new transactions with Production health checks
+        run: python scripts/moi_production_paced_resume.py
+      - name: Preserve complete/partial audit trail
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: moi-production-paced-resume-${{ github.run_id }}
+          path: /tmp/moi-paced-resume-report.json
+          retention-days: 90
