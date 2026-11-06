@@ -18,7 +18,7 @@ from moi_stage_to_production_transfer import (
 
 LIMIT=20
 MAX_NEW=int(os.environ.get("MOI_MAX_NEW","200"))
-if MAX_NEW not in (200,1000,10000):
+if MAX_NEW not in (200,1000,5000,10000):
     raise RuntimeError("Unsupported bounded transfer size")
 PAUSE_SECONDS=8
 MAX_HEALTH_LATENCY=6.0
