@@ -1,8 +1,5 @@
 name: MOI controlled 10000 append
 on:
-  push:
-    branches: [main]
-    paths: [.github/workflows/moi-production-paced-resume.yml]
   workflow_dispatch:
 permissions:
   contents: read
