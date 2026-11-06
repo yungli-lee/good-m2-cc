@@ -1,5 +1,8 @@
-name: MOI controlled 1000 append
+name: MOI controlled 10000 append
 on:
+  push:
+    branches: [main]
+    paths: [.github/workflows/moi-production-paced-resume.yml]
   workflow_dispatch:
 permissions:
   contents: read
@@ -10,15 +13,15 @@ concurrency:
 jobs:
   paced-resume:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 180
     env:
-      MOI_MAX_NEW: '1000'
+      MOI_MAX_NEW: '10000'
       MOI_STAGING_SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.MOI_STAGING_SUPABASE_SERVICE_ROLE_KEY }}
       MOI_PRODUCTION_SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.MOI_PRODUCTION_SUPABASE_SERVICE_ROLE_KEY || secrets.PRODUCTION_SUPABASE_SERVICE_ROLE_KEY }}
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: 0221460d4866f63e7b90d563e93b687c0cb3abc4
+          ref: 1b6fe6dce67f5ece636e7eab48fec760f51af6ef
           persist-credentials: false
       - uses: actions/setup-python@v5
         with:
