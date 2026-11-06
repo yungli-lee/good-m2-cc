@@ -1,8 +1,5 @@
 name: MOI controlled retry 200 after source 500
 on:
-  push:
-    branches: [main]
-    paths: [.github/workflows/moi-production-paced-resume.yml]
   workflow_dispatch:
 permissions:
   contents: read
