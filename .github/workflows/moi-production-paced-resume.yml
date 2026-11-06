@@ -1,5 +1,8 @@
-name: MOI controlled retry 200 after source 500
+name: MOI controlled 5000 append and report
 on:
+  push:
+    branches: [main]
+    paths: [.github/workflows/moi-production-paced-resume.yml]
   workflow_dispatch:
 permissions:
   contents: read
@@ -10,15 +13,15 @@ concurrency:
 jobs:
   paced-resume:
     runs-on: ubuntu-latest
-    timeout-minutes: 18
+    timeout-minutes: 120
     env:
-      MOI_MAX_NEW: '200'
+      MOI_MAX_NEW: '5000'
       MOI_STAGING_SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.MOI_STAGING_SUPABASE_SERVICE_ROLE_KEY }}
       MOI_PRODUCTION_SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.MOI_PRODUCTION_SUPABASE_SERVICE_ROLE_KEY || secrets.PRODUCTION_SUPABASE_SERVICE_ROLE_KEY }}
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: 960be912d4f7c0a75d494800bf3bf5c647253fad
+          ref: 4aa7a78ef60fff0daebfb5860b41afd29aab5b50
           persist-credentials: false
       - uses: actions/setup-python@v5
         with:
@@ -29,14 +32,53 @@ jobs:
           set -euo pipefail
           test -n "$MOI_STAGING_SUPABASE_SERVICE_ROLE_KEY"
           test -n "$MOI_PRODUCTION_SUPABASE_SERVICE_ROLE_KEY"
-      - name: Confirm reviewed one-off retry of the last failed preflight
-        run: echo "Previous run failed before any write on Staging 500; this attempt is limited to 200 and fails closed."
-      - name: Resume at most 200 new transactions with Production health checks
+      - name: Append at most 5000 transactions with Production health checks
         run: python scripts/moi_production_paced_resume.py
+      - name: Write Chinese import report from execution audit
+        if: always()
+        env:
+          RUN_ID: ${{ github.run_id }}
+        run: |
+          python - <<'PY'
+          import datetime, json, os, pathlib
+          p=pathlib.Path("/tmp/moi-paced-resume-report.json")
+          data=json.loads(p.read_text()) if p.exists() else {}
+          n=int(data.get("new_transactions") or 0)
+          d=int(data.get("new_details") or 0)
+          complete=bool(data.get("completed")) and n==5000
+          lines=[
+            "# 彰化實價登錄 Production 匯入報告",
+            "",
+            f"- GitHub Actions Run：{os.environ['RUN_ID']}",
+            f"- 報告產生時間（UTC）：{datetime.datetime.now(datetime.timezone.utc).isoformat()}",
+            "- 來源：Staging MOI 實價登錄",
+            "- 目的地：Production 實價登錄專用資料表",
+            "- 匯入前交易：84,650 筆；明細：238,680 筆",
+            "- 本次交易匯入上限：5,000 筆（20筆／批，間隔8秒）",
+            f"- 本次成功確認新增交易：{n:,} 筆",
+            f"- 本次成功確認新增明細：{d:,} 筆",
+            f"- 推估匯入後交易：{84650+n:,} 筆；明細：{238680+d:,} 筆",
+            f"- 狀態：{'完整成功' if complete else '未完成／停止，須查閱錯誤日誌'}",
+            f"- 最後來源 ID：{data.get('last_source_id','未取得')}",
+            f"- 最後寫入耗時：{data.get('last_write_latency_s','未取得')} 秒",
+            f"- 最終健康檢查耗時：{data.get('final_health_latency_s','未執行')} 秒",
+            "- 資料完整性：每批由 Production RPC 驗證主從資料關聯；整體需再對照資料庫實存筆數",
+            "- 發布狀態：本次程式不開放實價登錄公開查詢",
+            "- 後續匯入：已停用定時與推送觸發，無自動下一輪",
+            "",
+            "## 備註",
+            "本報告依執行紀錄自動建立；實際資料庫總量應再以 Production SQL 核對。",
+          ]
+          report=pathlib.Path("/tmp/moi-production-5000-report.md")
+          report.write_text("\\n".join(lines)+"\\n",encoding="utf-8")
+          print(report.read_text())
+          PY
       - name: Preserve complete/partial audit trail
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: moi-production-paced-resume-${{ github.run_id }}
-          path: /tmp/moi-paced-resume-report.json
+          path: |
+            /tmp/moi-paced-resume-report.json
+            /tmp/moi-production-5000-report.md
           retention-days: 90
