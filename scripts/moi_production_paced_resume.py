@@ -17,7 +17,9 @@ from moi_stage_to_production_transfer import (
 )
 
 LIMIT=20
-MAX_NEW=200
+MAX_NEW=int(os.environ.get("MOI_MAX_NEW","200"))
+if MAX_NEW not in (200,1000):
+    raise RuntimeError("Unsupported bounded transfer size")
 PAUSE_SECONDS=8
 MAX_HEALTH_LATENCY=6.0
 REPORT=pathlib.Path("/tmp/moi-paced-resume-report.json")
