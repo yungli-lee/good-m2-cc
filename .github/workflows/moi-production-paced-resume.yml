@@ -1,8 +1,5 @@
 name: MOI controlled 5000 append and report
 on:
-  push:
-    branches: [main]
-    paths: [.github/workflows/moi-production-paced-resume.yml]
   workflow_dispatch:
 permissions:
   contents: read
