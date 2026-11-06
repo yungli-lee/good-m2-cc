@@ -37,13 +37,23 @@ def health(key):
 def exact_prefix(base,key,cursor):
     # Basic indexed PK count for all rows through the last committed source ID.
     # Avoid source identity heuristics that might skip holes.
-    import urllib.request
+    import urllib.request, urllib.error
     u=base+"/rest/v1/moi_real_price_transactions?select=id&id=lte."+str(cursor)+"&limit=1"
     headers={"apikey":key,"Prefer":"count=exact","Accept":"application/json"}
     if key.startswith("eyJ"):headers["Authorization"]="Bearer "+key
     req=urllib.request.Request(u,headers=headers)
-    with urllib.request.urlopen(req,timeout=35) as r:
-        return int(r.headers["Content-Range"].split("/")[-1])
+    for attempt in range(3):
+        try:
+            with urllib.request.urlopen(req,timeout=35) as r:
+                return int(r.headers["Content-Range"].split("/")[-1])
+        except urllib.error.HTTPError as e:
+            if e.code not in (429,500,502,503,504) or attempt==2:
+                raise
+        except (TimeoutError, OSError):
+            if attempt==2:
+                raise
+        time.sleep((attempt+1)*5)
+    raise RuntimeError("Prefix verification unavailable")
 
 def main():
     stage=os.environ.get("MOI_STAGING_SUPABASE_SERVICE_ROLE_KEY","").strip()
