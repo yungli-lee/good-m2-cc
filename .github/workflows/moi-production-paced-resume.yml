@@ -1,10 +1,6 @@
 name: MOI Production verified 5000 continuation (2h cooldown)
 on:
   workflow_dispatch:
-  schedule:
-    # Check every half hour. The independent gate enforces >=2h after
-    # the last successful ACTUAL import, not the GitHub cron frequency.
-    - cron: '11,41 * * * *'
 permissions:
   contents: read
   actions: read
