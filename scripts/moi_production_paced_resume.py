@@ -71,14 +71,16 @@ def main():
     prod_prefix=exact_prefix(PRODUCTION,prod,cursor)
     if stage_prefix!=prod_prefix:
         raise RuntimeError(f"Unsafe prefix gap: staging {stage_prefix}, Production {prod_prefix}")
-    status.update({"resumed_after_id":cursor,"verified_prefix_count":prod_prefix,"preflight_latency_s":before})
+    status.update({"resumed_after_id":cursor,"verified_prefix_count":prod_prefix,"preflight_latency_s":before,"source_exhausted":False})
     save()
     for chunk in range(MAX_NEW//LIMIT):
         health(prod)
         rows=select(stage,"moi_real_price_transactions",{
             "select":"*","id":"gt."+str(cursor),"order":"id.asc","limit":LIMIT
         })
-        if not rows:break
+        if not rows:
+            status["source_exhausted"]=True
+            break
         ids=[int(m["id"]) for m in rows]
         if len(ids)!=len(set(ids)) or ids!=sorted(ids) or any(
             m["county"]!="彰化縣" or m["dataset_type"] not in ("sale","presale") for m in rows
@@ -111,6 +113,12 @@ def main():
             raise RuntimeError(f"Slow Production write ({elapsed:.1f}s), stopping to protect website")
         if chunk<MAX_NEW//LIMIT-1:
             time.sleep(PAUSE_SECONDS)
+    if status["new_transactions"] < MAX_NEW:
+        # A completed short batch is allowed only when Staging has no next row.
+        remaining=select(stage,"moi_real_price_transactions",{"select":"id","id":"gt."+str(cursor),"order":"id.asc","limit":1})
+        if remaining:
+            raise RuntimeError("Short transfer without source exhaustion")
+        status["source_exhausted"]=True
     status["final_health_latency_s"]=health(prod)
     # Verify the full transferred prefix again after the last committed chunk.
     final_stage_prefix=exact_prefix(STAGING,stage,cursor)
