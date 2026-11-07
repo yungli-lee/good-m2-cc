@@ -112,6 +112,12 @@ def main():
         if chunk<MAX_NEW//LIMIT-1:
             time.sleep(PAUSE_SECONDS)
     status["final_health_latency_s"]=health(prod)
+    # Verify the full transferred prefix again after the last committed chunk.
+    final_stage_prefix=exact_prefix(STAGING,stage,cursor)
+    final_prod_prefix=exact_prefix(PRODUCTION,prod,cursor)
+    if final_stage_prefix!=final_prod_prefix or final_prod_prefix!=prod_prefix+status["new_transactions"]:
+        raise RuntimeError("Final source/Production master prefix reconciliation failed")
+    status["verified_final_prefix_count"]=final_prod_prefix
     status["completed"]=True
     status["finished_at"]=datetime.datetime.now(datetime.timezone.utc).isoformat()
     save()
