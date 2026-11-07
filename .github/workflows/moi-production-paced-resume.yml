@@ -1,8 +1,5 @@
 name: MOI Production verified 5000 continuation (2h cooldown)
 on:
-  push:
-    branches: [main]
-    paths: [.github/workflows/moi-production-paced-resume.yml]
   workflow_dispatch:
   schedule:
     # Check every half hour. The independent gate enforces >=2h after
