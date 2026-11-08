@@ -1,0 +1,81 @@
+name: MOI reviewed 2023 Q1 and Q3 quarantine-aware Staging backfill
+on:
+  push:
+    branches: [main]
+    paths: [.github/workflows/moi-changhua-112-q1-q3-quarantine-backfill.yml]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: moi-changhua-historical-staging-backfill
+  cancel-in-progress: false
+jobs:
+  reviewed-backfill:
+    runs-on: ubuntu-latest
+    timeout-minutes: 100
+    env:
+      MOI_LOCAL_ZIP: /tmp/changhua-reviewed-2023.zip
+      MOI_REPORT_PATH: /tmp/changhua-reviewed-2023-report.json
+      STAGING_SUPABASE_URL: https://niorteztdbuyusemsgwa.supabase.co
+      STAGING_SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.MOI_STAGING_SUPABASE_SERVICE_ROLE_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: 522437bc9ad1c42fc98275b1725be56ebedd1255
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Validate exact exception signature then safely ingest the valid records
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/moi-reviewed-2023-reports
+          for season in 112S1 112S3; do
+            export MOI_SEASON="$season"
+            python - <<'PY'
+          import json,os,urllib.request
+          url=os.environ['STAGING_SUPABASE_URL'];key=os.environ.get('STAGING_SUPABASE_SERVICE_ROLE_KEY','')
+          if url!='https://niorteztdbuyusemsgwa.supabase.co' or not key:raise SystemExit('Invalid Staging destination')
+          req=urllib.request.Request(url+'/rest/v1/rpc/moi_current_import_capacity_guard',
+                headers={'apikey':key,'Authorization':'Bearer '+key,'Content-Type':'application/json'},data=b'{}')
+          with urllib.request.urlopen(req,timeout=25) as resp:stats=json.load(resp)
+          if not isinstance(stats,dict) or not isinstance(stats.get('database_bytes'),int) or stats['database_bytes']>=7000000000:
+              raise SystemExit('STOP: insufficient verified Staging capacity')
+          print('Capacity verified:',stats['database_bytes'])
+          PY
+            curl --fail --location --show-error --silent --retry 3 --retry-delay 5 \
+              --connect-timeout 20 --max-time 240 -o "$MOI_LOCAL_ZIP" \
+              "https://plvr.land.moi.gov.tw/DownloadSeason?season=$season&type=zip&fileName=lvr_landcsv.zip"
+            export MOI_CHECK_ONLY=1
+            python scripts/moi_changhua_2023_reviewed_quarantine_backfill.py
+            python - <<'PY'
+          import json,os,sys
+          sys.path.insert(0,'scripts')
+          from moi_changhua_2023_reviewed_quarantine_backfill import allow_exact_official_quarantine
+          r=json.load(open(os.environ['MOI_REPORT_PATH']))
+          if not allow_exact_official_quarantine(r):raise SystemExit('STOP: source issue identities changed, quarantine not authorized')
+          print('Exact reviewed source quarantine matched:',r['season'],r['unresolved_issues'])
+          PY
+            cp "$MOI_REPORT_PATH" "/tmp/moi-reviewed-2023-reports/$season-source-audit.json"
+            export MOI_CHECK_ONLY=0
+            python scripts/moi_changhua_2023_reviewed_quarantine_backfill.py
+            cp "$MOI_REPORT_PATH" "/tmp/moi-reviewed-2023-reports/$season-import-report.json"
+            python - <<'PY'
+          import json,os
+          r=json.load(open(os.environ['MOI_REPORT_PATH']))
+          if not r.get('import_complete') or r.get('complete') or not r.get('exception_quarantine_explicit'):
+              raise SystemExit('STOP: quarantine report not in reviewed incomplete state')
+          if any(x.get('status')!='verified' for x in r['batches']):
+              raise SystemExit('STOP: one or more imported chunks unverified')
+          print('Verified valid subset imported; season remains incomplete until anomalies resolved')
+          PY
+          done
+      - name: Save source anomaly and all batch-level reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: moi-reviewed-2023-${{ github.run_id }}
+          path: |
+            /tmp/moi-reviewed-2023-reports/
+            /tmp/changhua-reviewed-2023-report.json
+          retention-days: 90
