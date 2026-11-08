@@ -1,6 +1,11 @@
 "use client";
 import { useMemo, useState } from "react";
 
+type DatabaseRow = {
+  id:number; sourceId:string; sourcePeriod:string|null; date:string; area:string;
+  kind:string; price:string|null; ping:number|null; note:string;
+  cancellation:string; special:boolean;
+};
 type CaseRow = {
   id: number; date: string; area: string; kind: string; price: string; ping: string;
   sourceId: string; note: string; rank: "main" | "secondary" | "context";
@@ -29,8 +34,42 @@ export default function RealPriceReportBuilder() {
   const [reportNo,setReportNo] = useState("");
   const [analyst,setAnalyst] = useState("");
   const [recipient,setRecipient] = useState("買賣雙方（各交付一份）");
-  const [rows,setRows] = useState<CaseRow[]>([empty(1),empty(2),empty(3)]);
+  const [rows,setRows] = useState<CaseRow[]>([]);
   const [nextId,setNextId] = useState(4);
+  const [district,setDistrict] = useState("鹿港鎮");
+  const [keyword,setKeyword] = useState("");
+  const [searchMonths,setSearchMonths] = useState("12");
+  const [candidates,setCandidates] = useState<DatabaseRow[]>([]);
+  const [busy,setBusy] = useState(false);
+  const [searchError,setSearchError] = useState("");
+  const [queryInfo,setQueryInfo] = useState("");
+  async function findComparables() {
+    setBusy(true);setSearchError("");setCandidates([]);setQueryInfo("");
+    try {
+      const p = new URLSearchParams({district,keyword,kind,months:searchMonths});
+      const res = await fetch("/api/admin/real-price-comparables?"+p.toString(),{cache:"no-store",credentials:"same-origin"});
+      const payload = await res.json();
+      if (!res.ok || !Array.isArray(payload.data)) throw new Error(payload.error||"查詢失敗");
+      setCandidates(payload.data as DatabaseRow[]);
+      setQueryInfo(`找到${payload.data.length}筆候選資料${payload.truncated?"（僅顯示最近60筆，請縮小條件）":""}。資料尚須人工確認可比性。`);
+    } catch(e) { setSearchError(e instanceof Error?e.message:"無法取得資料");}
+    finally {setBusy(false);}
+  }
+  function addCandidate(candidate:DatabaseRow) {
+    if (!candidate.price || candidate.price==="0") return;
+    if (rows.some(row=>row.sourceId===candidate.sourceId)) return;
+    if (rows.filter(row=>row.sourceId.trim()).length>=5) return;
+    const imported:CaseRow = {
+      id:nextId,date:candidate.date||"",area:candidate.area||"",
+      kind:candidate.kind||kind,price:candidate.price,
+      ping:candidate.ping == null?"":String(Math.round(candidate.ping*100)/100),
+      sourceId:candidate.sourceId,note:[candidate.note,candidate.cancellation?"解約資訊："+candidate.cancellation:""].filter(Boolean).join("；"),
+      rank:candidate.special?"context":"main",
+      reason:candidate.special?"特殊交易／解約資訊待人工核對；僅列背景參考，不納入一般行情。":"需核對是否為相同生活圈，並補充屋齡、面積、臨路及屋況差異。"
+    };
+    setRows(old=>[...old.filter(r=>r.sourceId.trim()),imported].slice(0,5));
+    setNextId(i=>i+1);
+  }
   const valid = useMemo(()=>rows.filter(r=>r.sourceId.trim() && r.date && r.price && r.area.trim() && r.reason.trim()),[rows]);
   function update(id:number,key:keyof CaseRow,value:string) {
     setRows(old=>old.map(r=>r.id===id?{...r,[key]:value}:r));
@@ -70,7 +109,7 @@ export default function RealPriceReportBuilder() {
     `}</style>
     <div className="rp-ui-title">
       <h1>成交行情告知報告｜雙面A4製作</h1>
-      <p style={{color:"#9a3412"}}><strong>內部試行：</strong>必須逐筆核對內政部官方交易資料才能列入報告。本功能尚未接通正式查詢或交付簽收資料庫；列印／另存PDF不代表已送交客戶。</p>
+      <p style={{color:"#9a3412"}}><strong>內部試行：</strong>先由資料庫依條件帶出候選成交，再由經紀人核對生活圈與可比性。資料僅供 Preview 內部使用；正式公開查詢仍關閉，列印不代表已交付客戶。</p>
     </div>
     <section className="rp-editor">
       <h2 style={{marginTop:0}}>一、報告基本資料</h2>
@@ -87,7 +126,36 @@ export default function RealPriceReportBuilder() {
       <div style={{marginTop:12}}>{label("實際篩選條件、生活圈界線與排除理由",<textarea style={{...field,minHeight:74}} value={criteria} onChange={e=>setCriteria(e.target.value)} placeholder="例如：優先同生活圈、相似臨路及屋齡；因同類案例不足擴大至相鄰住宅圈……"/>)}</div>
     </section>
     <section className="rp-editor">
-      <h2 style={{marginTop:0}}>二、人工核實的官方成交案例（最多5筆／雙面A4）</h2>
+      <h2 style={{marginTop:0}}>二、設定條件 → 自資料庫取得候選成交</h2>
+      <p style={{fontSize:13,color:"#475569"}}>優先同鄉鎮、同產品型態，再輸入生活圈附近的道路或地段縮小範圍。僅查詢 Staging 已匯入的彰化縣資料；不代表所有歷史交易均已驗證齊全。</p>
+      <div className="rp-grid">
+        {label("鄉鎮市區",<input style={field} value={district} onChange={e=>setDistrict(e.target.value)} placeholder="例如：鹿港鎮"/>)}
+        {label("生活圈道路／地段關鍵字",<input style={field} value={keyword} onChange={e=>setKeyword(e.target.value)} placeholder="例如：鹿和路、東石段"/>)}
+        {label("成交期間",<select style={field} value={searchMonths} onChange={e=>setSearchMonths(e.target.value)}><option value="12">近12個月</option><option value="24">近24個月</option><option value="36">近36個月</option></select>)}
+      </div>
+      <div style={{marginTop:12,display:"flex",gap:12,alignItems:"center",flexWrap:"wrap"}}>
+        <button type="button" style={{...pill,background:"#153c53",color:"#fff"}} disabled={busy||!district.trim()} onClick={findComparables}>{busy?"查詢中…":"從實價登錄資料庫搜尋"}</button>
+        <span style={{fontSize:13,color:searchError?"#b91c1c":"#475569"}}>{searchError||queryInfo||"尚未查詢"}</span>
+      </div>
+      {candidates.length>0?<div style={{marginTop:16,maxHeight:370,overflow:"auto",border:"1px solid #dce3ea",borderRadius:8}}>
+        <table style={{borderCollapse:"collapse",width:"100%",fontSize:13}}>
+          <thead><tr><th>成交日期／型態</th><th>地址／地段</th><th>總價</th><th>備註／處理</th></tr></thead>
+          <tbody>{candidates.map(r=><tr key={r.id}>
+            <td style={{padding:8,borderBottom:"1px solid #e2e8f0"}}>{r.date}<div>{r.kind}</div></td>
+            <td style={{padding:8,borderBottom:"1px solid #e2e8f0"}}>{r.area}<div style={{fontSize:11,color:"#64748b"}}>{r.sourceId}</div></td>
+            <td style={{padding:8,borderBottom:"1px solid #e2e8f0"}}>{r.price===null?"待核對":r.price+"萬元"}</td>
+            <td style={{padding:8,borderBottom:"1px solid #e2e8f0"}}>{r.special?<div style={{color:"#9a3412"}}>特殊交易／解約，僅可列背景參考</div>:null}
+              {r.note?<div style={{fontSize:11}}>{r.note.slice(0,100)}</div>:null}
+              <button type="button" style={pill} disabled={!r.price||rows.some(x=>x.sourceId===r.sourceId)||rows.filter(x=>x.sourceId.trim()).length>=5}
+                onClick={()=>addCandidate(r)}>{rows.some(x=>x.sourceId===r.sourceId)?"已加入":"加入報告"}</button>
+            </td>
+          </tr>)}</tbody>
+        </table>
+      </div>:null}
+      <p style={{fontSize:12,color:"#9a3412"}}>搜尋僅用於建議候選，無法自動認定同生活圈或合理估價。原始備註不可省略；交易異常、無有效價格、解約及不同產品需另行判斷。最多列入五筆，並由經紀人確認原因。</p>
+    </section>
+    <section className="rp-editor">
+      <h2 style={{marginTop:0}}>三、已選取的成交案例（最多5筆／雙面A4）</h2>
       <p style={{fontSize:13,color:"#475569"}}>只列入來源編號、日期、區域、價格及比較理由完整的案例。不同產品及特殊交易請選「背景參考」，不得用來混算行情。</p>
       {rows.map((r,i)=><div key={r.id} style={{border:"1px solid #dce3ea",padding:12,borderRadius:9,marginBottom:12}}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}><strong>案例 {i+1}</strong><button type="button" style={pill} onClick={()=>setRows(old=>old.filter(x=>x.id!==r.id))}>移除此筆</button></div>
