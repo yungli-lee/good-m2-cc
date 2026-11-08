@@ -12,7 +12,7 @@ const rec=(kind,payload=Buffer.alloc(0))=>Buffer.concat([u16(kind),u16(payload.l
 const bof=rec(0x809,Buffer.from("00061000f215cc070000000006000000","hex"));
 const eof=rec(0x0a);
 const cases=[
-  ["買賣案件:房地(土地+建物),115 年 5 月 至115 年 10 月 資料來源：不動產交易實價查詢服務網"],
+  ["買賣案件:房地(土地+建物),115 年 5 月 至115 年 10 月","資料來源：不動產交易實價查詢服務網　2026年11月08日 12:11:38"],
   ["編號","地段位置或門牌","社區簡稱","交易日期","總價(萬元)","單價(萬元/坪)","總面積(坪)","主建物佔比","型態","屋齡","樓別/樓高","主要用途","交易標的","交易筆棟數","建物現況格局","車位總價(萬元)","管理組織","電梯","備註"],
   ["1","鹿港鎮民權路４４巷６號","","115/08/09","80","","11.95","","透天厝","42","全/二層","住家用","房地(土地+建物)","土:1 建物:1 車位:0","2房1廳2衛","","無","無","親友、員工、共有人或其他特殊關係間之交易;"],
   ["2","鹿港鎮安順街８８號","","115/07/07","1,050","","52.54","","透天厝","33","全/四層","住家用","房地(土地+建物)","土:1 建物:1 車位:0","4房2廳3衛","","無","無",""]
@@ -98,6 +98,9 @@ const fake=Buffer.concat([header,filebook,dir,fat]);
 const file=new File([fake],"official-test.xls",{type:"application/vnd.ms-excel"});
 const result=await importOfficialXls(file);
 assert.deepEqual(result.sheets,["案件列表","土地","建物","車位"]);
+assert.equal(result.officialType,"房地(土地+建物)");
+assert.equal(result.officialPeriod,"115年5月至115年10月");
+assert.match(result.exportedAt,/2026年11月08日\s*12:11:38/);
 assert.equal(result.rows.length,50);
 assert.equal(result.totalInSource,52);
 assert.equal(result.shownSourceCount,50);
