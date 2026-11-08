@@ -13,7 +13,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: d9e415616d3c27ea0c3a1acc216ee2ceaf28b96b
+          ref: 42a9b3200f6b982c0a11af3db0cccac4ed75a144
           persist-credentials: false
       - uses: actions/setup-node@v4
         with:
@@ -26,6 +26,8 @@ jobs:
         run: pnpm install --frozen-lockfile
       - name: Typecheck
         run: pnpm exec tsc --noEmit
+      - name: Parse synthetic official four-sheet XLS end to end
+        run: node --experimental-strip-types scripts/test-official-xls-import.mjs
       - name: Confirm report access and publication gate
         shell: bash
         run: |
