@@ -1,6 +1,24 @@
-name: MOI Production verified 5000 continuation (2h cooldown)
+name: MOI Production verified 200-row manual pilot
 on:
   workflow_dispatch:
+    inputs:
+      backup_confirmed:
+        description: "Confirm a COMPLETED Production backup newer than the last transfer"
+        required: true
+        type: choice
+        options:
+          - NO
+          - YES
+        default: NO
+      backup_completed_at_utc:
+        description: "Verified completed backup timestamp (UTC ISO 8601; e.g. 2026-11-09T20:36:13Z)"
+        required: true
+        type: string
+      expected_source_cursor:
+        description: "Expected current Production max source id"
+        required: true
+        default: "1571405"
+        type: string
 permissions:
   contents: read
   actions: read
@@ -32,7 +50,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 120
     env:
-      MOI_MAX_NEW: '5000'
+      MOI_MAX_NEW: '200'
       MOI_STAGING_SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.MOI_STAGING_SUPABASE_SERVICE_ROLE_KEY }}
       MOI_PRODUCTION_SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.MOI_PRODUCTION_SUPABASE_SERVICE_ROLE_KEY || secrets.PRODUCTION_SUPABASE_SERVICE_ROLE_KEY }}
     steps:
@@ -49,7 +67,49 @@ jobs:
           set -euo pipefail
           test -n "$MOI_STAGING_SUPABASE_SERVICE_ROLE_KEY"
           test -n "$MOI_PRODUCTION_SUPABASE_SERVICE_ROLE_KEY"
-      - name: Append at most 5000 transactions with Production health checks
+      - name: Require recent verified backup and unchanged Production cursor
+        env:
+          VERIFIED_BACKUP: ${{ inputs.backup_confirmed }}
+          BACKUP_UTC: ${{ inputs.backup_completed_at_utc }}
+          EXPECTED_CURSOR: ${{ inputs.expected_source_cursor }}
+        shell: python
+        run: |
+          import datetime as dt
+          import json
+          import os
+          import urllib.parse
+          import urllib.request
+
+          if os.environ["VERIFIED_BACKUP"] != "YES":
+              raise SystemExit("STOP: New completed backup has not been explicitly confirmed.")
+          try:
+              backup = dt.datetime.fromisoformat(os.environ["BACKUP_UTC"].replace("Z", "+00:00"))
+              if backup.tzinfo is None:
+                  raise ValueError("Missing timezone")
+              cursor = int(os.environ["EXPECTED_CURSOR"])
+          except (ValueError, TypeError) as exc:
+              raise SystemExit("STOP: Invalid verified backup time or source cursor.") from exc
+          if backup > dt.datetime.now(dt.timezone.utc):
+              raise SystemExit("STOP: Backup timestamp is in the future.")
+          key = os.environ["MOI_PRODUCTION_SUPABASE_SERVICE_ROLE_KEY"]
+          base = "https://rlbuadkmylulieoryzal.supabase.co/rest/v1"
+          headers = {"apikey": key, "Authorization": "Bearer " + key}
+          def select(path):
+              req = urllib.request.Request(base + path, headers=headers)
+              with urllib.request.urlopen(req, timeout=30) as response:
+                  return json.load(response)
+          recent = select("/moi_production_transfer_batches?select=completed_at&order=completed_at.desc&limit=1")
+          last = dt.datetime.fromisoformat(recent[0]["completed_at"].replace("Z", "+00:00")) if recent else None
+          if last and backup <= last:
+              raise SystemExit("STOP: Verified backup predates latest Production transfer.")
+          actual = select("/moi_real_price_transactions?select=id&order=id.desc&limit=1")
+          if not actual or int(actual[0]["id"]) != cursor:
+              raise SystemExit("STOP: Production source cursor has changed; reconcile before transfer.")
+          state = select("/moi_publication_state?select=enabled&limit=1")
+          if len(state) != 1 or state[0]["enabled"] is not False:
+              raise SystemExit("STOP: Unexpected publication state.")
+          print("Pilot guard passed: confirmed-backup time is newer than last transfer, cursor unchanged, publication disabled.")
+      - name: Append at most 200 transactions with Production health checks
         run: python scripts/moi_production_paced_resume.py
       - name: Write Chinese verified import report
         if: always()
