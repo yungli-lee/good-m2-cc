@@ -1,0 +1,71 @@
+name: MOI 2023 Q2 Changhua scoped staging-only backfill
+on:
+  push:
+    branches: [main]
+    paths: [.github/workflows/moi-changhua-112s2-backfill.yml]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: moi-changhua-historical-staging-backfill
+  cancel-in-progress: false
+jobs:
+  staging-q2:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      MOI_SEASON: '112S2'
+      MOI_LOCAL_ZIP: /tmp/changhua-112s2-official.zip
+      MOI_REPORT_PATH: /tmp/changhua-112s2-backfill-report.json
+      STAGING_SUPABASE_URL: https://niorteztdbuyusemsgwa.supabase.co
+      STAGING_SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.MOI_STAGING_SUPABASE_SERVICE_ROLE_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: 9a62fd3ca1c5f75d4a3dc256c6126cfde119b195
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Verify Staging-only URL and database capacity
+        env:
+          MOI_CHECK_ONLY: '1'
+        run: |
+          python - <<'PY'
+          import json,os,urllib.request
+          url=os.environ['STAGING_SUPABASE_URL']
+          key=os.environ.get('STAGING_SUPABASE_SERVICE_ROLE_KEY','')
+          assert url=='https://niorteztdbuyusemsgwa.supabase.co' and key
+          headers={'apikey':key,'Authorization':'Bearer '+key,'Content-Type':'application/json'}
+          req=urllib.request.Request(url+'/rest/v1/rpc/moi_staging_database_size',headers=headers,data=b'{}')
+          # Only use existing capacity RPC when installed; a missing RPC is a hard stop.
+          try:
+              with urllib.request.urlopen(req,timeout=20) as response:
+                  payload=json.load(response)
+          except Exception as e:
+              raise SystemExit('STOP: no verified Staging capacity RPC: '+str(e)) from e
+          if not isinstance(payload,int) or payload>=7000000000:
+              raise SystemExit('STOP: Staging capacity cannot be verified below 7GB')
+          print('Staging capacity guard passed (bytes):',payload)
+          PY
+      - name: Download official quarterly CSV ZIP
+        run: |
+          set -euo pipefail
+          curl --fail --location --show-error --silent --retry 3 --retry-delay 5 \
+            --connect-timeout 20 --max-time 240 -o "$MOI_LOCAL_ZIP" \
+            'https://plvr.land.moi.gov.tw/DownloadSeason?season=112S2&type=zip&fileName=lvr_landcsv.zip'
+      - name: Parse and validate scoped official source (no write)
+        env:
+          MOI_CHECK_ONLY: '1'
+        run: python scripts/moi_changhua_2023_backfill.py
+      - name: Import verified 112S2 into Staging only
+        env:
+          MOI_CHECK_ONLY: '0'
+        run: python scripts/moi_changhua_2023_backfill.py
+      - name: Preserve scoped provenance and batch report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: moi-changhua-112s2-staging-${{ github.run_id }}
+          path: /tmp/changhua-112s2-backfill-report.json
+          retention-days: 90
