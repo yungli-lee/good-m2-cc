@@ -104,6 +104,8 @@ export default async function AdminIndexPage() {
               <Link className="button secondary" href="/admin/site-pages">靜態頁面</Link>
               <Link className="button secondary" href="/admin/navigation">導覽選單</Link>
               <Link className="button ghost" href="/admin/tools">成交試算中心</Link>
+              <Link className="button ghost" href="/admin/real-price">實價登錄管理</Link>
+              <Link className="button ghost" href="/admin/real-price-reports">成交行情報告</Link>
               <Link className="button ghost" href="/admin/settings/company">公司資料設定</Link>
               <Link className="button ghost" href="/admin/settings/display">前台顯示設定</Link>
               <Link className="button ghost" href="/admin/settings/ai-assistants">AI 助手形象管理</Link>
