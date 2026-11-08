@@ -197,7 +197,7 @@ function table(sheet:Sheet,headerRow:number){
   }
   return rows;
 }
-const num=(raw:string)=>{const n=Number(raw.replace(/[,，\s]/g,""));return Number.isFinite(n)?n:null;};
+const num=(raw:string)=>{const text=raw.replace(/[,，\s]/g,"");if(!text)return null;const n=Number(text);return Number.isFinite(n)?n:null;};
 const ping=(raw:string)=>num(raw.replace(/坪/g,""));
 function rocDate(s:string){
   const m=/^(\d{2,3})\/(\d{1,2})\/(\d{1,2})$/.exec(s.trim());
