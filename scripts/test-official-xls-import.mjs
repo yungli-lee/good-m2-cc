@@ -17,6 +17,8 @@ const cases=[
   ["1","鹿港鎮民權路４４巷６號","","115/08/09","80","","11.95","","透天厝","42","全/二層","住家用","房地(土地+建物)","土:1 建物:1 車位:0","2房1廳2衛","","無","無","親友、員工、共有人或其他特殊關係間之交易;"],
   ["2","鹿港鎮安順街８８號","","115/07/07","1,050","","52.54","","透天厝","33","全/四層","住家用","房地(土地+建物)","土:1 建物:1 車位:0","4房2廳3衛","","無","無",""]
 ];
+// Exercise first-50 cap: add 50 further records, of which #51 and #52 must be hidden.
+for(let n=3;n<=52;n++)cases.push([String(n),"鹿港鎮測試路"+n+"號","","115/08/01","500","","35.00","","透天厝","20","全/三層","住家用","房地(土地+建物)","土:1 建物:1 車位:0","3房2廳2衛","","無","無",""]);
 const land=[
   ["序號","土地位置","土地移轉面積","使用分區或編定","備註"],
   ["1-1","埔崙段235地號","9.50坪","都市：住宅區",""],
@@ -96,7 +98,12 @@ const fake=Buffer.concat([header,filebook,dir,fat]);
 const file=new File([fake],"official-test.xls",{type:"application/vnd.ms-excel"});
 const result=await importOfficialXls(file);
 assert.deepEqual(result.sheets,["案件列表","土地","建物","車位"]);
-assert.equal(result.rows.length,2);
+assert.equal(result.rows.length,50);
+assert.equal(result.totalInSource,52);
+assert.equal(result.shownSourceCount,50);
+assert.equal(result.omitted,2);
+assert.ok(result.rows[49].sourceId.endsWith(':50'));
+assert.ok(!result.rows.some(x=>x.sourceId.endsWith(':51')||x.sourceId.endsWith(':52')));
 assert.equal(result.skipped,0);
 assert.equal(result.rows[0].date,"2026-08-09");
 assert.equal(result.rows[0].price,"80");
