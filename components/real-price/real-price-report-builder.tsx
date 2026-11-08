@@ -1,5 +1,6 @@
 "use client";
 import { useMemo, useState } from "react";
+import { importOfficialXls } from "@/lib/real-price/official-xls-import";
 
 type DatabaseRow = {
   id:number; sourceId:string; sourcePeriod:string|null; date:string; area:string;
@@ -49,10 +50,27 @@ export default function RealPriceReportBuilder() {
   const [maxPing,setMaxPing] = useState("");
   const [candidates,setCandidates] = useState<DatabaseRow[]>([]);
   const [busy,setBusy] = useState(false);
+  const [uploadBusy,setUploadBusy] = useState(false);
+  const [uploadNotice,setUploadNotice] = useState("");
+  const [selectedSource,setSelectedSource] = useState<"database"|"official_excel">("database");
+  async function handleOfficialUpload(file:File|undefined) {
+    if(!file)return;
+    setUploadBusy(true);setSearchError("");setQueryInfo("");setCandidates([]);setUploadNotice("");
+    try {
+      const result=await importOfficialXls(file);
+      setCandidates(result.rows);
+      setSelectedSource("official_excel");
+      setUploadNotice(`已讀取 ${result.filename}，${result.rows.length}筆有效案例，略過${result.skipped}筆異常資料；工作表：${result.sheets.join("、")}。`);
+      setQueryInfo(result.notice);
+      setWindowLabel("其他（請詳述）");
+      setCriteria(`資料來源：內政部官方實價登錄查詢網站匯出的 ${result.filename}。此檔共${result.rows.length}筆可讀取候選，${result.skipped}筆因日期、總價或地址缺漏略過；原搜尋圈選範圍未存入Excel幾何資訊，請由經紀人填寫生活圈與選取／排除理由。`);
+    }catch(e){setSearchError(e instanceof Error?e.message:"無法解析Excel");}
+    finally{setUploadBusy(false);}
+  }
   const [searchError,setSearchError] = useState("");
   const [queryInfo,setQueryInfo] = useState("");
   async function findComparables() {
-    setBusy(true);setSearchError("");setCandidates([]);setQueryInfo("");
+    setBusy(true);setSearchError("");setCandidates([]);setQueryInfo("");setUploadNotice("");setSelectedSource("database");
     try {
       const p = new URLSearchParams({district,keyword,kind,months:searchMonths,
         minPrice,maxPrice,minPing,maxPing});
@@ -124,7 +142,7 @@ export default function RealPriceReportBuilder() {
     `}</style>
     <div className="rp-ui-title">
       <h1>成交行情告知報告｜雙面A4製作</h1>
-      <p style={{color:"#9a3412"}}><strong>內部試行：</strong>先由資料庫依條件帶出候選成交，再由經紀人核對生活圈與可比性。資料僅供 Preview 內部使用；正式公開查詢仍關閉，列印不代表已交付客戶。</p>
+      <p style={{color:"#9a3412"}}><strong>內部試行：</strong>可上傳內政部官方Excel取得候選成交，或使用Staging資料庫查詢；再由經紀人核對生活圈與可比性。資料僅供 Preview 內部使用；正式公開查詢仍關閉，列印不代表已交付客戶。</p>
     </div>
     <section className="rp-editor">
       <h2 style={{marginTop:0}}>一、報告基本資料</h2>
@@ -141,7 +159,19 @@ export default function RealPriceReportBuilder() {
       <div style={{marginTop:12}}>{label("實際篩選條件、生活圈界線與排除理由",<textarea style={{...field,minHeight:74}} value={criteria} onChange={e=>setCriteria(e.target.value)} placeholder="例如：優先同生活圈、相似臨路及屋齡；因同類案例不足擴大至相鄰住宅圈……"/>)}</div>
     </section>
     <section className="rp-editor">
-      <h2 style={{marginTop:0}}>二、設定條件 → 自資料庫取得候選成交</h2>
+      <h2 style={{marginTop:0}}>二、上傳內政部官方查詢 Excel（推薦）</h2>
+      <p style={{fontSize:13,color:"#475569"}}>先在內政部網站完成地圖圈選與交易條件篩選，下載官方 Excel（.xls），在這裡直接匯入。系統自動對應「案件列表、土地、建物、車位」四個工作表，取得成交日期、總價、樓高、屋齡、地坪、建坪與原始備註；不需逐筆手工輸入。</p>
+      <input type="file" accept=".xls,application/vnd.ms-excel" disabled={uploadBusy}
+        onChange={e=>{void handleOfficialUpload(e.target.files?.[0]);e.currentTarget.value="";}}
+        aria-label="上傳內政部官方實價登錄xls檔案"
+        style={{...field,maxWidth:550}}/>
+      <p style={{fontSize:13,color:searchError?"#b91c1c":"#475569"}}>
+        {uploadBusy?"解析官方Excel中…":uploadNotice||"請上傳內政部匯出的 .xls（最多8MB）；檔案只在你的瀏覽器解析，不會寫入正式實價登錄資料庫。"}
+      </p>
+      <p style={{fontSize:12,color:"#9a3412"}}>注意：Excel只記錄已匯出的交易，通常不包含原本在地圖畫出的精確範圍。請在上方填寫實際生活圈，並自行確認匯出結果未混入其他產品或不適合比較的案件。</p>
+    </section>
+    <section className="rp-editor">
+      <h2 style={{marginTop:0}}>三、從現有資料庫搜尋（備用）</h2>
       <p style={{fontSize:13,color:"#475569"}}>優先同鄉鎮、同產品型態，再輸入生活圈附近的道路或地段縮小範圍。僅查詢 Staging 已匯入的彰化縣資料；不代表所有歷史交易均已驗證齊全。</p>
       <div className="rp-grid">
         {label("鄉鎮市區",<input style={field} value={district} onChange={e=>setDistrict(e.target.value)} placeholder="例如：鹿港鎮"/>)}
@@ -156,7 +186,7 @@ export default function RealPriceReportBuilder() {
         <button type="button" style={{...pill,background:"#153c53",color:"#fff"}} disabled={busy||!district.trim()} onClick={findComparables}>{busy?"查詢中…":"從實價登錄資料庫搜尋"}</button>
         <span style={{fontSize:13,color:searchError?"#b91c1c":"#475569"}}>{searchError||queryInfo||"尚未查詢"}</span>
       </div>
-      {candidates.length>0?<div style={{marginTop:16,maxHeight:370,overflow:"auto",border:"1px solid #dce3ea",borderRadius:8}}>
+      {selectedSource==="database" && candidates.length>0?<div style={{marginTop:16,maxHeight:370,overflow:"auto",border:"1px solid #dce3ea",borderRadius:8}}>
         <table style={{borderCollapse:"collapse",width:"100%",fontSize:13}}>
           <thead><tr><th>成交日期／型態</th><th>地址／地段</th><th>總價</th><th>備註／處理</th></tr></thead>
           <tbody>{candidates.map(r=><tr key={r.id}>
@@ -173,8 +203,28 @@ export default function RealPriceReportBuilder() {
       </div>:null}
       <p style={{fontSize:12,color:"#9a3412"}}>搜尋僅用於建議候選，無法自動認定同生活圈或合理估價。原始備註不可省略；交易異常、無有效價格、解約及不同產品需另行判斷。最多列入五筆，並由經紀人確認原因。</p>
     </section>
+    {selectedSource==="official_excel" && candidates.length>0?<section className="rp-editor">
+      <h2 style={{marginTop:0}}>四、勾選官方Excel的成交案例（{candidates.length}筆）</h2>
+      <p style={{fontSize:13,color:"#475569"}}>交易編號不顯示在客戶版報告；官方匯出資料會依案件列表的序號連結土地與建物明細。先看原始備註、樓高、屋齡及土地建物面積，再挑選具可比性的交易。</p>
+      <div style={{maxHeight:430,overflow:"auto",border:"1px solid #dce3ea",borderRadius:8}}>
+        <table style={{borderCollapse:"collapse",width:"100%",fontSize:13}}>
+          <thead><tr><th>成交日期／型態</th><th>地段位置或門牌</th><th>總價／建物資料</th><th>交易備註／選取</th></tr></thead>
+          <tbody>{candidates.map(r=><tr key={r.id}>
+            <td style={{padding:8,borderBottom:"1px solid #e2e8f0"}}>{r.date}<div>{r.kind}</div></td>
+            <td style={{padding:8,borderBottom:"1px solid #e2e8f0"}}>{r.area}</td>
+            <td style={{padding:8,borderBottom:"1px solid #e2e8f0"}}>{r.price===null?"未提供":r.price+"萬元"}<div style={{fontSize:11}}>樓高：{r.floorCount||"未提供"}｜屋齡：{r.buildingAge==null?"—":r.buildingAge+"年"}</div><div style={{fontSize:11}}>地坪：{r.landPing==null?"—":r.landPing+"坪"}｜建坪：{r.buildingPing==null?"—":r.buildingPing+"坪"}</div></td>
+            <td style={{padding:8,borderBottom:"1px solid #e2e8f0"}}>{r.special?<strong style={{color:"#9a3412"}}>特殊交易參考</strong>:null}
+              <div style={{fontSize:11}}>{r.note||"官方備註空白"}</div>
+              <button type="button" style={pill} disabled={!r.price||rows.some(x=>x.sourceId===r.sourceId)||rows.filter(x=>x.sourceId.trim()).length>=5} onClick={()=>addCandidate(r)}>
+                {rows.some(x=>x.sourceId===r.sourceId)?"已加入報告":"加入報告"}
+              </button>
+            </td>
+          </tr>)}</tbody>
+        </table>
+      </div>
+    </section>:null}
     <section className="rp-editor">
-      <h2 style={{marginTop:0}}>三、已選取的成交案例（最多5筆／雙面A4）</h2>
+      <h2 style={{marginTop:0}}>五、已選取的成交案例（最多5筆／雙面A4）</h2>
       <p style={{fontSize:13,color:"#475569"}}>僅從系統保留來源編號供內部追溯；對客報告不顯示編號。不同產品及特殊交易請選「背景參考」，不得用來混算行情。</p>
       {rows.map((r,i)=><div key={r.id} style={{border:"1px solid #dce3ea",padding:12,borderRadius:9,marginBottom:12}}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}><strong>案例 {i+1}</strong><button type="button" style={pill} onClick={()=>setRows(old=>old.filter(x=>x.id!==r.id))}>移除此筆</button></div>
@@ -212,7 +262,7 @@ export default function RealPriceReportBuilder() {
       <h3>資料解讀及交付說明</h3>
       <p>本頁是「已選取案例」的比較依據，並非全市場交易清單；案例與標的可能因屋況、區位、地坪、臨路、車位及交易情形而有所不同。各案例原始交易備註請以內政部官方紀錄為準，特殊／背景參考不可直接與主要可比案混算。</p>
       <p><b>資料來源：</b>內政部不動產交易實價登錄；<b>製作：</b>{analyst||"（未填）"}；<b>交付對象：</b>{recipient}。</p>
-      <p className="rp-small" style={{marginTop:15}}>注意：本試行版自資料庫列示成交候選，尚未完成所有交易品質核對。使用時應保存官方查詢證據與雙方實際交付紀錄；未交付不應標記為已完成告知。</p>
+      <p className="rp-small" style={{marginTop:15}}>注意：本試行版由資料庫或官方Excel產生候選，尚未完成所有交易品質核對。使用時應保存官方查詢證據與雙方實際交付紀錄；未交付不應標記為已完成告知。</p>
     </article>
     <article className="rp-sheet" aria-label="報告背面">
       <div className="rp-row"><h2>實價登錄成交案例選取標準暨使用說明</h2><strong style={{fontSize:12}}>背面｜固定標準</strong></div>
