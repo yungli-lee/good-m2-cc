@@ -1,8 +1,5 @@
 name: MOI 2018 four-quarter Changhua official source audit
 on:
-  push:
-    branches: [main]
-    paths: [.github/workflows/moi-historical-2018-source-audit.yml]
   workflow_dispatch:
 permissions:
   contents: read
