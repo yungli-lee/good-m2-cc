@@ -5,7 +5,7 @@ from moi_national_import import parse_archive,fingerprint
 
 VERSION='changhua-sale-presale-2018-v1'
 PROJECT_URL='https://niorteztdbuyusemsgwa.supabase.co'
-FILES={'n_lvr_land_a.csv','n_lvr_land_b.csv'}
+FILES={'n_lvr_land_a.csv'}
 SEASONS=[f'107S{quarter}' for quarter in (1,2,3,4)]
 BASE='https://feature-real-price-public-se.good-m2-cc.pages.dev'
 
@@ -21,7 +21,7 @@ def plan(path,season):
         if len(selected)!=len(set(selected)):raise ValueError('Duplicate scoped CSV names')
         if sum(x.file_size for x in z.infolist())>4_000_000_000:raise ValueError('Archive expansion bound exceeded')
     groups,issues,inventory=parse_archive(path,FILES)
-    if {name for name,_ in groups}!=FILES:raise ValueError('Both Changhua sale/presale files required')
+    if {name for name,_ in groups}!=FILES:raise ValueError('Historical Changhua sale master file required')
     for name,items in groups:
         for item in items:
             m=item['master']
