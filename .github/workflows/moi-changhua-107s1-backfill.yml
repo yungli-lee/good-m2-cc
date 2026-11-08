@@ -1,5 +1,8 @@
 name: MOI 2018 Q1 Changhua staging-only backfill
 on:
+  push:
+    branches: [main]
+    paths: [.github/workflows/moi-changhua-107s1-backfill.yml]
   workflow_dispatch:
 permissions:
   contents: read
@@ -19,7 +22,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: af36088aa7f52fb8034ce3f8764c6999ef34977c
+          ref: 27d8d6137a9f94f0deb4b38d6f1fc26221d7e81c
           persist-credentials: false
       - uses: actions/setup-python@v5
         with:
