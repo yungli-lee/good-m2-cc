@@ -1,5 +1,8 @@
 name: Validate real-price A4 report builder in feature branch
 on:
+  push:
+    branches: [main]
+    paths: [.github/workflows/moi-comparable-report-validate.yml]
   workflow_dispatch:
 permissions:
   contents: read
@@ -28,6 +31,6 @@ jobs:
         run: |
           set -euo pipefail
           grep -F 'await requireRole(["editor", "admin", "owner"])' app/admin/real-price-reports/page.tsx
-          grep -F 'moi_publication_state' app/api/public/real-price/route.ts
-          grep -F 'enabled!==true' app/api/public/real-price/route.ts
+          grep -F 'REAL_PRICE_PUBLIC_SEARCH_ENABLED' app/api/public/real-price/route.ts
+          grep -F '!previewStaging && !publicEnabled' app/api/public/real-price/route.ts
           ! grep -F 'real-price-reports' app/layout.tsx
