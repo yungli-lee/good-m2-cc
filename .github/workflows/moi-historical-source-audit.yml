@@ -1,8 +1,5 @@
 name: MOI historical missing-quarter read-only source audit
 on:
-  push:
-    branches: [main]
-    paths: [.github/workflows/moi-historical-source-audit.yml]
   workflow_dispatch:
 permissions:
   contents: read
