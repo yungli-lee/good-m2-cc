@@ -53,7 +53,7 @@ export default function RealPriceReportBuilder(){
    const srcTable=source.querySelector("table");
    const srcStandards=source.querySelector(".report-standards");
    if (!srcTable || !srcStandards) {popup.close();setError("無法找到報告表格或簽收頁。");return;}
-   const topNodes=Array.from(source.children).filter(n=>n!==srcTable && n!==srcStandards);
+   const topNodes=Array.from(source.children).filter(n=>n!==srcTable && n!==srcStandards && n!==srcTable.nextElementSibling);
    const rows=Array.from(srcTable.querySelectorAll("tbody tr"));
    const sheets:HTMLElement[]=[];
    const makePage=()=>{
@@ -100,8 +100,16 @@ export default function RealPriceReportBuilder(){
    }
    // Place explanatory standards and the ONE buyer/seller checkbox signature
    // after the table, with their own stable page boundary.
-   const note=source.querySelector("table + p");
-   // The note is already among topNodes, so do not clone it again.
+   const note=srcTable.nextElementSibling;
+   if (note && note.tagName==="P") {
+     const copy=note.cloneNode(true);
+     current.inside.appendChild(copy);
+     if (!within(current.page,current.inside)) {
+       current.inside.removeChild(copy);
+       current=makePage();
+       current.inside.appendChild(copy);
+     }
+   }
    current=makePage();
    current.inside.appendChild(srcStandards.cloneNode(true));
    if (!within(current.page,current.inside)){
