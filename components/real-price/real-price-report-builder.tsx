@@ -39,6 +39,10 @@ export default function RealPriceReportBuilder() {
   const [district,setDistrict] = useState("鹿港鎮");
   const [keyword,setKeyword] = useState("");
   const [searchMonths,setSearchMonths] = useState("12");
+  const [minPrice,setMinPrice] = useState("");
+  const [maxPrice,setMaxPrice] = useState("");
+  const [minPing,setMinPing] = useState("");
+  const [maxPing,setMaxPing] = useState("");
   const [candidates,setCandidates] = useState<DatabaseRow[]>([]);
   const [busy,setBusy] = useState(false);
   const [searchError,setSearchError] = useState("");
@@ -46,11 +50,15 @@ export default function RealPriceReportBuilder() {
   async function findComparables() {
     setBusy(true);setSearchError("");setCandidates([]);setQueryInfo("");
     try {
-      const p = new URLSearchParams({district,keyword,kind,months:searchMonths});
+      const p = new URLSearchParams({district,keyword,kind,months:searchMonths,
+        minPrice,maxPrice,minPing,maxPing});
       const res = await fetch("/api/admin/real-price-comparables?"+p.toString(),{cache:"no-store",credentials:"same-origin"});
       const payload = await res.json();
       if (!res.ok || !Array.isArray(payload.data)) throw new Error(payload.error||"查詢失敗");
       setCandidates(payload.data as DatabaseRow[]);
+      setCircle(keyword?`${district}／${keyword}周邊（須人工確認生活圈界線）`:`${district}（須再確認比較生活圈）`);
+      setWindowLabel("近"+searchMonths+"個月");
+      setCriteria(`初選條件：${district}、${kind}、最近${searchMonths}個月${keyword?"、關鍵字："+keyword:""}${minPrice||maxPrice?"、總價萬元："+(minPrice||"不限")+"至"+(maxPrice||"不限"):""}${minPing||maxPing?"、坪數："+(minPing||"不限")+"至"+(maxPing||"不限"):""}；候選案例需另經生活圈、屋齡、臨路、特殊交易及原始來源核對。`);
       setQueryInfo(`找到${payload.data.length}筆候選資料${payload.truncated?"（僅顯示最近60筆，請縮小條件）":""}。資料尚須人工確認可比性。`);
     } catch(e) { setSearchError(e instanceof Error?e.message:"無法取得資料");}
     finally {setBusy(false);}
@@ -132,6 +140,10 @@ export default function RealPriceReportBuilder() {
         {label("鄉鎮市區",<input style={field} value={district} onChange={e=>setDistrict(e.target.value)} placeholder="例如：鹿港鎮"/>)}
         {label("生活圈道路／地段關鍵字",<input style={field} value={keyword} onChange={e=>setKeyword(e.target.value)} placeholder="例如：鹿和路、東石段"/>)}
         {label("成交期間",<select style={field} value={searchMonths} onChange={e=>setSearchMonths(e.target.value)}><option value="12">近12個月</option><option value="24">近24個月</option><option value="36">近36個月</option></select>)}
+        {label("總價下限（萬元）",<input type="number" min="0" style={field} value={minPrice} onChange={e=>setMinPrice(e.target.value)} placeholder="不限"/>)}
+        {label("總價上限（萬元）",<input type="number" min="0" style={field} value={maxPrice} onChange={e=>setMaxPrice(e.target.value)} placeholder="不限"/>)}
+        {label(kind==="土地"?"土地坪數下限":"建物坪數下限",<input type="number" min="0" style={field} value={minPing} onChange={e=>setMinPing(e.target.value)} placeholder="不限"/>)}
+        {label(kind==="土地"?"土地坪數上限":"建物坪數上限",<input type="number" min="0" style={field} value={maxPing} onChange={e=>setMaxPing(e.target.value)} placeholder="不限"/>)}
       </div>
       <div style={{marginTop:12,display:"flex",gap:12,alignItems:"center",flexWrap:"wrap"}}>
         <button type="button" style={{...pill,background:"#153c53",color:"#fff"}} disabled={busy||!district.trim()} onClick={findComparables}>{busy?"查詢中…":"從實價登錄資料庫搜尋"}</button>
