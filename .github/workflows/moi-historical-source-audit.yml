@@ -1,0 +1,57 @@
+name: MOI historical missing-quarter read-only source audit
+on:
+  push:
+    branches: [main]
+    paths: [.github/workflows/moi-historical-source-audit.yml]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  source-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        season: ['112S1','112S2','112S3']
+    env:
+      MOI_SEASON: ${{ matrix.season }}
+      MOI_LOCAL_ZIP: /tmp/moi-historical-source.zip
+      MOI_REPORT_PATH: /tmp/moi-historical-source-report.json
+      MOI_CHECK_ONLY: '1'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: 9a62fd3ca1c5f75d4a3dc256c6126cfde119b195
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Download official quarterly archive
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --location --show-error --silent --retry 3 --retry-delay 5 \
+            --connect-timeout 20 --max-time 240 \
+            --output "$MOI_LOCAL_ZIP" \
+            "https://plvr.land.moi.gov.tw/DownloadSeason?season=$MOI_SEASON&type=zip&fileName=lvr_landcsv.zip"
+      - name: Validate source records and quarantinable exceptions (read only)
+        run: |
+          python scripts/moi_changhua_2023_backfill.py
+          python - <<'PY'
+          import json,os
+          p=os.environ["MOI_REPORT_PATH"]
+          d=json.load(open(p))
+          print(json.dumps({"season":d["season"],"archive_sha256":d["archive_sha256"],
+            "masters":sum(x["source_masters"] for x in d["inventory"]),
+            "valid_masters":sum(x["valid_masters"] for x in d["inventory"]),
+            "details":sum(x["linked_details"] for x in d["inventory"]),
+            "issues":d["unresolved_issues"],"errors":d.get("issues",[])},ensure_ascii=False))
+          PY
+      - name: Save official source manifest and issues
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: historical-source-audit-${{ matrix.season }}-${{ github.run_id }}
+          path: /tmp/moi-historical-source-report.json
+          retention-days: 90
