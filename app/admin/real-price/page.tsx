@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { requireRole } from "@/lib/auth";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { createSupabaseAdminClient } from "@/lib/supabase/server";
 
 export const runtime = "edge";
 export const dynamic = "force-dynamic";
@@ -17,7 +17,7 @@ type Archive = { archive_name: string; validation_status: string; expected_maste
 
 export default async function AdminRealPricePage() {
   await requireRole(["editor", "admin", "owner"]);
-  const supabase = await createSupabaseServerClient();
+  const supabase = createSupabaseAdminClient();
   const [transactions, details, rawFiles, readiness, batches, checkpoints, archives, countySources] = await Promise.all([
     supabase.from("moi_real_price_transactions").select("id", { count: "exact", head: true }),
     supabase.from("moi_transaction_details").select("id", { count: "exact", head: true }),
