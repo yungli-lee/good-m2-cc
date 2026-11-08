@@ -55,7 +55,7 @@ export async function GET(request: Request) {
   const now = new Date();
   const cutoff = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - months, now.getUTCDate()))
     .toISOString().slice(0, 10);
-  const selected = "id,source_record_key,source_period_date,transaction_date,district,address_display,dataset_type,target_category,building_pattern,land_area_sqm,building_area_sqm,total_price_ntd,raw_record";
+  const selected = "id,source_record_key,source_period_date,transaction_date,district,address_display,dataset_type,target_category,building_pattern,building_age_years,land_area_sqm,building_area_sqm,total_price_ntd,raw_record,latitude,longitude,location_precision";
   const db = createSupabaseAdminClient();
   let q = db.from("moi_preview_transactions").select(selected)
     .eq("county", "彰化縣").eq("district", district)
@@ -96,6 +96,15 @@ export async function GET(request: Request) {
       price: Number.isFinite(price) && price > 0 ? String(Math.round(price / 10000 * 100) / 100) : null,
       ping: x.target_category === "land" ? (x.land_area_sqm == null ? null : Number(x.land_area_sqm) / 3.305785)
         : (x.building_area_sqm == null ? null : Number(x.building_area_sqm) / 3.305785),
+      landPing: x.land_area_sqm == null ? null : Math.round(Number(x.land_area_sqm) / 3.305785 * 100) / 100,
+      buildingPing: x.building_area_sqm == null ? null : Math.round(Number(x.building_area_sqm) / 3.305785 * 100) / 100,
+      floorCount: typeof raw["總樓層數"] === "string" && raw["總樓層數"].trim()
+        ? raw["總樓層數"].trim() : null,
+      buildingAge: x.building_age_years == null ? null : Number(x.building_age_years),
+      // Geometry never inferred from the address. Unknown locations stay excluded from map filtering.
+      latitude: x.latitude == null ? null : Number(x.latitude),
+      longitude: x.longitude == null ? null : Number(x.longitude),
+      locationPrecision: x.location_precision || "unlocated",
       note, cancellation,
       special: Boolean(suspicious || cancellation),
     };
