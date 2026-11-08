@@ -72,7 +72,8 @@ function readCompoundWorkbook(bytes:Uint8Array):Uint8Array {
 type RecordItem={at:number;kind:number;value:Uint8Array};
 class Segments{
   i=0; p=0;
-  constructor(public blocks:Uint8Array[]){}
+  blocks:Uint8Array[];
+  constructor(blocks:Uint8Array[]){this.blocks=blocks;}
   read(length:number){
     check(length>=0&&length<MAX_BYTES,"SST長度異常");
     const out=new Uint8Array(length);let written=0;
