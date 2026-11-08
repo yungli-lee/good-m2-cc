@@ -100,7 +100,7 @@ export default function RealPriceReportBuilder(){
  {items.length>0&&<article className="paper" aria-label="不動產成交行情報告">
     <div style={{display:"flex",justifyContent:"space-between",gap:8}}>
       <h2>不動產成交行情參考報告</h2>
-      <b>交付對象：{buyer?"☑ 買方":"□ 買方"}　{seller?"☑ 賣方":"□ 賣方"}</b>
+      
     </div>
     <div style={{height:4,background:"#b59a66"}}/>
     <p><b>標的：</b>{subject||"未填"}　<b>生活圈：</b>{area||"未填"}</p>
@@ -126,7 +126,7 @@ export default function RealPriceReportBuilder(){
         <p>本人確認已收到本報告及相關說明；簽收僅證明收件，不代表同意所列價格。</p>
         <p>簽名：________________________________　交付日期：________________</p>
         <p>交付人：________________________　交付方式：________________</p>
-        <p className="muted">本報告一式兩份，簽收人及經紀公司各自留存相同版本。</p>
+        <p className="muted">本報告一式兩份簽名後，簽收人及不動產經紀公司各自留存相同版本。</p>
       </div>
     </section>
   </article>}
