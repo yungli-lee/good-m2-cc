@@ -7,6 +7,7 @@
 export type ImportedOfficialRow = {
   sourceId:string; date:string; area:string; kind:string; price:string|null;
   landPing:number|null; buildingPing:number|null; floorCount:string|null;
+  isLandOnly:boolean; unitPriceWanPing:number|null; unitPriceSource:"official"|"calculated"|null;
   buildingAge:number|null; note:string; cancellation:string; special:boolean;
   ping:number|null; sourcePeriod:string|null; id:number;
   latitude:null;longitude:null;locationPrecision:"unlocated";
@@ -246,18 +247,25 @@ export async function importOfficialXls(file:File):Promise<OfficialImport>{
     const bset=buildingRows.filter(a=>a["序號"]?.startsWith(index+"-"));
     const landValues=subset.map(x=>ping(x["土地移轉面積"]||"")).filter((n):n is number=>n!==null);
     const buildingValues=bset.map(x=>ping(x["建物移轉面積"]||"")).filter((n):n is number=>n!==null);
-    const land=landValues.length ? Math.round(landValues.reduce((a,b)=>a+b,0)*100)/100:null;
+    const isLandOnly=/^土地(?:$|[（(])/.test((r["交易標的"]||officialType||"").trim()) || /^土地(?:$|[（(])/.test((officialType||"").trim());
+    const land=landValues.length ? Math.round(landValues.reduce((a,b)=>a+b,0)*100)/100 : (isLandOnly ? ping(r["總面積(坪)"]||"") : null);
     const build=ping(r["總面積(坪)"]||"") ??
       (buildingValues.length?Math.round(buildingValues.reduce((a,b)=>a+b,0)*100)/100:null);
     const age=num(r["屋齡"]||"") ?? num(bset[0]?.["屋齡"]||"");
     const floorField=r["樓別/樓高"]||"";
     const floor=floorField.includes("/")?floorField.split("/").at(-1)?.trim():bset[0]?.["總層數"];
     const note=r["備註"]||"";
-    const kind=r["型態"]||r["交易標的"]||"";
+    const kind=isLandOnly?"土地":(r["型態"]||r["交易標的"]||"");
+    const officialUnit=num(r["單價(萬元/坪)"]||"");
+    const validOfficialUnit=officialUnit!==null && officialUnit>0 ? officialUnit : null;
+    const derivedUnit=isLandOnly && price>0 && land!==null && land>0 ? Math.round(price/land*100)/100 : null;
+    const unitPriceWanPing=isLandOnly ? (validOfficialUnit??derivedUnit) : null;
+    const unitPriceSource=isLandOnly ? (validOfficialUnit!==null?"official":derivedUnit!==null?"calculated":null) : null;
     rows.push({
       id:i+1,sourceId:"official-upload:"+digest+":"+index,
       date,area:address,kind,price:String(price),
-      landPing:land,buildingPing:build,floorCount:floor||null,buildingAge:age,
+      landPing:land,buildingPing:isLandOnly?null:build,floorCount:isLandOnly?null:floor||null,buildingAge:isLandOnly?null:age,
+      isLandOnly,unitPriceWanPing,unitPriceSource,
       ping:build??land,note,cancellation:"",special:suspicious.test(note),
       sourcePeriod:null,latitude:null,longitude:null,locationPrecision:"unlocated"
     });
