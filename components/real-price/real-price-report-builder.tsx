@@ -18,8 +18,7 @@ export default function RealPriceReportBuilder(){
  const [subject,setSubject]=useState(""),[area,setArea]=useState(""),[description,setDescription]=useState("");
  const [officialType,setOfficialType]=useState(""),[officialPeriod,setOfficialPeriod]=useState(""),[exportedAt,setExportedAt]=useState(""),[sourceHeading,setSourceHeading]=useState("");
  const [reportNo,setReportNo]=useState(""),[analyst,setAnalyst]=useState(""),[date,setDate]=useState("2026-11-08");
- const [buyer,setBuyer]=useState(true),[seller,setSeller]=useState(false);
- const canPrint=!!(items.length&&!invalid&&(buyer||seller)&&subject.trim()&&area.trim()&&reportNo.trim()&&analyst.trim());
+ const canPrint=!!(items.length&&!invalid&&subject.trim()&&area.trim()&&reportNo.trim()&&analyst.trim());
 
  function printReport() {
    if (!canPrint) return;
@@ -135,7 +134,7 @@ export default function RealPriceReportBuilder(){
  }
  return <main className="rp-bulk" style={{maxWidth:1160,margin:"0 auto",padding:20}}>
  <style>{'.rp-bulk .panel{background:white;padding:20px;margin-bottom:16px;border:1px solid #d4dee5;border-radius:10px}.rp-bulk .fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:13px}.rp-bulk .paper{background:white;color:#183449;width:210mm;box-sizing:border-box;padding:13mm;margin:16px auto;box-shadow:0 3px 16px #0002;font-family:Arial,"Noto Sans TC",sans-serif;overflow-wrap:anywhere}.rp-bulk .paper h2{font-size:19px;margin:0 0 10px}.rp-bulk .paper p,.rp-bulk .paper td,.rp-bulk .paper th{font-size:10.5px;line-height:1.6}.rp-bulk .paper table{width:100%;border-collapse:collapse}.rp-bulk .paper td,.rp-bulk .paper th{border:1px solid #c6d5de;padding:7px;text-align:left;vertical-align:top}.rp-bulk .paper th{background:#eef4f7}.rp-bulk .paper thead{display:table-header-group}.rp-bulk .paper tbody{display:table-row-group}.rp-bulk .muted{font-size:10px;color:#536e80}.rp-bulk .standard{border-bottom:1px solid #d5dee5;padding:10px 0}.rp-bulk .source-meta,.rp-bulk .report-source{background:#f1f5f8;padding:9px 12px;border-left:3px solid #ad965c;margin:10px 0}.rp-bulk .source-meta p{margin:5px 0;font-size:13px}.rp-bulk .report-source{font-size:11px;line-height:1.7}.rp-bulk .signature{border:1px solid #aebec9;padding:14px;margin-top:24px}@page{size:A4 portrait;margin:12mm}@media(max-width:800px){.rp-bulk .paper{width:100%;padding:15px}}@media print{body *{visibility:hidden!important}.rp-bulk,.rp-bulk .paper,.rp-bulk .paper *{visibility:visible!important}.rp-bulk{max-width:none!important;margin:0!important;padding:0!important}.rp-bulk .panel,.rp-bulk .intro{display:none!important}.rp-bulk{position:absolute!important;top:0!important;left:0!important;width:100%!important;box-sizing:border-box!important}.rp-bulk .paper{width:100%!important;min-height:0!important;height:auto!important;margin:0!important;padding:0!important;box-shadow:none!important;break-after:auto!important;page-break-after:auto!important}.rp-bulk .paper thead{display:table-header-group}.rp-bulk .paper tr{break-inside:avoid;page-break-inside:avoid}.rp-bulk .paper thead{display:table-header-group}.rp-bulk .report-source{print-color-adjust:exact;-webkit-print-color-adjust:exact}.rp-bulk .paper tr,.rp-bulk .standard,.rp-bulk .signature{break-inside:avoid;page-break-inside:avoid}}'}</style>
- <div className="intro"><h1>實價登錄成交行情報告</h1><p>內政部Excel上傳後，直接依官方檔案原順序取前50筆，不再二次篩選。僅輸出一份連續報告，明細自動接續排版。末尾只留一組簽名欄，依勾選標示買方或賣方身分。</p></div>
+ <div className="intro"><h1>實價登錄成交行情報告</h1><p>內政部Excel上傳後，直接依官方檔案原順序取前50筆，不再二次篩選。僅輸出一份連續報告，明細自動接續排版。末尾只留一組簽名欄，簽收人於紙本勾選買方或賣方身分。</p></div>
  <section className="panel"><h2>一、上傳內政部官方 Excel</h2>
    <input type="file" accept=".xls,application/vnd.ms-excel" disabled={loading} onChange={e=>{void onFile(e.currentTarget.files?.[0]);e.currentTarget.value="";}}/>
    <p>{loading?"解析中…":fileName?"已匯入："+fileName+"；總"+total+"筆，前50筆中可讀取"+items.length+"筆，超過"+omitted+"筆不顯示。":"請上傳內政部網站下載的 .xls 檔案。"}</p>
@@ -151,10 +150,7 @@ export default function RealPriceReportBuilder(){
  </div>
  <div className="source-meta"><b>內政部官方查詢條件（自Excel頁首讀取）</b><p>交易種類：{officialType||"無法由檔案辨識，請核對原件"}　成交期間：{officialPeriod||"無法由檔案辨識，請核對原件"}</p><p>資料匯出時間：{exportedAt||"未記載／未辨識"}</p></div>
  <p>{label("其他查詢條件補充（選填）",<textarea style={{...base,minHeight:55}} value={description} onChange={e=>setDescription(e.target.value)}/>)}</p>
- <div style={{display:"flex",gap:24,alignItems:"center",flexWrap:"wrap",margin:"12px 0"}}><strong>交付對象（勾選）</strong>
- <label><input type="checkbox" checked={buyer} onChange={e=>setBuyer(e.target.checked)}/> 買方</label>
- <label><input type="checkbox" checked={seller} onChange={e=>setSeller(e.target.checked)}/> 賣方</label></div>
- <p>只產製一份報告；底部一個簽名欄，勾選簽收者為買方或賣方。需留存時，請列印同一報告兩份，由當事人及經紀人各自保存。</p>
+ <p>報告最後保留「□ 買方　□ 賣方」供簽收人於紙本勾選；不須在後台預先選擇交付身分。</p>
  <button type="button" disabled={!canPrint||loading} onClick={printReport} style={{background:"#173b55",color:"white",border:0,borderRadius:7,padding:"11px 17px",cursor:"pointer"}}>列印一份報告／另存PDF（依內容自動分頁）</button>
  <p style={{fontSize:12,color:"#536e80"}}>所有成交明細連續排版，瀏覽器依A4版面自動換頁，盡量填滿每頁；最多50筆。前50筆有無法解析的資料時禁止輸出。</p>
  </section>
@@ -183,7 +179,7 @@ export default function RealPriceReportBuilder(){
       {standards.map(([heading,body],i)=><div className="standard" key={heading}><h3>{i+1}、{heading}</h3><p>{body}</p></div>)}
       <div className="signature">
         <strong>成交行情資料交付與簽收</strong>
-        <p>簽收者身分：{buyer?"☑ 買方":"□ 買方"}　{seller?"☑ 賣方":"□ 賣方"}</p>
+        <p>簽收者身分：□ 買方　□ 賣方</p>
         <p>本人確認已收到本報告及相關說明；簽收僅證明收件，不代表同意所列價格。</p>
         <p>簽名：________________________________　交付日期：________________</p>
         <p>交付人：________________________　交付方式：________________</p>
