@@ -209,7 +209,7 @@ function rocDate(s:string){
   return [year,String(month).padStart(2,"0"),String(day).padStart(2,"0")].join("-");
 }
 const suspicious=/親友|員工|共有人|特殊關係|協議價購|政府機關|標售|拍賣|地清|持分|未登記|增建|頂樓加蓋|分件登記|分次登記|解約/;
-export type OfficialImport = { rows:ImportedOfficialRow[]; skipped:number; totalInSource:number; shownSourceCount:number; omitted:number; filename:string; notice:string; sheets:string[]; officialType:string|null; officialPeriod:string|null; exportedAt:string|null; sourceHeading:string };
+export type OfficialImport = { rows:ImportedOfficialRow[]; skipped:number; skippedIndexes:number[]; totalInSource:number; shownSourceCount:number; omitted:number; filename:string; notice:string; sheets:string[]; officialType:string|null; officialPeriod:string|null; exportedAt:string|null; sourceHeading:string };
 export async function importOfficialXls(file:File):Promise<OfficialImport>{
   check(/\.xls$/i.test(file.name),"請上傳內政部匯出的 .xls 檔案");
   check(file.size>512&&file.size<=MAX_BYTES,"Excel檔案須小於8MB");
@@ -232,16 +232,16 @@ export async function importOfficialXls(file:File):Promise<OfficialImport>{
   const landRows=lands?table(lands,0):[];
   const buildingRows=buildings?table(buildings,0):[];
   const allRows=table(main,1);
-  const mainRows=allRows.slice(0,50); // preserve the official display order; never pull case #51 to replace a skipped case
+  const mainRows=allRows.slice(0,20); // preserve official ordering; report chooses first 5/10/15/20
   const sha=await crypto.subtle.digest("SHA-256",bytes);
   const digest=Array.from(new Uint8Array(sha).slice(0,10)).map(x=>x.toString(16).padStart(2,"0")).join("");
-  const rows:ImportedOfficialRow[]=[];let skipped=0;
+  const rows:ImportedOfficialRow[]=[];let skipped=0;const skippedIndexes:number[]=[];
   for(let i=0;i<mainRows.length;i++){
     const r=mainRows[i],index=r["編號"];
     const date=rocDate(r["交易日期"]||"");
     const price=num(r["總價(萬元)"]||"");
     const address=r["地段位置或門牌"]||"";
-    if(!index || !date || price===null || price<=0 || !address){skipped++;continue;}
+    if(!index || !date || price===null || price<=0 || !address){skipped++;skippedIndexes.push(i+1);continue;}
     const subset=landRows.filter(a=>a["序號"]?.startsWith(index+"-"));
     const bset=buildingRows.filter(a=>a["序號"]?.startsWith(index+"-"));
     const landValues=subset.map(x=>ping(x["土地移轉面積"]||"")).filter((n):n is number=>n!==null);
@@ -263,6 +263,6 @@ export async function importOfficialXls(file:File):Promise<OfficialImport>{
     });
   }
   check(rows.length>0,"Excel沒有可讀取的有效成交案例");
-  return {rows,skipped,totalInSource:allRows.length,shownSourceCount:mainRows.length,omitted:Math.max(0,allRows.length-50),filename:file.name,sheets:sheets.map(s=>s.name),officialType,officialPeriod,exportedAt,sourceHeading,
+  return {rows,skipped,skippedIndexes,totalInSource:allRows.length,shownSourceCount:mainRows.length,omitted:Math.max(0,allRows.length-20),filename:file.name,sheets:sheets.map(s=>s.name),officialType,officialPeriod,exportedAt,sourceHeading,
     notice:"本次資料來自使用者上傳的內政部Excel；只在瀏覽器工作階段使用，並非匯入既有實價登錄主資料庫。官方查詢來源、圈選範圍及交易條件須由經紀人核對。"};
 }
