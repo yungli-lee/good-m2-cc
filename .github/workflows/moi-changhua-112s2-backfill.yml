@@ -1,8 +1,5 @@
 name: MOI 2023 Q2 Changhua scoped staging-only backfill
 on:
-  push:
-    branches: [main]
-    paths: [.github/workflows/moi-changhua-112s2-backfill.yml]
   workflow_dispatch:
 permissions:
   contents: read
