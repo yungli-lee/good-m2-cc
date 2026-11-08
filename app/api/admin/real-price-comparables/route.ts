@@ -36,7 +36,7 @@ export async function GET(request: Request) {
   function numeric(name: string) {
     const value = p.get(name);
     if (!value) return null;
-    if (!/^\\d+(?:\\.\\d{1,2})?$/.test(value)) throw new Error("invalid_numeric");
+    if (!/^\d+(?:\.\d{1,2})?$/.test(value)) throw new Error("invalid_numeric");
     const n = Number(value);
     if (!Number.isFinite(n) || n < 0 || n > 100000000) throw new Error("invalid_numeric");
     return n;
