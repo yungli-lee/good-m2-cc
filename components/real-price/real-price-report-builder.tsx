@@ -188,7 +188,7 @@ export default function RealPriceReportBuilder(){
       <td>{r.area}<div className="muted">樓高：{r.floorCount||"未提供"}　屋齡：{r.buildingAge==null?"未提供":r.buildingAge+"年"}</div>
         <div className="muted">地坪：{r.landPing==null?"未提供":r.landPing+"坪"}　建坪：{r.buildingPing==null?"未提供":r.buildingPing+"坪"}</div></td>
       <td>{r.price}萬元</td>
-      <td>{r.special?<b style={{color:"#9a3412"}}>特殊交易注意</b>:null}<div>{r.note||"官方備註空白"}</div></td>
+      <td>{r.note||""}</td>
     </tr>)}</tbody></table>
     <p className="muted">本表為內政部官方匯出資料原順序，未再作同質性篩選。不同產品或特殊交易不一定可直接類比。</p>
     <section className="report-standards">
