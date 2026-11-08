@@ -37,16 +37,16 @@ jobs:
           key=os.environ.get('STAGING_SUPABASE_SERVICE_ROLE_KEY','')
           assert url=='https://niorteztdbuyusemsgwa.supabase.co' and key
           headers={'apikey':key,'Authorization':'Bearer '+key,'Content-Type':'application/json'}
-          req=urllib.request.Request(url+'/rest/v1/rpc/moi_staging_database_size',headers=headers,data=b'{}')
+          req=urllib.request.Request(url+'/rest/v1/rpc/moi_current_import_capacity_guard',headers=headers,data=b'{}')
           # Only use existing capacity RPC when installed; a missing RPC is a hard stop.
           try:
               with urllib.request.urlopen(req,timeout=20) as response:
                   payload=json.load(response)
           except Exception as e:
               raise SystemExit('STOP: no verified Staging capacity RPC: '+str(e)) from e
-          if not isinstance(payload,int) or payload>=7000000000:
+          if not isinstance(payload,dict) or not isinstance(payload.get('database_bytes'),int) or payload['database_bytes']>=7000000000:
               raise SystemExit('STOP: Staging capacity cannot be verified below 7GB')
-          print('Staging capacity guard passed (bytes):',payload)
+          print('Staging capacity guard passed (bytes):',payload['database_bytes'])
           PY
       - name: Download official quarterly CSV ZIP
         run: |
