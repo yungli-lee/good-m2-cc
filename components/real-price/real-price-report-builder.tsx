@@ -5,19 +5,23 @@ type DatabaseRow = {
   id:number; sourceId:string; sourcePeriod:string|null; date:string; area:string;
   kind:string; price:string|null; ping:number|null; note:string;
   cancellation:string; special:boolean;
+  landPing:number|null; buildingPing:number|null; floorCount:string|null; buildingAge:number|null;
+  latitude:number|null; longitude:number|null; locationPrecision:string;
 };
 type CaseRow = {
   id: number; date: string; area: string; kind: string; price: string; ping: string;
+  landPing:string; buildingPing:string; floorCount:string; buildingAge:string;
   sourceId: string; note: string; rank: "main" | "secondary" | "context";
   reason: string;
 };
 const STANDARD_VERSION = "V1.0（2026-11-08）";
 const empty = (id: number): CaseRow => ({
-  id, date: "", area: "", kind: "", price: "", ping: "", sourceId: "",
+  id, date: "", area: "", kind: "", price: "", ping: "",
+  landPing:"", buildingPing:"", floorCount:"", buildingAge:"", sourceId: "",
   note: "", rank: "main", reason: ""
 });
 const rules = [
-  ["資料來源與追溯", "案例以內政部不動產交易實價登錄資料為基礎，標示交易日期、原始編號、來源資料期別與查詢日期；如資料尚未查證，不能列為已核實成交案例。"],
+  ["資料來源與追溯", "案例以內政部不動產交易實價登錄資料為基礎，於系統內保存交易日期、來源識別碼、來源資料期別與查詢日期（對客報告不列官方編號）；如資料尚未查證，不能列為已核實成交案例。"],
   ["生活圈與區域", "優先挑選同一供需生活圈及相似街廓；不足時擴至有實際替代關係的鄰近生活圈，並逐案說明區位、機能與臨路等差異。行政界線或單一距離不等於同一市場。"],
   ["產品類型", "透天、華廈、公寓、大樓、土地、店住及預售屋分別比較；不同產品不得直接混算建坪單價。比較時應考慮土地持分、公設、車位與計價基礎。"],
   ["時間與個別條件", "原則優先考察近12個月同質成交，資料不足再擴至24個月或36個月並註明；併同檢查屋齡、土地與建物面積、樓層、地坪、面寬、路寬、使用分區及屋況。期間與容許差異是本公司作業建議，非法定固定門檻。"],
@@ -71,6 +75,9 @@ export default function RealPriceReportBuilder() {
       id:nextId,date:candidate.date||"",area:candidate.area||"",
       kind:candidate.kind||kind,price:candidate.price,
       ping:candidate.ping == null?"":String(Math.round(candidate.ping*100)/100),
+      landPing:candidate.landPing == null?"":String(candidate.landPing),
+      buildingPing:candidate.buildingPing == null?"":String(candidate.buildingPing),
+      floorCount:candidate.floorCount||"", buildingAge:candidate.buildingAge==null?"":String(candidate.buildingAge),
       sourceId:candidate.sourceId,note:[candidate.note,candidate.cancellation?"解約資訊："+candidate.cancellation:""].filter(Boolean).join("；"),
       rank:candidate.special?"context":"main",
       reason:candidate.special?"特殊交易／解約資訊待人工核對；僅列背景參考，不納入一般行情。":"需核對是否為相同生活圈，並補充屋齡、面積、臨路及屋況差異。"
@@ -154,8 +161,8 @@ export default function RealPriceReportBuilder() {
           <thead><tr><th>成交日期／型態</th><th>地址／地段</th><th>總價</th><th>備註／處理</th></tr></thead>
           <tbody>{candidates.map(r=><tr key={r.id}>
             <td style={{padding:8,borderBottom:"1px solid #e2e8f0"}}>{r.date}<div>{r.kind}</div></td>
-            <td style={{padding:8,borderBottom:"1px solid #e2e8f0"}}>{r.area}<div style={{fontSize:11,color:"#64748b"}}>{r.sourceId}</div></td>
-            <td style={{padding:8,borderBottom:"1px solid #e2e8f0"}}>{r.price===null?"待核對":r.price+"萬元"}</td>
+            <td style={{padding:8,borderBottom:"1px solid #e2e8f0"}}>{r.area}</td>
+            <td style={{padding:8,borderBottom:"1px solid #e2e8f0"}}>{r.price===null?"待核對":r.price+"萬元"}<div style={{fontSize:11,color:"#64748b"}}>樓高：{r.floorCount||"未提供"}｜屋齡：{r.buildingAge==null?"未提供":r.buildingAge+"年"}</div><div style={{fontSize:11,color:"#64748b"}}>地坪：{r.landPing==null?"—":r.landPing+"坪"}｜建坪：{r.buildingPing==null?"—":r.buildingPing+"坪"}</div></td>
             <td style={{padding:8,borderBottom:"1px solid #e2e8f0"}}>{r.special?<div style={{color:"#9a3412"}}>特殊交易／解約，僅可列背景參考</div>:null}
               {r.note?<div style={{fontSize:11}}>{r.note.slice(0,100)}</div>:null}
               <button type="button" style={pill} disabled={!r.price||rows.some(x=>x.sourceId===r.sourceId)||rows.filter(x=>x.sourceId.trim()).length>=5}
@@ -168,16 +175,18 @@ export default function RealPriceReportBuilder() {
     </section>
     <section className="rp-editor">
       <h2 style={{marginTop:0}}>三、已選取的成交案例（最多5筆／雙面A4）</h2>
-      <p style={{fontSize:13,color:"#475569"}}>只列入來源編號、日期、區域、價格及比較理由完整的案例。不同產品及特殊交易請選「背景參考」，不得用來混算行情。</p>
+      <p style={{fontSize:13,color:"#475569"}}>僅從系統保留來源編號供內部追溯；對客報告不顯示編號。不同產品及特殊交易請選「背景參考」，不得用來混算行情。</p>
       {rows.map((r,i)=><div key={r.id} style={{border:"1px solid #dce3ea",padding:12,borderRadius:9,marginBottom:12}}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}><strong>案例 {i+1}</strong><button type="button" style={pill} onClick={()=>setRows(old=>old.filter(x=>x.id!==r.id))}>移除此筆</button></div>
         <div className="rp-grid">
-          {label("官方來源編號",<input style={field} value={r.sourceId} onChange={e=>update(r.id,"sourceId",e.target.value)} placeholder="官方交易編號"/>)}
           {label("交易日期",<input type="date" style={field} value={r.date} onChange={e=>update(r.id,"date",e.target.value)}/>)}
           {label("地址／地段（依官方公開資料）",<input style={field} value={r.area} onChange={e=>update(r.id,"area",e.target.value)}/>)}
           {label("產品種類",<input style={field} value={r.kind} onChange={e=>update(r.id,"kind",e.target.value)} placeholder="透天／華廈／土地……"/>)}
           {label("總價（萬元）",<input type="number" min="0" step="any" style={field} value={r.price} onChange={e=>update(r.id,"price",e.target.value)}/>)}
-          {label("比較面積（坪，僅作描述）",<input type="number" min="0" step="any" style={field} value={r.ping} onChange={e=>update(r.id,"ping",e.target.value)}/>)}
+          {label("樓高（總樓層）",<input style={field} value={r.floorCount} onChange={e=>update(r.id,"floorCount",e.target.value)} placeholder="未提供勿自行推估"/>)}
+          {label("屋齡（年）",<input type="number" min="0" step="any" style={field} value={r.buildingAge} onChange={e=>update(r.id,"buildingAge",e.target.value)} placeholder="未提供"/>)}
+          {label("地坪（坪）",<input type="number" min="0" step="any" style={field} value={r.landPing} onChange={e=>update(r.id,"landPing",e.target.value)} placeholder="未提供"/>)}
+          {label("建坪（坪）",<input type="number" min="0" step="any" style={field} value={r.buildingPing} onChange={e=>update(r.id,"buildingPing",e.target.value)} placeholder="未提供"/>)}
           {label("比較用途",<select style={field} value={r.rank} onChange={e=>update(r.id,"rank",e.target.value)}><option value="main">主要可比案例</option><option value="secondary">次級可比案例</option><option value="context">特殊／背景參考</option></select>)}
           {label("官方原始備註（保持原意）",<input style={field} value={r.note} onChange={e=>update(r.id,"note",e.target.value)}/>)}
         </div>
@@ -188,7 +197,7 @@ export default function RealPriceReportBuilder() {
         <span style={{fontSize:13}}>符合列印欄位完整性：{valid.length}筆（未驗證官方真偽）</span>
         <button type="button" style={{...pill,background:"#153c53",color:"#fff"}} onClick={()=>window.print()} disabled={valid.length===0||!subject.trim()||!circle.trim()||!criteria.trim()||!reportNo.trim()||!analyst.trim()}>列印雙面A4／另存PDF</button>
       </div>
-      <p style={{fontSize:12,color:"#9a3412"}}>此版不自動下載官方紀錄、不判斷有效的官方來源編號，也不儲存交付證明。請列印預覽確認為兩頁A4，印表機選擇「長邊翻轉」。</p>
+      <p style={{fontSize:12,color:"#9a3412"}}>本版由資料庫帶出成交案例，但仍須人工核實交易條件，也不儲存交付證明。請列印預覽確認為兩頁A4，印表機選擇「長邊翻轉」。</p>
     </section>
     <article className="rp-sheet" aria-label="報告正面">
       <div className="rp-row"><h2>不動產成交行情參考報告</h2><strong style={{fontSize:12}}>正面｜成交案例</strong></div>
@@ -198,12 +207,12 @@ export default function RealPriceReportBuilder() {
       <p><b>實際生活圈：</b>{circle||"（未填）"}　<b>期間：</b>{windowLabel}</p>
       <p><b>選取與排除條件：</b>{criteria||"（未填）"}</p>
       <h3>成交案例及採用理由</h3>
-      <table><thead><tr><th style={{width:"13%"}}>日期／類型</th><th style={{width:"26%"}}>位置／官方編號</th><th style={{width:"13%"}}>成交價</th><th style={{width:"48%"}}>用途及差異說明</th></tr></thead>
-      <tbody>{printable.length?printable.map((r)=><tr key={r.id}><td>{r.date}<div>{r.kind}</div></td><td>{r.area}<div className="rp-small">編號：{r.sourceId}</div></td><td>{r.price}萬元{r.ping?<div className="rp-small">面積：{r.ping}坪</div>:null}</td><td><b>{r.rank==="main"?"主要可比":r.rank==="secondary"?"次級可比":"特殊／背景"}</b><div>{r.reason}</div>{r.note?<div className="rp-small">官方備註：{r.note}</div>:null}</td></tr>):<tr><td colSpan={4}>尚未輸入完整且經人工核對的成交案例。</td></tr>}</tbody></table>
+      <table><thead><tr><th style={{width:"13%"}}>日期／類型</th><th style={{width:"26%"}}>位置／建物資訊</th><th style={{width:"13%"}}>成交價</th><th style={{width:"48%"}}>用途及差異說明</th></tr></thead>
+      <tbody>{printable.length?printable.map((r)=><tr key={r.id}><td>{r.date}<div>{r.kind}</div></td><td>{r.area}<div className="rp-small">樓高：{r.floorCount||"未提供"}　屋齡：{r.buildingAge?`${r.buildingAge}年`:"未提供"}</div><div className="rp-small">地坪：{r.landPing?`${r.landPing}坪`:"未提供"}　建坪：{r.buildingPing?`${r.buildingPing}坪`:"未提供"}</div></td><td>{r.price}萬元</td><td><b>{r.rank==="main"?"主要可比":r.rank==="secondary"?"次級可比":"特殊／背景"}</b><div>{r.reason}</div>{r.note?<div className="rp-small">官方備註：{r.note}</div>:null}</td></tr>):<tr><td colSpan={4}>尚未輸入完整且經人工核對的成交案例。</td></tr>}</tbody></table>
       <h3>資料解讀及交付說明</h3>
       <p>本頁是「已選取案例」的比較依據，並非全市場交易清單；案例與標的可能因屋況、區位、地坪、臨路、車位及交易情形而有所不同。各案例原始交易備註請以內政部官方紀錄為準，特殊／背景參考不可直接與主要可比案混算。</p>
       <p><b>資料來源：</b>內政部不動產交易實價登錄；<b>製作：</b>{analyst||"（未填）"}；<b>交付對象：</b>{recipient}。</p>
-      <p className="rp-small" style={{marginTop:15}}>注意：本試行版由經紀人輸入已核實成交資料，尚未自動查證來源。使用時應保存官方查詢證據與雙方實際交付紀錄；未交付不應標記為已完成告知。</p>
+      <p className="rp-small" style={{marginTop:15}}>注意：本試行版自資料庫列示成交候選，尚未完成所有交易品質核對。使用時應保存官方查詢證據與雙方實際交付紀錄；未交付不應標記為已完成告知。</p>
     </article>
     <article className="rp-sheet" aria-label="報告背面">
       <div className="rp-row"><h2>實價登錄成交案例選取標準暨使用說明</h2><strong style={{fontSize:12}}>背面｜固定標準</strong></div>
