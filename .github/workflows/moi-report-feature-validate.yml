@@ -1,0 +1,32 @@
+name: Real-price report Preview branch validation
+on:
+  push:
+    branches: [feature/real-price-public-search-v1]
+    paths:
+      - components/real-price/real-price-report-builder.tsx
+      - lib/real-price/official-xls-import.ts
+      - scripts/test-official-xls-import.mjs
+      - .github/workflows/moi-report-feature-validate.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  validate-preview:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: |
+          corepack enable
+          corepack prepare pnpm@11.10.0 --activate
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec tsc --noEmit
+      - run: node --experimental-strip-types scripts/test-official-xls-import.mjs
+      - name: Verify one report one signature and dedicated A4 print view
+        run: |
+          grep -F '簽收人及經紀公司各自留存相同版本' components/real-price/real-price-report-builder.tsx
+          grep -F 'popup.document.write' components/real-price/real-price-report-builder.tsx
+          grep -F '@page { size: A4 portrait; margin: 12mm; }' components/real-price/real-price-report-builder.tsx
