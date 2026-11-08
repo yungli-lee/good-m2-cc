@@ -209,7 +209,7 @@ function rocDate(s:string){
   return [year,String(month).padStart(2,"0"),String(day).padStart(2,"0")].join("-");
 }
 const suspicious=/親友|員工|共有人|特殊關係|協議價購|政府機關|標售|拍賣|地清|持分|未登記|增建|頂樓加蓋|分件登記|分次登記|解約/;
-export type OfficialImport = { rows:ImportedOfficialRow[]; skipped:number; totalInSource:number; shownSourceCount:number; omitted:number; filename:string; notice:string; sheets:string[] };
+export type OfficialImport = { rows:ImportedOfficialRow[]; skipped:number; totalInSource:number; shownSourceCount:number; omitted:number; filename:string; notice:string; sheets:string[]; officialType:string|null; officialPeriod:string|null; exportedAt:string|null; sourceHeading:string };
 export async function importOfficialXls(file:File):Promise<OfficialImport>{
   check(/\.xls$/i.test(file.name),"請上傳內政部匯出的 .xls 檔案");
   check(file.size>512&&file.size<=MAX_BYTES,"Excel檔案須小於8MB");
@@ -217,6 +217,13 @@ export async function importOfficialXls(file:File):Promise<OfficialImport>{
   const sheets=parseBIFF(bytes);
   const main=sheets.find(s=>s.name==="案件列表");
   check(main,"不是可辨識的內政部『案件列表』Excel");
+  // Official header is row zero, often split over several merged-style cells.
+  // These fields describe the user's official search; geographic polygons are NOT in the export.
+  const sourceHeading=Array.from({length:40},(_,i)=>String(main.cells.get("0:"+i)??"").trim()).filter(Boolean).join(" ").replace(/\\s+/g," ").trim();
+  const officialType=sourceHeading.match(/(?:買賣|租賃)案件[：:]?\\s*(.+?)(?=,?\\s*\\d{3}\\s*年|資料來源|$)/)?.[1]?.trim().replace(/[,，]$/,"")||null;
+  const periodMatch=sourceHeading.match(/(\\d{3})\\s*年\\s*(\\d{1,2})\\s*月\\s*至\\s*(?:(\\d{3})\\s*年\\s*)?(\\d{1,2})\\s*月/);
+  const officialPeriod=periodMatch?`${periodMatch[1]}年${periodMatch[2]}月至${periodMatch[3]||periodMatch[1]}年${periodMatch[4]}月`:null;
+  const exportedAt=sourceHeading.match(/(?:20\\d{2})\\s*年\\s*\\d{1,2}\\s*月\\s*\\d{1,2}\\s*[日號]?\\s*\\d{1,2}:\\d{2}(?::\\d{2})?/)?.[0]||null;
   const header=(name:string)=>Array.from({length:25},(_,i)=>String(main.cells.get("1:"+i)??"")).includes(name);
   check(["編號","地段位置或門牌","交易日期","總價(萬元)","型態","備註"].every(header),
     "Excel表頭與內政部官方匯出格式不符");
@@ -256,6 +263,6 @@ export async function importOfficialXls(file:File):Promise<OfficialImport>{
     });
   }
   check(rows.length>0,"Excel沒有可讀取的有效成交案例");
-  return {rows,skipped,totalInSource:allRows.length,shownSourceCount:mainRows.length,omitted:Math.max(0,allRows.length-50),filename:file.name,sheets:sheets.map(s=>s.name),
+  return {rows,skipped,totalInSource:allRows.length,shownSourceCount:mainRows.length,omitted:Math.max(0,allRows.length-50),filename:file.name,sheets:sheets.map(s=>s.name),officialType,officialPeriod,exportedAt,sourceHeading,
     notice:"本次資料來自使用者上傳的內政部Excel；只在瀏覽器工作階段使用，並非匯入既有實價登錄主資料庫。官方查詢來源、圈選範圍及交易條件須由經紀人核對。"};
 }
