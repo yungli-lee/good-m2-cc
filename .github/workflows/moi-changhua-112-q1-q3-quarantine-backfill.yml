@@ -1,8 +1,5 @@
 name: MOI reviewed 2023 Q1 and Q3 quarantine-aware Staging backfill
 on:
-  push:
-    branches: [main]
-    paths: [.github/workflows/moi-changhua-112-q1-q3-quarantine-backfill.yml]
   workflow_dispatch:
 permissions:
   contents: read
