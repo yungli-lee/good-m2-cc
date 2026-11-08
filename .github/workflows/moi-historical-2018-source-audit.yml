@@ -1,0 +1,57 @@
+name: MOI 2018 four-quarter Changhua official source audit
+on:
+  push:
+    branches: [main]
+    paths: [.github/workflows/moi-historical-2018-source-audit.yml]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  source-audit-2018:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    strategy:
+      fail-fast: false
+      matrix:
+        season: ['107S1','107S2','107S3','107S4']
+    env:
+      MOI_SEASON: ${{ matrix.season }}
+      MOI_LOCAL_ZIP: /tmp/changhua-2018.zip
+      MOI_REPORT_PATH: /tmp/changhua-2018-source-review.json
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: 9a62fd3ca1c5f75d4a3dc256c6126cfde119b195
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Download official 2018 historical quarter
+        run: |
+          set -euo pipefail
+          curl --fail --location --show-error --silent --retry 3 --retry-delay 5 \
+            --connect-timeout 20 --max-time 240 -o "$MOI_LOCAL_ZIP" \
+            "https://plvr.land.moi.gov.tw/DownloadSeason?season=$MOI_SEASON&type=zip&fileName=lvr_landcsv.zip"
+      - name: Parse only Changhua sale and presale source records
+        run: |
+          python - <<'PY'
+          import hashlib,json,os,pathlib,sys
+          sys.path.insert(0,'scripts')
+          from moi_national_import import parse_archive
+          p=os.environ['MOI_LOCAL_ZIP']
+          groups,issues,inventory=parse_archive(p,{'n_lvr_land_a.csv','n_lvr_land_b.csv'})
+          data={'season':os.environ['MOI_SEASON'],'sha256':hashlib.sha256(pathlib.Path(p).read_bytes()).hexdigest(),
+                'inventory':inventory,'issues':issues,'unresolved_issues':sum(not x.get('resolved',False) for x in issues)}
+          pathlib.Path(os.environ['MOI_REPORT_PATH']).write_text(json.dumps(data,ensure_ascii=False,indent=2),encoding='utf-8')
+          print(json.dumps({'season':data['season'],'source_masters':sum(x['source_masters'] for x in inventory),
+                'valid_masters':sum(x['valid_masters'] for x in inventory),
+                'details':sum(x['linked_details'] for x in inventory),
+                'unresolved_issues':data['unresolved_issues']},ensure_ascii=False))
+          PY
+      - name: Preserve source manifest and exceptions
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: changhua-2018-${{ matrix.season }}-${{ github.run_id }}
+          path: /tmp/changhua-2018-source-review.json
+          retention-days: 90
