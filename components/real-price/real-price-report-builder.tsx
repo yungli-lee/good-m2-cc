@@ -178,7 +178,7 @@ export default function RealPriceReportBuilder(){
       
     </div>
     <div style={{height:4,background:"#b59a66"}}/>
-    <p><b>標的：</b>{subject||"未填"}　<b>生活圈：</b>{area||"未填"}</p>
+    <p><b>標的：</b>{subject||"未填"}　<b>地圖圈選範圍/生活圈：</b>{area||"未填"}</p>
     <p><b>報告：</b>{reportNo||"未填"}　<b>日期：</b>{date}　<b>製作：</b>{analyst||"未填"}</p>
     <div className="report-source"><strong>官方查詢條件</strong><div>交易種類：{officialType||"原檔未辨識"}　｜　成交期間：{officialPeriod||"原檔未辨識"}</div><div>查詢區域／生活圈：{area||"未填"}　｜　資料匯出時間：{exportedAt||"未提供"}</div><div className="muted">檔案：{fileName}；原始{total}筆；取前{limit}筆，超過{omitted}筆不顯示。{description}</div></div>
     <h3>官方成交資料（共{selectedItems.length}筆，依原始順序）</h3>
