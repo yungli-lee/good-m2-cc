@@ -1,0 +1,67 @@
+name: MOI 2018 remaining quarters Changhua scoped staging backfill
+on:
+  push:
+    branches: [main]
+    paths: [.github/workflows/moi-changhua-107-rest-backfill.yml]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: moi-changhua-historical-staging-backfill
+  cancel-in-progress: false
+jobs:
+  staging-2018-rest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    env:
+      MOI_LOCAL_ZIP: /tmp/changhua-2018-official.zip
+      MOI_REPORT_PATH: /tmp/changhua-2018-current-report.json
+      STAGING_SUPABASE_URL: https://niorteztdbuyusemsgwa.supabase.co
+      STAGING_SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.MOI_STAGING_SUPABASE_SERVICE_ROLE_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: 27d8d6137a9f94f0deb4b38d6f1fc26221d7e81c
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Verify and import 107S2, 107S3, 107S4 sequentially
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/moi-changhua-2018-reports
+          for season in 107S2 107S3 107S4; do
+            export MOI_SEASON="$season"
+            python - <<'PY'
+          import json,os,urllib.request
+          url=os.environ['STAGING_SUPABASE_URL']
+          key=os.environ.get('STAGING_SUPABASE_SERVICE_ROLE_KEY','')
+          if url!='https://niorteztdbuyusemsgwa.supabase.co' or not key:
+              raise SystemExit('STOP: incorrect Staging-only destination')
+          headers={'apikey':key,'Authorization':'Bearer '+key,'Content-Type':'application/json'}
+          req=urllib.request.Request(url+'/rest/v1/rpc/moi_current_import_capacity_guard',headers=headers,data=b'{}')
+          with urllib.request.urlopen(req,timeout=25) as response:
+              payload=json.load(response)
+          if not isinstance(payload,dict) or not isinstance(payload.get('database_bytes'),int) or payload['database_bytes']>=7000000000:
+              raise SystemExit('STOP: capacity guard failed')
+          print('Preflight capacity bytes:',payload['database_bytes'])
+          PY
+            curl --fail --location --show-error --silent --retry 3 --retry-delay 5 \
+              --connect-timeout 20 --max-time 240 -o "$MOI_LOCAL_ZIP" \
+              "https://plvr.land.moi.gov.tw/DownloadSeason?season=$season&type=zip&fileName=lvr_landcsv.zip"
+            export MOI_CHECK_ONLY=1
+            python scripts/moi_changhua_2018_backfill.py
+            cp "$MOI_REPORT_PATH" "/tmp/moi-changhua-2018-reports/$season-source-audit.json"
+            export MOI_CHECK_ONLY=0
+            python scripts/moi_changhua_2018_backfill.py
+            cp "$MOI_REPORT_PATH" "/tmp/moi-changhua-2018-reports/$season-import-report.json"
+          done
+      - name: Save completed and partial quarterly audit trails
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: moi-changhua-2018-sequential-${{ github.run_id }}
+          path: |
+            /tmp/moi-changhua-2018-reports/
+            /tmp/changhua-2018-current-report.json
+          retention-days: 90
