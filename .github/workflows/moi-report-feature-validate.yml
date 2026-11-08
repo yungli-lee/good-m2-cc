@@ -29,4 +29,7 @@ jobs:
         run: |
           grep -F '簽收人及經紀公司各自留存相同版本' components/real-price/real-price-report-builder.tsx
           grep -F 'popup.document.write' components/real-price/real-price-report-builder.tsx
-          grep -F '@page { size: A4 portrait; margin: 12mm; }' components/real-price/real-price-report-builder.tsx
+          grep -F 'const makePage=' components/real-price/real-price-report-builder.tsx
+          grep -F 'for (const sourceRow of rows)' components/real-price/real-price-report-builder.tsx
+          grep -F 'page-break-after:always' components/real-price/real-price-report-builder.tsx
+          grep -F '@page{size:A4 portrait;margin:12mm}' components/real-price/real-price-report-builder.tsx
