@@ -1,10 +1,10 @@
 "use client";
 import {useState} from "react";
 import {importOfficialXls,type ImportedOfficialRow} from "@/lib/real-price/official-xls-import";
-const VERSION="V1.3 2026-11-08";
+const VERSION="V1.4 2026-11-08";
 const standards=[
-["資料及數量","本報告依內政部匯出Excel原始順序取前50筆，不額外刪選或調整排序；超過50筆不顯示。本限制係本公司作業規則，不是內政部法定筆數。"],
-["查詢範圍與期間","查詢種類、期間與匯出時間依內政部Excel頁首自動帶入；地圖圈選的實際區域須由製作人填寫。原始檔不含完整圈選邊界，因此不推定確切坐標。"],
+["資料及數量","本報告依『內政部不動產交易實價查詢服務網』https://lvr.land.moi.gov.tw/ 匯出Excel原始順序取前50筆，不額外刪選或調整排序；超過50筆不顯示。"],
+["查詢範圍與期間","查詢種類、期間與匯出時間，依本報告首頁『官方查詢條件』所示。"],
 ["不同物件不能直接類比","透天、大樓、華廈、預售及土地的單價基礎不同；屋齡、臨路、土地條件及生活圈不同亦可能使價格不可直接相比。"],
 ["官方備註","完整揭露原始備註；親友、持分、未登記建物、增建、法拍、協議價購與解約等特殊條件，可能影響價格代表性。"],
 ["欄位與限制","樓高為總樓層數；地坪與建坪取自官方Excel及相關工作表。缺資料時標示未提供。本報告提供歷史成交資訊，並非正式不動產估價或不動產說明書。"]
@@ -20,6 +20,50 @@ export default function RealPriceReportBuilder(){
  const [reportNo,setReportNo]=useState(""),[analyst,setAnalyst]=useState(""),[date,setDate]=useState("2026-11-08");
  const [buyer,setBuyer]=useState(true),[seller,setSeller]=useState(false);
  const canPrint=!!(items.length&&!invalid&&(buyer||seller)&&subject.trim()&&area.trim()&&reportNo.trim()&&analyst.trim());
+
+ function printReport() {
+   if (!canPrint) return;
+   const report=document.querySelector<HTMLElement>(".rp-bulk .paper");
+   if (!report) return;
+   // A dedicated document avoids printing the admin layout and avoids absolute
+   // positioning of the report, which prevented its long table from fragmenting.
+   const popup=window.open("","_blank");
+   if (!popup) {
+     setError("瀏覽器阻擋列印視窗，請允許本站開啟彈出式視窗後重試。");
+     return;
+   }
+   const printCSS=`
+     @page { size: A4 portrait; margin: 12mm; }
+     html,body { padding:0; margin:0; width:auto; background:white; color:#183449; }
+     body { font: 10.5pt/1.55 Arial,"Noto Sans TC","Microsoft JhengHei",sans-serif; }
+     .paper { width:100%; margin:0; padding:0; box-shadow:none; background:white; overflow:visible; overflow-wrap:anywhere; }
+     h2 { font-size:16pt; margin:0 0 8pt; }
+     h3 { font-size:11pt; margin:10pt 0 5pt; }
+     p { margin:7pt 0; }
+     .paper table { border-collapse:collapse; width:100%; table-layout:fixed; }
+     .paper th,.paper td { border:0.5pt solid #b9c8d1; padding:5pt; vertical-align:top; text-align:left; font-size:9pt; line-height:1.45; overflow-wrap:anywhere; }
+     .paper th { background:#eef4f7; }
+     .paper thead { display:table-header-group; }
+     .paper tr { page-break-inside:avoid; break-inside:avoid; }
+     .muted { font-size:8.5pt; color:#536e80; }
+     .report-source { background:#f1f5f8; border-left:3pt solid #ad965c; padding:7pt; margin:9pt 0; line-height:1.55; font-size:9pt; }
+     .standard { border-bottom:0.5pt solid #d5dee5; padding:7pt 0; break-inside:avoid; }
+     .signature { border:1pt solid #aebec9; padding:12pt; margin-top:16pt; break-inside:avoid; }
+     .report-standards h2 { margin-top:16pt; }
+     .report-standards { break-before:auto; }
+     @media print { .paper { display:block; } }
+   `;
+   const escapedTitle="不動產成交行情參考報告";
+   popup.document.open();
+   popup.document.write("<!doctype html><html lang='zh-Hant'><head><meta charset='utf-8'><title>"+escapedTitle+"</title><style>"+printCSS+"</style></head><body>"+report.outerHTML+"</body></html>");
+   popup.document.close();
+   popup.focus();
+   // Wait until the isolated print document finishes laying out.
+   popup.onload=()=>{popup.focus();popup.print();};
+   // Some browsers complete document.write synchronously without firing load.
+   if(popup.document.readyState==="complete") {popup.focus();popup.print();}
+ }
+
  async function onFile(file:File|undefined){
    if(!file)return;setLoading(true);setItems([]);setError("");setOfficialType("");setOfficialPeriod("");setExportedAt("");setSourceHeading("");
    try{const r=await importOfficialXls(file);setItems(r.rows);setFileName(r.filename);setTotal(r.totalInSource);setOmitted(r.omitted);setInvalid(r.skipped);
@@ -50,7 +94,7 @@ export default function RealPriceReportBuilder(){
  <label><input type="checkbox" checked={buyer} onChange={e=>setBuyer(e.target.checked)}/> 買方</label>
  <label><input type="checkbox" checked={seller} onChange={e=>setSeller(e.target.checked)}/> 賣方</label></div>
  <p>只產製一份報告；底部一個簽名欄，勾選簽收者為買方或賣方。需留存時，請列印同一報告兩份，由當事人及經紀人各自保存。</p>
- <button type="button" disabled={!canPrint||loading} onClick={()=>window.print()} style={{background:"#173b55",color:"white",border:0,borderRadius:7,padding:"11px 17px",cursor:"pointer"}}>列印一份報告／另存PDF（依內容自動分頁）</button>
+ <button type="button" disabled={!canPrint||loading} onClick={printReport} style={{background:"#173b55",color:"white",border:0,borderRadius:7,padding:"11px 17px",cursor:"pointer"}}>列印一份報告／另存PDF（依內容自動分頁）</button>
  <p style={{fontSize:12,color:"#536e80"}}>所有成交明細連續排版，瀏覽器依A4版面自動換頁，盡量填滿每頁；最多50筆。前50筆有無法解析的資料時禁止輸出。</p>
  </section>
  {items.length>0&&<article className="paper" aria-label="不動產成交行情報告">
@@ -82,7 +126,7 @@ export default function RealPriceReportBuilder(){
         <p>本人確認已收到本報告及相關說明；簽收僅證明收件，不代表同意所列價格。</p>
         <p>簽名：________________________________　交付日期：________________</p>
         <p>交付人：________________________　交付方式：________________</p>
-        <p className="muted">本報告一式兩份，當事人及經紀人各自留存相同版本。</p>
+        <p className="muted">本報告一式兩份，簽收人及經紀公司各自留存相同版本。</p>
       </div>
     </section>
   </article>}
