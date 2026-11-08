@@ -209,7 +209,7 @@ function rocDate(s:string){
   return [year,String(month).padStart(2,"0"),String(day).padStart(2,"0")].join("-");
 }
 const suspicious=/親友|員工|共有人|特殊關係|協議價購|政府機關|標售|拍賣|地清|持分|未登記|增建|頂樓加蓋|分件登記|分次登記|解約/;
-export type OfficialImport = { rows:ImportedOfficialRow[]; skipped:number; filename:string; notice:string; sheets:string[] };
+export type OfficialImport = { rows:ImportedOfficialRow[]; skipped:number; totalInSource:number; shownSourceCount:number; omitted:number; filename:string; notice:string; sheets:string[] };
 export async function importOfficialXls(file:File):Promise<OfficialImport>{
   check(/\.xls$/i.test(file.name),"請上傳內政部匯出的 .xls 檔案");
   check(file.size>512&&file.size<=MAX_BYTES,"Excel檔案須小於8MB");
@@ -224,8 +224,8 @@ export async function importOfficialXls(file:File):Promise<OfficialImport>{
   const buildings=sheets.find(s=>s.name==="建物");
   const landRows=lands?table(lands,0):[];
   const buildingRows=buildings?table(buildings,0):[];
-  const mainRows=table(main,1);
-  check(mainRows.length<=1000,"單次最多匯入1000筆官方查詢結果");
+  const allRows=table(main,1);
+  const mainRows=allRows.slice(0,50); // preserve the official display order; never pull case #51 to replace a skipped case
   const sha=await crypto.subtle.digest("SHA-256",bytes);
   const digest=Array.from(new Uint8Array(sha).slice(0,10)).map(x=>x.toString(16).padStart(2,"0")).join("");
   const rows:ImportedOfficialRow[]=[];let skipped=0;
@@ -256,6 +256,6 @@ export async function importOfficialXls(file:File):Promise<OfficialImport>{
     });
   }
   check(rows.length>0,"Excel沒有可讀取的有效成交案例");
-  return {rows,skipped,filename:file.name,sheets:sheets.map(s=>s.name),
+  return {rows,skipped,totalInSource:allRows.length,shownSourceCount:mainRows.length,omitted:Math.max(0,allRows.length-50),filename:file.name,sheets:sheets.map(s=>s.name),
     notice:"本次資料來自使用者上傳的內政部Excel；只在瀏覽器工作階段使用，並非匯入既有實價登錄主資料庫。官方查詢來源、圈選範圍及交易條件須由經紀人核對。"};
 }
