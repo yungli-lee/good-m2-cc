@@ -219,11 +219,11 @@ export async function importOfficialXls(file:File):Promise<OfficialImport>{
   check(main,"不是可辨識的內政部『案件列表』Excel");
   // Official header is row zero, often split over several merged-style cells.
   // These fields describe the user's official search; geographic polygons are NOT in the export.
-  const sourceHeading=Array.from({length:40},(_,i)=>String(main.cells.get("0:"+i)??"").trim()).filter(Boolean).join(" ").replace(/\\s+/g," ").trim();
-  const officialType=sourceHeading.match(/(?:買賣|租賃)案件[：:]?\\s*(.+?)(?=,?\\s*\\d{3}\\s*年|資料來源|$)/)?.[1]?.trim().replace(/[,，]$/,"")||null;
-  const periodMatch=sourceHeading.match(/(\\d{3})\\s*年\\s*(\\d{1,2})\\s*月\\s*至\\s*(?:(\\d{3})\\s*年\\s*)?(\\d{1,2})\\s*月/);
+  const sourceHeading=Array.from({length:40},(_,i)=>String(main.cells.get("0:"+i)??"").trim()).filter(Boolean).join(" ").replace(/\s+/g," ").trim();
+  const officialType=sourceHeading.match(/(?:買賣|租賃)案件[：:]?\s*(.+?)(?=,?\s*\d{3}\s*年|資料來源|$)/)?.[1]?.trim().replace(/[,，]$/,"")||null;
+  const periodMatch=sourceHeading.match(/(\d{3})\s*年\s*(\d{1,2})\s*月\s*至\s*(?:(\d{3})\s*年\s*)?(\d{1,2})\s*月/);
   const officialPeriod=periodMatch?`${periodMatch[1]}年${periodMatch[2]}月至${periodMatch[3]||periodMatch[1]}年${periodMatch[4]}月`:null;
-  const exportedAt=sourceHeading.match(/(?:20\\d{2})\\s*年\\s*\\d{1,2}\\s*月\\s*\\d{1,2}\\s*[日號]?\\s*\\d{1,2}:\\d{2}(?::\\d{2})?/)?.[0]||null;
+  const exportedAt=sourceHeading.match(/(?:20\d{2})\s*年\s*\d{1,2}\s*月\s*\d{1,2}\s*[日號]?\s*\d{1,2}:\d{2}(?::\d{2})?/)?.[0]||null;
   const header=(name:string)=>Array.from({length:25},(_,i)=>String(main.cells.get("1:"+i)??"")).includes(name);
   check(["編號","地段位置或門牌","交易日期","總價(萬元)","型態","備註"].every(header),
     "Excel表頭與內政部官方匯出格式不符");
