@@ -33,6 +33,21 @@ export async function GET(request: Request) {
   const keyword = (p.get("keyword") || "").trim().normalize("NFKC").replace(/\s/g, "");
   const kind = p.get("kind") || "";
   const months = Number(p.get("months") || "12");
+  function numeric(name: string) {
+    const value = p.get(name);
+    if (!value) return null;
+    if (!/^\\d+(?:\\.\\d{1,2})?$/.test(value)) throw new Error("invalid_numeric");
+    const n = Number(value);
+    if (!Number.isFinite(n) || n < 0 || n > 100000000) throw new Error("invalid_numeric");
+    return n;
+  }
+  let minPrice:number|null,maxPrice:number|null,minPing:number|null,maxPing:number|null;
+  try {
+    minPrice=numeric("minPrice"); maxPrice=numeric("maxPrice");
+    minPing=numeric("minPing"); maxPing=numeric("maxPing");
+  } catch {return bad("invalid_range");}
+  if ((minPrice!==null&&maxPrice!==null&&minPrice>maxPrice) ||
+      (minPing!==null&&maxPing!==null&&minPing>maxPing)) return bad("invalid_range");
   if (!/^[\p{Script=Han}]{2,5}$/u.test(district)
     || (keyword && (!/^[\p{Script=Han}0-9之-]{1,35}$/u.test(keyword)))
     || !["透天住宅", "華廈", "公寓", "電梯大樓", "店住", "土地", "預售屋"].includes(kind)
@@ -50,6 +65,12 @@ export async function GET(request: Request) {
   else if (kind === "預售屋") q = q.eq("dataset_type", "presale");
   else q = q.eq("dataset_type", "sale").eq("target_category", "house_land")
     .ilike("building_pattern", KINDS[kind] + "%");
+  // Inputs are in NT$10,000 and 坪; normalized official data use NTD and sqm.
+  if (minPrice !== null) q=q.gte("total_price_ntd", minPrice*10000);
+  if (maxPrice !== null) q=q.lte("total_price_ntd", maxPrice*10000);
+  const sizeColumn=kind==="土地"?"land_area_sqm":"building_area_sqm";
+  if (minPing !== null) q=q.gte(sizeColumn, minPing*3.305785);
+  if (maxPing !== null) q=q.lte(sizeColumn, maxPing*3.305785);
   if (keyword) {
     const safe = keyword.replaceAll("\\", "\\\\");
     q = q.or(`address_display.ilike.%${safe}%,land_section.ilike.%${safe}%`);
