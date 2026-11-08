@@ -183,9 +183,10 @@ export default function RealPriceReportBuilder(){
     <p><b>報告：</b>{reportNo||"未填"}　<b>日期：</b>{date}　<b>製作：</b>{analyst||"未填"}</p>
     <div className="report-source"><strong>官方查詢條件</strong><div>交易種類：{officialType||"原檔未辨識"}　｜　成交期間：{officialPeriod||"原檔未辨識"}</div><div>查詢區域／生活圈：{area||"未填"}　｜　資料匯出時間：{exportedAt||"未提供"}</div><div className="muted">檔案：{fileName}；原始{total}筆；取前{limit}筆，超過{omitted}筆不顯示。{description}</div></div>
     <h3>官方成交資料（共{selectedItems.length}筆，依原始順序）</h3>
-    <table><thead><tr><th style={{width:"16%"}}>日期／型態</th><th style={{width:"36%"}}>地點／交易面積資訊</th><th style={{width:"14%"}}>總價</th><th>官方備註</th></tr></thead>
+    <table><thead><tr><th style={{width:"6%",textAlign:"center"}}>序號</th><th style={{width:"16%"}}>日期／型態</th><th style={{width:"32%"}}>地點／交易面積資訊</th><th style={{width:"16%"}}>總價</th><th style={{width:"30%"}}>官方備註</th></tr></thead>
     <tbody>{selectedItems.map((r,i)=><tr key={r.sourceId}>
-      <td>{r.date}<div>{r.kind}</div><span className="muted">第{i+1}筆</span></td>
+      <td style={{textAlign:"center",fontWeight:600}}>{i+1}</td>
+      <td>{r.date}<div>{r.kind}</div></td>
       <td>{r.area}
         {r.isLandOnly
           ? <div className="muted">地坪：{r.landPing==null?"未提供":r.landPing+"坪"}</div>
