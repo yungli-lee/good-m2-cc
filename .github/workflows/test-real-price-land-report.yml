@@ -1,0 +1,33 @@
+name: Validate standalone official land price report
+on:
+  push:
+    branches:
+      - release/real-price-land-cases-v1
+    paths:
+      - lib/real-price/official-xls-import.ts
+      - components/real-price/real-price-report-builder.tsx
+      - scripts/test-official-land-xls.mjs
+      - .github/workflows/test-real-price-land-report.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: |
+          corepack enable
+          corepack prepare pnpm@11.10.0 --activate
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec tsc --noEmit
+      - run: node --experimental-strip-types scripts/test-official-land-xls.mjs
+      - name: Verify land-only display and original official notes
+        run: |
+          grep -F 'r.isLandOnly' components/real-price/real-price-report-builder.tsx
+          grep -F 'unitPriceWanPing' components/real-price/real-price-report-builder.tsx
+          grep -F '<td>{r.note||""}</td>' components/real-price/real-price-report-builder.tsx
