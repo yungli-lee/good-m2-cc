@@ -1,8 +1,5 @@
 name: Validate real-price A4 report builder in feature branch
 on:
-  push:
-    branches: [main]
-    paths: [.github/workflows/moi-comparable-report-validate.yml]
   workflow_dispatch:
 permissions:
   contents: read
