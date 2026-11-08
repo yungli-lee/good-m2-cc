@@ -23,47 +23,100 @@ export default function RealPriceReportBuilder(){
 
  function printReport() {
    if (!canPrint) return;
-   const report=document.querySelector<HTMLElement>(".rp-bulk .paper");
-   if (!report) return;
-   // A dedicated document avoids printing the admin layout and avoids absolute
-   // positioning of the report, which prevented its long table from fragmenting.
+   const source=document.querySelector<HTMLElement>(".rp-bulk .paper");
+   if (!source) return;
    const popup=window.open("","_blank");
-   if (!popup) {
-     setError("瀏覽器阻擋列印視窗，請允許本站開啟彈出式視窗後重試。");
-     return;
-   }
-   const printCSS=`
-     @page { size: A4 portrait; margin: 12mm; }
-     html,body { padding:0; margin:0; width:auto; background:white; color:#183449; }
-     body { font: 10.5pt/1.55 Arial,"Noto Sans TC","Microsoft JhengHei",sans-serif; }
-     .paper { width:100%; margin:0; padding:0; box-shadow:none; background:white; overflow:visible; overflow-wrap:anywhere; }
-     h2 { font-size:16pt; margin:0 0 8pt; }
-     h3 { font-size:11pt; margin:10pt 0 5pt; }
-     p { margin:7pt 0; }
-     .paper table { border-collapse:collapse; width:100%; table-layout:fixed; }
-     .paper th,.paper td { border:0.5pt solid #b9c8d1; padding:5pt; vertical-align:top; text-align:left; font-size:9pt; line-height:1.45; overflow-wrap:anywhere; }
-     .paper th { background:#eef4f7; }
-     .paper thead { display:table-header-group; }
-     .paper tr { page-break-inside:avoid; break-inside:avoid; }
-     .muted { font-size:8.5pt; color:#536e80; }
-     .report-source { background:#f1f5f8; border-left:3pt solid #ad965c; padding:7pt; margin:9pt 0; line-height:1.55; font-size:9pt; }
-     .standard { border-bottom:0.5pt solid #d5dee5; padding:7pt 0; break-inside:avoid; }
-     .signature { border:1pt solid #aebec9; padding:12pt; margin-top:16pt; break-inside:avoid; }
-     .report-standards h2 { margin-top:16pt; }
-     .report-standards { break-before:auto; }
-     @media print { .paper { display:block; } }
-   `;
-   const escapedTitle="不動產成交行情參考報告";
+   if (!popup) {setError("瀏覽器阻擋列印視窗，請允許彈出式視窗。");return;}
+   const css=[
+     "@page{size:A4 portrait;margin:12mm}",
+     "html,body{margin:0;padding:0;background:white;color:#183449;font-family:Arial,'Noto Sans TC','Microsoft JhengHei',sans-serif;font-size:11px;line-height:1.5}",
+     ".a4-sheet{width:186mm;height:273mm;box-sizing:border-box;position:relative;overflow:hidden;break-after:page;page-break-after:always}",
+     ".a4-sheet:last-child{break-after:auto;page-break-after:auto}",
+     ".a4-content{width:100%;box-sizing:border-box}",
+     "h2{font-size:19px;margin:0 0 10px}h3{font-size:14px;margin:10px 0 7px}p{font-size:11px;margin:7px 0;line-height:1.5}",
+     "table{border-collapse:collapse;table-layout:fixed;width:100%}",
+     "th,td{border:1px solid #bfced8;padding:6px;vertical-align:top;text-align:left;font-size:10.5px;line-height:1.5;overflow-wrap:anywhere}",
+     "th{background:#edf3f7}thead{display:table-header-group}tr{break-inside:avoid}",
+     ".muted{font-size:10px;color:#536e80}",
+     ".report-source{background:#f1f5f8;border-left:3px solid #ad965c;padding:9px 12px;margin:10px 0;font-size:11px;line-height:1.6}",
+     ".report-source .muted{font-size:10px}",
+     ".standard{border-bottom:1px solid #d5dee5;padding:8px 0;break-inside:avoid}",
+     ".signature{border:1px solid #aebec9;padding:12px;margin-top:16px;break-inside:avoid}",
+     ".page-footer{position:absolute;bottom:0;right:2px;color:#536e80;font-size:10px;background:white}",
+     "@media screen{body{background:#e7edf1;padding:16px}.a4-sheet{background:white;margin:0 auto 18px;box-shadow:0 2px 12px #0002}}",
+     "@media print{body{background:white;padding:0}.a4-sheet{margin:0!important;box-shadow:none!important}.page-footer{color:#536e80}}"
+   ].join("\n");
    popup.document.open();
-   popup.document.write("<!doctype html><html lang='zh-Hant'><head><meta charset='utf-8'><title>"+escapedTitle+"</title><style>"+printCSS+"</style></head><body>"+report.outerHTML+"</body></html>");
+   popup.document.write("<!doctype html><html lang='zh-Hant'><head><meta charset='utf-8'><title>不動產成交行情參考報告｜A4分頁</title><style>"+css+"</style></head><body></body></html>");
    popup.document.close();
+   const doc=popup.document;
+   const srcTable=source.querySelector("table");
+   const srcStandards=source.querySelector(".report-standards");
+   if (!srcTable || !srcStandards) {popup.close();setError("無法找到報告表格或簽收頁。");return;}
+   const topNodes=Array.from(source.children).filter(n=>n!==srcTable && n!==srcStandards);
+   const rows=Array.from(srcTable.querySelectorAll("tbody tr"));
+   const sheets:HTMLElement[]=[];
+   const makePage=()=>{
+     const page=doc.createElement("section");
+     page.className="a4-sheet";
+     const inside=doc.createElement("div");inside.className="a4-content";
+     page.appendChild(inside);doc.body.appendChild(page);sheets.push(page);
+     return {page,inside};
+   };
+   const within=(page:HTMLElement,inside:HTMLElement)=>{
+     // Reserve ~12 mm for the page footer; the page is physically A4 content height.
+     return inside.getBoundingClientRect().bottom <= page.getBoundingClientRect().bottom-46;
+   };
+   const buildTable=()=>{
+     const table=doc.createElement("table");
+     table.innerHTML=srcTable.querySelector("thead")?.outerHTML||"";
+     const body=doc.createElement("tbody");table.appendChild(body);
+     return {table,body};
+   };
+   let current=makePage();
+   topNodes.forEach(n=>current.inside.appendChild(n.cloneNode(true)));
+   let listing=buildTable();current.inside.appendChild(listing.table);
+   let rowCount=0;
+   for (const sourceRow of rows){
+     const row=sourceRow.cloneNode(true) as HTMLTableRowElement;
+     listing.body.appendChild(row);
+     if (!within(current.page,current.inside)){
+       listing.body.removeChild(row);
+       if (rowCount===0){
+         popup.close();setError("成交明細單筆內容超過A4頁面容量，請回報該筆備註。");return;
+       }
+       current=makePage();
+       const heading=doc.createElement("h2");
+       heading.textContent="官方成交資料（續）";
+       current.inside.appendChild(heading);
+       listing=buildTable();current.inside.appendChild(listing.table);
+       listing.body.appendChild(row);
+       if (!within(current.page,current.inside)){
+         popup.close();setError("成交明細單筆內容過長，無法安排進A4頁面。");return;
+       }
+       rowCount=0;
+     }
+     rowCount++;
+   }
+   // Place explanatory standards and the ONE buyer/seller checkbox signature
+   // after the table, with their own stable page boundary.
+   const note=source.querySelector("table + p");
+   // The note is already among topNodes, so do not clone it again.
+   current=makePage();
+   current.inside.appendChild(srcStandards.cloneNode(true));
+   if (!within(current.page,current.inside)){
+     popup.close();setError("簽收說明超過一頁A4，請調整文字。");return;
+   }
+   sheets.forEach((page,i)=>{
+     const footer=doc.createElement("div");
+     footer.className="page-footer";
+     footer.textContent="第"+(i+1)+"頁／共"+sheets.length+"頁";
+     page.appendChild(footer);
+   });
    popup.focus();
-   // Wait until the isolated print document finishes laying out.
-   popup.onload=()=>{popup.focus();popup.print();};
-   // Some browsers complete document.write synchronously without firing load.
-   if(popup.document.readyState==="complete") {popup.focus();popup.print();}
+   // A rendered multipage document stays visible in the popup for inspection.
+   void doc.fonts.ready.then(()=>{popup.focus();popup.print();});
  }
-
  async function onFile(file:File|undefined){
    if(!file)return;setLoading(true);setItems([]);setError("");setOfficialType("");setOfficialPeriod("");setExportedAt("");setSourceHeading("");
    try{const r=await importOfficialXls(file);setItems(r.rows);setFileName(r.filename);setTotal(r.totalInSource);setOmitted(r.omitted);setInvalid(r.skipped);
