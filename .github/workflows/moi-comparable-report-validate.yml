@@ -1,8 +1,5 @@
 name: Validate database-driven real-price A4 report builder
 on:
-  push:
-    branches: [main]
-    paths: [.github/workflows/moi-comparable-report-validate.yml]
   workflow_dispatch:
 permissions:
   contents: read
@@ -13,7 +10,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: f46ea8998a4e96270418374fe3d6ac8a0d3863b7
+          ref: feature/real-price-public-search-v1
           persist-credentials: false
       - uses: actions/setup-node@v4
         with:
