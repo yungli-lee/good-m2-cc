@@ -233,7 +233,7 @@ export async function importOfficialXls(file:File):Promise<OfficialImport>{
   const landRows=lands?table(lands,0):[];
   const buildingRows=buildings?table(buildings,0):[];
   const allRows=table(main,1);
-  const mainRows=allRows.slice(0,20); // preserve official ordering; report chooses first 5/10/15/20
+  const mainRows=allRows.slice(0,100); // preserve official ordering; report chooses first 5/10/15/20 or custom 1-100
   const sha=await crypto.subtle.digest("SHA-256",bytes);
   const digest=Array.from(new Uint8Array(sha).slice(0,10)).map(x=>x.toString(16).padStart(2,"0")).join("");
   const rows:ImportedOfficialRow[]=[];let skipped=0;const skippedIndexes:number[]=[];
@@ -271,6 +271,6 @@ export async function importOfficialXls(file:File):Promise<OfficialImport>{
     });
   }
   check(rows.length>0,"Excel沒有可讀取的有效成交案例");
-  return {rows,skipped,skippedIndexes,totalInSource:allRows.length,shownSourceCount:mainRows.length,omitted:Math.max(0,allRows.length-20),filename:file.name,sheets:sheets.map(s=>s.name),officialType,officialPeriod,exportedAt,sourceHeading,
+  return {rows,skipped,skippedIndexes,totalInSource:allRows.length,shownSourceCount:mainRows.length,omitted:Math.max(0,allRows.length-100),filename:file.name,sheets:sheets.map(s=>s.name),officialType,officialPeriod,exportedAt,sourceHeading,
     notice:"本次資料來自使用者上傳的內政部Excel；只在瀏覽器工作階段使用，並非匯入既有實價登錄主資料庫。官方查詢來源、圈選範圍及交易條件須由經紀人核對。"};
 }
