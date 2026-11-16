@@ -141,7 +141,7 @@ export default function RealPriceMapSelection(){
    onPointerUp={finish} onPointerCancel={()=>{setStart(null);setCurrent(null);}}>
    <div style={{position:"absolute",inset:0,width:WIDTH,height:HEIGHT,transformOrigin:"top left",transform:"scale(1)",pointerEvents:"none"}}>
     {tiles.map(tile=><img key={tile.key} src={`https://tile.openstreetmap.org/${view.z}/${tile.x}/${tile.y}.png`} alt="" draggable={false} width={TILE} height={TILE} style={{position:"absolute",left:tile.left,top:tile.top,maxWidth:"none"}}/>)}
-    {located&&<div aria-label="標的定位參考點" style={{position:"absolute",left:WIDTH/2-10,top:HEIGHT/2-10,width:20,height:20,borderRadius:"50%",border:"3px solid white",background:"#dc2626",boxShadow:"0 0 0 2px #991b1b"}}/>}
+    {located&&<div aria-label="標的定位參考點" style={{position:"absolute",left:project(located.lat,located.lon,view.z).x-world.x+WIDTH/2-10,top:project(located.lat,located.lon,view.z).y-world.y+HEIGHT/2-10,width:20,height:20,borderRadius:"50%",border:"3px solid white",background:"#dc2626",boxShadow:"0 0 0 2px #991b1b"}}/>}
     {live&&<div style={{position:"absolute",left:live.left,top:live.top,width:live.width,height:live.height,border:"2px solid #1d4ed8",background:"rgba(37,99,235,.18)",boxSizing:"border-box"}}/>}
    </div>
    <span style={{position:"absolute",bottom:6,right:8,fontSize:11,background:"#fffd",padding:"2px 5px",pointerEvents:"none"}}>© OpenStreetMap contributors</span>
