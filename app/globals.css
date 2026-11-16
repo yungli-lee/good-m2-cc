@@ -4001,3 +4001,51 @@ td {
   .ayong-story-chapter::before { left: -29px; }
   .ayong-story-sidebar { padding: 18px; border-radius: 16px; }
 }
+
+
+/* About Ayong: compact mobile introduction; never affect other CMS pages. */
+@media (max-width: 680px) {
+  .cms-about-ayong .cms-public-page-header {
+    min-height: 0;
+    margin-bottom: 16px;
+  }
+  .cms-about-ayong .cms-public-page-header .eyebrow {
+    margin-bottom: 6px;
+  }
+  .cms-about-ayong .cms-public-page-header h1 {
+    font-size: clamp(1.8rem, 7vw, 2.25rem);
+    margin-bottom: 10px;
+  }
+  .cms-about-ayong .cms-public-page-header > img {
+    display: block;
+    width: 100%;
+    max-width: 360px;
+    height: auto;
+    max-height: 220px;
+    object-fit: contain;
+    margin: 8px auto 12px;
+  }
+  .cms-about-ayong .cms-public-page-header > p:not(.eyebrow) {
+    margin: 0 0 10px;
+    line-height: 1.55;
+  }
+  .cms-about-ayong .ayong-story-intro {
+    margin: 0 0 16px;
+  }
+  .cms-about-ayong .ayong-story-intro .cms-markdown-body > p {
+    margin-bottom: 10px;
+  }
+  .cms-about-ayong .ayong-story-intro .cms-markdown-body img {
+    width: min(100%, 280px);
+    max-height: 340px;
+    object-fit: contain;
+    margin: 10px auto 14px;
+    box-shadow: none;
+  }
+  .cms-about-ayong .ayong-story-columns { gap: 16px; }
+  .cms-about-ayong .ayong-story-chapter .cms-markdown-body img {
+    max-height: none;
+    height: auto;
+    object-fit: contain;
+  }
+}
