@@ -26,6 +26,7 @@ export default async function AdminSitePagesPage({ searchParams }: Props) {
           </div>
           <div className="admin-actions">
             <Link className="button ghost" href="/admin">返回後台</Link>
+            <Link className="button" href="/admin/contact-portraits">阿勇／阿美頭像管理</Link>
             <Link className="button" href="/admin/site-pages/new">新增頁面內容</Link>
           </div>
         </div>
