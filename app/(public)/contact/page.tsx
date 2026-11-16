@@ -1,3 +1,4 @@
+import "@/app/contact-portrait.css";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getPublicCompanySettings } from "@/lib/company-settings";
@@ -97,15 +98,17 @@ export default async function ContactPage() {
                 { key: "ayong", name: "阿勇", role: "不動產顧問・買賣與風險評估", phone: "0938-137177", description: "從需求釐清、產權現況到交易流程，陪您把重要決定想清楚。" },
                 { key: "amei", name: "阿美", role: "不動產顧問・買賣需求與委託服務", phone: "0919-880903", description: "協助買方整理條件、賣方規劃委託，細心回應每一步的問題。" }
               ].map((person) => (
-                <article className="contact-team-card" key={person.name}>
-                  {portraits[person.key] ? (
-                    <img className="contact-team-photo" src={portraits[person.key]} alt={`${person.name}不動產顧問形象照`} loading="lazy" />
-                  ) : (
-                    <div className="contact-team-photo-pending" role="img" aria-label={`${person.name}照片尚未設定`}>
-                      <span aria-hidden="true">◉</span>
-                      <small>照片尚未設定</small>
-                    </div>
-                  )}
+                <article className={`contact-team-card contact-team-card--${person.key}`} key={person.name}>
+                  <div className="contact-team-portrait">
+                    {portraits[person.key] ? (
+                      <img className="contact-team-photo" src={portraits[person.key]} alt={`${person.name}不動產顧問形象照`} loading="lazy" />
+                    ) : (
+                      <div className="contact-team-photo-pending" role="img" aria-label={`${person.name}照片尚未設定`}>
+                        <span aria-hidden="true">◉</span>
+                        <small>照片尚未設定</small>
+                      </div>
+                    )}
+                  </div>
                   <div className="contact-team-copy">
                     <h3>{person.name}</h3>
                     <p className="contact-team-role">{person.role}</p>
