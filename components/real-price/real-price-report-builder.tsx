@@ -20,7 +20,7 @@ export default function RealPriceReportBuilder(){
  const [fileName,setFileName]=useState(""),[total,setTotal]=useState(0),[invalidIndexes,setInvalidIndexes]=useState<number[]>([]);
  const [limitPreset,setLimitPreset]=useState("10");
  const [customLimit,setCustomLimit]=useState("30");
- const customCount=/^[1-9]\\d*$/.test(customLimit)?Number(customLimit):0;
+ const customCount=/^[1-9]\d*$/.test(customLimit)?Number(customLimit):0;
  const validCustom=Number.isSafeInteger(customCount)&&customCount<=10000;
  const limit=limitPreset==="custom"?(validCustom?customCount:0):Number(limitPreset);
  const [error,setError]=useState(""),[loading,setLoading]=useState(false);
