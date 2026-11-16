@@ -1,5 +1,5 @@
 "use client";
-import {useState} from "react";
+import {useEffect,useState} from "react";
 import {importOfficialXls,type ImportedOfficialRow} from "@/lib/real-price/official-xls-import";
 const VERSION="V1.5 2026-11-08";
 const standards=[
@@ -18,18 +18,28 @@ function docTitle(doc:Document,subject:string){
 export default function RealPriceReportBuilder(){
  const [items,setItems]=useState<ImportedOfficialRow[]>([]);
  const [fileName,setFileName]=useState(""),[total,setTotal]=useState(0),[invalidIndexes,setInvalidIndexes]=useState<number[]>([]);
- const [limit,setLimit]=useState<5|10|15|20>(10);
+ const [limitPreset,setLimitPreset]=useState("10");
+ const [customLimit,setCustomLimit]=useState("30");
+ const customCount=/^[1-9]\\d*$/.test(customLimit)?Number(customLimit):0;
+ const validCustom=Number.isSafeInteger(customCount)&&customCount<=10000;
+ const limit=limitPreset==="custom"?(validCustom?customCount:0):Number(limitPreset);
  const [error,setError]=useState(""),[loading,setLoading]=useState(false);
  const [subject,setSubject]=useState(""),[area,setArea]=useState(""),[description,setDescription]=useState("");
  const [officialType,setOfficialType]=useState(""),[officialPeriod,setOfficialPeriod]=useState(""),[exportedAt,setExportedAt]=useState(""),[sourceHeading,setSourceHeading]=useState("");
- const [reportNo,setReportNo]=useState(""),[analyst,setAnalyst]=useState(""),[date,setDate]=useState("2026-11-08");
+ const [reportNo,setReportNo]=useState(""),[analyst,setAnalyst]=useState(""),[date,setDate]=useState("");
+ useEffect(()=>{
+   // Client local calendar date, not UTC and not a fixed deployment date.
+   const now=new Date();
+   const localToday=[now.getFullYear(),String(now.getMonth()+1).padStart(2,"0"),String(now.getDate()).padStart(2,"0")].join("-");
+   setDate(current=>current||localToday);
+ },[]);
  const invalid=invalidIndexes.filter(i=>i<=limit).length;
  const selectedItems=items.filter(item=>item.id<=limit);
  const omitted=Math.max(0,total-limit);
- const canPrint=!!(selectedItems.length&&!invalid&&subject.trim());
+ const canPrint=!!(limit>0&&selectedItems.length&&!invalid&&subject.trim());
 
  function printReport() {
-   if (!canPrint) {setError("請先上傳官方 Excel 並輸入案名；如有資料解析異常，請先確認來源。");return;}
+   if (!canPrint) {setError("請確認成交資料筆數為1至10000的正整數、已上傳官方 Excel 並輸入案名；如有資料解析異常，請先確認來源。");return;}
    setError("");
    const source=document.querySelector<HTMLElement>(".rp-bulk .paper");
    if (!source) return;
@@ -148,7 +158,7 @@ export default function RealPriceReportBuilder(){
  }
  return <main className="rp-bulk" style={{maxWidth:1160,margin:"0 auto",padding:20}}>
  <style>{'.rp-bulk .panel{background:white;padding:20px;margin-bottom:16px;border:1px solid #d4dee5;border-radius:10px}.rp-bulk .fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:13px}.rp-bulk .paper{background:white;color:#183449;width:210mm;box-sizing:border-box;padding:13mm;margin:16px auto;box-shadow:0 3px 16px #0002;font-family:Arial,"Noto Sans TC",sans-serif;overflow-wrap:anywhere}.rp-bulk .paper h2{font-size:19px;margin:0 0 10px}.rp-bulk .paper p,.rp-bulk .paper td,.rp-bulk .paper th{font-size:10.5px;line-height:1.6}.rp-bulk .paper table{width:100%;border-collapse:collapse}.rp-bulk .paper td,.rp-bulk .paper th{border:1px solid #c6d5de;padding:7px;text-align:left;vertical-align:top}.rp-bulk .paper th{background:#eef4f7}.rp-bulk .paper thead{display:table-header-group}.rp-bulk .paper tbody{display:table-row-group}.rp-bulk .muted{font-size:10px;color:#536e80}.rp-bulk .standard{border-bottom:1px solid #d5dee5;padding:10px 0}.rp-bulk .source-meta,.rp-bulk .report-source{background:#f1f5f8;padding:9px 12px;border-left:3px solid #ad965c;margin:10px 0}.rp-bulk .source-meta p{margin:5px 0;font-size:13px}.rp-bulk .report-source{font-size:11px;line-height:1.7}.rp-bulk .signature{border:1px solid #aebec9;padding:14px;margin-top:24px}.rp-bulk .signature p{margin:15px 0;line-height:2}.rp-bulk .signature p.muted{margin:10px 0 0;line-height:1.6}@page{size:A4 portrait;margin:12mm}@media(max-width:800px){.rp-bulk .paper{width:100%;padding:15px}}@media print{body *{visibility:hidden!important}.rp-bulk,.rp-bulk .paper,.rp-bulk .paper *{visibility:visible!important}.rp-bulk{max-width:none!important;margin:0!important;padding:0!important}.rp-bulk .panel,.rp-bulk .intro{display:none!important}.rp-bulk{position:absolute!important;top:0!important;left:0!important;width:100%!important;box-sizing:border-box!important}.rp-bulk .paper{width:100%!important;min-height:0!important;height:auto!important;margin:0!important;padding:0!important;box-shadow:none!important;break-after:auto!important;page-break-after:auto!important}.rp-bulk .paper thead{display:table-header-group}.rp-bulk .paper tr{break-inside:avoid;page-break-inside:avoid}.rp-bulk .paper thead{display:table-header-group}.rp-bulk .report-source{print-color-adjust:exact;-webkit-print-color-adjust:exact}.rp-bulk .paper tr,.rp-bulk .standard,.rp-bulk .signature{break-inside:avoid;page-break-inside:avoid}}'}</style>
- <div className="intro"><h1>實價登錄成交行情報告</h1><p>內政部Excel上傳後，直接依官方檔案原順序取前10筆（可選5／15／20筆），不再二次篩選。僅輸出一份連續報告，明細自動接續排版。末尾只留一組簽名欄，簽收人於紙本勾選買方或賣方身分。</p></div>
+ <div className="intro"><h1>實價登錄成交行情報告</h1><p>內政部Excel上傳後，預設依官方檔案原順序取前10筆，亦可選5／15／20筆或自行輸入筆數，不再二次篩選。僅輸出一份連續報告，明細自動接續排版。末尾只留一組簽名欄，簽收人於紙本勾選買方或賣方身分。</p></div>
  <section className="panel"><h2>一、上傳內政部官方 Excel</h2>
    <input type="file" accept=".xls,application/vnd.ms-excel" disabled={loading} onChange={e=>{void onFile(e.currentTarget.files?.[0]);e.currentTarget.value="";}}/>
    <p>{loading?"解析中…":fileName?"已匯入："+fileName+"；官方總"+total+"筆，目前採前"+limit+"筆，超過"+omitted+"筆不顯示。":"請上傳內政部網站下載的 .xls 檔案。"}</p>
@@ -157,9 +167,14 @@ export default function RealPriceReportBuilder(){
  <section className="panel">
  <h2>二、報告筆數與基本資料</h2>
  <label style={{display:"block",marginBottom:14,fontWeight:600}}>成交資料筆數（依內政部 Excel 原順序）
- <select aria-label="成交資料筆數" value={limit} onChange={e=>{setLimit(Number(e.target.value) as 5|10|15|20);setError("");}} style={{...base,maxWidth:200,display:"block",marginTop:6}}>
-  <option value={5}>5筆</option><option value={10}>10筆（預設）</option><option value={15}>15筆</option><option value={20}>20筆</option>
- </select></label>
+ <div style={{display:"flex",flexWrap:"wrap",gap:10,alignItems:"center",marginTop:6}}>
+ <select aria-label="成交資料筆數" value={limitPreset} onChange={e=>{setLimitPreset(e.target.value);setError("");}} style={{...base,maxWidth:200}}>
+  <option value="5">5筆</option><option value="10">10筆（預設）</option><option value="15">15筆</option><option value="20">20筆</option><option value="custom">自行輸入筆數</option>
+ </select>
+ {limitPreset==="custom"?<input aria-label="自訂成交資料筆數" type="number" min="1" max="10000" step="1" inputMode="numeric" value={customLimit} onChange={e=>{setCustomLimit(e.target.value);setError("");}} style={{...base,maxWidth:150}}/>:null}
+ </div>
+ {limitPreset==="custom"&&!validCustom?<span style={{color:"#9a3412",fontSize:12}}>請輸入1至10000的正整數筆數。</span>:null}
+ </label>
  <div className="fields">
  {label("案名／比較標的",<input style={base} value={subject} onChange={e=>setSubject(e.target.value)}/>)}
  {label("地圖圈選區域／生活圈（必填）",<input style={base} placeholder="例如：鹿港舊市區、鹿和路以西" value={area} onChange={e=>setArea(e.target.value)}/>)}
@@ -170,8 +185,8 @@ export default function RealPriceReportBuilder(){
  <div className="source-meta"><b>內政部官方查詢條件（自Excel頁首讀取）</b><p>交易種類：{officialType||"無法由檔案辨識，請核對原件"}　成交期間：{officialPeriod||"無法由檔案辨識，請核對原件"}</p><p>資料匯出時間：{exportedAt||"未記載／未辨識"}</p></div>
  <p>{label("其他查詢條件補充（選填）",<textarea style={{...base,minHeight:55}} value={description} onChange={e=>setDescription(e.target.value)}/>)}</p>
  <p>報告最後保留「□ 買方　□ 賣方」供簽收人於紙本勾選；不須在後台預先選擇交付身分。</p>
- <button type="button" disabled={loading||!selectedItems.length||!!invalid} onClick={printReport} style={{background:"#173b55",color:"white",border:0,borderRadius:7,padding:"11px 17px",cursor:"pointer"}}>列印一份報告／另存PDF（依內容自動分頁）</button>
- <p style={{fontSize:12,color:"#536e80"}}>所有成交明細連續排版，瀏覽器依A4版面自動換頁，盡量填滿每頁；依設定最多20筆。所選前段資料有無法解析的紀錄時禁止輸出。</p>
+ <button type="button" disabled={loading||!canPrint} onClick={printReport} style={{background:"#173b55",color:"white",border:0,borderRadius:7,padding:"11px 17px",cursor:"pointer"}}>列印一份報告／另存PDF（依內容自動分頁）</button>
+ <p style={{fontSize:12,color:"#536e80"}}>所有成交明細連續排版，瀏覽器依A4版面自動換頁，盡量填滿每頁；可自行輸入最多10000筆（仍以官方 Excel 原始筆數為限）。所選前段資料有無法解析的紀錄時禁止輸出。</p>
  </section>
  {selectedItems.length>0&&<article className="paper" aria-label="不動產成交行情報告">
     <div style={{display:"flex",justifyContent:"space-between",gap:8}}>
