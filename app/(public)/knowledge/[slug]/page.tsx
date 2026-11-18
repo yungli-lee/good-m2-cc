@@ -326,6 +326,7 @@ export default async function KnowledgeDetailPage({ params }: Props) {
   const category = item.content_categories?.name || "不動產知識";
   const publishedDate = formatDate(item.published_at);
   const reviewedDate = formatDate(item.last_reviewed_at);
+  const effectiveDate = formatDate(item.effective_from);
   const articleUrl = canonicalFor(item);
   const articleBlocks = parseArticleBody(item.body);
   const imageFit = item.image_fit === "contain" ? "contain" : "cover";
@@ -371,10 +372,11 @@ export default async function KnowledgeDetailPage({ params }: Props) {
               <div className="knowledge-body">
                 {renderArticleBlocks(articleBlocks)}
               </div>
-              {(item.source_name || item.source_url || reviewedDate) ? (
+              {(item.source_name || item.source_url || reviewedDate || effectiveDate) ? (
                 <aside className="knowledge-source">
                   <h2>資料來源與複查</h2>
                   {item.source_name ? <p>來源：{item.source_url ? <a href={item.source_url} target="_blank" rel="noreferrer">{item.source_name}</a> : item.source_name}</p> : null}
+                  {effectiveDate ? <p>資料適用起日：{effectiveDate}</p> : null}
                   {reviewedDate ? <p>最後複查：{reviewedDate}</p> : null}
                   {item.legal_status === "current" ? <p>法規狀態：現行有效</p> : null}
                 </aside>
