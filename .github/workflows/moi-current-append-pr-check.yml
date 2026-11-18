@@ -1,0 +1,24 @@
+name: Validate MOI current append (no credentials)
+on:
+  pull_request:
+    paths:
+      - 'scripts/moi_production_current_append.py'
+      - 'scripts/test_moi_production_current_append.py'
+      - '.github/workflows/moi-production-current-append.yml'
+      - '.github/workflows/moi-current-append-pr-check.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  offline-guards:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Compile current append and offline test
+        run: python -m py_compile scripts/moi_production_current_append.py scripts/test_moi_production_current_append.py
+      - name: Test append guards without any secrets
+        run: python -m unittest discover -s scripts -p test_moi_production_current_append.py -v
