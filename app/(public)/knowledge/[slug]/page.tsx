@@ -4,7 +4,7 @@ import type React from "react";
 import Link from "next/link";
 import { KnowledgeViewTracker } from "@/components/analytics/content-trackers";
 import { DeliveredImage } from "@/components/media/delivered-image";
-import { notFound } from "next/navigation";
+import { notFound, permanentRedirect } from "next/navigation";
 import { getPublicKnowledgeBySlug, listRelatedKnowledgeItems } from "@/lib/content/queries";
 import { getPublicCompanySettings } from "@/lib/company-settings";
 import { formatKnowledgeReadingTime } from "@/lib/content/reading-time";
@@ -21,6 +21,12 @@ type Props = {
 };
 
 const siteOrigin = "https://good.m2.cc";
+
+// Preserve historical URLs while consolidating duplicate content into one canonical article.
+const canonicalArticleSlugRedirects: Record<string, string> = {
+  "self-use-land-value-increment-tax-once-vs-one-house-2": "self-use-land-value-increment-tax-once-vs-one-house"
+};
+
 
 
 type ArticleBlock =
@@ -278,6 +284,8 @@ function renderArticleBlocks(blocks: ArticleBlock[]) {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
+  const canonicalSlug = canonicalArticleSlugRedirects[slug];
+  if (canonicalSlug) permanentRedirect(`/knowledge/${canonicalSlug}`);
   const [{ data }, company] = await Promise.all([
     getPublicKnowledgeBySlug(slug),
     getPublicCompanySettings()
@@ -307,6 +315,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function KnowledgeDetailPage({ params }: Props) {
   const { slug } = await params;
+  const canonicalSlug = canonicalArticleSlugRedirects[slug];
+  if (canonicalSlug) permanentRedirect(`/knowledge/${canonicalSlug}`);
   const { data, error } = await getPublicKnowledgeBySlug(slug);
   if (error || !data) notFound();
 
