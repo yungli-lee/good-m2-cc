@@ -1,0 +1,49 @@
+name: MOI current Changhua Production append (gated)
+on:
+  workflow_dispatch:
+    inputs:
+      apply:
+        description: "Apply new records to Production (only after reviewing dry-run evidence)"
+        required: true
+        type: boolean
+        default: false
+  schedule:
+    # 10:45 Asia/Taipei on the 1st, 11th and 21st.
+    # Workflow must remain on a review branch until dry-run, RPC and schema checks pass.
+    - cron: '45 2 1,11,21 * *'
+permissions:
+  contents: read
+concurrency:
+  group: moi-production-current-append
+  cancel-in-progress: false
+jobs:
+  append:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      MOI_STAGING_SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.MOI_STAGING_SUPABASE_SERVICE_ROLE_KEY }}
+      MOI_PRODUCTION_SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.MOI_PRODUCTION_SUPABASE_SERVICE_ROLE_KEY || secrets.PRODUCTION_SUPABASE_SERVICE_ROLE_KEY }}
+      MOI_STAGING_URL: https://niorteztdbuyusemsgwa.supabase.co
+      MOI_PRODUCTION_URL: https://rlbuadkmylulieoryzal.supabase.co
+      # Scheduled runs remain non-writing until a separate reviewed activation.
+      MOI_APPEND_APPLY: ${{ github.event_name == 'workflow_dispatch' && inputs.apply && '1' || '0' }}
+      MOI_REPORT_PATH: /tmp/moi-production-current-append.json
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Compile append helper
+        run: python -m py_compile scripts/moi_production_current_append.py
+      - name: Inspect latest current source records; append only when explicitly approved
+        run: python scripts/moi_production_current_append.py
+      - name: Preserve import evidence, including failures
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: moi-production-current-append-${{ github.run_id }}
+          path: /tmp/moi-production-current-append.json
+          if-no-files-found: warn
+          retention-days: 90
