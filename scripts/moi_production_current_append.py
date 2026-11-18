@@ -70,6 +70,12 @@ def main():
         if len(page) < 1000:
             break
     report["scanned"] = len(recent)
+    report["scan_saturated"] = len(recent) >= SCAN_LIMIT
+    save()
+    # A saturated latest-ID window cannot establish that all current sources
+    # were considered. Do not treat it as successful, even in dry-run.
+    if report["scan_saturated"]:
+        raise RuntimeError("Current-source scan reached safety limit; widen or use an exact ingestion watermark before append")
     current = [r for r in recent if r.get("county") == "彰化縣"
                and r.get("dataset_type") in ("sale", "presale")
                and str(r.get("source_record_key") or "").startswith(("n:a:", "n:b:"))]
@@ -88,9 +94,14 @@ def main():
         rows = api(PRODUCTION, prod, "moi_real_price_transactions",
                    {"select": "id,source_record_key", "source_record_key": "in.(" + terms + ")", "limit": 100})
         for row in rows:
-            existing[row["source_record_key"]] = row["id"]
+            source_key = row["source_record_key"]
+            if source_key in existing and existing[source_key] != row["id"]:
+                raise RuntimeError("Duplicate official source identity in Production")
+            existing[source_key] = row["id"]
     new = [r for r in current if r["source_record_key"] not in existing]
     report["existing"], report["pending_new"] = len(current) - len(new), len(new)
+    save()
+    report["source_keys_checked"] = len(keys)
     save()
     if not new:
         report["completed"] = True
