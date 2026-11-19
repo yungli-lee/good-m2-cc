@@ -38,13 +38,17 @@ export default function RealPriceMapSelection(){
  const [lookupMode,setLookupMode]=useState<"address"|"parcel">("address");
  const [address,setAddress]=useState(""),[parcelDistrict,setParcelDistrict]=useState(""),[parcelSection,setParcelSection]=useState(""),[parcelNo,setParcelNo]=useState("");
  const [properties,setProperties]=useState<Property[]>([]),[selectedProperty,setSelectedProperty]=useState(""),[propertyError,setPropertyError]=useState("");
- const [loading,setLoading]=useState(false),[locationError,setLocationError]=useState(""),[located,setLocated]=useState<{lat:number;lon:number;description:string}|null>(null);
+ const [loading,setLoading]=useState(false),[locationError,setLocationError]=useState(""),[suggestedStreet,setSuggestedStreet]=useState(""),[located,setLocated]=useState<{lat:number;lon:number;description:string}|null>(null);
  useEffect(()=>{
   const controller=new AbortController();
-  fetch("/api/admin/real-price-map-properties",{signal:controller.signal,cache:"no-store"})
-   .then(r=>{if(!r.ok)throw new Error("auth_or_unavailable");return r.json() as Promise<{data:Property[]}>;})
-   .then(p=>setProperties(p.data||[]))
-   .catch(()=>{if(!controller.signal.aborted)setPropertyError("未登入後台或物件清單暫時無法載入；仍可手動輸入地址。");});
+  fetch("/api/admin/real-price-map-properties",{signal:controller.signal,cache:"no-store",credentials:"same-origin"})
+   .then(r=>{
+    if(r.status===401||r.status===403)throw new Error("需要登入此 Preview 網域的後台，才能載入物件清單。正式站與 Preview 的登入狀態可能不共用。");
+    if(!r.ok)throw new Error("物件清單暫時無法載入（HTTP "+r.status+"）。請重新整理或稍後再試。");
+    return r.json() as Promise<{data:Property[]}>;
+   })
+   .then(p=>{setProperties(p.data||[]);setPropertyError("");})
+   .catch(e=>{if(!controller.signal.aborted)setPropertyError(e instanceof Error?e.message:"物件清單載入失敗");});
   return ()=>controller.abort();
  },[]);
  function chooseProperty(id:string){
@@ -56,7 +60,7 @@ export default function RealPriceMapSelection(){
   if(!p.address_public?.trim())setLocationError("此物件未填公開地址，請手動輸入可定位地址。系統不會自動讀取或外送屋主私人地址。");
  }
  async function locateAddress(e:FormEvent<HTMLFormElement>){
-  e.preventDefault();setLocationError("");setLocated(null);
+  e.preventDefault();setLocationError("");setSuggestedStreet("");setLocated(null);
   if(lookupMode==="parcel"){
    if(!parcelDistrict.trim()||!parcelSection.trim()||!parcelNo.trim()){setLocationError("請完整輸入鄉鎮、地段及地號。");return;}
    setLocationError("已記錄地籍查詢條件，但尚未接上政府地籍座標服務，不能將地號當街道地址定位。可先輸入鄰近地址或手動移動地圖圈選。");
@@ -65,16 +69,29 @@ export default function RealPriceMapSelection(){
   const q=address.trim();if(q.length<4){setLocationError("請輸入較完整的地址（至少4個字）。");return;}
   setLoading(true);
   try{
+   // Search exactly what the user entered first. Never silently substitute a
+   // road centroid for a precise house number without explicitly warning.
    const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),12000);
-   let response:Response;
+   let matches:GeoMatch[];
    try{
     const params=new URLSearchParams({q:q.includes("台灣")||q.includes("臺灣")?q:"台灣 "+q,format:"json",limit:"5",countrycodes:"tw",addressdetails:"1"});
-    response=await fetch("https://nominatim.openstreetmap.org/search?"+params.toString(),{signal:controller.signal});
+    const response=await fetch("https://nominatim.openstreetmap.org/search?"+params.toString(),{signal:controller.signal});
+    if(!response.ok)throw new Error("定位服務目前無法使用（HTTP "+response.status+"）");
+    matches=await response.json() as GeoMatch[];
    }finally{clearTimeout(timer);}
-   if(!response.ok)throw new Error("服務目前無法使用");
-   const matches=await response.json() as GeoMatch[];
    const m=matches.find(x=>Number.isFinite(Number(x.lat))&&Number.isFinite(Number(x.lon)));
-   if(!m){setLocationError("查無可定位地址。請補上縣市、鄉鎮及門牌，或用地圖手動圈選。");return;}
+   if(!m){
+    const street=q.replace(/[0-9０-９]+(?:之[0-9０-９]+)?(?:號|号).*$/,"").trim();
+    if(street!==q&&street.length>=4){
+     setLocationError("查不到精確門牌。可改用路段參考定位：「"+street+"」。路段座標不等於門牌位置，請核對後再圈選。");
+     setSuggestedStreet(street);
+    }else{
+     setLocationError("查無可定位地址。請補上縣市、鄉鎮及路名，或用地圖手動圈選。");
+     setSuggestedStreet("");
+    }
+    return;
+   }
+   setSuggestedStreet("");
    const lat=Number(m.lat),lon=Number(m.lon);
    setView({lat,lon,z:16});setSelected(null);setRect(null);setLocated({lat,lon,description:m.display_name});
   }catch(e){setLocationError("地址定位失敗："+(e instanceof Error?e.message:"網路錯誤")+"。仍可手動圈選。");}
@@ -128,7 +145,7 @@ export default function RealPriceMapSelection(){
      {properties.map(p=><option key={p.id} value={p.id}>{p.title}{p.listing_no?"｜"+p.listing_no:""}｜{p.district||""}</option>)}
     </select>
    </label>
-   {propertyError&&<p role="status" style={{color:"#92400e"}}>{propertyError}</p>}
+   {propertyError&&<p role="status" style={{color:"#92400e"}}>{propertyError} <a href={"/admin/login?next="+encodeURIComponent("/real-price/map")} style={{textDecoration:"underline",fontWeight:700}}>登入 Preview 後台</a></p>}
    <form onSubmit={locateAddress}>
     <div style={{display:"flex",gap:14,flexWrap:"wrap",marginBottom:8}}>
      <label><input type="radio" checked={lookupMode==="address"} onChange={()=>setLookupMode("address")}/> 地址</label>
@@ -144,6 +161,7 @@ export default function RealPriceMapSelection(){
     <button type="submit" disabled={loading} style={{marginTop:12,background:"#173b55",color:"white",padding:"10px 18px",borderRadius:6}}>{loading?"定位中…":lookupMode==="address"?"定位到地圖":"確認地號輸入"}</button>
    </form>
    {locationError&&<p role="status" style={{color:"#9a3412",marginTop:10}}>{locationError}</p>}
+   {suggestedStreet&&<button type="button" onClick={()=>{setAddress(suggestedStreet);setSuggestedStreet("");setLocationError("已換成路段地址，請按「定位到地圖」。");}} style={{marginTop:8,padding:"8px 12px",border:"1px solid #173b55",borderRadius:6}}>改用路段定位：{suggestedStreet}</button>}
    {located&&<p role="status" style={{marginTop:10}}>定位參考位置：{located.description}。此為第三方地理編碼結果，請核對門牌位置後再圈選，非官方地籍鑑界。</p>}
    <p style={{fontSize:12,color:"#64748b",marginTop:10}}>只有按「定位到地圖」後才將輸入地址送往第三方服務；請勿輸入不希望傳送的私人地址。地號模式目前不外傳資料，也不會假造定位結果。</p>
   </section>
