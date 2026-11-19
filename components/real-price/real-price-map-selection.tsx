@@ -115,6 +115,7 @@ export default function RealPriceMapSelection(){
   setRect(box);
   setSelected({north:a.lat,west:a.lon,south:b.lat,east:b.lon});
  };
+ const clearSelection=()=>{setStart(null);setCurrent(null);setSelected(null);setRect(null);};
  const live=start&&current?draw(start,current):rect;
  return <main style={{maxWidth:1000,margin:"24px auto",padding:"16px",color:"#17243b"}}>
   <h1 style={{fontSize:28,fontWeight:700}}>地圖式成交行情｜圈選測試版</h1>
@@ -150,7 +151,7 @@ export default function RealPriceMapSelection(){
    aria-label="拖曳圈選地圖範圍"
    onPointerDown={e=>{if(e.button!==0)return;e.currentTarget.setPointerCapture(e.pointerId);setStart(point(e));setCurrent(point(e));setSelected(null);setRect(null);}}
    onPointerMove={e=>{if(start)setCurrent(point(e));}}
-   onPointerUp={finish} onPointerCancel={()=>{setStart(null);setCurrent(null);}}>
+   onPointerUp={finish} onPointerCancel={e=>{if(e.currentTarget.hasPointerCapture(e.pointerId))e.currentTarget.releasePointerCapture(e.pointerId);setStart(null);setCurrent(null);}}>
    <div style={{position:"absolute",inset:0,width:WIDTH,height:HEIGHT,transformOrigin:"top left",transform:`scale(${mapWidth/WIDTH})`,pointerEvents:"none"}}>
     {tiles.map(tile=><img key={tile.key} src={`https://tile.openstreetmap.org/${view.z}/${tile.x}/${tile.y}.png`} alt="" draggable={false} width={TILE} height={TILE} style={{position:"absolute",left:tile.left,top:tile.top,maxWidth:"none"}}/>)}
     {located&&<div aria-label="標的定位參考點" style={{position:"absolute",left:project(located.lat,located.lon,view.z).x-world.x+WIDTH/2-10,top:project(located.lat,located.lon,view.z).y-world.y+HEIGHT/2-10,width:20,height:20,borderRadius:"50%",border:"3px solid white",background:"#dc2626",boxShadow:"0 0 0 2px #991b1b"}}/>}
@@ -159,6 +160,7 @@ export default function RealPriceMapSelection(){
    <span style={{position:"absolute",bottom:6,right:8,fontSize:11,background:"#fffd",padding:"2px 5px",pointerEvents:"none"}}>© OpenStreetMap contributors</span>
   </div>
   <div style={{display:"flex",justifyContent:"center",gap:8,flexWrap:"wrap",marginTop:12}}>
+   <button type="button" onClick={clearSelection} disabled={!selected&&!start} aria-label="清除目前圈選範圍並重新圈選">重新圈選</button>
    <button type="button" onClick={()=>move(0,-150)}>↑ 北移</button>
    <button type="button" onClick={()=>move(-150,0)}>← 西移</button>
    <button type="button" onClick={()=>move(150,0)}>東移 →</button>
