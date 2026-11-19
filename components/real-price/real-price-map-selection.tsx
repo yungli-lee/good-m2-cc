@@ -145,7 +145,7 @@ export default function RealPriceMapSelection(){
      {properties.map(p=><option key={p.id} value={p.id}>{p.title}{p.listing_no?"｜"+p.listing_no:""}｜{p.district||""}</option>)}
     </select>
    </label>
-   {propertyError&&<p role="status" style={{color:"#92400e"}}>{propertyError} <a href={"/admin/login?next="+encodeURIComponent("/real-price/map")} style={{textDecoration:"underline",fontWeight:700}}>登入 Preview 後台</a></p>}
+   {propertyError&&<p role="status" style={{color:"#92400e"}}>{propertyError} <a href="/admin/login" style={{textDecoration:"underline",fontWeight:700}}>登入 Preview 後台（登入後再返回地圖頁）</a></p>}
    <form onSubmit={locateAddress}>
     <div style={{display:"flex",gap:14,flexWrap:"wrap",marginBottom:8}}>
      <label><input type="radio" checked={lookupMode==="address"} onChange={()=>setLookupMode("address")}/> 地址</label>
