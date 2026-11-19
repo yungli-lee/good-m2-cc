@@ -1,5 +1,5 @@
 "use client";
-import {useEffect,useMemo,useState,type FormEvent,type PointerEvent} from "react";
+import {useEffect,useMemo,useRef,useState,type FormEvent,type PointerEvent} from "react";
 
 type Pos={x:number;y:number};
 type Property={id:string;title:string;listing_no?:string|null;city?:string|null;district?:string|null;address_public?:string|null;property_type?:string|null};
@@ -19,6 +19,18 @@ const unproject=(x:number,y:number,z:number)=>{
 const initial={lat:24.075,lon:120.52,z:12};
 export default function RealPriceMapSelection(){
  const [view,setView]=useState(initial);
+ const mapRef=useRef<HTMLDivElement|null>(null);
+ const [mapWidth,setMapWidth]=useState(WIDTH);
+ useEffect(()=>{
+  const el=mapRef.current;
+  if(!el)return;
+  const observer=new ResizeObserver(entries=>{
+   const width=entries[0]?.contentRect.width;
+   if(width&&Number.isFinite(width))setMapWidth(width);
+  });
+  observer.observe(el);
+  return ()=>observer.disconnect();
+ },[]);
  const [start,setStart]=useState<Pos|null>(null);
  const [current,setCurrent]=useState<Pos|null>(null);
  const [selected,setSelected]=useState<Bounds|null>(null);
@@ -96,12 +108,12 @@ export default function RealPriceMapSelection(){
   if(!start)return;
   const end=point(e),box=draw(start,end);
   setStart(null);setCurrent(null);
+  if(e.currentTarget.hasPointerCapture(e.pointerId))e.currentTarget.releasePointerCapture(e.pointerId);
   if(box.width<8||box.height<8)return;
   const a=unproject(world.x-WIDTH/2+box.left,world.y-HEIGHT/2+box.top,view.z);
   const b=unproject(world.x-WIDTH/2+box.left+box.width,world.y-HEIGHT/2+box.top+box.height,view.z);
   setRect(box);
   setSelected({north:a.lat,west:a.lon,south:b.lat,east:b.lon});
-  e.currentTarget.releasePointerCapture(e.pointerId);
  };
  const live=start&&current?draw(start,current):rect;
  return <main style={{maxWidth:1000,margin:"24px auto",padding:"16px",color:"#17243b"}}>
@@ -134,12 +146,12 @@ export default function RealPriceMapSelection(){
    {located&&<p role="status" style={{marginTop:10}}>定位參考位置：{located.description}。此為第三方地理編碼結果，請核對門牌位置後再圈選，非官方地籍鑑界。</p>}
    <p style={{fontSize:12,color:"#64748b",marginTop:10}}>只有按「定位到地圖」後才將輸入地址送往第三方服務；請勿輸入不希望傳送的私人地址。地號模式目前不外傳資料，也不會假造定位結果。</p>
   </section>
-  <div style={{position:"relative",maxWidth:WIDTH,margin:"14px auto",aspectRatio:"8 / 5",overflow:"hidden",background:"#e2e8f0",touchAction:"none",border:"1px solid #94a3b8",borderRadius:8,cursor:"crosshair"}}
+  <div ref={mapRef} style={{position:"relative",maxWidth:WIDTH,margin:"14px auto",aspectRatio:"8 / 5",overflow:"hidden",background:"#e2e8f0",touchAction:"none",border:"1px solid #94a3b8",borderRadius:8,cursor:"crosshair"}}
    aria-label="拖曳圈選地圖範圍"
    onPointerDown={e=>{if(e.button!==0)return;e.currentTarget.setPointerCapture(e.pointerId);setStart(point(e));setCurrent(point(e));setSelected(null);setRect(null);}}
    onPointerMove={e=>{if(start)setCurrent(point(e));}}
    onPointerUp={finish} onPointerCancel={()=>{setStart(null);setCurrent(null);}}>
-   <div style={{position:"absolute",inset:0,width:WIDTH,height:HEIGHT,transformOrigin:"top left",transform:"scale(1)",pointerEvents:"none"}}>
+   <div style={{position:"absolute",inset:0,width:WIDTH,height:HEIGHT,transformOrigin:"top left",transform:`scale(${mapWidth/WIDTH})`,pointerEvents:"none"}}>
     {tiles.map(tile=><img key={tile.key} src={`https://tile.openstreetmap.org/${view.z}/${tile.x}/${tile.y}.png`} alt="" draggable={false} width={TILE} height={TILE} style={{position:"absolute",left:tile.left,top:tile.top,maxWidth:"none"}}/>)}
     {located&&<div aria-label="標的定位參考點" style={{position:"absolute",left:project(located.lat,located.lon,view.z).x-world.x+WIDTH/2-10,top:project(located.lat,located.lon,view.z).y-world.y+HEIGHT/2-10,width:20,height:20,borderRadius:"50%",border:"3px solid white",background:"#dc2626",boxShadow:"0 0 0 2px #991b1b"}}/>}
     {live&&<div style={{position:"absolute",left:live.left,top:live.top,width:live.width,height:live.height,border:"2px solid #1d4ed8",background:"rgba(37,99,235,.18)",boxSizing:"border-box"}}/>}
