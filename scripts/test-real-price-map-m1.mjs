@@ -14,7 +14,7 @@ const checks=[
  ["M1 address no-match explicit fallback",map.includes("setSuggestedStreet(street)")&&map.includes("改用路段定位")],
  ["M1 fallback not automatic",map.includes("setAddress(suggestedStreet)")],
  ["M1 authenticated property API",api.includes('requireApiRole(["editor","admin","owner"])')],
- ["M1 no private address exposure",!api.match(/\\.select\\([^)]*address_private/)],
+ ["M1 no private address exposure",!api.split(".select(").slice(1).some(x=>x.split(")")[0].includes("address_private"))],
  ["M1 public-only property select",api.includes('.select("id,title,listing_no,city,district,address_public,property_type")')],
  ["M1 Preview login error surfaced",map.includes("r.status===401||r.status===403")],
  ["M1 route noindex",page.includes("index:false")],
