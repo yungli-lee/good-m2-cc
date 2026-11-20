@@ -4,6 +4,7 @@ import {readFileSync} from "node:fs";
 const map=readFileSync("components/real-price/real-price-map-selection.tsx","utf8");
 const api=readFileSync("app/api/admin/real-price-map-properties/route.ts","utf8");
 const page=readFileSync("app/real-price/map/page.tsx","utf8");
+const editor=readFileSync("app/admin/properties/[id]/edit/page.tsx","utf8");
 const checks=[
  ["M1 map selection output",map.includes("setSelected({north:a.lat,west:a.lon,south:b.lat,east:b.lon})")],
  ["M1 pointer capture",map.includes("setPointerCapture(e.pointerId)")],
@@ -22,6 +23,8 @@ const checks=[
  ["M1 parcel mode clears stale address marker",map.includes('setLookupMode("parcel");setLocated(null);setSuggestedStreet("");setLocationError("");setSelectedProperty("")')],
  ["M1 selected property identity visible",map.includes("目前標的：")&&map.includes("公開地址：")&&map.includes("selectedProperty&&properties.some")],
  ["M1 Preview login error surfaced",map.includes("r.status===401||r.status===403")],
+ ["M1 property editor deep link",editor.includes("/real-price/map?propertyId=")&&editor.includes("encodeURIComponent(property.id)")],
+ ["M1 deep link only selects authorized public property",map.includes('new URLSearchParams(window.location.search).get("propertyId")')&&map.includes("items.find(item=>item.id===requested)")&&map.includes("setAddress(buildPublicPropertyAddress(chosen))")],
  ["M1 route noindex",page.includes("index:false")],
 ];
 let failed=0;
