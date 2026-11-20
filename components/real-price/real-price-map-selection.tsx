@@ -160,6 +160,7 @@ export default function RealPriceMapSelection(){
      {properties.map(p=><option key={p.id} value={p.id}>{p.title}{p.listing_no?"｜"+p.listing_no:""}｜{p.district||""}</option>)}
     </select>
    </label>
+   {selectedProperty&&properties.some(p=>p.id===selectedProperty)&&<p role="status" style={{marginTop:8,marginBottom:12,padding:"10px 12px",background:"#eaf4ff",borderRadius:6}}><strong>目前標的：</strong>{properties.find(p=>p.id===selectedProperty)?.title}{properties.find(p=>p.id===selectedProperty)?.listing_no?"｜"+properties.find(p=>p.id===selectedProperty)?.listing_no:""}<span style={{display:"block",fontSize:13}}>公開地址：{address||"未提供，請手動輸入可定位地址"}</span></p>}
    {propertyError&&<p role="status" style={{color:"#92400e"}}>{propertyError} <a href="/admin/login" style={{textDecoration:"underline",fontWeight:700}}>登入 Preview 後台（登入後再返回地圖頁）</a></p>}
    <form onSubmit={locateAddress}>
     <div style={{display:"flex",gap:14,flexWrap:"wrap",marginBottom:8}}>
