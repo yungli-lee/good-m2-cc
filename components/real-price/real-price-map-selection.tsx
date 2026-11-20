@@ -165,7 +165,7 @@ export default function RealPriceMapSelection(){
    <form onSubmit={locateAddress}>
     <div style={{display:"flex",gap:14,flexWrap:"wrap",marginBottom:8}}>
      <label><input type="radio" checked={lookupMode==="address"} onChange={()=>setLookupMode("address")}/> 地址</label>
-     <label><input type="radio" checked={lookupMode==="parcel"} onChange={()=>setLookupMode("parcel")}/> 地段地號</label>
+     <label><input type="radio" checked={lookupMode==="parcel"} onChange={()=>{setLookupMode("parcel");setLocated(null);setSuggestedStreet("");setLocationError("");setSelectedProperty("");}}/> 地段地號</label>
     </div>
     {lookupMode==="address"?<label style={{display:"block"}}>地址（定位服務由 OpenStreetMap Nominatim 提供）
      <input value={address} maxLength={180} onChange={e=>{setAddress(e.target.value);setSelectedProperty("");setLocated(null);setSuggestedStreet("");setLocationError("");}} placeholder="例如：彰化縣鹿港鎮中山路..." style={{display:"block",width:"100%",minHeight:42,border:"1px solid #94a3b8",borderRadius:6,padding:8,marginTop:5}}/>
