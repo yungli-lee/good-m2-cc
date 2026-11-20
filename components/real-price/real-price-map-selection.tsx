@@ -5,6 +5,21 @@ type Pos={x:number;y:number};
 type Property={id:string;title:string;listing_no?:string|null;city?:string|null;district?:string|null;address_public?:string|null;property_type?:string|null};
 type GeoMatch={lat:string;lon:string;display_name:string;type?:string;addresstype?:string};
 type Bounds={south:number;west:number;north:number;east:number};
+// address_public may already contain the county and township. Avoid duplicating them.
+export function buildPublicPropertyAddress(p:Pick<Property,"city"|"district"|"address_public">){
+ const raw=(p.address_public||"").trim();
+ const city=(p.city||"").trim();
+ const district=(p.district||"").trim();
+ let result=raw;
+ // Property address can contain separated/fully qualified administrative labels.
+ const canonical=(v:string)=>v.replace(/臺/g,"台").replace(/\s+/g,"");
+ const hasPrefix=(v:string,prefix:string)=>canonical(v).startsWith(canonical(prefix));
+ if(district&&!hasPrefix(result,district)&&!(city&&hasPrefix(result,city)&&canonical(result).slice(canonical(city).length).startsWith(canonical(district)))){
+  result=district+(result?" "+result:"");
+ }
+ if(city&&!hasPrefix(result,city))result=city+(result?" "+result:"");
+ return result.trim();
+}
 const WIDTH=800,HEIGHT=500, TILE=256;
 const clamp=(n:number,a:number,b:number)=>Math.max(a,Math.min(b,n));
 const project=(lat:number,lon:number,z:number)=>{
@@ -55,7 +70,7 @@ export default function RealPriceMapSelection(){
   setSelectedProperty(id);setLocated(null);setLocationError("");
   const p=properties.find(x=>x.id===id);
   if(!p)return;
-  const addr=[p.city,p.district,p.address_public].filter(Boolean).join(" ");
+  const addr=buildPublicPropertyAddress(p);
   setAddress(addr);setLookupMode("address");
   if(!p.address_public?.trim())setLocationError("此物件未填公開地址，請手動輸入可定位地址。系統不會自動讀取或外送屋主私人地址。");
  }
