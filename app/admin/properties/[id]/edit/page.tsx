@@ -64,6 +64,7 @@ export default async function EditPropertyPage({ params, searchParams }: Props) 
     <main className="section">
       <div className="container">
         <h1>編輯物件</h1>
+        <p><Link className="button ghost" href={`/real-price/map?propertyId=${encodeURIComponent(property.id)}`}>以此物件開啟地圖式交易行情（Preview）</Link></p>
         <p className="muted">B-001：物件健康度協助檢查上架資料完整度。目前狀態：{property.status}</p>
         {query.saved ? <div className="notice">已儲存。</div> : null}
         {query.error ? <div className="notice">{errorMessage[query.error] || "操作失敗，請稍後再試。"}</div> : null}
