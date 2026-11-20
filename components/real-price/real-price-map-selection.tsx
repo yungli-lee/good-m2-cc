@@ -62,7 +62,20 @@ export default function RealPriceMapSelection(){
     if(!r.ok)throw new Error("物件清單暫時無法載入（HTTP "+r.status+"）。請重新整理或稍後再試。");
     return r.json() as Promise<{data:Property[]}>;
    })
-   .then(p=>{setProperties(p.data||[]);setPropertyError("");})
+   .then(p=>{
+    const items=p.data||[];
+    setProperties(items);setPropertyError("");
+    // Explicit deep link from the authenticated property editor. Only use
+    // properties returned by the permission-checked public-address endpoint.
+    const requested=new URLSearchParams(window.location.search).get("propertyId");
+    const chosen=items.find(item=>item.id===requested);
+    if(chosen){
+     setSelectedProperty(chosen.id);
+     setAddress(buildPublicPropertyAddress(chosen));
+     setLookupMode("address");
+     if(!chosen.address_public?.trim())setLocationError("此物件未填公開地址，請手動輸入可定位地址。系統不會自動讀取或外送屋主私人地址。");
+    }
+   })
    .catch(e=>{if(!controller.signal.aborted)setPropertyError(e instanceof Error?e.message:"物件清單載入失敗");});
   return ()=>controller.abort();
  },[]);
