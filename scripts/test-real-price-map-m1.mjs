@@ -18,6 +18,7 @@ const checks=[
  ["M1 public-only property select",api.includes('.select("id,title,listing_no,city,district,address_public,property_type")')],
  ["M1 public address assembled with deduplication",map.includes("const addr=buildPublicPropertyAddress(p)")&&map.includes("export function buildPublicPropertyAddress")],
  ["M1 address administrative-prefix normalization",map.includes('replace(/臺/g,"台")')&&map.includes("hasPrefix(result,city)")&&map.includes("hasPrefix(result,district)")],
+ ["M1 selected property identity visible",map.includes("目前標的：")&&map.includes("公開地址：")&&map.includes("selectedProperty&&properties.some")],
  ["M1 Preview login error surfaced",map.includes("r.status===401||r.status===403")],
  ["M1 route noindex",page.includes("index:false")],
 ];
