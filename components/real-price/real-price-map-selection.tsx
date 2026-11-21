@@ -2,6 +2,7 @@
 import {useEffect,useMemo,useRef,useState,type FormEvent,type PointerEvent} from "react";
 
 type Pos={x:number;y:number};
+type Interaction="pan"|"select";
 type Property={id:string;title:string;listing_no?:string|null;city?:string|null;district?:string|null;address_public?:string|null;property_type?:string|null};
 type GeoMatch={lat:string;lon:string;display_name:string;type?:string;addresstype?:string};
 type Bounds={south:number;west:number;north:number;east:number};
@@ -46,6 +47,8 @@ export default function RealPriceMapSelection(){
   observer.observe(el);
   return ()=>observer.disconnect();
  },[]);
+ const [interaction,setInteraction]=useState<Interaction>("select");
+ const [panStart,setPanStart]=useState<Pos|null>(null);
  const [start,setStart]=useState<Pos|null>(null);
  const [current,setCurrent]=useState<Pos|null>(null);
  const [selected,setSelected]=useState<Bounds|null>(null);
@@ -150,6 +153,18 @@ export default function RealPriceMapSelection(){
   setSelected(null);setRect(null);
  };
  const finish=(e:PointerEvent<HTMLDivElement>)=>{
+  if(interaction==="pan"){
+   if(panStart){
+    const end=point(e);
+    // Dragging the map east moves the map center west, and vice versa.
+    const result=unproject(world.x+panStart.x-end.x,world.y+panStart.y-end.y,view.z);
+    setView(v=>({...v,lat:clamp(result.lat,-85,85),lon:result.lon}));
+    setSelected(null);setRect(null);
+   }
+   setPanStart(null);
+   if(e.currentTarget.hasPointerCapture(e.pointerId))e.currentTarget.releasePointerCapture(e.pointerId);
+   return;
+  }
   if(!start)return;
   const end=point(e),box=draw(start,end);
   setStart(null);setCurrent(null);
@@ -160,11 +175,12 @@ export default function RealPriceMapSelection(){
   setRect(box);
   setSelected({north:a.lat,west:a.lon,south:b.lat,east:b.lon});
  };
- const clearSelection=()=>{setStart(null);setCurrent(null);setSelected(null);setRect(null);};
+ const clearSelection=()=>{setPanStart(null);setStart(null);setCurrent(null);setSelected(null);setRect(null);};
+ const changeInteraction=(next:Interaction)=>{clearSelection();setInteraction(next);};
  const live=start&&current?draw(start,current):rect;
  return <main style={{maxWidth:1000,margin:"24px auto",padding:"16px",color:"#17243b"}}>
   <h1 style={{fontSize:28,fontWeight:700}}>地圖式成交行情｜圈選測試版</h1>
-  <p>在地圖上拖曳畫出矩形範圍；可用下方方向鍵移動、放大縮小。此版本僅提供範圍選取，<strong>尚未連接交易座標比對、範圍內搜尋或 A4 報告</strong>，請勿把圈選當成已完成的成交查詢。</p>
+  <p>先選「移動地圖」拖曳找位置，再選「圈選範圍」畫出矩形；也可用下方方向鍵移動、放大縮小。此版本僅提供範圍選取，<strong>尚未連接交易座標比對、範圍內搜尋或 A4 報告</strong>，請勿把圈選當成已完成的成交查詢。</p>
   <section style={{padding:16,background:"#f8fafc",border:"1px solid #cbd5e1",borderRadius:10,marginTop:16}}>
    <h2 style={{fontSize:18,fontWeight:700,marginBottom:10}}>先找標的，再圈選周邊</h2>
    <label style={{display:"block",marginBottom:12}}>從後台選擇物件（需登入；僅使用公開地址）
@@ -187,6 +203,7 @@ export default function RealPriceMapSelection(){
      <label>地段<input value={parcelSection} onChange={e=>setParcelSection(e.target.value)} placeholder="新生段" style={{width:"100%",padding:8,border:"1px solid #94a3b8"}}/></label>
      <label>地號<input value={parcelNo} onChange={e=>setParcelNo(e.target.value)} placeholder="2106" style={{width:"100%",padding:8,border:"1px solid #94a3b8"}}/></label>
     </div>}
+    {lookupMode==="parcel"&&<p role="status" style={{marginTop:10,padding:"10px 12px",background:"#fff7ed",border:"1px solid #fdba74",borderRadius:6,color:"#9a3412"}}><strong>地段地號尚不支援自動定位。</strong>輸入後按「確認地號輸入」只會檢查欄位，不會移動地圖或產生地籍座標。請改用附近地址作參考定位，再切換「移動地圖」與「圈選範圍」手動框選。</p>}
     <button type="submit" disabled={loading} style={{marginTop:12,background:"#173b55",color:"white",padding:"10px 18px",borderRadius:6}}>{loading?"定位中…":lookupMode==="address"?"定位到地圖":"確認地號輸入"}</button>
    </form>
    {locationError&&<p role="status" style={{color:"#9a3412",marginTop:10}}>{locationError}</p>}
@@ -194,11 +211,16 @@ export default function RealPriceMapSelection(){
    {located&&<p role="status" style={{marginTop:10}}>定位參考位置：{located.description}。此為第三方地理編碼結果，請核對門牌位置後再圈選，非官方地籍鑑界。</p>}
    <p style={{fontSize:12,color:"#64748b",marginTop:10}}>只有按「定位到地圖」後才將輸入地址送往第三方服務；請勿輸入不希望傳送的私人地址。地號模式目前不外傳資料，也不會假造定位結果。</p>
   </section>
-  <div ref={mapRef} style={{position:"relative",maxWidth:WIDTH,margin:"14px auto",aspectRatio:"8 / 5",overflow:"hidden",background:"#e2e8f0",touchAction:"none",border:"1px solid #94a3b8",borderRadius:8,cursor:"crosshair"}}
-   aria-label="拖曳圈選地圖範圍"
-   onPointerDown={e=>{if(e.button!==0)return;e.currentTarget.setPointerCapture(e.pointerId);setStart(point(e));setCurrent(point(e));setSelected(null);setRect(null);}}
+  <div role="group" aria-label="地圖操作模式" style={{display:"flex",gap:8,justifyContent:"center",marginTop:16,flexWrap:"wrap"}}>
+   <button type="button" aria-pressed={interaction==="pan"} onClick={()=>changeInteraction("pan")} style={{padding:"9px 14px",border:"1px solid #64748b",borderRadius:6,background:interaction==="pan"?"#173b55":"#fff",color:interaction==="pan"?"#fff":"#17243b"}}>✋ 移動地圖</button>
+   <button type="button" aria-pressed={interaction==="select"} onClick={()=>changeInteraction("select")} style={{padding:"9px 14px",border:"1px solid #64748b",borderRadius:6,background:interaction==="select"?"#173b55":"#fff",color:interaction==="select"?"#fff":"#17243b"}}>▭ 圈選範圍</button>
+  </div>
+  <p style={{textAlign:"center",fontSize:13,marginTop:6}} role="status">{interaction==="pan"?"移動模式：按住滑鼠拖曳地圖（或手指拖曳）；可用下方＋／－縮放。":"圈選模式：按住滑鼠或手指拖曳畫出藍色矩形；要移動地圖請先切換「移動地圖」。"}</p>
+  <div ref={mapRef} style={{position:"relative",maxWidth:WIDTH,margin:"14px auto",aspectRatio:"8 / 5",overflow:"hidden",background:"#e2e8f0",touchAction:"none",border:"1px solid #94a3b8",borderRadius:8,cursor:interaction==="pan"?"grab":"crosshair"}}
+   aria-label={interaction==="pan"?"拖曳移動地圖":"拖曳圈選地圖範圍"}
+   onPointerDown={e=>{if(e.button!==0)return;e.currentTarget.setPointerCapture(e.pointerId);if(interaction==="pan"){setPanStart(point(e));return;}setStart(point(e));setCurrent(point(e));setSelected(null);setRect(null);}}
    onPointerMove={e=>{if(start)setCurrent(point(e));}}
-   onPointerUp={finish} onPointerCancel={e=>{if(e.currentTarget.hasPointerCapture(e.pointerId))e.currentTarget.releasePointerCapture(e.pointerId);setStart(null);setCurrent(null);}}>
+   onPointerUp={finish} onPointerCancel={e=>{if(e.currentTarget.hasPointerCapture(e.pointerId))e.currentTarget.releasePointerCapture(e.pointerId);setPanStart(null);setStart(null);setCurrent(null);}}>
    <div style={{position:"absolute",inset:0,width:WIDTH,height:HEIGHT,transformOrigin:"top left",transform:`scale(${mapWidth/WIDTH})`,pointerEvents:"none"}}>
     {tiles.map(tile=><img key={tile.key} src={`https://tile.openstreetmap.org/${view.z}/${tile.x}/${tile.y}.png`} alt="" draggable={false} width={TILE} height={TILE} style={{position:"absolute",left:tile.left,top:tile.top,maxWidth:"none"}}/>)}
     {located&&<div aria-label="標的定位參考點" style={{position:"absolute",left:project(located.lat,located.lon,view.z).x-world.x+WIDTH/2-10,top:project(located.lat,located.lon,view.z).y-world.y+HEIGHT/2-10,width:20,height:20,borderRadius:"50%",border:"3px solid white",background:"#dc2626",boxShadow:"0 0 0 2px #991b1b"}}/>}
