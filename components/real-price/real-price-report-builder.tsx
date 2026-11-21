@@ -3,7 +3,7 @@ import {useEffect,useState} from "react";
 import {importOfficialXls,type ImportedOfficialRow} from "@/lib/real-price/official-xls-import";
 const VERSION="V1.5 2026-11-08";
 const standards=[
-["資料及數量","本報告依『內政部不動產交易實價查詢服務網』https://lvr.land.moi.gov.tw/ 匯出Excel原始順序，採前{LIMIT}筆，不額外刪選或調整排序；超過部分不顯示。"],
+["資料及數量","本報告依『內政部不動產交易實價查詢服務網』https://lvr.land.moi.gov.tw/ 匯出Excel原始順序，採前{LIMIT}筆，不額外刪選或調整排序。"],
 ["查詢範圍與期間","查詢種類、期間與匯出時間，依本報告首頁『官方查詢條件』所示。"],
 ["不同物件不能直接類比","透天、大樓、華廈、預售及土地的單價基礎不同；屋齡、臨路、土地條件及生活圈不同亦可能使價格不可直接相比。"],
 ["官方備註","完整揭露原始備註；親友、持分、未登記建物、增建、法拍、協議價購與解約等特殊條件，可能影響價格代表性。"],
@@ -37,8 +37,7 @@ export default function RealPriceReportBuilder(){
  },[]);
  const invalid=invalidIndexes.filter(i=>i<=limit).length;
  const selectedItems=items.filter(item=>item.id<=limit);
- const omitted=Math.max(0,total-limit);
- const selectionSummary=allSelected?"全部匯入，共"+total+"筆":"取前"+limit+"筆，超過"+omitted+"筆不顯示";
+ const selectionSummary=allSelected?"全部匯入，共"+total+"筆":"取前"+limit+"筆";
  const canPrint=!!(limit>0&&selectedItems.length&&!invalid&&subject.trim());
 
  function printReport() {
