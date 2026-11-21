@@ -1,0 +1,24 @@
+name: Real-price map M1 static regression
+on:
+  push:
+    branches:
+      - feature/real-price-map-selection-preview
+    paths:
+      - 'components/real-price/real-price-map-selection.tsx'
+      - 'app/api/admin/real-price-map-properties/route.ts'
+      - 'app/real-price/map/page.tsx'
+      - 'scripts/test-real-price-map-m1.mjs'
+      - '.github/workflows/real-price-map-m1.yml'
+  workflow_dispatch:
+jobs:
+  m1-static:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify M1 static regression invariants
+        run: node scripts/test-real-price-map-m1.mjs
