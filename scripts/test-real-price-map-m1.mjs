@@ -8,6 +8,9 @@ const editor=readFileSync("app/admin/properties/[id]/edit/page.tsx","utf8");
 const checks=[
  ["M1 map selection output",map.includes("setSelected({north:a.lat,west:a.lon,south:b.lat,east:b.lon})")],
  ["M1 pointer capture",map.includes("setPointerCapture(e.pointerId)")],
+ ["M1 explicit pan and selection modes",map.includes('type Interaction="pan"|"select"')&&map.includes('changeInteraction("pan")')&&map.includes('changeInteraction("select")')],
+ ["M1 pan drag updates center",map.includes("world.x+panStart.x-end.x")&&map.includes("world.y+panStart.y-end.y")],
+ ["M1 parcel guidance always visible",map.includes('lookupMode==="parcel"&&<p role="status"')&&map.includes("地段地號尚不支援自動定位")],
  ["M1 selection reset",map.includes("clearSelection")],
  ["M1 manual address mode",map.includes('lookupMode==="address"')],
  ["M1 parcel fields",["parcelDistrict","parcelSection","parcelNo"].every(x=>map.includes(x))],
