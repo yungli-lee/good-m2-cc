@@ -56,6 +56,8 @@ export default function RealPriceMapSelection(){
  const [lookupMode,setLookupMode]=useState<"address"|"parcel">("address");
  const [address,setAddress]=useState(""),[parcelDistrict,setParcelDistrict]=useState(""),[parcelSection,setParcelSection]=useState(""),[parcelNo,setParcelNo]=useState("");
  const [properties,setProperties]=useState<Property[]>([]),[selectedProperty,setSelectedProperty]=useState(""),[propertyError,setPropertyError]=useState("");
+ const activeGeocode=useRef<AbortController|null>(null);
+ const cancelGeocode=()=>{activeGeocode.current?.abort();activeGeocode.current=null;setLoading(false);};
  const [loading,setLoading]=useState(false),[locationError,setLocationError]=useState(""),[suggestedStreet,setSuggestedStreet]=useState(""),[located,setLocated]=useState<{lat:number;lon:number;description:string}|null>(null);
  useEffect(()=>{
   const controller=new AbortController();
@@ -83,7 +85,7 @@ export default function RealPriceMapSelection(){
   return ()=>controller.abort();
  },[]);
  function chooseProperty(id:string){
-  setSelectedProperty(id);setLocated(null);setLocationError("");
+  cancelGeocode();setSelectedProperty(id);setLocated(null);setLocationError("");
   const p=properties.find(x=>x.id===id);
   if(!p)return;
   const addr=buildPublicPropertyAddress(p);
@@ -91,18 +93,20 @@ export default function RealPriceMapSelection(){
   if(!p.address_public?.trim())setLocationError("此物件未填公開地址，請手動輸入可定位地址。系統不會自動讀取或外送屋主私人地址。");
  }
  async function locateAddress(e:FormEvent<HTMLFormElement>){
-  e.preventDefault();setLocationError("");setSuggestedStreet("");setLocated(null);
+  e.preventDefault();cancelGeocode();setLocationError("");setSuggestedStreet("");setLocated(null);
   if(lookupMode==="parcel"){
    if(!parcelDistrict.trim()||!parcelSection.trim()||!parcelNo.trim()){setLocationError("請完整輸入鄉鎮、地段及地號。");return;}
    setLocationError("已記錄地籍查詢條件，但尚未接上政府地籍座標服務，不能將地號當街道地址定位。可先輸入鄰近地址或手動移動地圖圈選。");
    return;
   }
   const q=address.trim();if(q.length<4){setLocationError("請輸入較完整的地址（至少4個字）。");return;}
+  const controller=new AbortController();
+  activeGeocode.current=controller;
   setLoading(true);
   try{
    // Search exactly what the user entered first. Never silently substitute a
    // road centroid for a precise house number without explicitly warning.
-   const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),12000);
+   const timer=setTimeout(()=>controller.abort(),12000);
    let matches:GeoMatch[];
    try{
     const params=new URLSearchParams({q:q.includes("台灣")||q.includes("臺灣")?q:"台灣 "+q,format:"json",limit:"5",countrycodes:"tw",addressdetails:"1"});
@@ -110,7 +114,8 @@ export default function RealPriceMapSelection(){
     if(!response.ok)throw new Error("定位服務目前無法使用（HTTP "+response.status+"）");
     matches=await response.json() as GeoMatch[];
    }finally{clearTimeout(timer);}
-   const m=matches.find(x=>Number.isFinite(Number(x.lat))&&Number.isFinite(Number(x.lon)));
+   if(controller.signal.aborted||activeGeocode.current!==controller)return;
+   const m=Array.isArray(matches)?matches.find(x=>Number.isFinite(Number(x.lat))&&Number.isFinite(Number(x.lon))&&Math.abs(Number(x.lat))<=90&&Math.abs(Number(x.lon))<=180):undefined;
    if(!m){
     const street=q.replace(/[0-9０-９]+(?:之[0-9０-９]+)?(?:號|号).*$/,"").trim();
     if(street!==q&&street.length>=4){
@@ -125,8 +130,8 @@ export default function RealPriceMapSelection(){
    setSuggestedStreet("");
    const lat=Number(m.lat),lon=Number(m.lon);
    setView({lat,lon,z:16});setSelected(null);setRect(null);setLocated({lat,lon,description:m.display_name});
-  }catch(e){setLocationError("地址定位失敗："+(e instanceof Error?e.message:"網路錯誤")+"。仍可手動圈選。");}
-  finally{setLoading(false);}
+  }catch(e){if(activeGeocode.current===controller)setLocationError("地址定位失敗："+(controller.signal.aborted?"定位逾時，請重試":e instanceof Error?e.message:"網路錯誤")+"。仍可手動圈選。");}
+  finally{if(activeGeocode.current===controller){activeGeocode.current=null;setLoading(false);}}
  }
  const world=project(view.lat,view.lon,view.z);
  const tiles=useMemo(()=>{
@@ -193,11 +198,11 @@ export default function RealPriceMapSelection(){
    {propertyError&&<p role="status" style={{color:"#92400e"}}>{propertyError} <a href="/admin/login" style={{textDecoration:"underline",fontWeight:700}}>登入 Preview 後台（登入後再返回地圖頁）</a></p>}
    <form onSubmit={locateAddress}>
     <div style={{display:"flex",gap:14,flexWrap:"wrap",marginBottom:8}}>
-     <label><input type="radio" checked={lookupMode==="address"} onChange={()=>setLookupMode("address")}/> 地址</label>
-     <label><input type="radio" checked={lookupMode==="parcel"} onChange={()=>{setLookupMode("parcel");setLocated(null);setSuggestedStreet("");setLocationError("");setSelectedProperty("");}}/> 地段地號</label>
+     <label><input type="radio" checked={lookupMode==="address"} onChange={()=>{cancelGeocode();setLookupMode("address");setLocationError("");}}/> 地址</label>
+     <label><input type="radio" checked={lookupMode==="parcel"} onChange={()=>{cancelGeocode();setLookupMode("parcel");setLocated(null);setSuggestedStreet("");setLocationError("");setSelectedProperty("");}}/> 地段地號</label>
     </div>
     {lookupMode==="address"?<label style={{display:"block"}}>地址（定位服務由 OpenStreetMap Nominatim 提供）
-     <input value={address} maxLength={180} onChange={e=>{setAddress(e.target.value);setSelectedProperty("");setLocated(null);setSuggestedStreet("");setLocationError("");}} placeholder="例如：彰化縣鹿港鎮中山路..." style={{display:"block",width:"100%",minHeight:42,border:"1px solid #94a3b8",borderRadius:6,padding:8,marginTop:5}}/>
+     <input value={address} maxLength={180} onChange={e=>{cancelGeocode();setAddress(e.target.value);setSelectedProperty("");setLocated(null);setSuggestedStreet("");setLocationError("");}} placeholder="例如：彰化縣鹿港鎮中山路..." style={{display:"block",width:"100%",minHeight:42,border:"1px solid #94a3b8",borderRadius:6,padding:8,marginTop:5}}/>
     </label>:<div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))",gap:8}}>
      <label>鄉鎮市區<input value={parcelDistrict} onChange={e=>setParcelDistrict(e.target.value)} placeholder="福興鄉" style={{width:"100%",padding:8,border:"1px solid #94a3b8"}}/></label>
      <label>地段<input value={parcelSection} onChange={e=>setParcelSection(e.target.value)} placeholder="新生段" style={{width:"100%",padding:8,border:"1px solid #94a3b8"}}/></label>
