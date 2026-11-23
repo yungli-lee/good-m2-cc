@@ -9,13 +9,11 @@ for(const token of [
  "row.latitude>=b.south && row.latitude<=b.north",
  "row.longitude>=b.west && row.longitude<=b.east",
  ".sort((a,c)=>a.sourceOrder-c.sourceOrder)",
- "row.sourceOrder",
+ "sourceOrder:number",
  "土地每坪單價",
  "官方備註",
  "測試樣本：非內政部官方成交紀錄",
 ]) {
- // Source order is defined on the contract type, not necessarily as row.sourceOrder.
- if(token==="row.sourceOrder")continue;
  assert.ok(s.includes(token),"Missing M2 invariant: "+token);
 }
 assert.ok(!s.includes("Math.random"),"No invented transaction values");
