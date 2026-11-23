@@ -106,6 +106,8 @@ export default function RealPriceMapSelection(){
   try{
    // Search exactly what the user entered first. Never silently substitute a
    // road centroid for a precise house number without explicitly warning.
+   // Keep the deadline active through JSON body parsing, not only fetch headers.
+   // A response that sends headers but stalls its body must also time out.
    const timer=setTimeout(()=>controller.abort(),12000);
    let matches:GeoMatch[];
    try{
