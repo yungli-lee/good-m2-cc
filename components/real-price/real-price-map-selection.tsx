@@ -1,5 +1,6 @@
 "use client";
 import {useEffect,useMemo,useRef,useState,type FormEvent,type PointerEvent} from "react";
+import {DEFAULT_PAGE_SIZE,PAGE_SIZES,type PageSize,type QueryState} from "@/lib/real-price/map-query-contract";
 
 type Pos={x:number;y:number};
 type Interaction="pan"|"select";
@@ -52,6 +53,8 @@ export default function RealPriceMapSelection(){
  const [start,setStart]=useState<Pos|null>(null);
  const [current,setCurrent]=useState<Pos|null>(null);
  const [selected,setSelected]=useState<Bounds|null>(null);
+ const [resultSize,setResultSize]=useState<PageSize>(DEFAULT_PAGE_SIZE);
+ const [queryState,setQueryState]=useState<QueryState>({status:"idle"});
  const [rect,setRect]=useState<{left:number;top:number;width:number;height:number}|null>(null);
  const [lookupMode,setLookupMode]=useState<"address"|"parcel">("address");
  const [address,setAddress]=useState(""),[parcelDistrict,setParcelDistrict]=useState(""),[parcelSection,setParcelSection]=useState(""),[parcelNo,setParcelNo]=useState("");
@@ -157,7 +160,7 @@ export default function RealPriceMapSelection(){
  const move=(dx:number,dy:number)=>{
   const p=unproject(world.x+dx,world.y+dy,view.z);
   setView(v=>({...v,lat:clamp(p.lat,-85,85),lon:p.lon}));
-  setSelected(null);setRect(null);
+  setSelected(null);setRect(null);setQueryState({status:"idle"});
  };
  const finish=(e:PointerEvent<HTMLDivElement>)=>{
   if(interaction==="pan"){
@@ -182,7 +185,7 @@ export default function RealPriceMapSelection(){
   setRect(box);
   setSelected({north:a.lat,west:a.lon,south:b.lat,east:b.lon});
  };
- const clearSelection=()=>{setPanStart(null);setStart(null);setCurrent(null);setSelected(null);setRect(null);};
+ const clearSelection=()=>{setPanStart(null);setStart(null);setCurrent(null);setSelected(null);setRect(null);setQueryState({status:"idle"});};
  const changeInteraction=(next:Interaction)=>{clearSelection();setInteraction(next);};
  const live=start&&current?draw(start,current):rect;
  return <main style={{maxWidth:1000,margin:"24px auto",padding:"16px",color:"#17243b"}}>
@@ -249,6 +252,19 @@ export default function RealPriceMapSelection(){
     <p style={{overflowWrap:"anywhere"}}>北緯 {selected.north.toFixed(6)} ～ {selected.south.toFixed(6)}；東經 {selected.west.toFixed(6)} ～ {selected.east.toFixed(6)}</p>
     <p>下一階段須建立官方交易地址／地號的可信定位資料，才能以此範圍精確查詢；不能拿行政區或路名假裝符合圈選。</p>
    </section>:<p style={{textAlign:"center"}}>尚未圈選範圍</p>}
+  <section aria-label="M2 成交行情查詢預覽" style={{marginTop:18,padding:16,border:"1px solid #cbd5e1",borderRadius:8}}>
+   <h2 style={{fontSize:20,fontWeight:700}}>M2｜圈選成交行情（尚未串接官方交易定位資料）</h2>
+   <p>此區僅驗證查詢操作介面，不提供虛構成交案件。無可信逐筆座標與查詢 API 前，不會將路名或行政區交易宣稱位於圈選範圍內。</p>
+   <label>顯示筆數 <select value={resultSize} onChange={e=>setResultSize(Number(e.target.value) as PageSize)} aria-label="成交清單筆數">
+    {PAGE_SIZES.map(n=><option key={n} value={n}>{n} 筆</option>)}
+   </select></label>
+   <button type="button" disabled={!selected} style={{marginLeft:12,padding:"8px 12px"}} onClick={()=>{
+    setQueryState({status:"loading"});
+    // No real spatial transaction endpoint is connected. Fail closed, never fabricate results.
+    setQueryState({status:"error",message:"尚未串接具有可信逐筆成交座標的官方查詢服務，目前無法提供圈選範圍內的成交清單。"});
+   }}>查詢成交行情</button>
+   <p role="status" style={{marginTop:10}}>{queryState.status==="idle"?"請先在地圖上圈選範圍。":queryState.status==="loading"?"查詢中…":queryState.status==="error"?queryState.message:queryState.total===0?"查無符合條件的成交案件。":"查詢完成。"}</p>
+  </section>
   <p style={{marginTop:20}}>既有功能：<a href="/real-price" style={{textDecoration:"underline"}}>條件式實價查詢</a>。後台另有獨立 A4 報告製作功能。</p>
  </main>;
 }
