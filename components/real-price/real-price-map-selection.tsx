@@ -85,7 +85,7 @@ export default function RealPriceMapSelection(){
   return ()=>controller.abort();
  },[]);
  function chooseProperty(id:string){
-  cancelGeocode();setSelectedProperty(id);setLocated(null);setLocationError("");
+  cancelGeocode();setSelectedProperty(id);setLocated(null);setSuggestedStreet("");setLocationError("");
   const p=properties.find(x=>x.id===id);
   if(!p)return;
   const addr=buildPublicPropertyAddress(p);
