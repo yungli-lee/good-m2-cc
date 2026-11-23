@@ -134,7 +134,7 @@ export default function RealPriceMapSelection(){
    }
    setSuggestedStreet("");
    const lat=Number(m.lat),lon=Number(m.lon);
-   setView({lat,lon,z:16});setSelected(null);setRect(null);setLocated({lat,lon,description:m.display_name});
+   setView({lat,lon,z:16});setSelected(null);setRect(null);setQueryState({status:"idle"});setLocated({lat,lon,description:m.display_name});
   }catch(e){if(activeGeocode.current===controller)setLocationError("地址定位失敗："+(controller.signal.aborted?"定位逾時，請重試":e instanceof Error?e.message:"網路錯誤")+"。仍可手動圈選。");}
   finally{if(activeGeocode.current===controller){activeGeocode.current=null;setLoading(false);}}
  }
@@ -169,7 +169,7 @@ export default function RealPriceMapSelection(){
     // Dragging the map east moves the map center west, and vice versa.
     const result=unproject(world.x+panStart.x-end.x,world.y+panStart.y-end.y,view.z);
     setView(v=>({...v,lat:clamp(result.lat,-85,85),lon:result.lon}));
-    setSelected(null);setRect(null);
+    setSelected(null);setRect(null);setQueryState({status:"idle"});
    }
    setPanStart(null);
    if(e.currentTarget.hasPointerCapture(e.pointerId))e.currentTarget.releasePointerCapture(e.pointerId);
@@ -228,7 +228,7 @@ export default function RealPriceMapSelection(){
   <p style={{textAlign:"center",fontSize:13,marginTop:6}} role="status">{interaction==="pan"?"移動模式：按住滑鼠拖曳地圖（或手指拖曳）；可用下方＋／－縮放。":"圈選模式：按住滑鼠或手指拖曳畫出藍色矩形；要移動地圖請先切換「移動地圖」。"}</p>
   <div ref={mapRef} style={{position:"relative",maxWidth:WIDTH,margin:"14px auto",aspectRatio:"8 / 5",overflow:"hidden",background:"#e2e8f0",touchAction:"none",border:"1px solid #94a3b8",borderRadius:8,cursor:interaction==="pan"?"grab":"crosshair"}}
    aria-label={interaction==="pan"?"拖曳移動地圖":"拖曳圈選地圖範圍"}
-   onPointerDown={e=>{if(e.button!==0)return;e.currentTarget.setPointerCapture(e.pointerId);if(interaction==="pan"){setPanStart(point(e));return;}setStart(point(e));setCurrent(point(e));setSelected(null);setRect(null);}}
+   onPointerDown={e=>{if(e.button!==0)return;e.currentTarget.setPointerCapture(e.pointerId);if(interaction==="pan"){setPanStart(point(e));return;}setStart(point(e));setCurrent(point(e));setSelected(null);setRect(null);setQueryState({status:"idle"});}}
    onPointerMove={e=>{if(start)setCurrent(point(e));}}
    onPointerUp={finish} onPointerCancel={e=>{if(e.currentTarget.hasPointerCapture(e.pointerId))e.currentTarget.releasePointerCapture(e.pointerId);setPanStart(null);setStart(null);setCurrent(null);}}>
    <div style={{position:"absolute",inset:0,width:WIDTH,height:HEIGHT,transformOrigin:"top left",transform:`scale(${mapWidth/WIDTH})`,pointerEvents:"none"}}>
@@ -244,8 +244,8 @@ export default function RealPriceMapSelection(){
    <button type="button" onClick={()=>move(-150,0)}>← 西移</button>
    <button type="button" onClick={()=>move(150,0)}>東移 →</button>
    <button type="button" onClick={()=>move(0,150)}>南移 ↓</button>
-   <button type="button" onClick={()=>{setView(v=>({...v,z:Math.min(v.z+1,17)}));setSelected(null);setRect(null);}}>＋ 放大</button>
-   <button type="button" onClick={()=>{setView(v=>({...v,z:Math.max(v.z-1,8)}));setSelected(null);setRect(null);}}>－ 縮小</button>
+   <button type="button" onClick={()=>{setView(v=>({...v,z:Math.min(v.z+1,17)}));setSelected(null);setRect(null);setQueryState({status:"idle"});}}>＋ 放大</button>
+   <button type="button" onClick={()=>{setView(v=>({...v,z:Math.max(v.z-1,8)}));setSelected(null);setRect(null);setQueryState({status:"idle"});}}>－ 縮小</button>
   </div>
   {selected?<section style={{background:"#eff6ff",padding:12,marginTop:16,borderRadius:8}}>
     <strong>已圈選經緯度範圍</strong>
