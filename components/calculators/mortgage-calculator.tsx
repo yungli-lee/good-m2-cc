@@ -9,10 +9,19 @@ type RateFormState = {
   startMonth: string;
 };
 
-const initialRates: [RateFormState, RateFormState, RateFormState] = [
+const initialRates: RateFormState[] = [
   { rate: "1.775", startMonth: "1" },
   { rate: "2.000", startMonth: "37" },
   { rate: "2.300", startMonth: "85" }
+];
+
+// 青安 3.0：115/8/1 起新申辦之一段式機動利率，假設基準利率不變。
+const youthLoan3Rates: RateFormState[] = [
+  { rate: "1.775", startMonth: "1" },
+  { rate: "1.900", startMonth: "37" },
+  { rate: "2.025", startMonth: "49" },
+  { rate: "2.150", startMonth: "61" },
+  { rate: "2.275", startMonth: "73" }
 ];
 
 function numberOrNull(value: string) {
@@ -22,7 +31,7 @@ function numberOrNull(value: string) {
   return Number.isFinite(number) ? number : null;
 }
 
-function toMortgageInput(amountWan: string, years: string, graceMonths: string, rates: [RateFormState, RateFormState, RateFormState]): MortgageInput {
+function toMortgageInput(amountWan: string, years: string, graceMonths: string, rates: RateFormState[]): MortgageInput {
   return {
     amountWan: Number(amountWan),
     years: Number(years),
@@ -77,20 +86,22 @@ export function MortgageCalculator() {
   const [years, setYears] = useState("40");
   const [graceMonths, setGraceMonths] = useState("36");
   const [rates, setRates] = useState(initialRates);
+  const [rateMode, setRateMode] = useState<"custom" | "youth3">("custom");
 
   const input = useMemo(() => toMortgageInput(amountWan, years, graceMonths, rates), [amountWan, years, graceMonths, rates]);
   const validationMessage = validateMortgageInput(input);
   const result = validationMessage ? null : calculateMortgage(input);
 
   function updateRate(index: number, key: keyof RateFormState, value: string) {
+    setRateMode("custom");
     setRates((current) => current.map((rate, rateIndex) => (
       rateIndex === index ? { ...rate, [key]: value } : rate
-    )) as [RateFormState, RateFormState, RateFormState]);
+    )));
   }
 
   return (
     <div style={{ display: "grid", gap: 22 }}>
-      <form style={pageStyles.panel}>
+      <form style={pageStyles.panel} onSubmit={(event) => event.preventDefault()}>
         <div style={pageStyles.fields}>
           <label className="field">
             <span>貸款金額（萬元）</span>
@@ -106,7 +117,32 @@ export function MortgageCalculator() {
           </label>
         </div>
 
-        <div style={pageStyles.rateGrid} aria-label="三段式利率設定">
+        <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
+          <button type="button" onClick={() => { setRateMode("youth3"); setRates(youthLoan3Rates.map((r) => ({ ...r }))); }}
+            aria-pressed={rateMode === "youth3"}
+            style={{ padding: "10px 16px", border: "1px solid #244e86", borderRadius: 8, background: rateMode === "youth3" ? "#173966" : "#fff", color: rateMode === "youth3" ? "#fff" : "#173966", fontWeight: 700, cursor: "pointer" }}>
+            🏠 一鍵套用青安 3.0 利率
+          </button>
+          <button type="button" onClick={() => { setRateMode("custom"); setRates(initialRates.map((r) => ({ ...r }))); }}
+            aria-pressed={rateMode === "custom"}
+            style={{ padding: "10px 16px", border: "1px solid #cbd5e1", borderRadius: 8, background: rateMode === "custom" ? "#e9eef5" : "#fff", color: "#173966", cursor: "pointer" }}>
+            恢復自訂三段利率
+          </button>
+        </div>
+        {rateMode === "youth3" ? (
+          <p className="muted" style={{ margin: 0, lineHeight: 1.7 }}>
+            青安 3.0（2026/8/1 起新申辦）試算：撥款後第 1～3 年 1.775%、第 4 年 1.900%、第 5 年 2.025%、第 6 年 2.150%、第 7 年起 2.275%。
+            利率為基準利率不變時之參考值，實際利率將隨指標利率調整；申貸資格、貸款額度及寬限期仍以承貸銀行審核為準。
+            <a href="https://www.nta.gov.tw/singlehtml/109" target="_blank" rel="noreferrer" style={{ marginLeft: 6 }}>財政部官方說明</a>
+          </p>
+        ) : null}
+        {rateMode === "youth3" && Number(graceMonths) > 60 ? (
+          <div className="notice">青安 3.0 寬限期最長 5 年（60 個月），請調整寬限期以符合方案條件。</div>
+        ) : null}
+        {rateMode === "youth3" && Number(amountWan) > 1000 ? (
+          <div className="notice">貸款超過一般戶 1,000 萬元上限；較高額度須符合婚育家庭等特定資格，請向銀行確認。</div>
+        ) : null}
+        <div style={pageStyles.rateGrid} aria-label="分段利率設定">
           <div style={{ ...pageStyles.rateRow, color: "#64708a", fontSize: 14, fontWeight: 800 }}>
             <span>段別</span>
             <span>年利率（%）</span>
