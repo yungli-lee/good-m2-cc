@@ -1,0 +1,30 @@
+name: Mortgage calculator PR validation
+on:
+  pull_request:
+    paths:
+      - 'components/calculators/mortgage-calculator.tsx'
+      - 'lib/calculators/mortgage.ts'
+      - 'scripts/test-mortgage-youth-loan-3.ts'
+      - '.github/workflows/mortgage-pr-validation.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: '11.10.0'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec tsc --noEmit
+      - run: node --experimental-strip-types scripts/test-mortgage-youth-loan-3.ts
+      - run: pnpm run build
