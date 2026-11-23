@@ -7,7 +7,7 @@ export type MortgageInput = {
   amountWan: number;
   years: number;
   graceMonths: number;
-  rates: [MortgageRateInput, MortgageRateInput, MortgageRateInput];
+  rates: MortgageRateInput[];
 };
 
 export type MortgageRow = {
@@ -48,40 +48,35 @@ export function monthlyPayment(principal: number, annualRate: number, months: nu
 export function validateMortgageInput(input: MortgageInput) {
   const totalMonths = Math.floor(input.years * 12);
   const graceMonths = Math.floor(input.graceMonths);
-  const firstRate = input.rates[0];
-  const secondRate = input.rates[1];
-  const thirdRate = input.rates[2];
 
-  if (input.amountWan <= 0) return "請輸入正確的貸款金額。";
+  if (!Number.isFinite(input.amountWan) || input.amountWan <= 0) return "請輸入正確的貸款金額。";
   if (!Number.isInteger(input.years) || input.years < 1 || input.years > 40) return "貸款年限請輸入 1 到 40 年。";
-  if (!Number.isInteger(graceMonths) || graceMonths < 0 || graceMonths > 84) return "寬限期請輸入 0 到 84 個月。";
-  if (graceMonths >= totalMonths) return "寬限期不可大於或等於總貸款期數。";
-  if (firstRate.rate == null || firstRate.startMonth == null) return "第一段利率與啟用月份必填。";
-  if (firstRate.startMonth !== 1) return "第一段啟用月份必須是 1。";
-  if (firstRate.rate < 0) return "第一段利率不可小於 0。";
-
-  const optionalRates = [secondRate, thirdRate];
-  for (const [index, segment] of optionalRates.entries()) {
-    const number = index + 2;
+  if (!Number.isInteger(input.graceMonths) || input.graceMonths < 0 || input.graceMonths > 84) return "寬限期請輸入 0 到 84 個月。";
+  if (input.graceMonths >= totalMonths) return "寬限期不可大於或等於總貸款期數。";
+  if (input.rates.length < 1 || input.rates.length > 12) return "利率至少一段、最多十二段。";
+  if (input.rates[0].rate == null || input.rates[0].startMonth == null) return "第一段利率與啟用月份必填。";
+  if (input.rates[0].startMonth !== 1) return "第一段啟用月份必須是 1。";
+  let previousStart = 0;
+  let hasBlankSegment = false;
+  for (const [index, segment] of input.rates.entries()) {
+    const number = index + 1;
     const hasRate = segment.rate != null;
     const hasStart = segment.startMonth != null;
     if (hasRate !== hasStart) return `第 ${number} 段利率與啟用月份必須同時填寫，或同時留空。`;
-    if (segment.rate != null && segment.rate < 0) return `第 ${number} 段利率不可小於 0。`;
-    if (segment.startMonth != null && (!Number.isInteger(segment.startMonth) || segment.startMonth < 1 || segment.startMonth > totalMonths)) {
-      return `第 ${number} 段啟用月份必須在 1 到 ${totalMonths} 之間。`;
+    if (!hasRate || !hasStart) {
+      hasBlankSegment = true;
+      continue;
     }
-  }
-
-  if (secondRate.rate == null && thirdRate.rate != null) return "第二段空白時，第三段不可填寫；請先填第二段，或清空第三段。";
-
-  const activeSegments = input.rates.filter((segment): segment is { rate: number; startMonth: number } => (
-    segment.rate != null && segment.startMonth != null
-  ));
-
-  for (let index = 1; index < activeSegments.length; index += 1) {
-    if (activeSegments[index].startMonth <= activeSegments[index - 1].startMonth) {
-      return "各段利率的啟用月份必須由小到大，且不可相同。";
+    if (hasBlankSegment) return `第 ${number} 段前面有空白段別，請先填寫前一段。`;
+    if (!Number.isFinite(segment.rate) || segment.rate! < 0 || segment.rate! > 100) return `第 ${number} 段利率請輸入 0 至 100%。`;
+    if (!Number.isInteger(segment.startMonth) || segment.startMonth! < 1) return `第 ${number} 段啟用月份必須是正整數。`;
+    if (segment.startMonth! > totalMonths) {
+      // 貸款年期不足以進入後續優惠階段時，該階段可保留預設值但不參與試算。
+      if (index > 0) continue;
+      return `第 ${number} 段啟用月份超出貸款年期。`;
     }
+    if (segment.startMonth! <= previousStart) return "各段利率的啟用月份必須由小到大，且不可相同。";
+    previousStart = segment.startMonth!;
   }
 
   return "";
@@ -90,7 +85,7 @@ export function validateMortgageInput(input: MortgageInput) {
 function buildRateSegments(input: MortgageInput): RateSegment[] {
   const totalMonths = Math.floor(input.years * 12);
   const activeSegments = input.rates
-    .filter((segment): segment is { rate: number; startMonth: number } => segment.rate != null && segment.startMonth != null)
+    .filter((segment): segment is { rate: number; startMonth: number } => segment.rate != null && segment.startMonth != null && segment.startMonth <= totalMonths)
     .map((segment) => ({ rate: segment.rate, startMonth: segment.startMonth }));
 
   return activeSegments.map((segment, index) => ({
