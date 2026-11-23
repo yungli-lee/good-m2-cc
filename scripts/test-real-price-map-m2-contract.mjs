@@ -18,3 +18,12 @@ for(const token of [
 }
 assert.ok(!s.includes("Math.random"),"No invented transaction values");
 console.log("M2 contract static guards passed; API, real-data binding and Preview acceptance remain pending.");
+
+// Switching the target invalidates a previously selected spatial query.
+const ui=readFileSync("components/real-price/real-price-map-selection.tsx","utf8");
+for(const fragment of [
+ 'setSelectedProperty(id);setLocated(null);setSuggestedStreet("");setLocationError("");setSelected(null);setRect(null);setQueryState({status:"idle"})',
+ 'setAddress(e.target.value);setSelectedProperty("");setLocated(null);setSuggestedStreet("");setLocationError("");setSelected(null);setRect(null);setQueryState({status:"idle"})',
+ 'setSelectedProperty("");setSelected(null);setRect(null);setQueryState({status:"idle"})',
+])assert.ok(ui.includes(fragment),"Stale bbox must be invalidated: "+fragment);
+console.log("M2 target-change selection invalidation static guards passed.");
