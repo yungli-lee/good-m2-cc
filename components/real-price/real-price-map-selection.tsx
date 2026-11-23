@@ -88,7 +88,7 @@ export default function RealPriceMapSelection(){
   return ()=>controller.abort();
  },[]);
  function chooseProperty(id:string){
-  cancelGeocode();setSelectedProperty(id);setLocated(null);setSuggestedStreet("");setLocationError("");
+  cancelGeocode();setSelectedProperty(id);setLocated(null);setSuggestedStreet("");setLocationError("");setSelected(null);setRect(null);setQueryState({status:"idle"});
   const p=properties.find(x=>x.id===id);
   if(!p)return;
   const addr=buildPublicPropertyAddress(p);
@@ -204,10 +204,10 @@ export default function RealPriceMapSelection(){
    <form onSubmit={locateAddress}>
     <div style={{display:"flex",gap:14,flexWrap:"wrap",marginBottom:8}}>
      <label><input type="radio" checked={lookupMode==="address"} onChange={()=>{cancelGeocode();setLookupMode("address");setLocationError("");}}/> 地址</label>
-     <label><input type="radio" checked={lookupMode==="parcel"} onChange={()=>{cancelGeocode();setLookupMode("parcel");setLocated(null);setSuggestedStreet("");setLocationError("");setSelectedProperty("");}}/> 地段地號</label>
+     <label><input type="radio" checked={lookupMode==="parcel"} onChange={()=>{cancelGeocode();setLookupMode("parcel");setLocated(null);setSuggestedStreet("");setLocationError("");setSelectedProperty("");setSelected(null);setRect(null);setQueryState({status:"idle"});}}/> 地段地號</label>
     </div>
     {lookupMode==="address"?<label style={{display:"block"}}>地址（定位服務由 OpenStreetMap Nominatim 提供）
-     <input value={address} maxLength={180} onChange={e=>{cancelGeocode();setAddress(e.target.value);setSelectedProperty("");setLocated(null);setSuggestedStreet("");setLocationError("");}} placeholder="例如：彰化縣鹿港鎮中山路..." style={{display:"block",width:"100%",minHeight:42,border:"1px solid #94a3b8",borderRadius:6,padding:8,marginTop:5}}/>
+     <input value={address} maxLength={180} onChange={e=>{cancelGeocode();setAddress(e.target.value);setSelectedProperty("");setLocated(null);setSuggestedStreet("");setLocationError("");setSelected(null);setRect(null);setQueryState({status:"idle"});}} placeholder="例如：彰化縣鹿港鎮中山路..." style={{display:"block",width:"100%",minHeight:42,border:"1px solid #94a3b8",borderRadius:6,padding:8,marginTop:5}}/>
     </label>:<div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))",gap:8}}>
      <label>鄉鎮市區<input value={parcelDistrict} onChange={e=>setParcelDistrict(e.target.value)} placeholder="福興鄉" style={{width:"100%",padding:8,border:"1px solid #94a3b8"}}/></label>
      <label>地段<input value={parcelSection} onChange={e=>setParcelSection(e.target.value)} placeholder="新生段" style={{width:"100%",padding:8,border:"1px solid #94a3b8"}}/></label>
@@ -263,7 +263,7 @@ export default function RealPriceMapSelection(){
     // No real spatial transaction endpoint is connected. Fail closed, never fabricate results.
     setQueryState({status:"error",message:"尚未串接具有可信逐筆成交座標的官方查詢服務，目前無法提供圈選範圍內的成交清單。"});
    }}>查詢成交行情</button>
-   <p role="status" style={{marginTop:10}}>{queryState.status==="idle"?"請先在地圖上圈選範圍。":queryState.status==="loading"?"查詢中…":queryState.status==="error"?queryState.message:queryState.total===0?"查無符合條件的成交案件。":"查詢完成。"}</p>
+   <p role="status" style={{marginTop:10}}>{queryState.status==="idle"?(selected?"已圈選範圍，可按「查詢成交行情」；目前查詢服務尚未接通。":"請先在地圖上圈選範圍。"):queryState.status==="loading"?"查詢中…":queryState.status==="error"?queryState.message:queryState.total===0?"查無符合條件的成交案件。":"查詢完成。"}</p>
   </section>
   <p style={{marginTop:20}}>既有功能：<a href="/real-price" style={{textDecoration:"underline"}}>條件式實價查詢</a>。後台另有獨立 A4 報告製作功能。</p>
  </main>;
