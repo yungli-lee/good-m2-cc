@@ -259,7 +259,7 @@ export default function RealPriceMapSelection(){
     {PAGE_SIZES.map(n=><option key={n} value={n}>{n} 筆</option>)}
    </select></label>
    <button type="button" disabled={!selected} style={{marginLeft:12,padding:"8px 12px"}} onClick={()=>{
-    setQueryState({status:"loading"});
+    // No endpoint exists yet: do not flash a fictitious loading state.
     // No real spatial transaction endpoint is connected. Fail closed, never fabricate results.
     setQueryState({status:"error",message:"尚未串接具有可信逐筆成交座標的官方查詢服務，目前無法提供圈選範圍內的成交清單。"});
    }}>查詢成交行情</button>
