@@ -1,0 +1,22 @@
+name: Real-price map M2 contract regression
+on:
+  push:
+    branches:
+      - feature/real-price-map-selection-preview
+    paths:
+      - 'lib/real-price/map-query-contract.ts'
+      - 'scripts/test-real-price-map-m2-contract.mjs'
+      - '.github/workflows/real-price-map-m2.yml'
+  workflow_dispatch:
+jobs:
+  m2-contract:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check M2 contract invariants
+        run: node scripts/test-real-price-map-m2-contract.mjs
