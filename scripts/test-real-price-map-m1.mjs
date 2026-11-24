@@ -16,7 +16,7 @@ const checks=[
  ["M1 parcel fields",["parcelDistrict","parcelSection","parcelNo"].every(x=>map.includes(x))],
  ["M1 parcel not falsely geocoded",map.includes("尚未接上政府地籍座標服務")],
  ["M1 stale geocoding request aborted on edits",map.includes("const activeGeocode=useRef<AbortController|null>(null)")&&map.includes("activeGeocode.current?.abort()")&&map.includes('onChange={e=>{cancelGeocode();setAddress(e.target.value);')],
- ["M1 outdated geocoder results ignored",map.includes("controller.signal.aborted||activeGeocode.current!==controller")&&map.includes("activeGeocode.current===controller")],
+ ["M1 outdated geocoder results ignored",map.includes("if(activeGeocode.current!==controller)return;")&&map.includes('if(controller.signal.aborted)throw new Error("定位逾時，請重試");')&&map.includes("activeGeocode.current===controller")],
  ["M1 no-result fallback guarded against malformed response",map.includes("Array.isArray(matches)?matches.find")&&map.includes("if(!m){")],
  ["M1 address no-match explicit fallback",map.includes("setSuggestedStreet(street)")&&map.includes("改用路段定位")],
  ["M1 fallback not automatic",map.includes("setAddress(suggestedStreet)")],
