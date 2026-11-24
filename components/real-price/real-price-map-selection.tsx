@@ -119,7 +119,8 @@ export default function RealPriceMapSelection(){
     if(!response.ok)throw new Error("定位服務目前無法使用（HTTP "+response.status+"）");
     matches=await response.json() as GeoMatch[];
    }finally{clearTimeout(timer);}
-   if(controller.signal.aborted||activeGeocode.current!==controller)return;
+   if(activeGeocode.current!==controller)return;
+   if(controller.signal.aborted)throw new Error("定位逾時，請重試");
    const m=Array.isArray(matches)?matches.find(x=>Number.isFinite(Number(x.lat))&&Number.isFinite(Number(x.lon))&&Math.abs(Number(x.lat))<=90&&Math.abs(Number(x.lon))<=180):undefined;
    if(!m){
     const street=q.replace(/[0-9０-９]+(?:之[0-9０-９]+)?(?:號|号).*$/,"").trim();
